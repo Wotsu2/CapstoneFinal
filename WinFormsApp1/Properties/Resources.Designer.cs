@@ -73,6 +73,36 @@ namespace WinFormsApp1.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap famicons_radio_button_on_outline {
+            get {
+                object obj = ResourceManager.GetObject("famicons_radio-button-on-outline", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap famicons_radio_button_on_outline_2 {
+            get {
+                object obj = ResourceManager.GetObject("famicons_radio-button-on-outline-2", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap famicons_radio_button_on_outline_21 {
+            get {
+                object obj = ResourceManager.GetObject("famicons_radio-button-on-outline-21", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap flowbite_users_solid {
             get {
                 object obj = ResourceManager.GetObject("flowbite_users-solid", resourceCulture);
