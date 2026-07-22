@@ -103,9 +103,29 @@ namespace WinFormsApp1.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap fe_activity {
+            get {
+                object obj = ResourceManager.GetObject("fe_activity", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap flowbite_users_solid {
             get {
                 object obj = ResourceManager.GetObject("flowbite_users-solid", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap flowbite_users_solid1 {
+            get {
+                object obj = ResourceManager.GetObject("flowbite_users-solid1", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -143,9 +163,69 @@ namespace WinFormsApp1.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap material_symbols_computer_rounded {
+            get {
+                object obj = ResourceManager.GetObject("material-symbols_computer-rounded", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap material_symbols_computer_rounded1 {
+            get {
+                object obj = ResourceManager.GetObject("material-symbols_computer-rounded1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap material_symbols_dashboard_rounded {
             get {
                 object obj = ResourceManager.GetObject("material-symbols_dashboard-rounded", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap material_symbols_folder_rounded {
+            get {
+                object obj = ResourceManager.GetObject("material-symbols_folder-rounded", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap oui_nav_reports {
+            get {
+                object obj = ResourceManager.GetObject("oui_nav-reports", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap solar_file_bold {
+            get {
+                object obj = ResourceManager.GetObject("solar_file-bold", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap solar_file_bold1 {
+            get {
+                object obj = ResourceManager.GetObject("solar_file-bold1", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
