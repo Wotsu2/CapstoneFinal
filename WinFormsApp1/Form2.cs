@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Text;
 using System.Windows.Forms;
 
@@ -11,21 +12,34 @@ namespace WinFormsApp1
 {
     public partial class Form2 : Form
     {
+
+        int pendingNewUser = 0;
         public Form2()
         {
 
             InitializeComponent();
             LoadUser();
             ConfirmUpdateButton.Enabled = false;
-            UserDataList.ReadOnly = true;
+
+            //Dashboard Panel
+            TotalUserFunction();
+            NotifierBtn.Visible = false;
+            TotalUserLabel.Text = TotalUserFunction().ToString();
+            LoadStorageProgress();
         }
 
         private void DashboardButton_Click(object sender, EventArgs e)
         {
-            Form1 form1 = new Form1();
-            form1.Show();
-            this.Hide();
+            DashboardPanel.Visible = true;
+            UserManagementPanel.Visible = false;
+            LoadStorageProgress();
         }
+        private void UserManagementButton_Click(object sender, EventArgs e)
+        {
+            UserManagementPanel.Visible = true;
+            DashboardPanel.Visible = false;
+        }
+
 
         private void UserListButton_Click(object sender, EventArgs e)
         {
@@ -146,6 +160,8 @@ namespace WinFormsApp1
                     ClearText();
                     LoadUser();
 
+                    OnNewUserCreated(1);
+
                 }
             }
             catch (Exception ex)
@@ -183,7 +199,7 @@ namespace WinFormsApp1
 
         private void UserDataList_MouseDown(object sender, MouseEventArgs e)
         {
-            
+
             if (e.Button == MouseButtons.Right)
             {
                 var rowIndex = UserDataList.HitTest(e.X, e.Y).RowIndex;
@@ -218,11 +234,11 @@ namespace WinFormsApp1
             string section = row.Cells["sections"].Value.ToString();
             string course = row.Cells["courses"].Value.ToString();
 
-            UpdateDatabase(id, lastname, firstname,middlename, email, school_year, section, course);
+            UpdateDatabase(id, lastname, firstname, middlename, email, school_year, section, course);
 
         }
 
-        private void UpdateDatabase(string id,string lastname, string firstname, string middlename, string email, string school_yr, string section, string course)
+        private void UpdateDatabase(string id, string lastname, string firstname, string middlename, string email, string school_yr, string section, string course)
         {
             string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
 
@@ -289,7 +305,7 @@ namespace WinFormsApp1
             string status = row.Cells["status"].Value.ToString();
             try
             {
-                using(var conn = new MySqlConnection(connStr))
+                using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
 
@@ -316,7 +332,7 @@ namespace WinFormsApp1
                             MessageBox.Show("Succesfully Activated");
                         }
                     }
-                    
+
                     LoadUser();
                 }
             }
@@ -398,5 +414,69 @@ namespace WinFormsApp1
                 MessageBox.Show("Error: " + ex.Message);
             }
         }
+
+        //Dashboard Panel
+        private void OnNewUserCreated(int num)
+        {
+            pendingNewUser += num;
+            NotifierBtn.Text = pendingNewUser.ToString() + " New";
+            NotifierBtn.Visible = true;
+        }
+
+        private void NotifierBtn_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show( pendingNewUser.ToString() + " New Account Created");
+            NotifierBtn.Visible = false;
+            NotifierBtn.Text = "";
+            pendingNewUser = 0;
+        }
+
+        private int TotalUserFunction()
+        {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT COUNT(*) FROM users_credential_role";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        return Convert.ToInt32(cmd.ExecuteScalar());
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+                return 0;
+            }
+        }
+
+        private void LoadStorageProgress()
+        {
+            DriveInfo drive = new DriveInfo("E:\\");
+
+            long totalSpace = drive.TotalSize;
+            long freeSpace = drive.AvailableFreeSpace;
+            long usedSpace = totalSpace - freeSpace;
+
+            double totalGb = Math.Round((double)totalSpace / (1024.0 * 1024.0 * 1024.0), 2);
+            double usedGb = Math.Round((double)usedSpace / (1024.0 * 1024.0 * 1024.0), 2);
+            double freelGb = Math.Round((double)freeSpace / (1024.0 * 1024.0 * 1024.0), 2);
+
+            int percentage = (int)((double)usedSpace / totalSpace * 100);
+            storageProgressBar.Minimum = 0;
+            storageProgressBar.Maximum = 100;
+            storageProgressBar.Value = percentage;
+
+            lblUsedStorage.Text = $"{usedGb} GB";
+            lblFreeStorage.Text = $"{freelGb} GB";
+            lblTotalStorage.Text = $"{totalGb} Total GB";
+
+        }
+
     }
 }

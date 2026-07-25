@@ -868,7 +868,7 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             AutoScroll = true;
-            ClientSize = new Size(1199, 562);
+            ClientSize = new Size(1678, 803);
             Controls.Add(guna2ShadowPanel3);
             Controls.Add(guna2ShadowPanel6);
             Controls.Add(guna2ShadowPanel1);
