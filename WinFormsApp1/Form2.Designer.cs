@@ -169,7 +169,7 @@
             guna2Button3 = new Guna.UI2.WinForms.Guna2Button();
             guna2ShadowPanel4 = new Guna.UI2.WinForms.Guna2ShadowPanel();
             label17 = new Label();
-            label18 = new Label();
+            lblWorkstation = new Label();
             guna2Button1 = new Guna.UI2.WinForms.Guna2Button();
             guna2GradientPanel4 = new Guna.UI2.WinForms.Guna2GradientPanel();
             label25 = new Label();
@@ -1467,7 +1467,7 @@
             guna2ShadowPanel4.AllowDrop = true;
             guna2ShadowPanel4.BackColor = Color.Transparent;
             guna2ShadowPanel4.Controls.Add(label17);
-            guna2ShadowPanel4.Controls.Add(label18);
+            guna2ShadowPanel4.Controls.Add(lblWorkstation);
             guna2ShadowPanel4.Controls.Add(guna2Button1);
             guna2ShadowPanel4.FillColor = Color.Black;
             guna2ShadowPanel4.Location = new Point(346, 82);
@@ -1492,18 +1492,18 @@
             label17.TabIndex = 13;
             label17.Text = "Workstations";
             // 
-            // label18
+            // lblWorkstation
             // 
-            label18.AutoSize = true;
-            label18.BackColor = Color.Transparent;
-            label18.FlatStyle = FlatStyle.Flat;
-            label18.Font = new Font("Segoe UI", 19.8000011F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label18.ForeColor = Color.White;
-            label18.Location = new Point(36, 44);
-            label18.Name = "label18";
-            label18.Size = new Size(33, 37);
-            label18.TabIndex = 12;
-            label18.Text = "0";
+            lblWorkstation.AutoSize = true;
+            lblWorkstation.BackColor = Color.Transparent;
+            lblWorkstation.FlatStyle = FlatStyle.Flat;
+            lblWorkstation.Font = new Font("Segoe UI", 19.8000011F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblWorkstation.ForeColor = Color.White;
+            lblWorkstation.Location = new Point(36, 44);
+            lblWorkstation.Name = "lblWorkstation";
+            lblWorkstation.Size = new Size(33, 37);
+            lblWorkstation.TabIndex = 12;
+            lblWorkstation.Text = "0";
             // 
             // guna2Button1
             // 
@@ -1660,7 +1660,7 @@
         private Guna.UI2.WinForms.Guna2Button NotifierBtn;
         private Guna.UI2.WinForms.Guna2ShadowPanel guna2ShadowPanel4;
         private Label label17;
-        private Label label18;
+        private Label lblWorkstation;
         private Guna.UI2.WinForms.Guna2Button guna2Button1;
         private Guna.UI2.WinForms.Guna2ShadowPanel guna2ShadowPanel5;
         private Label label19;

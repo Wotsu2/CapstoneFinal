@@ -7,6 +7,9 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Text;
 using System.Windows.Forms;
+using System.Net;
+using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace WinFormsApp1
 {
@@ -14,6 +17,8 @@ namespace WinFormsApp1
     {
 
         int pendingNewUser = 0;
+
+        private TcpListener listener;
         public Form2()
         {
 
@@ -26,6 +31,7 @@ namespace WinFormsApp1
             NotifierBtn.Visible = false;
             TotalUserLabel.Text = TotalUserFunction().ToString();
             LoadStorageProgress();
+            StartServer();
         }
 
         private void DashboardButton_Click(object sender, EventArgs e)
@@ -425,7 +431,7 @@ namespace WinFormsApp1
 
         private void NotifierBtn_Click(object sender, EventArgs e)
         {
-            MessageBox.Show( pendingNewUser.ToString() + " New Account Created");
+            MessageBox.Show(pendingNewUser.ToString() + " New Account Created");
             NotifierBtn.Visible = false;
             NotifierBtn.Text = "";
             pendingNewUser = 0;
@@ -476,6 +482,62 @@ namespace WinFormsApp1
             lblFreeStorage.Text = $"{freelGb} GB";
             lblTotalStorage.Text = $"{totalGb} Total GB";
 
+        }
+
+        private async void StartServer()
+        {
+            listener = new TcpListener(IPAddress.Any, 5000);
+            listener.Start();
+
+            lblWorkstation.Text = "0";
+
+            while (true)
+            {
+                TcpClient client = await listener.AcceptTcpClientAsync();
+
+                if (this.InvokeRequired)
+                {
+                    this.Invoke(new Action(() => OnWorkStationConnected()));
+                }
+                else
+                {
+                    OnWorkStationConnected();
+
+                    _ = MonitorDisconnected(client);
+                }
+            }
+        }
+
+        private void OnWorkStationConnected()
+        {
+            int currentCount = int.Parse(lblWorkstation.Text);
+            currentCount++;
+            lblWorkstation.Text = currentCount.ToString();
+        }
+
+        private async Task MonitorDisconnected(TcpClient client)
+        {
+            NetworkStream stream = client.GetStream();
+            byte[] buffer = new byte[1];
+
+            try
+            {
+                while (client.Connected)
+                {
+                    int bytesRead = await stream.ReadAsync(buffer, 0, 1);
+                    if (bytesRead == 0) break;
+                }
+            }
+            catch { }
+            finally
+            {
+                if (this.InvokeRequired)
+                    this.Invoke(new Action(() => lblWorkstation.Text = "0"));
+                else
+                    lblWorkstation.Text = "0";
+
+                client.Close();
+            }
         }
 
     }
