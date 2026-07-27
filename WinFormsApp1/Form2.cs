@@ -38,6 +38,11 @@ namespace WinFormsApp1
             TotalUserLabel.Text = TotalUserFunction().ToString();
             LoadStorageProgress();
             StartServer();
+
+            if (!Directory.Exists(saveFolder))
+                Directory.CreateDirectory(saveFolder);
+
+            StartFileServer();
         }
 
         private void DashboardButton_Click(object sender, EventArgs e)
