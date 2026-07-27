@@ -7,6 +7,8 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Text;
 using System.Windows.Forms;
+
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -17,8 +19,12 @@ namespace WinFormsApp1
     {
 
         int pendingNewUser = 0;
-
         private TcpListener listener;
+
+        //For Submitting File
+        private TcpListener fileListener;
+        private int fileSubmittedCount = 0;
+        private string saveFolder = @"";
         public Form2()
         {
 
@@ -538,6 +544,59 @@ namespace WinFormsApp1
 
                 client.Close();
             }
+        }
+
+        private async void StartFileServer()
+        {
+            fileListener = new TcpListener(IPAddress.Any, 5001);
+            fileListener.Start();
+
+            while(true)
+            {
+                TcpClient client = await fileListener.AcceptTcpClientAsync();
+                _ = HandleFileReceive(client);
+            }
+        }
+
+        private async Task HandleFileReceive(TcpClient client)
+        {
+            try
+            {
+                using (client)
+                using (NetworkStream stream = client.GetStream())
+                using (BinaryReader reader = new BinaryReader(stream))
+                {
+                    string fileName = reader.ReadString();
+                    int fileLength = reader.ReadInt32();
+                    byte[] fileBytes = new byte[fileLength];
+
+                    string savePath = Path.Combine(saveFolder, fileName);
+                    File.WriteAllBytes(savePath, fileBytes);
+
+                    if (this.InvokeRequired)
+                    {
+                        this.Invoke(new Action(() => OnFileReceived(fileName)));
+                    }
+                    else
+                    {
+                        OnFileReceived(fileName);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                if (this.InvokeRequired)
+                {
+                    this.Invoke(new Action(() => MessageBox.Show("File receive error: " + ex.Message)));
+                }
+
+            }
+        }
+
+        private void OnFileReceived(string fileName)
+        {
+            fileSubmittedCount++;
+            lblFileSubmittedCount.Text = fileSubmittedCount.ToString();
         }
 
     }
