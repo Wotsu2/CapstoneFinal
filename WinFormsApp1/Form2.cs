@@ -24,7 +24,7 @@ namespace WinFormsApp1
         //For Submitting File
         private TcpListener fileListener;
         private int fileSubmittedCount = 0;
-        private string saveFolder = @"";
+        private string saveFolder = @"C:\ReceivedFileFolder";
         public Form2()
         {
 
@@ -556,7 +556,7 @@ namespace WinFormsApp1
             fileListener = new TcpListener(IPAddress.Any, 5001);
             fileListener.Start();
 
-            while(true)
+            while (true)
             {
                 TcpClient client = await fileListener.AcceptTcpClientAsync();
                 _ = HandleFileReceive(client);
@@ -604,5 +604,9 @@ namespace WinFormsApp1
             lblFileSubmittedCount.Text = fileSubmittedCount.ToString();
         }
 
+        private void SettingBtn_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
