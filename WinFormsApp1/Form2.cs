@@ -20,11 +20,10 @@ namespace WinFormsApp1
 
         int pendingNewUser = 0;
         private TcpListener listener;
-
-        //For Submitting File
         private TcpListener fileListener;
         private int fileSubmittedCount = 0;
-        private string saveFolder = @"C:\ReceivedFileFolder";
+        private int WorkStationNum = 0;
+        private string saveFolder = @"C:\ReceivedFileFolder"; // Should be Empty for setting to configure
         public Form2()
         {
 
@@ -40,11 +39,12 @@ namespace WinFormsApp1
             StartServer();
 
             if (!Directory.Exists(saveFolder))
-                Directory.CreateDirectory(saveFolder);
+                Directory.CreateDirectory(saveFolder); // if the folder is not existed then it will create it self 
 
             StartFileServer();
         }
 
+        // Button For Panel to Show Up //
         private void DashboardButton_Click(object sender, EventArgs e)
         {
             DashboardPanel.Visible = true;
@@ -58,6 +58,8 @@ namespace WinFormsApp1
         }
 
 
+
+        // for User Management Panel //
         private void UserListButton_Click(object sender, EventArgs e)
         {
             UserListPanel.Visible = true;
@@ -71,6 +73,9 @@ namespace WinFormsApp1
             UserListPanel.Visible = false;
         }
 
+
+
+        // Searching a user in datagrid //
         private void LoadUser(string filter = "")
         {
             string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
@@ -118,20 +123,14 @@ namespace WinFormsApp1
                 MessageBox.Show("Error: " + ex.Message);
             }
         }
-
-        private void ClearText()
+        private void SearchButton_TextChanged(object sender, EventArgs e)
         {
-            IdNumberText.Clear();
-            FirstnameText.Clear();
-            LastnameText.Clear();
-            MiddlenameText.Clear();
-            EmailText.Clear();
-            ContextRoleText.SelectedIndex = -1;
-            ContextYearText.SelectedIndex = -1;
-            ContextSectionText.SelectedIndex = -1;
-            ContextRoleText.SelectedIndex = -1;
+            LoadUser(SearchButton.Text);
         }
 
+
+
+        // Creation of Account //
         private void CreateButton_Click(object sender, EventArgs e)
         {
             string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
@@ -186,12 +185,22 @@ namespace WinFormsApp1
                 MessageBox.Show("Error: " + ex.Message);
             }
         }
-
-        private void SearchButton_TextChanged(object sender, EventArgs e)
+        private void ClearText()
         {
-            LoadUser(SearchButton.Text);
+            IdNumberText.Clear();
+            FirstnameText.Clear();
+            LastnameText.Clear();
+            MiddlenameText.Clear();
+            EmailText.Clear();
+            ContextRoleText.SelectedIndex = -1;
+            ContextYearText.SelectedIndex = -1;
+            ContextSectionText.SelectedIndex = -1;
+            ContextRoleText.SelectedIndex = -1;
         }
 
+
+
+        // For Role if the admin pick the professor or Admin it will ignore the other information //
         private void ContextRoleText_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (ContextRoleText.Text == "Professor")
@@ -214,6 +223,9 @@ namespace WinFormsApp1
             }
         }
 
+
+
+        // Context Menu on DataGridView //
         private void UserDataList_MouseDown(object sender, MouseEventArgs e)
         {
 
@@ -230,6 +242,9 @@ namespace WinFormsApp1
             }
         }
 
+
+
+        // Update or Edit the User Information only //
         private void UpdateButton_Click(object sender, EventArgs e)
         {
             ConfirmUpdateButton.Enabled = true;
@@ -252,13 +267,10 @@ namespace WinFormsApp1
             string course = row.Cells["courses"].Value.ToString();
 
             UpdateDatabase(id, lastname, firstname, middlename, email, school_year, section, course);
-
         }
-
         private void UpdateDatabase(string id, string lastname, string firstname, string middlename, string email, string school_yr, string section, string course)
         {
             string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
-
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -292,6 +304,9 @@ namespace WinFormsApp1
             }
         }
 
+
+
+        // Just Style of Activation and Deactivation Noting More //
         private void ActivationStyle()
         {
             foreach (DataGridViewRow row in UserDataList.Rows)
@@ -311,6 +326,9 @@ namespace WinFormsApp1
             }
         }
 
+
+
+        // Deactivate the User you want to Deactivate //
         private void DeactivateButton_Click(object sender, EventArgs e)
         {
             string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
@@ -359,6 +377,9 @@ namespace WinFormsApp1
             }
         }
 
+
+
+        // Delete the Account of User you want to delete //
         private void DeleteButton_Click(object sender, EventArgs e)
         {
             if (UserDataList.SelectedRows.Count == 0) return; // silently ignore if nothing selected
@@ -400,6 +421,9 @@ namespace WinFormsApp1
             }
         }
 
+
+
+        // Reset the password of the user who you want to reset //
         private void ResetPasswordButton_Click(object sender, EventArgs e)
         {
             string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
@@ -432,7 +456,9 @@ namespace WinFormsApp1
             }
         }
 
-        //Dashboard Panel
+
+
+        //Dashboard Panel Notifier Button //
         private void OnNewUserCreated(int num)
         {
             pendingNewUser += num;
@@ -448,6 +474,9 @@ namespace WinFormsApp1
             pendingNewUser = 0;
         }
 
+
+
+        // Return the Total User even the Professor //
         private int TotalUserFunction()
         {
             string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
@@ -472,9 +501,12 @@ namespace WinFormsApp1
             }
         }
 
+
+
+        // For Load the Storage //
         private void LoadStorageProgress()
         {
-            DriveInfo drive = new DriveInfo("E:\\");
+            DriveInfo drive = new DriveInfo("C:\\"); // Put the Storage you want to show Exampke: "C:\\"
 
             long totalSpace = drive.TotalSize;
             long freeSpace = drive.AvailableFreeSpace;
@@ -495,6 +527,9 @@ namespace WinFormsApp1
 
         }
 
+
+
+        // For WorkStation Connection Server //
         private async void StartServer()
         {
             listener = new TcpListener(IPAddress.Any, 5000);
@@ -506,27 +541,45 @@ namespace WinFormsApp1
             {
                 TcpClient client = await listener.AcceptTcpClientAsync();
 
+                Button wsButton = null;
+
                 if (this.InvokeRequired)
                 {
-                    this.Invoke(new Action(() => OnWorkStationConnected()));
+                    this.Invoke(new Action(() => wsButton = OnWorkStationConnected()));
                 }
                 else
                 {
-                    OnWorkStationConnected();
+                    wsButton = OnWorkStationConnected();
 
-                    _ = MonitorDisconnected(client);
+                    _ = MonitorDisconnected(client, wsButton);
                 }
             }
         }
 
-        private void OnWorkStationConnected()
+        private Button OnWorkStationConnected()
         {
             int currentCount = int.Parse(lblWorkstation.Text);
             currentCount++;
             lblWorkstation.Text = currentCount.ToString();
+
+            WorkStationNum++;
+
+            Button wsButton = new Button();
+            wsButton.Text = "WS " + WorkStationNum.ToString();
+            wsButton.Height = 100;
+            wsButton.Width = 50;
+            wsButton.Margin = new Padding(5);
+            wsButton.BackColor = Color.LightGreen;
+            wsButton.Tag = WorkStationNum;
+
+
+            MiniWorkstationFLP.Controls.Add(wsButton);
+
+            return wsButton;
+
         }
 
-        private async Task MonitorDisconnected(TcpClient client)
+        private async Task MonitorDisconnected(TcpClient client, Button wsButton)
         {
             NetworkStream stream = client.GetStream();
             byte[] buffer = new byte[1];
@@ -543,18 +596,41 @@ namespace WinFormsApp1
             finally
             {
                 if (this.InvokeRequired)
-                    this.Invoke(new Action(() => lblWorkstation.Text = "0"));
-                else
-                    lblWorkstation.Text = "0";
+                {
+                    this.Invoke(new Action(() =>
+                    {
+                        MiniWorkstationFLP.Controls.Add(wsButton);
+                        wsButton.Dispose();
 
+                        int count = int.Parse(lblWorkstation.Text);
+                        if (count > 0) count--;
+                        lblWorkstation.Text = count.ToString();
+                    }));
+                }
+                else
+                {
+                    MiniWorkstationFLP.Controls.Add(wsButton);
+                    wsButton.Dispose();
+
+                    int count = int.Parse(lblWorkstation.Text);
+                    if (count > 0) count--;
+                    lblWorkstation.Text = count.ToString();
+
+                }
                 client.Close();
             }
         }
 
+
+
+        // For Receiving File Connection to Server //
         private async void StartFileServer()
         {
             fileListener = new TcpListener(IPAddress.Any, 5001);
             fileListener.Start();
+
+            MessageBox.Show("File server listening on port 5001"); // temp test
+
 
             while (true)
             {
@@ -573,7 +649,7 @@ namespace WinFormsApp1
                 {
                     string fileName = reader.ReadString();
                     int fileLength = reader.ReadInt32();
-                    byte[] fileBytes = new byte[fileLength];
+                    byte[] fileBytes = reader.ReadBytes(fileLength);
 
                     string savePath = Path.Combine(saveFolder, fileName);
                     File.WriteAllBytes(savePath, fileBytes);

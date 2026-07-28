@@ -1,7 +1,7 @@
 using MySql.Data.MySqlClient;
 using System;
 using System.Data;
-using System.Data.SqlClient; // For SQL Server. Use MySql.Data.MySqlClient for MySQL, etc.
+using System.Data.SqlClient;
 using System.Windows.Forms;
 using TheArtOfDevHtmlRenderer.Adapters;
 
@@ -21,12 +21,14 @@ namespace WinFormsApp1
             ConnectToServer();
         }
 
+
+        // To Connect it to Server or Form2 //
         private async void ConnectToServer()
         {
             try
             {
                 client = new TcpClient();
-                await client.ConnectAsync("192.168.100.124", 5000); // use the SERVER's actual IP here
+                await client.ConnectAsync("192.168.100.124", 5000); // use the SERVER's actual IP here And Should be Empty and configure it to setting
 
                 MessageBox.Show("Connected to server!");
 
@@ -38,7 +40,6 @@ namespace WinFormsApp1
                 MessageBox.Show("Connection failed: " + ex.Message);
             }
         }
-
         private async Task KeepAlive()
         {
             try
@@ -51,6 +52,9 @@ namespace WinFormsApp1
             catch { }
         }
 
+
+
+        // To Select A File //
         private void SelectFileBtn_Click(object sender, EventArgs e)
         {
             using (OpenFileDialog ofd = new OpenFileDialog())
@@ -64,6 +68,9 @@ namespace WinFormsApp1
             }
         }
 
+
+
+        // To Submit the File you selected to Server //
         private async void SubmitBtn_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(selectedFilePath))
@@ -77,7 +84,7 @@ namespace WinFormsApp1
             {
                 using (TcpClient client = new TcpClient())
                 {
-                    await client.ConnectAsync("192.168.100.124", 5001);
+                    await client.ConnectAsync("192.168.100.124", 5001); // Same to other one it Should be Empty and configure it to setting
                     using (NetworkStream stream = client.GetStream())
                     using (BinaryWriter writer = new BinaryWriter(stream))
                     {
