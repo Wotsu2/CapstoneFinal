@@ -13,6 +13,7 @@ namespace WinFormsApp1
     {
         private TcpClient client;
         private string selectedFilePath = "";
+        private string ipAddress = "";
 
 
         public Form1()
@@ -28,7 +29,7 @@ namespace WinFormsApp1
             try
             {
                 client = new TcpClient();
-                await client.ConnectAsync("192.168.100.124", 5000); // use the SERVER's actual IP here And Should be Empty and configure it to setting
+                await client.ConnectAsync(ipAddress, 5000); // use the SERVER's actual IP here And Should be Empty and configure it to setting
 
                 MessageBox.Show("Connected to server!");
 
@@ -84,7 +85,7 @@ namespace WinFormsApp1
             {
                 using (TcpClient client = new TcpClient())
                 {
-                    await client.ConnectAsync("192.168.100.124", 5001); // Same to other one it Should be Empty and configure it to setting
+                    await client.ConnectAsync(ipAddress, 5001); // Same to other one it Should be Empty and configure it to setting
                     using (NetworkStream stream = client.GetStream())
                     using (BinaryWriter writer = new BinaryWriter(stream))
                     {

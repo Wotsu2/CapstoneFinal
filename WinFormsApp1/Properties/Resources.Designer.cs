@@ -203,6 +203,16 @@ namespace WinFormsApp1.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap material_symbols_light_computer_outline_rounded {
+            get {
+                object obj = ResourceManager.GetObject("material-symbols-light_computer-outline-rounded", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap oui_nav_reports {
             get {
                 object obj = ResourceManager.GetObject("oui_nav-reports", resourceCulture);

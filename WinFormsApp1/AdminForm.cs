@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace WinFormsApp1
 {
-    public partial class Form2 : Form
+    public partial class AdminForm : Form
     {
 
         int pendingNewUser = 0;
@@ -24,7 +24,12 @@ namespace WinFormsApp1
         private int fileSubmittedCount = 0;
         private int WorkStationNum = 0;
         private string saveFolder = @"C:\ReceivedFileFolder"; // Should be Empty for setting to configure
-        public Form2()
+        private int fileCount;
+
+        private string currentFolder;
+        private Stack<string> folderHistory = new Stack<string>();
+
+        public AdminForm()
         {
 
             InitializeComponent();
@@ -42,6 +47,12 @@ namespace WinFormsApp1
                 Directory.CreateDirectory(saveFolder); // if the folder is not existed then it will create it self 
 
             StartFileServer();
+            fileCount = Directory.GetFiles(saveFolder).Length;
+            lblFilesToday.Text = fileCount.ToString();
+
+            //File Management Panel
+            lsServerFolderSetup();
+            LoadServerFolder(saveFolder);
         }
 
         // Button For Panel to Show Up //
@@ -49,12 +60,20 @@ namespace WinFormsApp1
         {
             DashboardPanel.Visible = true;
             UserManagementPanel.Visible = false;
+            panelFileManagement.Visible = false;
             LoadStorageProgress();
         }
         private void UserManagementButton_Click(object sender, EventArgs e)
         {
             UserManagementPanel.Visible = true;
             DashboardPanel.Visible = false;
+            panelFileManagement.Visible = false;
+        }
+        private void fileManagementBtn_Click(object sender, EventArgs e)
+        {
+            DashboardPanel.Visible = false;
+            UserManagementPanel.Visible = false;
+            panelFileManagement.Visible = true;
         }
 
 
@@ -514,7 +533,7 @@ namespace WinFormsApp1
 
             double totalGb = Math.Round((double)totalSpace / (1024.0 * 1024.0 * 1024.0), 2);
             double usedGb = Math.Round((double)usedSpace / (1024.0 * 1024.0 * 1024.0), 2);
-            double freelGb = Math.Round((double)freeSpace / (1024.0 * 1024.0 * 1024.0), 2);
+            double freeGb = Math.Round((double)freeSpace / (1024.0 * 1024.0 * 1024.0), 2);
 
             int percentage = (int)((double)usedSpace / totalSpace * 100);
             storageProgressBar.Minimum = 0;
@@ -522,9 +541,10 @@ namespace WinFormsApp1
             storageProgressBar.Value = percentage;
 
             lblUsedStorage.Text = $"{usedGb} GB";
-            lblFreeStorage.Text = $"{freelGb} GB";
+            lblFreeStorage.Text = $"{freeGb} GB";
             lblTotalStorage.Text = $"{totalGb} Total GB";
 
+            StorageAutoLoader(usedGb, freeGb, totalGb, percentage);
         }
 
 
@@ -572,8 +592,18 @@ namespace WinFormsApp1
             wsButton.BackColor = Color.LightGreen;
             wsButton.Tag = WorkStationNum;
 
+            Label wsLabel = new Label();
+            wsLabel.Text = "Marc Junnel V Meriales";
+            wsLabel.AutoSize = false;
+            wsLabel.TextAlign = ContentAlignment.MiddleCenter;
+            wsLabel.BackColor = Color.Transparent;
+            wsLabel.ForeColor = Color.Black;
+            wsLabel.Font = wsButton.Font;
+
+            wsButton.Controls.Add(wsLabel);
 
             MiniWorkstationFLP.Controls.Add(wsButton);
+            MainWorkstationFLP.Controls.Add(wsButton);
 
             return wsButton;
 
@@ -600,6 +630,7 @@ namespace WinFormsApp1
                     this.Invoke(new Action(() =>
                     {
                         MiniWorkstationFLP.Controls.Add(wsButton);
+                        MainWorkstationFLP.Controls.Add(wsButton);
                         wsButton.Dispose();
 
                         int count = int.Parse(lblWorkstation.Text);
@@ -628,9 +659,6 @@ namespace WinFormsApp1
         {
             fileListener = new TcpListener(IPAddress.Any, 5001);
             fileListener.Start();
-
-            MessageBox.Show("File server listening on port 5001"); // temp test
-
 
             while (true)
             {
@@ -678,9 +706,107 @@ namespace WinFormsApp1
         {
             fileSubmittedCount++;
             lblFileSubmittedCount.Text = fileSubmittedCount.ToString();
+            lblFilesToday.Text = fileSubmittedCount.ToString();
+        }
+
+        private void StorageAutoLoader(double usedGb, double freeGb, double totalGb, int percentage)
+        {
+            string usedGbStr = usedGb.ToString();
+            string freeGbStr = freeGb.ToString();
+            string totalGbStr = totalGb.ToString();
+
+            progressStorageBar.Minimum = 0;
+            progressStorageBar.Maximum = 100;
+            progressStorageBar.Value = percentage;
+
+            lblTotalGb2.Text = $"{totalGb} GB";
+            lblStorageUsed.Text = $"{usedGb} GB";
+            lblStorageFree.Text = $"{freeGb} GB";
+            fileCount = Directory.GetFiles(saveFolder).Length;
+            lblTotalFiles2.Text = $"{fileCount.ToString()} Total Files";
+            lblFileToday2.Text = $"{fileSubmittedCount.ToString()} Files Today";
         }
 
         private void SettingBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void lsServerFolderSetup()
+        {
+            lvServerFolder.Columns.Clear();
+            lvServerFolder.Columns.Add("Name", 250);
+            lvServerFolder.Columns.Add("Type", 100);
+            lvServerFolder.Columns.Add("Size", 100);
+            lvServerFolder.Columns.Add("Date Modified", 150);
+        }
+
+        private void LoadServerFolder(string path, bool addToHistory = true)
+        {
+            if (addToHistory && !string.IsNullOrEmpty(currentFolder))
+            {
+                folderHistory.Push(currentFolder);
+            }
+
+            currentFolder = path;
+            lvServerFolder.Items.Clear();
+
+
+            //To Show Folder
+            foreach (string dir in Directory.GetDirectories(path))
+            {
+                DirectoryInfo di = new DirectoryInfo(dir);
+                ListViewItem item = new ListViewItem(di.Name);
+                item.SubItems.Add("Folder");
+                item.SubItems.Add("");
+                item.SubItems.Add(di.LastWriteTime.ToString());
+                item.Tag = dir;
+                lvServerFolder.Items.Add(item);
+            }
+
+            //to Show File
+
+            foreach (string file in Directory.GetFiles(path))
+            {
+                FileInfo fi = new FileInfo(file);
+                ListViewItem item = new ListViewItem(fi.Name);
+                item.SubItems.Add(fi.Extension);
+                item.SubItems.Add((fi.Length / 1024).ToString() + "KB");
+                item.SubItems.Add(fi.LastWriteTime.ToString());
+                item.Tag = file;
+                lvServerFolder.Items.Add(item);
+
+            }
+
+            BtnBack.Enabled = folderHistory.Count > 0;
+        }
+
+        private void lvServerFolder_DoubleClick(object sender, EventArgs e)
+        {
+            if (lvServerFolder.SelectedItems.Count == 0) return;
+
+            string path = lvServerFolder.SelectedItems[0].Tag.ToString();
+
+            if (Directory.Exists(path))
+            {
+                LoadServerFolder(path);
+            }
+            else if (File.Exists(path))
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+            }
+        }
+
+        private void BtnBack_Click(object sender, EventArgs e)
+        {
+            if (folderHistory.Count > 0)
+            {
+                string previousFolder = folderHistory.Pop();
+                LoadServerFolder(previousFolder, addToHistory: false);
+            }
+        }
+
+        private void label41_Click(object sender, EventArgs e)
         {
 
         }
