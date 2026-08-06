@@ -75,7 +75,7 @@
             // 
             lblFileName.AutoSize = true;
             lblFileName.Location = new Point(550, 91);
-            lblFileName.Name = "lblFileName";                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+            lblFileName.Name = "lblFileName";
             lblFileName.Size = new Size(55, 15);
             lblFileName.TabIndex = 2;
             lblFileName.Text = "Filename";

@@ -135,7 +135,7 @@
             guna2Button1.FillColor = Color.White;
             guna2Button1.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
             guna2Button1.ForeColor = Color.Black;
-            guna2Button1.Image = Properties.Resources.material_symbols_light_computer_outline_rounded;
+            guna2Button1.Image = Properties.Resources.Vector_Item;
             guna2Button1.ImageOffset = new Point(12, -20);
             guna2Button1.ImageSize = new Size(50, 50);
             guna2Button1.Location = new Point(610, 201);

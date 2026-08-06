@@ -4,9 +4,10 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
-using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.Text;
 using System.Windows.Forms;
+using System.Linq;
 
 using System.IO;
 using System.Net;
@@ -18,11 +19,10 @@ namespace WinFormsApp1
     public partial class AdminForm : Form
     {
 
+        private string Date = DateTime.Now.ToString("MM/dd/yyyy");        // 08/06/2026
+        private string Time = DateTime.Now.ToString("hh:mm:ss tt");       // 12:14:32 PM
         int pendingNewUser = 0;
-        private TcpListener listener;
-        private TcpListener fileListener;
-        private int fileSubmittedCount = 0;
-        private int WorkStationNum = 0;
+
         private string saveFolder = @"C:\ReceivedFileFolder"; // Should be Empty for setting to configure
         private int fileCount;
 
@@ -52,7 +52,9 @@ namespace WinFormsApp1
 
             //File Management Panel
             lsServerFolderSetup();
-            LoadServerFolder(saveFolder);
+            LoadServerFolder(saveFolder, addToHistory: false);
+
+            //WorkStation Management panel
         }
 
         // Button For Panel to Show Up //
@@ -61,6 +63,7 @@ namespace WinFormsApp1
             DashboardPanel.Visible = true;
             UserManagementPanel.Visible = false;
             panelFileManagement.Visible = false;
+            panelWorkStation.Visible = false;
             LoadStorageProgress();
         }
         private void UserManagementButton_Click(object sender, EventArgs e)
@@ -68,12 +71,22 @@ namespace WinFormsApp1
             UserManagementPanel.Visible = true;
             DashboardPanel.Visible = false;
             panelFileManagement.Visible = false;
+            panelWorkStation.Visible = false;
         }
         private void fileManagementBtn_Click(object sender, EventArgs e)
         {
+            panelFileManagement.Visible = true;
             DashboardPanel.Visible = false;
             UserManagementPanel.Visible = false;
-            panelFileManagement.Visible = true;
+            panelWorkStation.Visible = false;
+
+        }
+        private void WorkStationButton_Click(object sender, EventArgs e)
+        {
+            panelWorkStation.Visible = true;
+            panelFileManagement.Visible = false;
+            DashboardPanel.Visible = false;
+            UserManagementPanel.Visible = false;
         }
 
 
@@ -547,36 +560,195 @@ namespace WinFormsApp1
             StorageAutoLoader(usedGb, freeGb, totalGb, percentage);
         }
 
+        // For File Management Panel //
+
+        private void lsServerFolderSetup()
+        {
+            lvServerFolder.View = View.LargeIcon;
+            lvServerFolder.LargeImageList = imgListIcon;
+            lvServerFolder.MultiSelect = false;
+        }
+
+        private void LoadServerFolder(string path, bool addToHistory = true)
+        {
+            if (addToHistory && !string.IsNullOrEmpty(currentFolder))
+            {
+                folderHistory.Push(currentFolder);
+            }
+
+            currentFolder = path;
+            lvServerFolder.Items.Clear();
+            imgListIcon.Images.Clear();
+            int imageIndex = 0;
+
+            //To Show Folder
+            foreach (string dir in Directory.GetDirectories(path))
+            {
+                imgListIcon.Images.Add(Properties.Resources.Vector_Folder);
+                ListViewItem item = new ListViewItem(Path.GetFileName(dir), imageIndex);
+                item.Tag = dir;
+                lvServerFolder.Items.Add(item);
+                imageIndex++;
+            }
+
+            //to Show File
+
+            foreach (string file in Directory.GetFiles(path))
+            {
+                Icon fileIcon = Icon.ExtractAssociatedIcon(file);
+                imgListIcon.Images.Add(Properties.Resources.Vector_Item);
+
+                ListViewItem item = new ListViewItem(Path.GetFileName(file), imageIndex);
+                item.Tag = file;
+                lvServerFolder.Items.Add(item);
+                imageIndex++;
+
+            }
+
+            BtnBack.Enabled = folderHistory.Count > 0;
+        }
+
+        private void lvServerFolder_DoubleClick(object sender, EventArgs e)
+        {
+            if (lvServerFolder.SelectedItems.Count == 0) return;
+
+            string path = lvServerFolder.SelectedItems[0].Tag.ToString();
+
+            if (Directory.Exists(path))
+                LoadServerFolder(path);
+            else if (File.Exists(path))
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+        }
+
+        private void BtnBack_Click(object sender, EventArgs e)
+        {
+            if (folderHistory.Count > 0)
+            {
+                string previousFolder = folderHistory.Pop();
+                LoadServerFolder(previousFolder, addToHistory: false);
+            }
+        }
+        private void OnFileReceived(string fileName)
+        {
+            fileSubmittedCount++;
+            lblFileSubmittedCount.Text = fileSubmittedCount.ToString();
+            lblFilesToday.Text = fileSubmittedCount.ToString();
+        }
+
+        private void StorageAutoLoader(double usedGb, double freeGb, double totalGb, int percentage)
+        {
+            string usedGbStr = usedGb.ToString();
+            string freeGbStr = freeGb.ToString();
+            string totalGbStr = totalGb.ToString();
+
+            progressStorageBar.Minimum = 0;
+            progressStorageBar.Maximum = 100;
+            progressStorageBar.Value = percentage;
+
+            lblTotalGb2.Text = $"{totalGb} GB";
+            lblStorageUsed.Text = $"{usedGb} GB";
+            lblStorageFree.Text = $"{freeGb} GB";
+            fileCount = Directory.GetFiles(saveFolder).Length;
+            lblTotalFiles2.Text = $"{fileCount.ToString()} Total Files";
+            lblFileToday2.Text = $"{fileSubmittedCount.ToString()} Files Today";
+        }
+
 
 
         // For WorkStation Connection Server //
+
+        private TcpListener listener;
+        private TcpListener fileListener;
+        private int fileSubmittedCount = 0;
+        private int WorkStationNum = 0;
+        private Dictionary<string, (Button mainBtn, Button miniBtn)> workstationButtons
+        = new Dictionary<string, (Button, Button)>();
+
+        private TcpListener screenListener;
+        private PictureBox pictureBoxScreen;
+
         private async void StartServer()
         {
             listener = new TcpListener(IPAddress.Any, 5000);
             listener.Start();
 
             lblWorkstation.Text = "0";
+            int registeredCount = workstationButtons.Count;
 
             while (true)
             {
                 TcpClient client = await listener.AcceptTcpClientAsync();
 
-                Button wsButton = null;
+                string pcId = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
 
-                if (this.InvokeRequired)
+                Button MainPcButton = null;
+                Button MiniPcButton = null;
+
+                if (workstationButtons.ContainsKey(pcId))
                 {
-                    this.Invoke(new Action(() => wsButton = OnWorkStationConnected()));
+                    (MainPcButton, MiniPcButton) = workstationButtons[pcId];
+
+                    if (this.InvokeRequired)
+                    {
+                        this.Invoke(new Action(() =>
+                        {
+                            MainPcButton.BackColor = Color.LightGreen;
+                            MiniPcButton.BackColor = Color.LightGreen;
+                            UpdateConnectedCount();
+                        }));
+                    }
+                    else
+                    {
+                        MainPcButton.BackColor = Color.LightGreen;
+                        MiniPcButton.BackColor = Color.LightGreen;
+                        UpdateConnectedCount();
+                    }
                 }
                 else
                 {
-                    wsButton = OnWorkStationConnected();
+                    // First time seeing this PC — create buttons
+                    if (this.InvokeRequired)
+                    {
+                        this.Invoke(new Action(() =>
+                        {
+                            var (mainBtn, miniBtn) = OnWorkStationConnected();
+                            MainPcButton = mainBtn;
+                            MiniPcButton = miniBtn;
+                        }));
+                    }
+                    else
+                    {
+                        var (mainBtn, miniBtn) = OnWorkStationConnected();
+                        MainPcButton = mainBtn;
+                        MiniPcButton = miniBtn;
+                    }
 
-                    _ = MonitorDisconnected(client, wsButton);
+                    workstationButtons[pcId] = (MainPcButton, MiniPcButton);
+
+                    if (this.InvokeRequired)
+                    {
+                        this.Invoke(new Action(() =>
+                        {
+                            lblTotalComputer.Text = workstationButtons.Count.ToString();
+                            UpdateConnectedCount();
+                        }));
+                    }
+                    else
+                    {
+                        lblTotalComputer.Text = workstationButtons.Count.ToString();
+                        UpdateConnectedCount();
+                    }
+
+
                 }
+
+
+                _ = MonitorDisconnected(client, MainPcButton, MiniPcButton);
+
             }
         }
 
-        private Button OnWorkStationConnected()
+        private (Button mainBtn, Button miniBtn) OnWorkStationConnected()
         {
             int currentCount = int.Parse(lblWorkstation.Text);
             currentCount++;
@@ -584,32 +756,64 @@ namespace WinFormsApp1
 
             WorkStationNum++;
 
-            Button wsButton = new Button();
-            wsButton.Text = "WS " + WorkStationNum.ToString();
-            wsButton.Height = 100;
-            wsButton.Width = 50;
-            wsButton.Margin = new Padding(5);
-            wsButton.BackColor = Color.LightGreen;
-            wsButton.Tag = WorkStationNum;
+            Button MiniPcButton = new Button();
+            MiniPcButton.Text = "PC " + WorkStationNum.ToString();
+            MiniPcButton.Image = Properties.Resources.material_symbols_light_computer_outline_rounded;
+            MiniPcButton.Height = 100;
+            MiniPcButton.Width = 80;
+            MiniPcButton.Margin = new Padding(5);
+            MiniPcButton.BackColor = Color.LightGreen;
+            MiniPcButton.Tag = WorkStationNum;
 
-            Label wsLabel = new Label();
-            wsLabel.Text = "Marc Junnel V Meriales";
-            wsLabel.AutoSize = false;
-            wsLabel.TextAlign = ContentAlignment.MiddleCenter;
-            wsLabel.BackColor = Color.Transparent;
-            wsLabel.ForeColor = Color.Black;
-            wsLabel.Font = wsButton.Font;
+            Button MainPcButton = new Button();
+            MainPcButton.Text = "PC " + WorkStationNum.ToString();
+            MainPcButton.Image = Properties.Resources.material_symbols_light_computer_outline_rounded;
+            MainPcButton.Height = 180;
+            MainPcButton.Width = 131;
+            MainPcButton.Margin = new Padding(5);
+            MainPcButton.BackColor = Color.LightGreen;
+            MainPcButton.Tag = WorkStationNum;
 
-            wsButton.Controls.Add(wsLabel);
+            Label wsLabelName = new Label();
+            wsLabelName.Text = "Meriales";
+            wsLabelName.Location = new Point(14, 115);
+            wsLabelName.AutoSize = false;
+            wsLabelName.BackColor = Color.Transparent;
+            wsLabelName.ForeColor = Color.Black;
+            wsLabelName.TextAlign = ContentAlignment.MiddleCenter;
+            wsLabelName.Font = MainPcButton.Font;
 
-            MiniWorkstationFLP.Controls.Add(wsButton);
-            MainWorkstationFLP.Controls.Add(wsButton);
+            Label wsLabelDate = new Label();
+            wsLabelDate.Text = Date;
+            wsLabelDate.Location = new Point(14, 135);
+            wsLabelDate.AutoSize = false;
+            wsLabelDate.BackColor = Color.Transparent;
+            wsLabelDate.ForeColor = Color.Black;
+            wsLabelDate.TextAlign = ContentAlignment.MiddleCenter;
+            wsLabelDate.Font = MainPcButton.Font;
 
-            return wsButton;
+            Label wsLabelTime = new Label();
+            wsLabelTime.Text = Time;
+            wsLabelTime.Location = new Point(14, 155);
+            wsLabelTime.AutoSize = false;
+            wsLabelTime.BackColor = Color.Transparent;
+            wsLabelTime.ForeColor = Color.Black;
+            wsLabelTime.TextAlign = ContentAlignment.MiddleCenter;
+            wsLabelTime.Font = MainPcButton.Font;
+
+
+            MainPcButton.Controls.Add(wsLabelName);
+            MainPcButton.Controls.Add(wsLabelDate);
+            MainPcButton.Controls.Add(wsLabelTime);
+
+            MiniWorkstationFLP.Controls.Add(MiniPcButton);
+            MainWorkstationFLP.Controls.Add(MainPcButton);
+
+            return (MainPcButton, MiniPcButton);
 
         }
 
-        private async Task MonitorDisconnected(TcpClient client, Button wsButton)
+        private async Task MonitorDisconnected(TcpClient client, Button MainPcButton, Button MiniPcButton)
         {
             NetworkStream stream = client.GetStream();
             byte[] buffer = new byte[1];
@@ -629,9 +833,9 @@ namespace WinFormsApp1
                 {
                     this.Invoke(new Action(() =>
                     {
-                        MiniWorkstationFLP.Controls.Add(wsButton);
-                        MainWorkstationFLP.Controls.Add(wsButton);
-                        wsButton.Dispose();
+                        MainPcButton.BackColor = Color.Red;
+                        MiniPcButton.BackColor = Color.Red;
+                        UpdateConnectedCount();
 
                         int count = int.Parse(lblWorkstation.Text);
                         if (count > 0) count--;
@@ -640,8 +844,9 @@ namespace WinFormsApp1
                 }
                 else
                 {
-                    MiniWorkstationFLP.Controls.Add(wsButton);
-                    wsButton.Dispose();
+                    MainPcButton.BackColor = Color.Red;
+                    MiniPcButton.BackColor = Color.Red;
+                    UpdateConnectedCount();
 
                     int count = int.Parse(lblWorkstation.Text);
                     if (count > 0) count--;
@@ -651,6 +856,17 @@ namespace WinFormsApp1
                 client.Close();
             }
         }
+        private void UpdateConnectedCount()
+        {
+            int connectedCount = workstationButtons.Values
+            .Count(pair => pair.mainBtn.BackColor == Color.LightGreen);
+
+            int disconnectedCount = workstationButtons.Count - connectedCount;
+
+            lblOnline.Text = connectedCount.ToString();
+            lblOffline.Text = disconnectedCount.ToString();
+        }
+
 
 
 
@@ -702,113 +918,66 @@ namespace WinFormsApp1
             }
         }
 
-        private void OnFileReceived(string fileName)
+        private async void StartScreenListerner()
         {
-            fileSubmittedCount++;
-            lblFileSubmittedCount.Text = fileSubmittedCount.ToString();
-            lblFilesToday.Text = fileSubmittedCount.ToString();
-        }
-
-        private void StorageAutoLoader(double usedGb, double freeGb, double totalGb, int percentage)
-        {
-            string usedGbStr = usedGb.ToString();
-            string freeGbStr = freeGb.ToString();
-            string totalGbStr = totalGb.ToString();
-
-            progressStorageBar.Minimum = 0;
-            progressStorageBar.Maximum = 100;
-            progressStorageBar.Value = percentage;
-
-            lblTotalGb2.Text = $"{totalGb} GB";
-            lblStorageUsed.Text = $"{usedGb} GB";
-            lblStorageFree.Text = $"{freeGb} GB";
-            fileCount = Directory.GetFiles(saveFolder).Length;
-            lblTotalFiles2.Text = $"{fileCount.ToString()} Total Files";
-            lblFileToday2.Text = $"{fileSubmittedCount.ToString()} Files Today";
-        }
-
-        private void SettingBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void lsServerFolderSetup()
-        {
-            lvServerFolder.Columns.Clear();
-            lvServerFolder.Columns.Add("Name", 250);
-            lvServerFolder.Columns.Add("Type", 100);
-            lvServerFolder.Columns.Add("Size", 100);
-            lvServerFolder.Columns.Add("Date Modified", 150);
-        }
-
-        private void LoadServerFolder(string path, bool addToHistory = true)
-        {
-            if (addToHistory && !string.IsNullOrEmpty(currentFolder))
+            screenListener = new TcpListener(IPAddress.Any, 5002);
+            screenListener.Start();
+            while (true)
             {
-                folderHistory.Push(currentFolder);
-            }
-
-            currentFolder = path;
-            lvServerFolder.Items.Clear();
-
-
-            //To Show Folder
-            foreach (string dir in Directory.GetDirectories(path))
-            {
-                DirectoryInfo di = new DirectoryInfo(dir);
-                ListViewItem item = new ListViewItem(di.Name);
-                item.SubItems.Add("Folder");
-                item.SubItems.Add("");
-                item.SubItems.Add(di.LastWriteTime.ToString());
-                item.Tag = dir;
-                lvServerFolder.Items.Add(item);
-            }
-
-            //to Show File
-
-            foreach (string file in Directory.GetFiles(path))
-            {
-                FileInfo fi = new FileInfo(file);
-                ListViewItem item = new ListViewItem(fi.Name);
-                item.SubItems.Add(fi.Extension);
-                item.SubItems.Add((fi.Length / 1024).ToString() + "KB");
-                item.SubItems.Add(fi.LastWriteTime.ToString());
-                item.Tag = file;
-                lvServerFolder.Items.Add(item);
-
-            }
-
-            BtnBack.Enabled = folderHistory.Count > 0;
-        }
-
-        private void lvServerFolder_DoubleClick(object sender, EventArgs e)
-        {
-            if (lvServerFolder.SelectedItems.Count == 0) return;
-
-            string path = lvServerFolder.SelectedItems[0].Tag.ToString();
-
-            if (Directory.Exists(path))
-            {
-                LoadServerFolder(path);
-            }
-            else if (File.Exists(path))
-            {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+                TcpClient client = await screenListener.AcceptTcpClientAsync();
+                _ = ReceiveScreenStream(client);
             }
         }
 
-        private void BtnBack_Click(object sender, EventArgs e)
+        private async Task ReceiveScreenStream(TcpClient client)
         {
-            if (folderHistory.Count > 0)
+            NetworkStream stream = client.GetStream();
+
+            try
             {
-                string previousFolder = folderHistory.Pop();
-                LoadServerFolder(previousFolder, addToHistory: false);
+                while (client.Connected)
+                {
+                    byte[] lengthBuffer = new byte[4];
+                    int read = await stream.ReadAsync(lengthBuffer, 0, 4);
+                    if (read == 0) break;
+
+                    int imgLength = BitConverter.ToInt32(lengthBuffer, 0);
+                    byte[] imageBuffer = new byte[imgLength];
+
+                    int totalRead = 0;
+                    while (totalRead < imgLength)
+                    {
+                        int bytesRead = await stream.ReadAsync(imageBuffer, totalRead, imgLength - totalRead);
+                        if (bytesRead == 0) break;
+                        totalRead += bytesRead;
+                    }
+                    using (MemoryStream ms = new MemoryStream(imageBuffer))
+                    {
+                        Image frame = Image.FromStream(ms);
+
+                        if (this.InvokeRequired)
+                            this.Invoke(new Action(() => pictureBoxScreen.Image = frame));
+                        else
+                            pictureBoxScreen.Image = frame;
+                    }
+                }
+
+            }
+            catch { }
+            finally
+            {
+                client.Close();
             }
         }
 
-        private void label41_Click(object sender, EventArgs e)
+        private void ViewScreenbtn_Click(object sender, EventArgs e)
         {
+            Button btn = (Button)sender;
+            string workstationId = btn.Tag.ToString(); // or however you identify which PC
 
+            // Open a viewer form/panel showing that student's screen
+            ScreenViewerForm viewer = new ScreenViewerForm(workstationId);
+            viewer.Show();
         }
     }
 }
