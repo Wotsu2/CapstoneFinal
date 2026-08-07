@@ -1,18 +1,18 @@
 ﻿using MySql.Data.MySqlClient;
+using MySqlX.XDevAPI;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Text;
-using System.Windows.Forms;
-using System.Linq;
-
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace WinFormsApp1
 {
@@ -55,6 +55,7 @@ namespace WinFormsApp1
             LoadServerFolder(saveFolder, addToHistory: false);
 
             //WorkStation Management panel
+            StartScreenListener();
         }
 
         // Button For Panel to Show Up //
@@ -663,10 +664,10 @@ namespace WinFormsApp1
         private int WorkStationNum = 0;
         private Dictionary<string, (Button mainBtn, Button miniBtn)> workstationButtons
         = new Dictionary<string, (Button, Button)>();
+        private Dictionary<string, PictureBox> screenViewers = new Dictionary<string, PictureBox>();
 
         private TcpListener screenListener;
         private PictureBox pictureBoxScreen;
-
         private async void StartServer()
         {
             listener = new TcpListener(IPAddress.Any, 5000);
@@ -711,14 +712,14 @@ namespace WinFormsApp1
                     {
                         this.Invoke(new Action(() =>
                         {
-                            var (mainBtn, miniBtn) = OnWorkStationConnected();
+                            var (mainBtn, miniBtn) = OnWorkStationConnected(pcId);
                             MainPcButton = mainBtn;
                             MiniPcButton = miniBtn;
                         }));
                     }
                     else
                     {
-                        var (mainBtn, miniBtn) = OnWorkStationConnected();
+                        var (mainBtn, miniBtn) = OnWorkStationConnected(pcId);
                         MainPcButton = mainBtn;
                         MiniPcButton = miniBtn;
                     }
@@ -748,7 +749,7 @@ namespace WinFormsApp1
             }
         }
 
-        private (Button mainBtn, Button miniBtn) OnWorkStationConnected()
+        private (Button mainBtn, Button miniBtn) OnWorkStationConnected(string clientIp)
         {
             int currentCount = int.Parse(lblWorkstation.Text);
             currentCount++;
@@ -772,7 +773,8 @@ namespace WinFormsApp1
             MainPcButton.Width = 131;
             MainPcButton.Margin = new Padding(5);
             MainPcButton.BackColor = Color.LightGreen;
-            MainPcButton.Tag = WorkStationNum;
+            MainPcButton.Tag = clientIp;
+            MainPcButton.Click += WorkstationButton_Click;
 
             Label wsLabelName = new Label();
             wsLabelName.Text = "Meriales";
@@ -918,10 +920,46 @@ namespace WinFormsApp1
             }
         }
 
-        private async void StartScreenListerner()
+        private string selectedWorkstationId = "";
+        private void WorkstationButton_Click(object sender, EventArgs e)
+        {
+            Button MainPcButton = (Button)sender;
+            string workstationId = MainPcButton.Tag.ToString(); 
+
+            selectedWorkstationId = workstationId; 
+            lblIpAddress.Text = "IP Address: " + workstationId;
+            lblComputerName.Text = "Computer: " + MainPcButton.Text; 
+
+            ViewScreenbtn.Enabled = true;
+        }
+
+        private void ViewScreenbtn_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(selectedWorkstationId))
+            {
+                MessageBox.Show("Please select a workstation first.");
+                return;
+            }
+
+            ScreenViewerForm viewer = new ScreenViewerForm(selectedWorkstationId);
+
+            screenViewers[selectedWorkstationId] = viewer.GetPictureBox();
+
+            viewer.FormClosed += (s, args) => screenViewers.Remove(selectedWorkstationId);
+
+            viewer.Show();
+        }
+
+
+
+
+        // ================= SCREEN SHARING =================
+
+        private async void StartScreenListener()
         {
             screenListener = new TcpListener(IPAddress.Any, 5002);
             screenListener.Start();
+
             while (true)
             {
                 TcpClient client = await screenListener.AcceptTcpClientAsync();
@@ -932,36 +970,33 @@ namespace WinFormsApp1
         private async Task ReceiveScreenStream(TcpClient client)
         {
             NetworkStream stream = client.GetStream();
+            string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
 
             try
             {
                 while (client.Connected)
                 {
                     byte[] lengthBuffer = new byte[4];
-                    int read = await stream.ReadAsync(lengthBuffer, 0, 4);
+                    int read = await ReadExactAsync(stream, lengthBuffer, 4);
                     if (read == 0) break;
 
-                    int imgLength = BitConverter.ToInt32(lengthBuffer, 0);
-                    byte[] imageBuffer = new byte[imgLength];
+                    int imageLength = BitConverter.ToInt32(lengthBuffer, 0);
+                    //MessageBox.Show("📥 Receiving frame: " + imageLength + " bytes from " + clientIp);
+                    byte[] imageBuffer = new byte[imageLength];
 
-                    int totalRead = 0;
-                    while (totalRead < imgLength)
-                    {
-                        int bytesRead = await stream.ReadAsync(imageBuffer, totalRead, imgLength - totalRead);
-                        if (bytesRead == 0) break;
-                        totalRead += bytesRead;
-                    }
+                    int totalRead = await ReadExactAsync(stream, imageBuffer, imageLength);
+                    if (totalRead == 0) break;
+
                     using (MemoryStream ms = new MemoryStream(imageBuffer))
                     {
                         Image frame = Image.FromStream(ms);
 
                         if (this.InvokeRequired)
-                            this.Invoke(new Action(() => pictureBoxScreen.Image = frame));
+                            this.Invoke(new Action(() => UpdateScreenViewer(clientIp, frame)));
                         else
-                            pictureBoxScreen.Image = frame;
+                            UpdateScreenViewer(clientIp, frame);
                     }
                 }
-
             }
             catch { }
             finally
@@ -970,14 +1005,34 @@ namespace WinFormsApp1
             }
         }
 
-        private void ViewScreenbtn_Click(object sender, EventArgs e)
+        // Helper: reliably reads exactly 'count' bytes (TCP can deliver data in partial chunks)
+        private async Task<int> ReadExactAsync(NetworkStream stream, byte[] buffer, int count)
         {
-            Button btn = (Button)sender;
-            string workstationId = btn.Tag.ToString(); // or however you identify which PC
-
-            // Open a viewer form/panel showing that student's screen
-            ScreenViewerForm viewer = new ScreenViewerForm(workstationId);
-            viewer.Show();
+            int totalRead = 0;
+            while (totalRead < count)
+            {
+                int bytesRead = await stream.ReadAsync(buffer, totalRead, count - totalRead);
+                if (bytesRead == 0) return 0; // connection closed
+                totalRead += bytesRead;
+            }
+            return totalRead;
         }
+
+        private void UpdateScreenViewer(string clientIp, Image frame)
+        {
+            if (screenViewers.ContainsKey(clientIp) && screenViewers[clientIp] != null)
+            {
+                PictureBox pb = screenViewers[clientIp];
+                Image oldImage = pb.Image;
+                pb.Image = frame;
+                oldImage?.Dispose();
+            }
+            else
+            {
+                frame.Dispose();
+            }
+        }
+
+        
     }
 }

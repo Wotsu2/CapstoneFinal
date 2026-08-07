@@ -117,6 +117,8 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges83 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges104 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges105 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges86 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges87 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges88 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges89 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges90 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -133,8 +135,6 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges101 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges102 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges103 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges86 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges87 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             UserDataList = new DataGridView();
             SearchButton = new Guna.UI2.WinForms.Guna2TextBox();
             guna2ShadowPanel2 = new Guna.UI2.WinForms.Guna2ShadowPanel();
@@ -247,6 +247,11 @@
             guna2GradientPanel3 = new Guna.UI2.WinForms.Guna2GradientPanel();
             label54 = new Label();
             panelWorkStation = new Guna.UI2.WinForms.Guna2Panel();
+            guna2ShadowPanel17 = new Guna.UI2.WinForms.Guna2ShadowPanel();
+            lblComputerName = new Label();
+            lblIpAddress = new Label();
+            ViewScreenbtn = new Guna.UI2.WinForms.Guna2Button();
+            label18 = new Label();
             guna2ShadowPanel16 = new Guna.UI2.WinForms.Guna2ShadowPanel();
             label45 = new Label();
             lblOffline = new Label();
@@ -277,9 +282,6 @@
             guna2GradientPanel5 = new Guna.UI2.WinForms.Guna2GradientPanel();
             label40 = new Label();
             imgListIcon = new ImageList(components);
-            guna2ShadowPanel17 = new Guna.UI2.WinForms.Guna2ShadowPanel();
-            label18 = new Label();
-            ViewScreenbtn = new Guna.UI2.WinForms.Guna2Button();
             ((System.ComponentModel.ISupportInitialize)UserDataList).BeginInit();
             guna2ShadowPanel2.SuspendLayout();
             guna2GradientPanel2.SuspendLayout();
@@ -311,6 +313,7 @@
             ((System.ComponentModel.ISupportInitialize)guna2PictureBox3).BeginInit();
             guna2GradientPanel3.SuspendLayout();
             panelWorkStation.SuspendLayout();
+            guna2ShadowPanel17.SuspendLayout();
             guna2ShadowPanel16.SuspendLayout();
             guna2ShadowPanel15.SuspendLayout();
             guna2ShadowPanel14.SuspendLayout();
@@ -318,7 +321,6 @@
             guna2ShadowPanel12.SuspendLayout();
             guna2ShadowPanel11.SuspendLayout();
             guna2GradientPanel5.SuspendLayout();
-            guna2ShadowPanel17.SuspendLayout();
             SuspendLayout();
             // 
             // UserDataList
@@ -2072,6 +2074,74 @@
             panelWorkStation.Size = new Size(1354, 701);
             panelWorkStation.TabIndex = 43;
             // 
+            // guna2ShadowPanel17
+            // 
+            guna2ShadowPanel17.AllowDrop = true;
+            guna2ShadowPanel17.BackColor = Color.Transparent;
+            guna2ShadowPanel17.Controls.Add(lblComputerName);
+            guna2ShadowPanel17.Controls.Add(lblIpAddress);
+            guna2ShadowPanel17.Controls.Add(ViewScreenbtn);
+            guna2ShadowPanel17.Controls.Add(label18);
+            guna2ShadowPanel17.FillColor = Color.Black;
+            guna2ShadowPanel17.Location = new Point(1024, 250);
+            guna2ShadowPanel17.Margin = new Padding(3, 2, 3, 2);
+            guna2ShadowPanel17.Name = "guna2ShadowPanel17";
+            guna2ShadowPanel17.Radius = 15;
+            guna2ShadowPanel17.ShadowColor = Color.Black;
+            guna2ShadowPanel17.ShadowStyle = Guna.UI2.WinForms.Guna2ShadowPanel.ShadowMode.Dropped;
+            guna2ShadowPanel17.Size = new Size(315, 262);
+            guna2ShadowPanel17.TabIndex = 36;
+            // 
+            // lblComputerName
+            // 
+            lblComputerName.AutoSize = true;
+            lblComputerName.Font = new Font("Segoe UI", 11F);
+            lblComputerName.ForeColor = Color.White;
+            lblComputerName.Location = new Point(51, 144);
+            lblComputerName.Name = "lblComputerName";
+            lblComputerName.Size = new Size(0, 20);
+            lblComputerName.TabIndex = 15;
+            // 
+            // lblIpAddress
+            // 
+            lblIpAddress.AutoSize = true;
+            lblIpAddress.Font = new Font("Segoe UI", 11F);
+            lblIpAddress.ForeColor = Color.White;
+            lblIpAddress.Location = new Point(51, 120);
+            lblIpAddress.Name = "lblIpAddress";
+            lblIpAddress.Size = new Size(0, 20);
+            lblIpAddress.TabIndex = 14;
+            // 
+            // ViewScreenbtn
+            // 
+            ViewScreenbtn.CustomizableEdges = customizableEdges86;
+            ViewScreenbtn.DisabledState.BorderColor = Color.DarkGray;
+            ViewScreenbtn.DisabledState.CustomBorderColor = Color.DarkGray;
+            ViewScreenbtn.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            ViewScreenbtn.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            ViewScreenbtn.Font = new Font("Segoe UI", 9F);
+            ViewScreenbtn.ForeColor = Color.White;
+            ViewScreenbtn.Location = new Point(74, 199);
+            ViewScreenbtn.Name = "ViewScreenbtn";
+            ViewScreenbtn.ShadowDecoration.CustomizableEdges = customizableEdges87;
+            ViewScreenbtn.Size = new Size(180, 31);
+            ViewScreenbtn.TabIndex = 13;
+            ViewScreenbtn.Text = "View Screen";
+            ViewScreenbtn.Click += ViewScreenbtn_Click;
+            // 
+            // label18
+            // 
+            label18.AutoSize = true;
+            label18.BackColor = Color.Transparent;
+            label18.FlatStyle = FlatStyle.Flat;
+            label18.Font = new Font("Segoe UI", 10F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label18.ForeColor = Color.White;
+            label18.Location = new Point(125, 21);
+            label18.Name = "label18";
+            label18.Size = new Size(69, 19);
+            label18.TabIndex = 12;
+            label18.Text = "Pc Status";
+            // 
             // guna2ShadowPanel16
             // 
             guna2ShadowPanel16.AllowDrop = true;
@@ -2506,52 +2576,6 @@
             imgListIcon.Images.SetKeyName(0, "Vector_Folder.png");
             imgListIcon.Images.SetKeyName(1, "Vector_Item.png");
             // 
-            // guna2ShadowPanel17
-            // 
-            guna2ShadowPanel17.AllowDrop = true;
-            guna2ShadowPanel17.BackColor = Color.Transparent;
-            guna2ShadowPanel17.Controls.Add(ViewScreenbtn);
-            guna2ShadowPanel17.Controls.Add(label18);
-            guna2ShadowPanel17.FillColor = Color.Black;
-            guna2ShadowPanel17.Location = new Point(1024, 250);
-            guna2ShadowPanel17.Margin = new Padding(3, 2, 3, 2);
-            guna2ShadowPanel17.Name = "guna2ShadowPanel17";
-            guna2ShadowPanel17.Radius = 15;
-            guna2ShadowPanel17.ShadowColor = Color.Black;
-            guna2ShadowPanel17.ShadowStyle = Guna.UI2.WinForms.Guna2ShadowPanel.ShadowMode.Dropped;
-            guna2ShadowPanel17.Size = new Size(315, 262);
-            guna2ShadowPanel17.TabIndex = 36;
-            // 
-            // label18
-            // 
-            label18.AutoSize = true;
-            label18.BackColor = Color.Transparent;
-            label18.FlatStyle = FlatStyle.Flat;
-            label18.Font = new Font("Segoe UI", 10F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label18.ForeColor = Color.White;
-            label18.Location = new Point(125, 21);
-            label18.Name = "label18";
-            label18.Size = new Size(69, 19);
-            label18.TabIndex = 12;
-            label18.Text = "Pc Status";
-            // 
-            // ViewScreenbtn
-            // 
-            ViewScreenbtn.CustomizableEdges = customizableEdges86;
-            ViewScreenbtn.DisabledState.BorderColor = Color.DarkGray;
-            ViewScreenbtn.DisabledState.CustomBorderColor = Color.DarkGray;
-            ViewScreenbtn.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
-            ViewScreenbtn.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            ViewScreenbtn.Font = new Font("Segoe UI", 9F);
-            ViewScreenbtn.ForeColor = Color.White;
-            ViewScreenbtn.Location = new Point(64, 159);
-            ViewScreenbtn.Name = "ViewScreenbtn";
-            ViewScreenbtn.ShadowDecoration.CustomizableEdges = customizableEdges87;
-            ViewScreenbtn.Size = new Size(180, 31);
-            ViewScreenbtn.TabIndex = 13;
-            ViewScreenbtn.Text = "View Screen";
-            ViewScreenbtn.Click += ViewScreenbtn_Click;
-            // 
             // AdminForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -2619,6 +2643,8 @@
             guna2GradientPanel3.ResumeLayout(false);
             guna2GradientPanel3.PerformLayout();
             panelWorkStation.ResumeLayout(false);
+            guna2ShadowPanel17.ResumeLayout(false);
+            guna2ShadowPanel17.PerformLayout();
             guna2ShadowPanel16.ResumeLayout(false);
             guna2ShadowPanel16.PerformLayout();
             guna2ShadowPanel15.ResumeLayout(false);
@@ -2633,8 +2659,6 @@
             guna2ShadowPanel11.PerformLayout();
             guna2GradientPanel5.ResumeLayout(false);
             guna2GradientPanel5.PerformLayout();
-            guna2ShadowPanel17.ResumeLayout(false);
-            guna2ShadowPanel17.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -2785,5 +2809,7 @@
         private Guna.UI2.WinForms.Guna2ShadowPanel guna2ShadowPanel17;
         private Guna.UI2.WinForms.Guna2Button ViewScreenbtn;
         private Label label18;
+        private Label lblIpAddress;
+        private Label lblComputerName;
     }
 }

@@ -10,11 +10,14 @@ namespace WinFormsApp1
 {
     public partial class ScreenViewerForm : Form
     {
-        private string workstationId;
+        public string WorkstationId { get; private set; }
+
         public ScreenViewerForm(string workstationId)
         {
             InitializeComponent();
-            this.workstationId = workstationId;
+            WorkstationId = workstationId;
+            this.Text = "Viewing: " + workstationId;
         }
+        public PictureBox GetPictureBox() => pictureBoxScreen;
     }
 }

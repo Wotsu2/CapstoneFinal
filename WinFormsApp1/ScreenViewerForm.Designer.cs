@@ -28,12 +28,34 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Text = "ScreenViewerForm";
+            pictureBoxScreen = new PictureBox();
+            ((System.ComponentModel.ISupportInitialize)pictureBoxScreen).BeginInit();
+            SuspendLayout();
+            // 
+            // pictureBoxScreen
+            // 
+            pictureBoxScreen.Dock = DockStyle.Fill;
+            pictureBoxScreen.Location = new Point(0, 0);
+            pictureBoxScreen.Name = "pictureBoxScreen";
+            pictureBoxScreen.Size = new Size(800, 450);
+            pictureBoxScreen.SizeMode = PictureBoxSizeMode.Zoom;
+            pictureBoxScreen.TabIndex = 0;
+            pictureBoxScreen.TabStop = false;
+            // 
+            // ScreenViewerForm
+            // 
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(800, 450);
+            Controls.Add(pictureBoxScreen);
+            Name = "ScreenViewerForm";
+            Text = "ScreenViewerForm";
+            ((System.ComponentModel.ISupportInitialize)pictureBoxScreen).EndInit();
+            ResumeLayout(false);
         }
 
         #endregion
+
+        private PictureBox pictureBoxScreen;
     }
 }

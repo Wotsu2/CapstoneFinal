@@ -13,23 +13,29 @@ namespace WinFormsApp1
     {
         private TcpClient client;
         private string selectedFilePath = "";
-        private string ipAddress = "192.168.100.112";
+
+
+        private System.Windows.Forms.Timer screenShareTimer;
+        private TcpClient screenClient;
+        private bool isSharingScreen = false;
+        private string serverIp = "192.168.100.4";
 
 
         public Form1()
         {
             InitializeComponent();
-            ConnectToServer();
+            ConnectToServer(serverIp);
+            StartScreenShare(serverIp);
         }
 
 
         // To Connect it to Server or Form2 //
-        private async void ConnectToServer()
+        private async void ConnectToServer(string serverIp)
         {
             try
             {
                 client = new TcpClient();
-                await client.ConnectAsync("192.168.100.1", 5000); // use the SERVER's actual IP here And Should be Empty and configure it to setting
+                await client.ConnectAsync(serverIp, 5000); // use the SERVER's actual IP here And Should be Empty and configure it to setting
 
                 MessageBox.Show("Connected to server!");
 
@@ -69,7 +75,8 @@ namespace WinFormsApp1
             }
         }
 
-
+        private TcpListener screenListener;
+        private PictureBox pictureBoxScreen;
 
         // To Submit the File you selected to Server //
         private async void SubmitBtn_Click(object sender, EventArgs e)
@@ -85,7 +92,7 @@ namespace WinFormsApp1
             {
                 using (TcpClient client = new TcpClient())
                 {
-                    await client.ConnectAsync("192.168.100.1", 5001); // Same to other one it Should be Empty and configure it to setting
+                    await client.ConnectAsync(serverIp, 5001); // Same to other one it Should be Empty and configure it to setting
                     using (NetworkStream stream = client.GetStream())
                     using (BinaryWriter writer = new BinaryWriter(stream))
                     {
@@ -109,21 +116,24 @@ namespace WinFormsApp1
 
         }
 
-        private System.Windows.Forms.Timer screenShareTimer;
-        private TcpClient screenClient;
-        private bool isSharingScreen = false;
-
-        private void StartScreenSharing(string serverIp)
+        private void StartScreenShare(string serverIp)
         {
-            screenClient = new TcpClient();
-            screenClient.Connect(serverIp, 5002);
+            try
+            {
+                screenClient = new TcpClient();
+                screenClient.Connect(serverIp, 5002); // dedicated screen-share port
 
-            isSharingScreen = true;
+                isSharingScreen = true;
 
-            screenShareTimer = new System.Windows.Forms.Timer();
-            screenShareTimer.Interval = 500;
-            screenShareTimer.Tick += ScreenShareTimer_Tick;
-            screenShareTimer.Start();
+                screenShareTimer = new System.Windows.Forms.Timer();
+                screenShareTimer.Interval = 500; // send a frame every 0.5s
+                screenShareTimer.Tick += ScreenShareTimer_Tick;
+                screenShareTimer.Start();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Could not start screen share: " + ex.Message);
+            }
         }
 
         private void ScreenShareTimer_Tick(object sender, EventArgs e)
@@ -134,21 +144,21 @@ namespace WinFormsApp1
 
                 using (MemoryStream ms = new MemoryStream())
                 {
-                    screenshot.Save(ms, ImageFormat.Jpeg); // JPEG = smaller size, faster to send
+                    screenshot.Save(ms, ImageFormat.Jpeg);
                     byte[] imageBytes = ms.ToArray();
 
                     NetworkStream stream = screenClient.GetStream();
-                    using (BinaryWriter writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true))
-                    {
-                        writer.Write(imageBytes.Length);
-                        writer.Write(imageBytes);
-                    }
+                    byte[] lengthPrefix = BitConverter.GetBytes(imageBytes.Length);
+
+                    stream.Write(lengthPrefix, 0, lengthPrefix.Length);
+                    stream.Write(imageBytes, 0, imageBytes.Length);
                 }
 
                 screenshot.Dispose();
             }
             catch (Exception ex)
             {
+                MessageBox.Show("Screen share stopped: " + ex.Message);
                 screenShareTimer.Stop();
                 isSharingScreen = false;
             }
@@ -166,5 +176,6 @@ namespace WinFormsApp1
 
             return bitmap;
         }
+
     }
 }
