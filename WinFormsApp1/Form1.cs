@@ -28,6 +28,7 @@ namespace WinFormsApp1
             InitializeComponent();
             ConnectToServer(serverIp);
             StartScreenShare(serverIp);
+            StartHealthMonitoring(serverIp);
         }
 
 

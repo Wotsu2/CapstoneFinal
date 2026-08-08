@@ -1125,8 +1125,7 @@ namespace WinFormsApp1
             chartCpu.Name = "chartCpu";
             chartCpu.Location = new Point(30, 50); // adjust position to fit your layout
             chartCpu.Size = new Size(250, 50);     // adjust size as needed
-            chartCpu.BackColor = Color.White;       // optional, match your dark theme
-
+            chartCpu.BackColor = Color.Gray;       // optional, match your dark theme
             panelPcStatus.Controls.Add(chartCpu);
         }
 
@@ -1144,7 +1143,7 @@ namespace WinFormsApp1
 
             Series series = new Series("CPU");
             series.ChartType = SeriesChartType.Line;
-            series.Color = Color.LightGreen;
+            series.Color = Color.Green;
             series.BorderWidth = 2;
             chartCpu.Series.Add(series);
 
