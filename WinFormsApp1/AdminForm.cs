@@ -13,6 +13,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows.Forms.DataVisualization.Charting;
 
 namespace WinFormsApp1
 {
@@ -56,6 +57,8 @@ namespace WinFormsApp1
 
             //WorkStation Management panel
             StartScreenListener();
+            SetupCpuChartControl();
+            StartHealthListener();
         }
 
         // Button For Panel to Show Up //
@@ -924,13 +927,16 @@ namespace WinFormsApp1
         private void WorkstationButton_Click(object sender, EventArgs e)
         {
             Button MainPcButton = (Button)sender;
-            string workstationId = MainPcButton.Tag.ToString(); 
+            string workstationId = MainPcButton.Tag.ToString();
 
-            selectedWorkstationId = workstationId; 
+            selectedWorkstationId = workstationId;
             lblIpAddress.Text = "IP Address: " + workstationId;
-            lblComputerName.Text = "Computer: " + MainPcButton.Text; 
+            lblComputerName.Text = "Computer: " + MainPcButton.Text;
 
             ViewScreenbtn.Enabled = true;
+
+            SetupCpuChart();
+            RedrawCpuChart();
         }
 
         private void ViewScreenbtn_Click(object sender, EventArgs e)
@@ -1005,14 +1011,13 @@ namespace WinFormsApp1
             }
         }
 
-        // Helper: reliably reads exactly 'count' bytes (TCP can deliver data in partial chunks)
         private async Task<int> ReadExactAsync(NetworkStream stream, byte[] buffer, int count)
         {
             int totalRead = 0;
             while (totalRead < count)
             {
                 int bytesRead = await stream.ReadAsync(buffer, totalRead, count - totalRead);
-                if (bytesRead == 0) return 0; // connection closed
+                if (bytesRead == 0) return 0;
                 totalRead += bytesRead;
             }
             return totalRead;
@@ -1033,6 +1038,130 @@ namespace WinFormsApp1
             }
         }
 
-        
+
+
+        // Health of the cpu display on the Admin Form //
+
+
+        private TcpListener healthListener;
+        private Dictionary<string, List<float>> cpuHistoryByWorkstation = new Dictionary<string, List<float>>();
+        private const int maxDataPoints = 30;
+
+        private async void StartHealthListener()
+        { 
+            healthListener = new TcpListener(IPAddress.Any, 5003);
+            healthListener.Start();
+
+            while(true)
+            {
+                TcpClient client = await healthListener.AcceptTcpClientAsync();
+                _ = ReceiveHealthSteam(client);
+            }
+        }
+
+        private async Task ReceiveHealthSteam(TcpClient client)
+        {
+            NetworkStream stream = client.GetStream();
+            string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
+
+            try
+            {
+                while(client.Connected)
+                {
+                    byte[] lengthBuffer = new byte[4];
+                    int read = await ReadExactAsync(stream, lengthBuffer, 4);
+                    if (read == 0) break;
+
+                    int dataLength = BitConverter.ToInt32(lengthBuffer, 0);
+                    byte[] dataBuffer = new byte[dataLength];
+                    int totalRead = await ReadExactAsync(stream, dataBuffer, dataLength);
+                    if (totalRead == 0) break;
+
+                    string message = Encoding.UTF8.GetString(dataBuffer);
+                    float cpu = float.Parse(message);
+
+                    if (this.InvokeRequired)
+                    {
+                        this.Invoke(new Action(() => onCpuReceived(clientIp, cpu)));
+                    }
+                    else
+                    {
+                        onCpuReceived(clientIp, cpu);
+                    }
+
+                }
+            }
+            catch {}
+            finally
+            {
+                client.Close();
+            }
+        }
+
+        private void onCpuReceived(string clientIp, float cpu)
+        {
+            if (!cpuHistoryByWorkstation.ContainsKey(clientIp))
+            {
+                cpuHistoryByWorkstation[clientIp] = new List<float>();
+            }
+
+            var history = cpuHistoryByWorkstation[clientIp];
+            history.Add(cpu);
+            if(history.Count > maxDataPoints)
+            {
+                history.RemoveAt(0);
+            }
+
+            if (clientIp == selectedWorkstationId)
+            {
+                RedrawCpuChart();
+            }
+        }
+        private Chart chartCpu;
+
+        private void SetupCpuChartControl()
+        {
+            chartCpu = new Chart();
+            chartCpu.Name = "chartCpu";
+            chartCpu.Location = new Point(30, 50); // adjust position to fit your layout
+            chartCpu.Size = new Size(250, 50);     // adjust size as needed
+            chartCpu.BackColor = Color.White;       // optional, match your dark theme
+
+            panelPcStatus.Controls.Add(chartCpu);
+        }
+
+        private void SetupCpuChart()
+        {
+            chartCpu.Series.Clear();
+            chartCpu.ChartAreas.Clear();
+
+            ChartArea area = new ChartArea("CpuArea");
+            area.AxisY.Minimum = 0;
+            area.AxisY.Maximum = 100;
+            area.AxisY.Title = "CPU %";
+            area.AxisX.LabelStyle.Enabled = false;
+            chartCpu.ChartAreas.Add(area);
+
+            Series series = new Series("CPU");
+            series.ChartType = SeriesChartType.Line;
+            series.Color = Color.LightGreen;
+            series.BorderWidth = 2;
+            chartCpu.Series.Add(series);
+
+            chartCpu.Legends.Clear();
+        }
+
+        private void RedrawCpuChart()
+        {
+            chartCpu.Series["CPU"].Points.Clear();
+
+            if (cpuHistoryByWorkstation.ContainsKey(selectedWorkstationId))
+            {
+                foreach (float value in cpuHistoryByWorkstation[selectedWorkstationId])
+                {
+                    chartCpu.Series["CPU"].Points.AddY(value);
+                }
+            }
+        }
     }
 }

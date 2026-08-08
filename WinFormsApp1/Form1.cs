@@ -2,9 +2,11 @@ using MySql.Data.MySqlClient;
 using System;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Net.Sockets;
+using System.Text;
 using System.Windows.Forms;
 using TheArtOfDevHtmlRenderer.Adapters;
 namespace WinFormsApp1
@@ -177,5 +179,52 @@ namespace WinFormsApp1
             return bitmap;
         }
 
+        // Send the Health of the CPU in the Server //
+
+        private System.Windows.Forms.Timer healthTimer;
+        private TcpClient healthClient;
+        private PerformanceCounter cpuCounter;
+
+        private void StartHealthMonitoring(string serverIp)
+        {
+            try
+            {
+                cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+                cpuCounter.NextValue();
+
+                healthClient = new TcpClient();
+                healthClient.Connect(serverIp, 5003);
+                healthTimer = new System.Windows.Forms.Timer();
+                healthTimer.Interval = 2000;
+                healthTimer.Tick += healthTimer_Tick;
+                healthTimer.Start();
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Could not start health monitoring: " + ex.Message);
+            }
+        }
+
+        private void healthTimer_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                float cpuUsage = cpuCounter.NextValue();
+                string message = cpuUsage.ToString("F1");
+                byte[] data = Encoding.UTF8.GetBytes(message);
+                byte[] lengthPrefix = BitConverter.GetBytes(data.Length);
+
+                NetworkStream stream = healthClient.GetStream();
+                stream.Write(lengthPrefix, 0, lengthPrefix.Length);
+                stream.Write(data, 0, data.Length);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Health monitor error: " + ex.Message);
+                healthTimer.Stop();
+            }
+
+        }
     }
 }
