@@ -7,11 +7,11 @@ namespace WinFormsApp1
 {
     internal class ServerFolder
     {
-        private admindash parentForm; 
+        private AdminForm parentForm; 
         private string currentFolder;
         private Stack<string> folderHistory = new Stack<string>();
 
-        public ServerFolder(admindash form)
+        public ServerFolder(AdminForm form)
         {
             parentForm = form;
         }

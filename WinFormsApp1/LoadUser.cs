@@ -8,9 +8,9 @@ namespace WinFormsApp1
 {
     internal class LoadUser
     {
-        private admindash parentForm;
+        private AdminForm parentForm;
 
-        public LoadUser(admindash form)
+        public LoadUser(AdminForm form)
         {
             parentForm = form;
         }

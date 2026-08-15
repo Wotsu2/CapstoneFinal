@@ -9,7 +9,7 @@ namespace WinFormsApp1
 {
     internal class WorkStationFunctions
     {
-        private admindash parentForm;
+        private AdminForm parentForm;
 
         private TcpListener listener;
         private TcpListener fileListener;
@@ -17,7 +17,7 @@ namespace WinFormsApp1
         private int WorkStationNum = 0;
         private Dictionary<string, Button> workstationButtons = new Dictionary<string, Button>();
                 
-        public WorkStationFunctions(admindash form)
+        public WorkStationFunctions(AdminForm form)
         {
             parentForm = form;
         }

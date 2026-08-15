@@ -8,12 +8,13 @@ namespace WinFormsApp1
 {
     internal class ScreenSharing
     {
-        private admindash parentForm;
+        private AdminForm parentForm;
         private Dictionary<string, PictureBox> screenViewers = new Dictionary<string, PictureBox>();
         private TcpListener screenListener;
         private PictureBox pictureBoxScreen;
+        
 
-        public ScreenSharing(admindash form)
+        public ScreenSharing(AdminForm form)
         {
             parentForm = form;
         }
@@ -38,12 +39,13 @@ namespace WinFormsApp1
             {
                 while (client.Connected)
                 {
+
                     byte[] lengthBuffer = new byte[4];
                     int read = await ReadExactAsync(stream, lengthBuffer, 4);
                     if (read == 0) break;
 
                     int imageLength = BitConverter.ToInt32(lengthBuffer, 0);
-                    //MessageBox.Show("📥 Receiving frame: " + imageLength + " bytes from " + clientIp);
+                    Console.WriteLine("Receiving frame: " + imageLength + " bytes from " + clientIp);
                     byte[] imageBuffer = new byte[imageLength];
 
                     int totalRead = await ReadExactAsync(stream, imageBuffer, imageLength);
@@ -92,6 +94,17 @@ namespace WinFormsApp1
             {
                 frame.Dispose();
             }
+        }
+
+        public void AddScreenViewer(string workstationId)
+        {
+            ScreenViewerForm viewer = new ScreenViewerForm(workstationId);
+
+            screenViewers[workstationId] = viewer.GetPictureBox();
+
+            viewer.FormClosed += (s, args) => screenViewers.Remove(workstationId);
+
+            viewer.Show();
         }
     }
 }

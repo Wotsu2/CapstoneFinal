@@ -7,9 +7,9 @@ namespace WinFormsApp1
 {
     internal class CreateAccount
     {
-        private admindash parentForm; // reference to the Form that owns the UI
+        private AdminForm parentForm; // reference to the Form that owns the UI
 
-        public CreateAccount(admindash form)
+        public CreateAccount(AdminForm form)
         {
             parentForm = form;
         }
