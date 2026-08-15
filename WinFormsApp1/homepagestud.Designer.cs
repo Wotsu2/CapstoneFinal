@@ -987,11 +987,11 @@
             guna2Panel4.CustomBorderColor = Color.Transparent;
             guna2Panel4.CustomizableEdges = customizableEdges45;
             guna2Panel4.FillColor = Color.Transparent;
-            guna2Panel4.Location = new Point(227, 308);
+            guna2Panel4.Location = new Point(131, 308);
             guna2Panel4.Name = "guna2Panel4";
             guna2Panel4.ShadowDecoration.Color = Color.Transparent;
             guna2Panel4.ShadowDecoration.CustomizableEdges = customizableEdges46;
-            guna2Panel4.Size = new Size(1435, 617);
+            guna2Panel4.Size = new Size(1587, 617);
             guna2Panel4.TabIndex = 2;
             // 
             // guna2Panel5

@@ -63,6 +63,26 @@ namespace WinFormsApp1.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap _355823652_701491338448756_8639478619159832458_n_removebg_preview_1 {
+            get {
+                object obj = ResourceManager.GetObject("355823652_701491338448756_8639478619159832458_n-removebg-preview 1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap _355823652_701491338448756_8639478619159832458_n_removebg_preview_11 {
+            get {
+                object obj = ResourceManager.GetObject("355823652_701491338448756_8639478619159832458_n-removebg-preview 11", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap _519651826_1547683232876514_5721937903657253200_n_removebg_preview {
             get {
                 object obj = ResourceManager.GetObject("519651826_1547683232876514_5721937903657253200_n-removebg-preview", resourceCulture);
@@ -126,6 +146,16 @@ namespace WinFormsApp1.Properties {
         internal static System.Drawing.Bitmap flowbite_users_solid1 {
             get {
                 object obj = ResourceManager.GetObject("flowbite_users-solid1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Group_2417 {
+            get {
+                object obj = ResourceManager.GetObject("Group 2417", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
