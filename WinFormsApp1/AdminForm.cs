@@ -169,70 +169,9 @@ namespace WinFormsApp1
         // Creation of Account //
         private void CreateButton_Click(object sender, EventArgs e)
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
-
-            try
-            {
-                using (var conn = new MySqlConnection(connStr))
-                {
-                    conn.Open();
-
-                    string Insertquery2 = @"INSERT INTO users_credential_role (user_id, pass_word, user_role, status)
-                                            VALUES (@User_Id, @Password, @UserRole, @Status)";
-
-                    using (MySqlCommand cmd2 = new MySqlCommand(Insertquery2, conn))
-                    {
-                        cmd2.Parameters.AddWithValue("@User_Id", IdNumberText.Text.Trim());
-                        cmd2.Parameters.AddWithValue("@Password", "12345678");
-                        cmd2.Parameters.AddWithValue("@UserRole", ContextRoleText.Text.Trim());
-                        cmd2.Parameters.AddWithValue("@Status", "Activated");
-                        cmd2.ExecuteNonQuery();
-                    }
-
-                    string Insertquery = @"
-                                    INSERT INTO user_informations 
-                                        (user_id, lastname, firstname, middlename, emails, school_years, sections, courses) 
-                                    VALUES 
-                                        (@user_id, @lastname, @firstname, @middlename, @emails, @school_yr, @section, @course)";
-
-                    using (MySqlCommand cmd = new MySqlCommand(Insertquery, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@user_id", IdNumberText.Text.Trim());
-                        cmd.Parameters.AddWithValue("@lastname", LastnameText.Text.ToUpper());
-                        cmd.Parameters.AddWithValue("@firstname", FirstnameText.Text.ToUpper());
-                        cmd.Parameters.AddWithValue("@middlename", MiddlenameText.Text.ToUpper());
-                        cmd.Parameters.AddWithValue("@emails", EmailText.Text.Trim());
-                        cmd.Parameters.AddWithValue("@school_yr", ContextYearText.Text.ToUpper());
-                        cmd.Parameters.AddWithValue("@section", ContextSectionText.Text.ToUpper());
-                        cmd.Parameters.AddWithValue("@course", ContextCourseText.Text.ToUpper());
-                        cmd.ExecuteNonQuery();
-                    }
-
-                    MessageBox.Show("Account Successfuly Created!");
-                    ClearText();
-                    LoadUser();
-
-                    OnNewUserCreated(1);
-
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error: " + ex.Message);
-            }
+            
         }
-        private void ClearText()
-        {
-            IdNumberText.Clear();
-            FirstnameText.Clear();
-            LastnameText.Clear();
-            MiddlenameText.Clear();
-            EmailText.Clear();
-            ContextRoleText.SelectedIndex = -1;
-            ContextYearText.SelectedIndex = -1;
-            ContextSectionText.SelectedIndex = -1;
-            ContextRoleText.SelectedIndex = -1;
-        }
+        
 
 
 
