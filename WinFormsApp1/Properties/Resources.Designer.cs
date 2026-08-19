@@ -103,6 +103,16 @@ namespace WinFormsApp1.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap CCSLogo {
+            get {
+                object obj = ResourceManager.GetObject("CCSLogo", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap famicons_radio_button_on_outline {
             get {
                 object obj = ResourceManager.GetObject("famicons_radio-button-on-outline", resourceCulture);
