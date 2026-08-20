@@ -21,7 +21,7 @@ namespace WinFormsApp1
 
             // After SplashForm:
             // open your existing login form.
-            Application.Run(new login());
+            Application.Run(new Nothing());
         }
     }
 }

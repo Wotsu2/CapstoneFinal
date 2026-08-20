@@ -111,7 +111,7 @@ namespace WinFormsApp1
                 SaveInfoDatabase();
                 MessageBox.Show("File Submitted Successfuly");
                 selectedFilePath = "";
-                lblFileName.Text = "Filename";
+                lblFilename.Text = "Filename";
             }
             catch (Exception ex)
             {
