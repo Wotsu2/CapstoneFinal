@@ -3,28 +3,25 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WinFormsApp1
 {
-    internal class WorkStationFunctions
+    internal class ProfMainWorkStationFunctions
     {
-        private AdminForm parentForm;
+        private ProfessorForm parentForm;
 
         private TcpListener listener;
-        private TcpListener fileListener;
-        private int fileSubmittedCount = 0;
         private int WorkStationNum = 0;
         private Dictionary<string, Button> workstationButtons = new Dictionary<string, Button>();
-                
-        public WorkStationFunctions(AdminForm form)
+
+        public ProfMainWorkStationFunctions(ProfessorForm form)
         {
             parentForm = form;
         }
 
         public async void StartServer()
         {
-            listener = new TcpListener(IPAddress.Any, 5000);
+            listener = new TcpListener(IPAddress.Any, 5001);
             listener.Start();
 
             parentForm.lblTotalWorkstations.Text = "0";
@@ -79,6 +76,7 @@ namespace WinFormsApp1
                     {
                         parentForm.Invoke(new Action(() =>
                         {
+                            
                             parentForm.lblTotalWorkstations.Text = workstationButtons.Count.ToString();
                             UpdateConnectedCount();
                         }));
@@ -114,7 +112,7 @@ namespace WinFormsApp1
             MainPcButton.Tag = clientIp;
             MainPcButton.Click += (s, e) => parentForm.WorkstationButton_Click(s, e);
 
-            parentForm.MainWorkstationFLP.Controls.Add(MainPcButton);
+            parentForm.flpMainWorkstations.Controls.Add(MainPcButton);
 
             return MainPcButton;
 
@@ -169,8 +167,8 @@ namespace WinFormsApp1
 
             int disconnectedCount = workstationButtons.Count - connectedCount;
 
+            parentForm.lblComputerOnline.Text = connectedCount.ToString();
+            parentForm.lblComputerOffline.Text = disconnectedCount.ToString();
         }
-
-        
     }
 }

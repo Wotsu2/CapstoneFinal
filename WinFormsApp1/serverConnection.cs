@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
-using static System.Net.WebRequestMethods;
+
 using static System.Runtime.InteropServices.JavaScript.JSType;
 namespace WinFormsApp1
 
@@ -12,17 +12,16 @@ namespace WinFormsApp1
     internal class serverConnection
     {
         private Nothing parentForm; // reference to the Form that owns the UI
-
         public serverConnection(Nothing form)
         {
             parentForm = form;
         }
 
-        private void CreateFileButton(string fileName, string filePath)
+        private void CreateFileButton(string fileName)
         {
             if (parentForm.InvokeRequired)
             {
-                parentForm.Invoke((MethodInvoker)delegate { CreateFileButton(fileName, filePath); });
+                parentForm.Invoke((MethodInvoker)delegate { CreateFileButton(fileName); });
                 return;
             }
 
@@ -30,7 +29,6 @@ namespace WinFormsApp1
             btn.Text = fileName;
             btn.Width = 200;
             btn.Height = 30;
-
 
             parentForm.flpActivities.Controls.Add(btn); // add to a FlowLayoutPanel on your form
         }
@@ -86,6 +84,8 @@ namespace WinFormsApp1
                     await File.WriteAllBytesAsync(savePath, fileBytes);
 
                     Console.WriteLine($"Received file: {fileName} ({fileLength} bytes)");
+
+                    CreateFileButton(fileName);
                 }
             }
             catch (Exception ex)

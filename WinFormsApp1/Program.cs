@@ -7,21 +7,21 @@ namespace WinFormsApp1
         {
             ApplicationConfiguration.Initialize();
 
-            using (SplashForm splash =
-                   new SplashForm())
-            {
-                splash.ShowDialog();
+            //using (SplashForm splash =
+            //       new SplashForm())
+            //{
+            //    splash.ShowDialog();
 
-                if (splash.DialogResult !=
-                    DialogResult.OK)
-                {
-                    return;
-                }
-            }
+            //    if (splash.DialogResult !=
+            //        DialogResult.OK)
+            //    {
+            //        return;
+            //    }
+            //}
 
             // After SplashForm:
             // open your existing login form.
-            Application.Run(new Nothing());
+            Application.Run(new ProfessorForm());
         }
     }
 }

@@ -175,6 +175,7 @@
             guna2PictureBox4 = new Guna.UI2.WinForms.Guna2PictureBox();
             label21 = new Label();
             guna2Panel8 = new Guna.UI2.WinForms.Guna2Panel();
+            MainWorkstationFLP = new FlowLayoutPanel();
             guna2PictureBox6 = new Guna.UI2.WinForms.Guna2PictureBox();
             label40 = new Label();
             guna2PictureBox5 = new Guna.UI2.WinForms.Guna2PictureBox();
@@ -184,7 +185,6 @@
             guna2PictureBox3 = new Guna.UI2.WinForms.Guna2PictureBox();
             label43 = new Label();
             guna2ComboBox3 = new Guna.UI2.WinForms.Guna2ComboBox();
-            MainWorkstationFLP = new FlowLayoutPanel();
             panelDashoard.SuspendLayout();
             guna2Panel6.SuspendLayout();
             guna2Panel5.SuspendLayout();
@@ -1351,6 +1351,13 @@
             guna2Panel8.Size = new Size(1022, 515);
             guna2Panel8.TabIndex = 181;
             // 
+            // MainWorkstationFLP
+            // 
+            MainWorkstationFLP.Location = new Point(35, 74);
+            MainWorkstationFLP.Name = "MainWorkstationFLP";
+            MainWorkstationFLP.Size = new Size(950, 411);
+            MainWorkstationFLP.TabIndex = 26;
+            // 
             // guna2PictureBox6
             // 
             guna2PictureBox6.BackColor = Color.Transparent;
@@ -1490,30 +1497,23 @@
             guna2ComboBox3.Size = new Size(1345, 51);
             guna2ComboBox3.TabIndex = 173;
             // 
-            // MainWorkstationFLP
-            // 
-            MainWorkstationFLP.Location = new Point(35, 74);
-            MainWorkstationFLP.Name = "MainWorkstationFLP";
-            MainWorkstationFLP.Size = new Size(950, 411);
-            MainWorkstationFLP.TabIndex = 26;
-            // 
-            // admindash
+            // AdminForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             AutoScroll = true;
             AutoScrollMargin = new Size(0, 100);
             ClientSize = new Size(1664, 775);
+            Controls.Add(label6);
+            Controls.Add(guna2Panel2);
+            Controls.Add(guna2Panel1);
             Controls.Add(pnlWorkstation);
             Controls.Add(pnlFileManagement);
             Controls.Add(pnlUserManagement);
             Controls.Add(panelDashoard);
-            Controls.Add(label6);
-            Controls.Add(guna2Panel2);
-            Controls.Add(guna2Panel1);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             Margin = new Padding(3, 2, 3, 2);
-            Name = "admindash";
+            Name = "AdminForm";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "admindash";
             WindowState = FormWindowState.Maximized;

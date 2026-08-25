@@ -3,21 +3,20 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WinFormsApp1
 {
-    internal class WorkStationFunctions
+    internal class ProfMiniWorkStationFunction
     {
-        private AdminForm parentForm;
+        private ProfessorForm parentForm;
 
         private TcpListener listener;
         private TcpListener fileListener;
         private int fileSubmittedCount = 0;
         private int WorkStationNum = 0;
         private Dictionary<string, Button> workstationButtons = new Dictionary<string, Button>();
-                
-        public WorkStationFunctions(AdminForm form)
+
+        public ProfMiniWorkStationFunction(ProfessorForm form)
         {
             parentForm = form;
         }
@@ -27,7 +26,7 @@ namespace WinFormsApp1
             listener = new TcpListener(IPAddress.Any, 5000);
             listener.Start();
 
-            parentForm.lblTotalWorkstations.Text = "0";
+            parentForm.lblStudentOnline.Text = "0";
             int registeredCount = workstationButtons.Count;
 
             while (true)
@@ -79,13 +78,11 @@ namespace WinFormsApp1
                     {
                         parentForm.Invoke(new Action(() =>
                         {
-                            parentForm.lblTotalWorkstations.Text = workstationButtons.Count.ToString();
                             UpdateConnectedCount();
                         }));
                     }
                     else
                     {
-                        parentForm.lblTotalWorkstations.Text = workstationButtons.Count.ToString();
                         UpdateConnectedCount();
                     }
 
@@ -98,9 +95,9 @@ namespace WinFormsApp1
 
         private Button OnWorkStationConnected(string clientIp)
         {
-            int currentCount = int.Parse(parentForm.lblTotalWorkstations.Text);
+            int currentCount = int.Parse(parentForm.lblStudentOnline.Text);
             currentCount++;
-            parentForm.lblTotalWorkstations.Text = currentCount.ToString();
+            parentForm.lblStudentOnline.Text = $"{currentCount.ToString()} Online";
 
             WorkStationNum++;
 
@@ -114,7 +111,7 @@ namespace WinFormsApp1
             MainPcButton.Tag = clientIp;
             MainPcButton.Click += (s, e) => parentForm.WorkstationButton_Click(s, e);
 
-            parentForm.MainWorkstationFLP.Controls.Add(MainPcButton);
+            parentForm.flpMiniWorkStations.Controls.Add(MainPcButton);
 
             return MainPcButton;
 
@@ -143,9 +140,9 @@ namespace WinFormsApp1
                         MainPcButton.BackColor = Color.Red;
                         UpdateConnectedCount();
 
-                        int count = int.Parse(parentForm.lblTotalWorkstations.Text);
+                        int count = int.Parse(parentForm.lblStudentOnline.Text);
                         if (count > 0) count--;
-                        parentForm.lblTotalWorkstations.Text = count.ToString();
+                        parentForm.lblStudentOnline.Text = $"{count.ToString()} Online";
                     }));
                 }
                 else
@@ -153,9 +150,9 @@ namespace WinFormsApp1
                     MainPcButton.BackColor = Color.Red;
                     UpdateConnectedCount();
 
-                    int count = int.Parse(parentForm.lblTotalWorkstations.Text);
+                    int count = int.Parse(parentForm.lblStudentOnline.Text);
                     if (count > 0) count--;
-                    parentForm.lblTotalWorkstations.Text = count.ToString();
+                    parentForm.lblStudentOnline.Text = $"{count.ToString()} Online";
 
                 }
                 client.Close();
@@ -170,7 +167,5 @@ namespace WinFormsApp1
             int disconnectedCount = workstationButtons.Count - connectedCount;
 
         }
-
-        
     }
 }
