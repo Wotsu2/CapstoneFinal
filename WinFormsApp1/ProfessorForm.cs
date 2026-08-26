@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Text;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
@@ -15,7 +16,6 @@ namespace WinFormsApp1
         // WorkStation //
         private ProfMiniWorkStationFunction MiniworkStationFunctions;
         private ProfMainWorkStationFunctions MainworkStationFunctions;
-        private ScreenSharing screenSharing;
         private string selectedWorkstationId = "";
         public ProfessorForm()
         {
@@ -35,33 +35,42 @@ namespace WinFormsApp1
 
             //screenSharing = new ScreenSharing(this);
             //screenSharing.StartScreenListener();
+
         }
 
         private void btnHome_Click(object sender, EventArgs e)
         {
-            pnlHome.Visible = true;
-            pnlWorkstation.Visible = false;
-            pnlStudent.Visible = false;
+            pnlHome.BringToFront();
         }
         private void btnWorkstation_Click(object sender, EventArgs e)
         {
-            pnlWorkstation.Visible = true;
-            pnlHome.Visible = false;
-            pnlStudent.Visible = false;
+            pnlWorkstation.BringToFront();
         }
         private void btnStudent_Click(object sender, EventArgs e)
         {
-            pnlStudent.Visible = true;
-            pnlHome.Visible = false;
-            pnlWorkstation.Visible = false;
+            pnlStudent.BringToFront();
         }
         private void btnActivities_Click(object sender, EventArgs e)
         {
-
+            pnlActivity.BringToFront();
         }
         private void btnGrades_Click(object sender, EventArgs e)
         {
+            pnlGrades.BringToFront();
+        }
+        private void btnAttendance_Click(object sender, EventArgs e)
+        {
+            pnlAttendance.BringToFront();
+        }
 
+        private void btnSubject_Click(object sender, EventArgs e)
+        {
+            pnlSubject.BringToFront();
+        }
+
+        private void btnFile_Click(object sender, EventArgs e)
+        {
+            pnlFile.BringToFront();
         }
 
         public void WorkstationButton_Click(object sender, EventArgs e)
@@ -69,12 +78,8 @@ namespace WinFormsApp1
             Button clickedButton = (Button)sender;
             string workstationId = clickedButton.Tag.ToString();
             selectedWorkstationId = workstationId;
-            screenSharing.AddScreenViewer(workstationId);
         }
 
-        private void guna2ComboBox3_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
+        
     }
 }

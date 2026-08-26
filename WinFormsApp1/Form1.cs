@@ -20,7 +20,7 @@ namespace WinFormsApp1
         private System.Windows.Forms.Timer screenShareTimer;
         private TcpClient screenClient;
         private bool isSharingScreen = false;
-        private string serverIp = "192.168.100.4";
+        private string serverIp = "192.168.100.4"; //Should be Empty and configure it to setting
 
 
         public Form1()
@@ -28,7 +28,7 @@ namespace WinFormsApp1
             InitializeComponent();
             ConnectToServer(serverIp);
             StartScreenShare(serverIp);
-            StartHealthMonitoring(serverIp);
+            //StartHealthMonitoring(serverIp);
         }
 
 
@@ -119,6 +119,8 @@ namespace WinFormsApp1
 
         }
 
+
+        //Share Screen Function//
         private void StartScreenShare(string serverIp)
         {
             try

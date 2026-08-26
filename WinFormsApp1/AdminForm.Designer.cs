@@ -44,6 +44,9 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges10 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges11 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges12 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges15 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges16 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges17 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -121,7 +124,7 @@
             guna2Panel9 = new Guna.UI2.WinForms.Guna2Panel();
             guna2ComboBox2 = new Guna.UI2.WinForms.Guna2ComboBox();
             SearchButton = new Guna.UI2.WinForms.Guna2TextBox();
-            UserDataList = new DataGridView();
+            UserDataList = new Guna.UI2.WinForms.Guna2DataGridView();
             guna2ShadowPanel2 = new Guna.UI2.WinForms.Guna2ShadowPanel();
             AccountCreateButton = new Guna.UI2.WinForms.Guna2Button();
             UserListButton = new Guna.UI2.WinForms.Guna2Button();
@@ -454,15 +457,37 @@
             // 
             // UserDataList
             // 
-            UserDataList.BackgroundColor = Color.Black;
-            UserDataList.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            UserDataList.GridColor = Color.Gray;
-            UserDataList.Location = new Point(1, 82);
-            UserDataList.Margin = new Padding(3, 2, 3, 2);
+            dataGridViewCellStyle1.BackColor = Color.White;
+            UserDataList.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = Color.FromArgb(100, 88, 255);
+            dataGridViewCellStyle2.Font = new Font("Segoe UI", 9F);
+            dataGridViewCellStyle2.ForeColor = Color.White;
+            dataGridViewCellStyle2.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = DataGridViewTriState.True;
+            UserDataList.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle2;
+            UserDataList.ColumnHeadersHeight = 4;
+            UserDataList.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.EnableResizing;
+            dataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = Color.White;
+            dataGridViewCellStyle3.Font = new Font("Segoe UI", 9F);
+            dataGridViewCellStyle3.ForeColor = Color.FromArgb(71, 69, 94);
+            dataGridViewCellStyle3.SelectionBackColor = Color.FromArgb(231, 229, 255);
+            dataGridViewCellStyle3.SelectionForeColor = Color.FromArgb(71, 69, 94);
+            dataGridViewCellStyle3.WrapMode = DataGridViewTriState.False;
+            UserDataList.DefaultCellStyle = dataGridViewCellStyle3;
+            UserDataList.GridColor = Color.FromArgb(231, 229, 255);
+            UserDataList.Location = new Point(0, 77);
             UserDataList.Name = "UserDataList";
-            UserDataList.RowHeadersWidth = 51;
-            UserDataList.Size = new Size(1345, 430);
-            UserDataList.TabIndex = 2;
+            UserDataList.RowHeadersVisible = false;
+            UserDataList.Size = new Size(1342, 432);
+            UserDataList.TabIndex = 164;
+            UserDataList.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White;
+            UserDataList.ThemeStyle.HeaderStyle.Font = new Font("Segoe UI", 9F);
+            UserDataList.ThemeStyle.HeaderStyle.Height = 4;
+            UserDataList.ThemeStyle.RowsStyle.Font = new Font("Segoe UI", 9F);
+            UserDataList.ThemeStyle.RowsStyle.Height = 25;
             // 
             // guna2ShadowPanel2
             // 
@@ -1059,7 +1084,7 @@
             guna2CircleButton1.Font = new Font("Segoe UI", 9F);
             guna2CircleButton1.ForeColor = Color.White;
             guna2CircleButton1.Image = Properties.Resources.Group;
-            guna2CircleButton1.Location = new Point(1527, 26);
+            guna2CircleButton1.Location = new Point(1510, 26);
             guna2CircleButton1.Name = "guna2CircleButton1";
             guna2CircleButton1.ShadowDecoration.CustomizableEdges = customizableEdges49;
             guna2CircleButton1.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle;
@@ -1077,7 +1102,7 @@
             btnLoguot.FillColor = Color.FromArgb(109, 109, 109, 102);
             btnLoguot.Font = new Font("Segoe UI", 9F);
             btnLoguot.ForeColor = Color.White;
-            btnLoguot.Location = new Point(2708, 24);
+            btnLoguot.Location = new Point(2691, 24);
             btnLoguot.Name = "btnLoguot";
             btnLoguot.ShadowDecoration.CustomizableEdges = customizableEdges50;
             btnLoguot.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle;
@@ -1091,7 +1116,7 @@
             label10.BackColor = Color.Transparent;
             label10.Font = new Font("Segoe UI Black", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label10.ForeColor = Color.FromArgb(123, 15, 23);
-            label10.Location = new Point(1327, 43);
+            label10.Location = new Point(1310, 43);
             label10.Name = "label10";
             label10.Size = new Size(69, 21);
             label10.TabIndex = 9;
@@ -1104,7 +1129,7 @@
             label4.BackColor = Color.Transparent;
             label4.Font = new Font("Segoe UI Black", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label4.ForeColor = Color.FromArgb(123, 15, 23);
-            label4.Location = new Point(2508, 41);
+            label4.Location = new Point(2491, 41);
             label4.Name = "label4";
             label4.Size = new Size(69, 21);
             label4.TabIndex = 6;
@@ -1507,10 +1532,10 @@
             Controls.Add(label6);
             Controls.Add(guna2Panel2);
             Controls.Add(guna2Panel1);
+            Controls.Add(panelDashoard);
             Controls.Add(pnlWorkstation);
             Controls.Add(pnlFileManagement);
             Controls.Add(pnlUserManagement);
-            Controls.Add(panelDashoard);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             Margin = new Padding(3, 2, 3, 2);
             Name = "AdminForm";
@@ -1616,14 +1641,10 @@
         private Panel pnlUserList;
         private Guna.UI2.WinForms.Guna2Panel guna2Panel9;
         private Guna.UI2.WinForms.Guna2ComboBox guna2ComboBox2;
-        public DataGridView UserDataList;
-        public Guna.UI2.WinForms.Guna2TextBox SearchButton;
         private Panel pnlFileManagement;
         private Guna.UI2.WinForms.Guna2ComboBox guna2ComboBox1;
         private Guna.UI2.WinForms.Guna2Panel guna2Panel10;
         private Label label33;
-        public ListView lvServerFolder;
-        public Guna.UI2.WinForms.Guna2CircleButton BtnBack;
         public ImageList imageListIcon;
         private Panel pnlWorkstation;
         private Guna.UI2.WinForms.Guna2ComboBox guna2ComboBox3;
@@ -1639,6 +1660,10 @@
         private Label label42;
         private Guna.UI2.WinForms.Guna2PictureBox guna2PictureBox3;
         private Label label43;
-        public FlowLayoutPanel MainWorkstationFLP;
+        private FlowLayoutPanel MainWorkstationFLP;
+        private ListView lvServerFolder;
+        private Guna.UI2.WinForms.Guna2CircleButton BtnBack;
+        private Guna.UI2.WinForms.Guna2DataGridView UserDataList;
+        private Guna.UI2.WinForms.Guna2TextBox SearchButton;
     }
 }
