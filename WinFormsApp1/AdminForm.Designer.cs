@@ -1528,6 +1528,8 @@
             AutoScaleMode = AutoScaleMode.Font;
             AutoScroll = true;
             AutoScrollMargin = new Size(0, 100);
+            BackgroundImage = Properties.Resources.Shade;
+            BackgroundImageLayout = ImageLayout.Stretch;
             ClientSize = new Size(1664, 775);
             Controls.Add(label6);
             Controls.Add(guna2Panel2);
@@ -1536,6 +1538,7 @@
             Controls.Add(pnlWorkstation);
             Controls.Add(pnlFileManagement);
             Controls.Add(pnlUserManagement);
+            DoubleBuffered = true;
             FormBorderStyle = FormBorderStyle.FixedSingle;
             Margin = new Padding(3, 2, 3, 2);
             Name = "AdminForm";
