@@ -28,17 +28,16 @@
         /// </summary>
         private void InitializeComponent()
         {
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges21 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges22 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges23 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges24 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges25 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges26 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges27 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges28 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges29 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges30 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            guna2PictureBox1 = new Guna.UI2.WinForms.Guna2PictureBox();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges1 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges2 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges3 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges4 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges5 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges6 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges7 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges8 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges9 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges10 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             label1 = new Label();
             guna2PictureBox2 = new Guna.UI2.WinForms.Guna2PictureBox();
             label2 = new Label();
@@ -46,22 +45,10 @@
             txtIdNumber = new Guna.UI2.WinForms.Guna2TextBox();
             txtPassword = new Guna.UI2.WinForms.Guna2TextBox();
             btnLogin = new Guna.UI2.WinForms.Guna2Button();
-            ((System.ComponentModel.ISupportInitialize)guna2PictureBox1).BeginInit();
+            guna2PictureBox1 = new Guna.UI2.WinForms.Guna2PictureBox();
             ((System.ComponentModel.ISupportInitialize)guna2PictureBox2).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)guna2PictureBox1).BeginInit();
             SuspendLayout();
-            // 
-            // guna2PictureBox1
-            // 
-            guna2PictureBox1.CustomizableEdges = customizableEdges21;
-            guna2PictureBox1.Image = Properties.Resources.Picture1;
-            guna2PictureBox1.ImageRotate = 0F;
-            guna2PictureBox1.Location = new Point(704, -7);
-            guna2PictureBox1.Name = "guna2PictureBox1";
-            guna2PictureBox1.ShadowDecoration.CustomizableEdges = customizableEdges22;
-            guna2PictureBox1.Size = new Size(750, 805);
-            guna2PictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
-            guna2PictureBox1.TabIndex = 0;
-            guna2PictureBox1.TabStop = false;
             // 
             // label1
             // 
@@ -77,12 +64,12 @@
             // guna2PictureBox2
             // 
             guna2PictureBox2.BackColor = Color.Transparent;
-            guna2PictureBox2.CustomizableEdges = customizableEdges23;
+            guna2PictureBox2.CustomizableEdges = customizableEdges1;
             guna2PictureBox2.Image = Properties.Resources._519651826_1547683232876514_5721937903657253200_n_removebg_preview;
             guna2PictureBox2.ImageRotate = 0F;
             guna2PictureBox2.Location = new Point(68, 71);
             guna2PictureBox2.Name = "guna2PictureBox2";
-            guna2PictureBox2.ShadowDecoration.CustomizableEdges = customizableEdges24;
+            guna2PictureBox2.ShadowDecoration.CustomizableEdges = customizableEdges2;
             guna2PictureBox2.Size = new Size(50, 50);
             guna2PictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
             guna2PictureBox2.TabIndex = 2;
@@ -92,10 +79,10 @@
             // 
             label2.AutoSize = true;
             label2.BackColor = Color.Transparent;
-            label2.Font = new Font("Arial Rounded MT Bold", 28F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label2.Font = new Font("Microsoft Sans Serif", 28F, FontStyle.Regular, GraphicsUnit.Point, 0);
             label2.Location = new Point(68, 264);
             label2.Name = "label2";
-            label2.Size = new Size(475, 44);
+            label2.Size = new Size(440, 44);
             label2.TabIndex = 3;
             label2.Text = "Welcome to our ComLab";
             // 
@@ -114,7 +101,7 @@
             // 
             txtIdNumber.BackColor = Color.Transparent;
             txtIdNumber.BorderRadius = 20;
-            txtIdNumber.CustomizableEdges = customizableEdges25;
+            txtIdNumber.CustomizableEdges = customizableEdges3;
             txtIdNumber.DefaultText = "";
             txtIdNumber.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
             txtIdNumber.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
@@ -128,19 +115,21 @@
             txtIdNumber.IconRightOffset = new Point(30, 0);
             txtIdNumber.IconRightSize = new Size(20, 18);
             txtIdNumber.Location = new Point(68, 396);
+            txtIdNumber.Margin = new Padding(3, 4, 3, 4);
             txtIdNumber.Name = "txtIdNumber";
             txtIdNumber.PlaceholderText = "ID Number";
             txtIdNumber.SelectedText = "";
-            txtIdNumber.ShadowDecoration.CustomizableEdges = customizableEdges26;
+            txtIdNumber.ShadowDecoration.CustomizableEdges = customizableEdges4;
             txtIdNumber.Size = new Size(422, 56);
             txtIdNumber.TabIndex = 5;
             txtIdNumber.TextOffset = new Point(30, 0);
+            txtIdNumber.TextChanged += txtIdNumber_TextChanged;
             // 
             // txtPassword
             // 
             txtPassword.BackColor = Color.Transparent;
             txtPassword.BorderRadius = 20;
-            txtPassword.CustomizableEdges = customizableEdges27;
+            txtPassword.CustomizableEdges = customizableEdges5;
             txtPassword.DefaultText = "";
             txtPassword.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
             txtPassword.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
@@ -154,20 +143,22 @@
             txtPassword.IconRightOffset = new Point(30, 0);
             txtPassword.IconRightSize = new Size(25, 25);
             txtPassword.Location = new Point(68, 492);
+            txtPassword.Margin = new Padding(3, 4, 3, 4);
             txtPassword.Name = "txtPassword";
             txtPassword.PasswordChar = '*';
             txtPassword.PlaceholderText = "Password";
             txtPassword.SelectedText = "";
-            txtPassword.ShadowDecoration.CustomizableEdges = customizableEdges28;
+            txtPassword.ShadowDecoration.CustomizableEdges = customizableEdges6;
             txtPassword.Size = new Size(422, 56);
             txtPassword.TabIndex = 6;
             txtPassword.TextOffset = new Point(30, 0);
+            txtPassword.TextChanged += txtPassword_TextChanged;
             // 
             // btnLogin
             // 
             btnLogin.BackColor = Color.Transparent;
             btnLogin.BorderRadius = 20;
-            btnLogin.CustomizableEdges = customizableEdges29;
+            btnLogin.CustomizableEdges = customizableEdges7;
             btnLogin.DisabledState.BorderColor = Color.DarkGray;
             btnLogin.DisabledState.CustomBorderColor = Color.DarkGray;
             btnLogin.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -177,12 +168,27 @@
             btnLogin.ForeColor = Color.White;
             btnLogin.Location = new Point(68, 604);
             btnLogin.Name = "btnLogin";
-            btnLogin.ShadowDecoration.CustomizableEdges = customizableEdges30;
+            btnLogin.ShadowDecoration.CustomizableEdges = customizableEdges8;
             btnLogin.Size = new Size(422, 52);
             btnLogin.TabIndex = 7;
             btnLogin.Text = "Log in";
+            btnLogin.Click += btnLogin_Click;
             // 
-            // Form3
+            // guna2PictureBox1
+            // 
+            guna2PictureBox1.CustomizableEdges = customizableEdges9;
+            guna2PictureBox1.Image = Properties.Resources.Picture1;
+            guna2PictureBox1.ImageRotate = 0F;
+            guna2PictureBox1.Location = new Point(704, -7);
+            guna2PictureBox1.Name = "guna2PictureBox1";
+            guna2PictureBox1.ShadowDecoration.CustomizableEdges = customizableEdges10;
+            guna2PictureBox1.Size = new Size(750, 805);
+            guna2PictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+            guna2PictureBox1.TabIndex = 0;
+            guna2PictureBox1.TabStop = false;
+            guna2PictureBox1.Click += guna2PictureBox1_Click;
+            // 
+            // Login
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -197,10 +203,11 @@
             Controls.Add(guna2PictureBox1);
             FormBorderStyle = FormBorderStyle.None;
             Margin = new Padding(3, 2, 3, 2);
-            Name = "Form3";
+            Name = "Login";
             Text = "Form3";
-            ((System.ComponentModel.ISupportInitialize)guna2PictureBox1).EndInit();
+            Load += Login_Load;
             ((System.ComponentModel.ISupportInitialize)guna2PictureBox2).EndInit();
+            ((System.ComponentModel.ISupportInitialize)guna2PictureBox1).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
