@@ -19,8 +19,14 @@ namespace WinFormsApp1
             //    }
             //}
 
+<<<<<<< Updated upstream
             // Simulan sa Login form — ito ang tamang starting point ng app
             Application.Run(new Login());
+=======
+            // After SplashForm:
+            // open your existing login form.
+            Application.Run(new ProfessorForm());
+>>>>>>> Stashed changes
         }
     }
 }

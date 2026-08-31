@@ -1,4 +1,5 @@
-﻿using MySql.Data.MySqlClient;
+﻿using Microsoft.VisualBasic.ApplicationServices;
+using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -54,7 +55,7 @@ namespace WinFormsApp1
             // WORKSTATION ATTRIBUTES //
             StartServer();
             StartScreenListener();
-            StartReceivingFileServer(5001);
+            //StartReceivingFileServer(5001);
         }
 
         private void btnDashboard_Click_1(object sender, EventArgs e)
@@ -123,15 +124,13 @@ namespace WinFormsApp1
 
         private void AccountCreateButton_Click(object sender, EventArgs e)
         {
-            pnlCreateAccount.Visible = true;
-            pnlUserList.Visible = false;
+            pnlCreateAccount.BringToFront();
         }
 
         private void UserListButton_Click(object sender, EventArgs e)
         {
             LoadUserData();
-            pnlUserList.Visible = true;
-            pnlCreateAccount.Visible = false;
+            pnlUserList.BringToFront();
         }
 
         private void SearchButton_TextChanged(object sender, EventArgs e)
@@ -150,61 +149,7 @@ namespace WinFormsApp1
         }
 
         //Client to Server Connection//
-        private void StartReceivingFileServer(int port = 5001)
-        {
-            listener = new TcpListener(IPAddress.Any, port);
-            Directory.CreateDirectory(saveFolder); // ensure folder exists
-
-            listener.Start();
-            isRunning = true;
-            Console.WriteLine("Server started, waiting for files...");
-
-            Task.Run(() => ListenForClients());
-        }
-        private async Task ListenForClients()
-        {
-            while (isRunning)
-            {
-                try
-                {
-                    TcpClient client = await listener.AcceptTcpClientAsync();
-                    _ = HandleClientAsync(client); // handle each client without blocking others
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Listener error: " + ex.Message);
-                }
-            }
-        }
-        private async Task HandleClientAsync(TcpClient client)
-        {
-            try
-            {
-                using (client)
-                using (NetworkStream stream = client.GetStream())
-                using (BinaryReader reader = new BinaryReader(stream))
-                {
-                    // Read in the SAME order the client wrote them
-                    string fileName = reader.ReadString();
-                    int fileLength = reader.ReadInt32();
-                    byte[] fileBytes = reader.ReadBytes(fileLength);
-
-                    string savePath = Path.Combine(saveFolder, fileName);
-                    await File.WriteAllBytesAsync(savePath, fileBytes);
-
-                    Console.WriteLine($"Received file: {fileName} ({fileLength} bytes)");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error receiving file: " + ex.Message);
-            }
-        }
-        private void StopServer()
-        {
-            isRunning = false;
-            listener?.Stop();
-        }
+        
 
         //User Management Total User//
         private static int TotalUsers()
@@ -216,7 +161,7 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = "SELECT COUNT(*) FROM users_credential_role";
+                    string query = "SELECT COUNT(*) FROM user_credential";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -243,11 +188,11 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
-                    string query = "SELECT u.user_id, u.user_role, u.status, " +
+                    string query = "SELECT u.username, u.roles, u.user_status, " +
                        "i.lastname, i.firstname, i.middlename, " +
-                       "i.emails, i.school_years, i.sections, i.courses " +
-                       "FROM users_credential_role u " +
-                       "LEFT JOIN user_informations i ON u.user_id = i.user_id";
+                       "i.email, i.school_year, i.school_section, i.school_semester, i.school_course " +
+                       "FROM user_credential u " +
+                       "LEFT JOIN user_information i ON u.user_id = i.user_id";
 
                     if (!string.IsNullOrEmpty(filter))
                     {
@@ -272,7 +217,6 @@ namespace WinFormsApp1
                             UserDataList.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
                         }
                     }
-                    //ActivationStyle();
                 }
             }
             catch (Exception ex)
@@ -282,45 +226,62 @@ namespace WinFormsApp1
         }
 
         //User Management Create Account//
+        string semester;
         private void CreateUser()
         {
             string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
-
+            if (ContextRoleText.Text ==  "Professor")
+            {
+                semester = "Null";
+            }
+            else if (ContextRoleText.Text == "Student")
+            {
+                semester = "1st Semester";
+            }
             try
             {
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
 
-                    string Insertquery2 = @"INSERT INTO users_credential_role (user_id, pass_word, user_role, status)
-                                            VALUES (@User_Id, @Password, @UserRole, @Status)";
+                    string Insertquery2 = @"INSERT INTO user_credential (username, p_word, roles, user_status)
+                                            VALUES (@Uname, @Password, @UserRole, @Status); SELECT LAST_INSERT_ID();";
 
                     using (MySqlCommand cmd2 = new MySqlCommand(Insertquery2, conn))
                     {
-                        cmd2.Parameters.AddWithValue("@User_Id", IdNumberText.Text.Trim());
+                        cmd2.Parameters.AddWithValue("@Uname", IdNumberText.Text.Trim());
                         cmd2.Parameters.AddWithValue("@Password", "12345678");
                         cmd2.Parameters.AddWithValue("@UserRole", ContextRoleText.Text.Trim());
-                        cmd2.Parameters.AddWithValue("@Status", "Activated");
-                        cmd2.ExecuteNonQuery();
-                    }
+                        cmd2.Parameters.AddWithValue("@Status", "Active");
+                        long userId = Convert.ToInt64(cmd2.ExecuteScalar());
 
-                    string Insertquery = @"
-                                    INSERT INTO user_informations 
-                                        (user_id, lastname, firstname, middlename, emails, school_years, sections, courses) 
+                        string Insertquery = @"
+                                    INSERT INTO user_information 
+                                        (user_id, lastname, firstname, middlename, email, school_year, school_section, school_semester, school_course) 
                                     VALUES 
-                                        (@user_id, @lastname, @firstname, @middlename, @emails, @school_yr, @section, @course)";
+                                        (@user_id, @lastname, @firstname, @middlename, @email, @school_year, @school_section, @school_semester, @school_course)";
 
-                    using (MySqlCommand cmd = new MySqlCommand(Insertquery, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@user_id", IdNumberText.Text.Trim());
-                        cmd.Parameters.AddWithValue("@lastname", LastnameText.Text.ToUpper());
-                        cmd.Parameters.AddWithValue("@firstname", FirstnameText.Text.ToUpper());
-                        cmd.Parameters.AddWithValue("@middlename", MiddlenameText.Text.ToUpper());
-                        cmd.Parameters.AddWithValue("@emails", EmailText.Text.Trim());
-                        cmd.Parameters.AddWithValue("@school_yr", ContextYearText.Text.ToUpper());
-                        cmd.Parameters.AddWithValue("@section", ContextSectionText.Text.ToUpper());
-                        cmd.Parameters.AddWithValue("@course", ContextCourseText.Text.ToUpper());
-                        cmd.ExecuteNonQuery();
+                        using (MySqlCommand cmd = new MySqlCommand(Insertquery, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@user_id", userId);
+                            cmd.Parameters.AddWithValue("@lastname", LastnameText.Text.ToUpper());
+                            cmd.Parameters.AddWithValue("@firstname", FirstnameText.Text.ToUpper());
+                            cmd.Parameters.AddWithValue("@middlename", MiddlenameText.Text.ToUpper());
+                            cmd.Parameters.AddWithValue("@email", EmailText.Text.Trim());
+                            cmd.Parameters.AddWithValue("@school_year", ContextYearText.Text.ToUpper());
+                            cmd.Parameters.AddWithValue("@school_section", ContextSectionText.Text.ToUpper());
+                            cmd.Parameters.AddWithValue("@school_semester", semester);
+                            cmd.Parameters.AddWithValue("@school_course", ContextCourseText.Text.ToUpper());
+                            cmd.ExecuteNonQuery();
+
+                        }
+                        string AttendanceQuery = "INSERT INTO professor_attendance (student_id, student_name) VALUES (@student_id, @student_name)";
+                        using (MySqlCommand cmd3 = new MySqlCommand(AttendanceQuery, conn))
+                        {
+                            cmd3.Parameters.AddWithValue("@student_id", userId);
+                            cmd3.Parameters.AddWithValue("@student_name", $"{LastnameText.Text.ToUpper()} {FirstnameText.Text.ToUpper()} {MiddlenameText.Text.ToUpper()}");
+                            cmd3.ExecuteNonQuery();
+                        }
                     }
 
                     MessageBox.Show("Account Successfuly Created!");
@@ -363,98 +324,68 @@ namespace WinFormsApp1
             listener.Start();
 
             lblTotalWorkstations.Text = "0";
-            int registeredCount = workstationButtons.Count;
 
             while (true)
             {
                 TcpClient client = await listener.AcceptTcpClientAsync();
+                string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
 
-                string pcId = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
+                Console.WriteLine("🟢 New TCP connection accepted from: " + clientIp);
 
-                Button MainPcButton = null;
+                Button wsButton = null;
 
-                if (workstationButtons.ContainsKey(pcId))
+                if (this.InvokeRequired)
                 {
-                    (MainPcButton) = workstationButtons[pcId];
-
-                    if (this.InvokeRequired)
-                    {
-                        this.Invoke(new Action(() =>
-                        {
-                            MainPcButton.BackColor = Color.LightGreen;
-                            UpdateConnectedCount();
-                        }));
-                    }
-                    else
-                    {
-                        MainPcButton.BackColor = Color.LightGreen;
-                        UpdateConnectedCount();
-                    }
+                    this.Invoke(new Action(() => wsButton = OnWorkStationConnected(clientIp)));
                 }
                 else
                 {
-                    if (this.InvokeRequired)
-                    {
-                        this.Invoke(new Action(() =>
-                        {
-                            var mainBtn = OnWorkStationConnected(pcId);
-                            MainPcButton = mainBtn;
-                        }));
-                    }
-                    else
-                    {
-                        var mainBtn = OnWorkStationConnected(pcId);
-                        MainPcButton = mainBtn;
-                    }
-
-                    workstationButtons[pcId] = (MainPcButton);
-
-                    if (this.InvokeRequired)
-                    {
-                        this.Invoke(new Action(() =>
-                        {
-                            this.lblTotalWorkstations.Text = workstationButtons.Count.ToString();
-                            UpdateConnectedCount();
-                        }));
-                    }
-                    else
-                    {
-                        this.lblTotalWorkstations.Text = workstationButtons.Count.ToString();
-                        UpdateConnectedCount();
-                    }
-
-
+                    wsButton = OnWorkStationConnected(clientIp);
                 }
-                _ = MonitorDisconnected(client, MainPcButton);
 
+                _ = MonitorDisconnected(client, wsButton, clientIp);
             }
         }
 
         private Button OnWorkStationConnected(string clientIp)
         {
-            int currentCount = int.Parse(lblTotalWorkstations.Text);
-            currentCount++;
-            lblTotalWorkstations.Text = currentCount.ToString();
+            Console.WriteLine("🔵 OnWorkStationConnected called for: " + clientIp);
+            Console.WriteLine("   Existing keys: [" + string.Join(", ", workstationButtons.Keys) + "]");
+            Console.WriteLine("   Contains this IP? " + workstationButtons.ContainsKey(clientIp));
 
+            // If this PC already has a button (reconnecting), just turn it green again
+            if (workstationButtons.ContainsKey(clientIp))
+            {
+                Console.WriteLine("   ✅ Reusing existing button, setting to green");
+                Button existingBtn = workstationButtons[clientIp];
+                existingBtn.BackColor = Color.LightGreen;
+                UpdateConnectedCount();
+                return existingBtn;
+            }
+
+            // New PC — create a fresh button
+            Console.WriteLine("   🆕 Creating new button");
             WorkStationNum++;
 
             Button MainPcButton = new Button();
-            MainPcButton.Text = "PC " + WorkStationNum.ToString();
-            MainPcButton.Image = Properties.Resources.material_symbols_light_computer_outline_rounded;
+            MainPcButton.Text = "PC " + WorkStationNum;
             MainPcButton.Height = 180;
             MainPcButton.Width = 131;
             MainPcButton.Margin = new Padding(5);
-            MainPcButton.BackColor = Color.Green;
+            MainPcButton.BackColor = Color.LightGreen;
             MainPcButton.Tag = clientIp;
-            MainPcButton.Click += (s, e) => WorkstationButton_Click(s, e);
+            MainPcButton.Click += WorkstationButton_Click;
 
             MainWorkstationFLP.Controls.Add(MainPcButton);
 
-            return MainPcButton;
+            workstationButtons[clientIp] = MainPcButton;
 
+            UpdateConnectedCount();
+
+            return MainPcButton;
         }
 
-        private async Task MonitorDisconnected(TcpClient client, Button MainPcButton)
+        private async Task MonitorDisconnected(TcpClient client, Button wsButton, string clientIp)
         {
             NetworkStream stream = client.GetStream();
             byte[] buffer = new byte[1];
@@ -464,34 +395,31 @@ namespace WinFormsApp1
                 while (client.Connected)
                 {
                     int bytesRead = await stream.ReadAsync(buffer, 0, 1);
-                    if (bytesRead == 0) break;
+                    if (bytesRead == 0) break; // client disconnected
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Console.WriteLine("⚠️ MonitorDisconnected exception for " + clientIp + ": " + ex.Message);
+            }
             finally
             {
+                Console.WriteLine("🔴 Marking as disconnected: " + clientIp);
+
                 if (this.InvokeRequired)
                 {
                     this.Invoke(new Action(() =>
                     {
-                        MainPcButton.BackColor = Color.Red;
+                        wsButton.BackColor = Color.Red; // red = offline
                         UpdateConnectedCount();
-
-                        int count = int.Parse(lblTotalWorkstations.Text);
-                        if (count > 0) count--;
-                        this.lblTotalWorkstations.Text = count.ToString();
                     }));
                 }
                 else
                 {
-                    MainPcButton.BackColor = Color.Red;
+                    wsButton.BackColor = Color.Red;
                     UpdateConnectedCount();
-
-                    int count = int.Parse(lblTotalWorkstations.Text);
-                    if (count > 0) count--;
-                    lblTotalWorkstations.Text = count.ToString();
-
                 }
+
                 client.Close();
             }
         }
@@ -499,10 +427,11 @@ namespace WinFormsApp1
         private void UpdateConnectedCount()
         {
             int connectedCount = workstationButtons.Values
-            .Count(btn => btn.BackColor == Color.LightGreen);
+                .Count(btn => btn.BackColor == Color.LightGreen);
 
             int disconnectedCount = workstationButtons.Count - connectedCount;
 
+            lblTotalWorkstations.Text = workstationButtons.Count.ToString();
         }
 
         //WorkStation Screen Sharing//
