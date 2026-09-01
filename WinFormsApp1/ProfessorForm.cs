@@ -32,10 +32,10 @@ namespace WinFormsApp1
 
 
         int ProfessorID;
-        public ProfessorForm(int UserId)
+        public ProfessorForm()
         {
             InitializeComponent();
-            ProfessorID = UserId;
+            //ProfessorID = UserId;
         }
 
         private void ProfessorForm_Load(object sender, EventArgs e)
@@ -702,6 +702,29 @@ namespace WinFormsApp1
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
+            }
+        }
+        private static int CountTotalClass(int ProfessorID)
+        {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT COUNT(*) FROM professor_class WHERE professor_id = @professor_id";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@professir_id", ProfessorID);
+                        int totalClass = Convert.ToInt32(cmd.ExecuteScalar());
+                        return totalClass;
+                    }
+                }
+            }
+            catch
+            {
+                return 0;
             }
         }
     }
