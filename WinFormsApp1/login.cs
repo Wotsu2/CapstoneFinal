@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MySql.Data.MySqlClient;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -6,6 +7,7 @@ using System.Drawing;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace WinFormsApp1
 {
@@ -61,53 +63,75 @@ namespace WinFormsApp1
 
         private void btnLogin_Click(object sender, EventArgs e)
         {
-            string idNumber = txtIdNumber.Text.Trim();
-            string password = txtPassword.Text.Trim();
+            string username = txtUsername.Text;
+            string password = txtPassword.Text;
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
 
-            // Check kung may laman yung fields
-            if (string.IsNullOrEmpty(idNumber) || string.IsNullOrEmpty(password))
+            try
             {
-                MessageBox.Show("Paki-fill up po ang ID Number at Password.", "Login Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT user_id, username, p_word, roles FROM user_credential WHERE username = @username";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@username", username);
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                int userId = reader.GetInt32("user_id");
+                                string storedPassword = reader.GetString("p_word");
+                                string role = reader.GetString("roles");
+
+                                if (storedPassword == password)
+                                {
+                                    MessageBox.Show("Login successful!");
+                                    OpenAppropriateForm(role, username, userId);
+                                    this.Hide();
+                                }
+                                else
+                                {
+                                    MessageBox.Show("Incorrect password.", "Login Error",
+                                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                }
+                            }
+                            else
+                            {
+                                MessageBox.Show("ID Number not found.", "Login Error",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            }
+                        }
+                    }
+                }
             }
-
-            // Check kung tama yung ID at password sa temporary accounts
-            if (tempAccounts.ContainsKey(idNumber) && tempAccounts[idNumber] == password)
+            catch
             {
-                // Hanapin yung reference photo ng account na ito
-                string photoPath = Path.Combine(Application.StartupPath, "StudentPhotos", idNumber + ".jpg");
 
-                if (!File.Exists(photoPath))
-                {
-                    MessageBox.Show("Walang reference photo para sa account na '" + idNumber +
-                        "'. Ilagay ang larawan sa: StudentPhotos\\" + idNumber + ".jpg",
-                        "Missing Photo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
-                Bitmap referencePhoto = new Bitmap(photoPath);
-                LivenessCheckForm liveness = new LivenessCheckForm(referencePhoto);
-                DialogResult result = liveness.ShowDialog();
-
-                if (result == DialogResult.OK && liveness.VerificationPassed)
-                {
-                    MessageBox.Show("Login successful! Welcome, " + idNumber);
-
-                    StudentForm studentForm = new StudentForm();
-                    studentForm.Show();
-                    this.Hide();
-                }
-                else
-                {
-                    MessageBox.Show("Face verification failed o hindi na-complete. Subukan ulit.",
-                        "Verification Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                }
+            }
+        }
+        private void OpenAppropriateForm(string role, string username, int UserId)
+        {
+            if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+            {
+                AdminForm adminForm = new AdminForm();
+                adminForm.Show();
+            }
+            else if (role.Equals("Professor", StringComparison.OrdinalIgnoreCase))
+            {
+                ProfessorForm profForm = new ProfessorForm(UserId); // pass ID if the form needs it
+                profForm.Show();
+            }
+            else if (role.Equals("Student", StringComparison.OrdinalIgnoreCase))
+            {
+                StudentForm studentForm = new StudentForm();
+                studentForm.Show();
             }
             else
             {
-                MessageBox.Show("Mali ang ID Number o Password. Pakisubukan ulit.", "Login Failed",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Unknown role: " + role);
             }
         }
     }

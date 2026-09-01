@@ -42,7 +42,7 @@
             guna2PictureBox2 = new Guna.UI2.WinForms.Guna2PictureBox();
             label2 = new Label();
             label3 = new Label();
-            txtIdNumber = new Guna.UI2.WinForms.Guna2TextBox();
+            txtUsername = new Guna.UI2.WinForms.Guna2TextBox();
             txtPassword = new Guna.UI2.WinForms.Guna2TextBox();
             btnLogin = new Guna.UI2.WinForms.Guna2Button();
             guna2PictureBox1 = new Guna.UI2.WinForms.Guna2PictureBox();
@@ -97,33 +97,33 @@
             label3.TabIndex = 4;
             label3.Text = "Login your account";
             // 
-            // txtIdNumber
+            // txtUsername
             // 
-            txtIdNumber.BackColor = Color.Transparent;
-            txtIdNumber.BorderRadius = 20;
-            txtIdNumber.CustomizableEdges = customizableEdges3;
-            txtIdNumber.DefaultText = "";
-            txtIdNumber.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
-            txtIdNumber.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
-            txtIdNumber.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
-            txtIdNumber.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
-            txtIdNumber.FillColor = Color.FromArgb(70, 70, 70);
-            txtIdNumber.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtIdNumber.Font = new Font("Segoe UI", 9F);
-            txtIdNumber.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtIdNumber.IconRight = Properties.Resources.Id;
-            txtIdNumber.IconRightOffset = new Point(30, 0);
-            txtIdNumber.IconRightSize = new Size(20, 18);
-            txtIdNumber.Location = new Point(68, 396);
-            txtIdNumber.Margin = new Padding(3, 4, 3, 4);
-            txtIdNumber.Name = "txtIdNumber";
-            txtIdNumber.PlaceholderText = "ID Number";
-            txtIdNumber.SelectedText = "";
-            txtIdNumber.ShadowDecoration.CustomizableEdges = customizableEdges4;
-            txtIdNumber.Size = new Size(422, 56);
-            txtIdNumber.TabIndex = 5;
-            txtIdNumber.TextOffset = new Point(30, 0);
-            txtIdNumber.TextChanged += txtIdNumber_TextChanged;
+            txtUsername.BackColor = Color.Transparent;
+            txtUsername.BorderRadius = 20;
+            txtUsername.CustomizableEdges = customizableEdges3;
+            txtUsername.DefaultText = "";
+            txtUsername.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
+            txtUsername.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
+            txtUsername.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
+            txtUsername.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
+            txtUsername.FillColor = Color.FromArgb(70, 70, 70);
+            txtUsername.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
+            txtUsername.Font = new Font("Segoe UI", 9F);
+            txtUsername.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
+            txtUsername.IconRight = Properties.Resources.Id;
+            txtUsername.IconRightOffset = new Point(30, 0);
+            txtUsername.IconRightSize = new Size(20, 18);
+            txtUsername.Location = new Point(68, 404);
+            txtUsername.Margin = new Padding(3, 4, 3, 4);
+            txtUsername.Name = "txtUsername";
+            txtUsername.PlaceholderText = "Username";
+            txtUsername.SelectedText = "";
+            txtUsername.ShadowDecoration.CustomizableEdges = customizableEdges4;
+            txtUsername.Size = new Size(422, 56);
+            txtUsername.TabIndex = 5;
+            txtUsername.TextOffset = new Point(30, 0);
+            txtUsername.TextChanged += txtIdNumber_TextChanged;
             // 
             // txtPassword
             // 
@@ -195,7 +195,7 @@
             ClientSize = new Size(1414, 793);
             Controls.Add(btnLogin);
             Controls.Add(txtPassword);
-            Controls.Add(txtIdNumber);
+            Controls.Add(txtUsername);
             Controls.Add(label3);
             Controls.Add(label2);
             Controls.Add(guna2PictureBox2);
@@ -222,5 +222,6 @@
         private Guna.UI2.WinForms.Guna2TextBox txtIdNumber;
         private Guna.UI2.WinForms.Guna2TextBox txtPassword;
         private Guna.UI2.WinForms.Guna2Button btnLogin;
+        private Guna.UI2.WinForms.Guna2TextBox txtUsername;
     }
 }

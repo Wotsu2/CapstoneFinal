@@ -11,6 +11,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
+using ClosedXML.Excel;
 
 namespace WinFormsApp1
 {
@@ -28,10 +29,13 @@ namespace WinFormsApp1
         private string selectedWorkstationId = "";
 
         //Attendance//
-        
-        public ProfessorForm()
+
+
+        int ProfessorID;
+        public ProfessorForm(int UserId)
         {
             InitializeComponent();
+            ProfessorID = UserId;
         }
 
         private void ProfessorForm_Load(object sender, EventArgs e)
@@ -472,7 +476,7 @@ namespace WinFormsApp1
 
                 column.Controls.Add(cmb);
             }
-            
+
             flpAttendance.Controls.Add(column);
             flpAttendance.Controls.SetChildIndex(column, 0);
 
@@ -515,7 +519,7 @@ namespace WinFormsApp1
                             }
                         }
 
-                        
+
                     }
                 }
             }
@@ -559,13 +563,13 @@ namespace WinFormsApp1
                     conn.Open();
                     foreach (Control ctrl in currentColumn.Controls)
                     {
-                        if (ctrl is Guna.UI2.WinForms.Guna2TextBox txt && txt.Tag != null)
+                        if (ctrl is Guna.UI2.WinForms.Guna2ComboBox cmb && cmb.Tag != null)
                         {
-                            int studentId = (int)txt.Tag;
-                            string status = txt.Text; // e.g. "present", "absent", "late"
+                            int studentId = (int)cmb.Tag;
+                            string status = cmb.Text; // e.g. "present", "absent", "late"
                             if (status == "present")
                             {
-                                string query = $"UPDATE professor_attendance SET `{DateToday}` = @status, present = present + 1 WHERE student_id = @student_id ";
+                                string query = $"UPDATE professor_attendance SET `{DateToday}` = @status, present = COALESCE(present, 0) + 1 WHERE student_id = @student_id ";
                                 using (var cmd = new MySqlCommand(query, conn))
                                 {
                                     cmd.Parameters.AddWithValue("@status", status);
@@ -575,7 +579,7 @@ namespace WinFormsApp1
                             }
                             if (status == "absent")
                             {
-                                string query = $"UPDATE professor_attendance SET `{DateToday}` = @status, absent = absent + 1 WHERE student_id = @student_id ";
+                                string query = $"UPDATE professor_attendance SET `{DateToday}` = @status, absent = COALESCE(absent, 0) + 1 WHERE student_id = @student_id ";
                                 using (var cmd = new MySqlCommand(query, conn))
                                 {
                                     cmd.Parameters.AddWithValue("@status", status);
@@ -585,7 +589,7 @@ namespace WinFormsApp1
                             }
                             if (status == "late")
                             {
-                                string query = $"UPDATE professor_attendance SET `{DateToday}` = @status, late = late + 1 WHERE student_id = @student_id ";
+                                string query = $"UPDATE professor_attendance SET `{DateToday}` = @status, late = COALESCE(late, 0) + 1 WHERE student_id = @student_id ";
                                 using (var cmd = new MySqlCommand(query, conn))
                                 {
                                     cmd.Parameters.AddWithValue("@status", status);
@@ -599,6 +603,101 @@ namespace WinFormsApp1
                     MessageBox.Show("Update");
                 }
 
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void btnExportAttendance_Click(object sender, EventArgs e)
+        {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+
+            try
+            {
+                DataTable dt = new DataTable();
+
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT * FROM professor_attendance"; // change to your table/query
+
+                    using (var adapter = new MySqlDataAdapter(query, conn))
+                    {
+                        adapter.Fill(dt);
+                    }
+                }
+
+                if (dt.Rows.Count == 0)
+                {
+                    MessageBox.Show("No data to export.");
+                    return;
+                }
+
+                // Let the user choose where to save
+                using (SaveFileDialog sfd = new SaveFileDialog())
+                {
+                    sfd.Filter = "Excel Files|*.xlsx";
+                    sfd.FileName = "UserData_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".xlsx";
+
+                    if (sfd.ShowDialog() == DialogResult.OK)
+                    {
+                        using (var workbook = new XLWorkbook())
+                        {
+                            var worksheet = workbook.Worksheets.Add(dt, "Users");
+                            worksheet.Columns().AdjustToContents(); // auto-fit column widths
+
+                            workbook.SaveAs(sfd.FileName);
+                        }
+
+                        MessageBox.Show("Exported successfully!");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Export failed: " + ex.Message);
+            }
+        }
+
+        private void btnShowPnlCreateClass_Click(object sender, EventArgs e)
+        {
+            pnlCreateClass.Visible = true;
+            pnlCreateClass.BringToFront(); ;
+        }
+
+        private void btnClosePanel_Click(object sender, EventArgs e)
+        {
+            pnlCreateClass.Visible = false;
+            pnlCreateClass.SendToBack();
+        }
+
+        private void btnCreateClass_Click(object sender, EventArgs e)
+        {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = @"INSERT INTO professor_class 
+                                    (professor_id, class_code, class_name, class_section, class_time, class_date) 
+                                    VALUE (@professor_id, @class_code, @class_name, @class_section, @class_time, @class_date)";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@professor_id", ProfessorID);
+                        cmd.Parameters.AddWithValue("@class_code", txtClassCode.Text.Trim());
+                        cmd.Parameters.AddWithValue("@class_name", txtClassName.Text.Trim());
+                        cmd.Parameters.AddWithValue("@class_section", txtClassSection.Text.Trim());
+                        cmd.Parameters.AddWithValue("@class_time", txtClassTime.Text.Trim());
+                        cmd.Parameters.AddWithValue("@class_date", cmbClassDate.Text.Trim());
+
+                        cmd.ExecuteNonQuery();
+                    }
+                    MessageBox.Show("Created Succesfuly");
+                }
             }
             catch (Exception ex)
             {
