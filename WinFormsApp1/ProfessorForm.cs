@@ -1,4 +1,6 @@
-﻿using MySql.Data.MySqlClient;
+﻿using ClosedXML.Excel;
+using MySql.Data.MySqlClient;
+using MySqlX.XDevAPI;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -11,7 +13,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
-using ClosedXML.Excel;
 
 namespace WinFormsApp1
 {
@@ -30,12 +31,14 @@ namespace WinFormsApp1
 
         //Attendance//
 
+        //Activity//
+        private string selectedFilePath = "";
 
         int ProfessorID;
-        public ProfessorForm()
+        public ProfessorForm(int UserId)
         {
             InitializeComponent();
-            //ProfessorID = UserId;
+            ProfessorID = UserId;
         }
 
         private void ProfessorForm_Load(object sender, EventArgs e)
@@ -51,6 +54,11 @@ namespace WinFormsApp1
             //Attendance Caller//
             dgvAttendance();
 
+            //Class Subject Caller//
+            AutoCreateClassBtn();
+
+            //Activity Caller//
+            ActivitySectionSubject();
         }
 
         private void btnHome_Click(object sender, EventArgs e)
@@ -68,6 +76,7 @@ namespace WinFormsApp1
         private void btnActivities_Click(object sender, EventArgs e)
         {
             pnlActivity.BringToFront();
+            ActivitySectionSubject();
         }
         private void btnGrades_Click(object sender, EventArgs e)
         {
@@ -89,13 +98,6 @@ namespace WinFormsApp1
             pnlFile.BringToFront();
         }
 
-        public void WorkstationButton_Click(object sender, EventArgs e)
-        {
-            Button clickedButton = (Button)sender;
-            string workstationId = clickedButton.Tag.ToString();
-            selectedWorkstationId = workstationId;
-            //AddScreenViewer(workstationId);
-        }
         //Home Page//
         private void linkLblWorkstations_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
@@ -113,6 +115,14 @@ namespace WinFormsApp1
         }
 
         // WorkStation Page //
+        public void WorkstationButton_Click(object sender, EventArgs e)
+        {
+            Button clickedButton = (Button)sender;
+            string workstationId = clickedButton.Tag.ToString();
+            selectedWorkstationId = workstationId;
+            //AddScreenViewer(workstationId);
+        }
+
         private async void StartServer()
         {
             listener = new TcpListener(IPAddress.Any, 5000);
@@ -396,7 +406,15 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = "SELECT student_name, present, absent, late FROM professor_attendance";
+                    string query = @"SELECT 
+                                uc.roles,
+                                pa.student_name, 
+                                pa.present, 
+                                pa.absent, 
+                                pa.late
+                            FROM user_credential uc 
+                            INNER JOIN professor_attendance pa ON uc.user_id = pa.student_id
+                            WHERE uc.roles = 'Student'";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -696,6 +714,7 @@ namespace WinFormsApp1
 
                         cmd.ExecuteNonQuery();
                     }
+                    AutoCreateClassBtn();
                     MessageBox.Show("Created Succesfuly");
                 }
             }
@@ -716,7 +735,7 @@ namespace WinFormsApp1
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@professir_id", ProfessorID);
+                        cmd.Parameters.AddWithValue("@professor_id", ProfessorID);
                         int totalClass = Convert.ToInt32(cmd.ExecuteScalar());
                         return totalClass;
                     }
@@ -726,6 +745,118 @@ namespace WinFormsApp1
             {
                 return 0;
             }
+        }
+        private void AutoCreateClassBtn()
+        {
+            int totalClasses = CountTotalClass(ProfessorID);
+            //MessageBox.Show($"Creating {totalClasses} classes"); // Debug line
+            for (int i = 0; i < CountTotalClass(ProfessorID); i++)
+            {
+                Button ClassButton = new Button();
+                ClassButton.Text = "Class " + (i + 1);
+                ClassButton.Height = 200;
+                ClassButton.Width = 300;
+                ClassButton.Margin = new Padding(5);
+                ClassButton.BackColor = Color.LightGreen;
+                ClassButton.Click += WorkstationButton_Click;
+
+                flpSubjectClass.Controls.Add(ClassButton);
+            }
+            //MessageBox.Show($"Total buttons: {flpSubjectClass.Controls.Count}");
+        }
+
+        //Creating Activity Page//
+
+        private void btnActivityUploadFile_Click(object sender, EventArgs e)
+        {
+            using (OpenFileDialog ofd = new OpenFileDialog())
+            {
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    selectedFilePath = ofd.FileName;
+                    btnActivityUploadFile.Text = Path.GetFileName(selectedFilePath);
+
+                }
+            }
+        }
+
+        private void btnPostActivity_Click(object sender, EventArgs e)
+        {
+            DateTime now = DateTime.Now;
+            string FullDateTime = now.ToString("MMM-dd HH:mm:ss");
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = @"INSERT INTO professor_activity 
+                                    (professor_id, title, description, section, activity_subject, start_time, due_date, activity_status, score, file_path) 
+                                    VALUE (@professor_id, @title, @description, @section, @activity_subject, @start_time, @due_date, @activity_status, score, @file_path)";
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@professor_id", ProfessorID);
+                        cmd.Parameters.AddWithValue("@title", cmbActivityTitle.Text.Trim());
+                        cmd.Parameters.AddWithValue("@description", txtActivityPostDetails.Text.Trim());
+                        cmd.Parameters.AddWithValue("@section", cmbActivitySection.Text.Trim());
+                        cmd.Parameters.AddWithValue("@activity_subject", cmbActivitySubject.Text.Trim());
+                        cmd.Parameters.AddWithValue("@start_time", FullDateTime);
+                        cmd.Parameters.AddWithValue("@due_date", dtpActivityDeadline.Value);
+                        cmd.Parameters.AddWithValue("@activity_status", "Pending");
+                        cmd.Parameters.AddWithValue("@score", txtActivityScore.Text.Trim());
+                        cmd.Parameters.AddWithValue("@file_path", Path.GetFileName(selectedFilePath));
+                        cmd.ExecuteNonQuery();
+                    }
+                    MessageBox.Show("Activity Posted Succesfuly");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+        private void ActivitySectionSubject()
+        {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = @"SELECT class_name, class_section FROM professor_class WHERE professor_id = @professor_id";
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@professor_id", ProfessorID);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                cmbActivitySection.Items.Add(reader.GetString("class_section"));
+                                cmbActivitySubject.Items.Add(reader.GetString("class_name"));
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void cmbActivityTitle_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            lblActivitytTitle.Visible = false;
+        }
+
+        private void cmbActivitySection_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            lblActivitySection.Visible = false;
+        }
+
+        private void cmbActivitySubject_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            lblActivitySubject.Visible = false;
         }
     }
 }
