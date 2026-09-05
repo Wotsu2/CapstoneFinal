@@ -282,17 +282,44 @@ namespace WinFormsApp1
                             cmd3.Parameters.AddWithValue("@student_name", $"{LastnameText.Text.ToUpper()} {FirstnameText.Text.ToUpper()} {MiddlenameText.Text.ToUpper()}");
                             cmd3.ExecuteNonQuery();
                         }
+
+                        string FolderPathQuery = "INSERT INTO mainfolderpath (user_id, FolderPath) VALUES (@user_id, @FolderPath)";
+                        using (var cmd3 = new MySqlCommand(FolderPathQuery, conn))
+                        {
+                            cmd3.Parameters.AddWithValue("@user_id", userId);
+                            cmd3.Parameters.AddWithValue("@FolderPath", $"C:\\ReceivedFileFolder\\{LastnameText.Text.ToUpper()}_{FirstnameText.Text.ToUpper()}_{MiddlenameText.Text.ToUpper()}");
+                            cmd3.ExecuteNonQuery();
+                        }
+
                     }
+
+                    string FolderName = $"{LastnameText.Text.ToUpper()}_{FirstnameText.Text.ToUpper()}_{MiddlenameText.Text.ToUpper()}";
 
                     MessageBox.Show("Account Successfuly Created!");
                     ClearText();
                     LoadUserData();
+                    CreateFolder(FolderName);
 
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error: " + ex.Message);
+            }
+        }
+
+        private void CreateFolder(string FolderName)
+        {
+            string newFolderPath = Path.Combine(saveFolder, FolderName);
+
+            if (!Directory.Exists(newFolderPath))
+            {
+                Directory.CreateDirectory(newFolderPath);
+                MessageBox.Show("Folder created!");
+            }
+            else
+            {
+                MessageBox.Show("Folder already exists.");
             }
         }
 

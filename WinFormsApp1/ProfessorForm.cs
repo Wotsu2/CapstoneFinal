@@ -1,4 +1,6 @@
 ﻿using ClosedXML.Excel;
+using DocumentFormat.OpenXml.VariantTypes;
+using Guna.UI2.WinForms;
 using MySql.Data.MySqlClient;
 using MySqlX.XDevAPI;
 using System;
@@ -13,6 +15,8 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
+using UMapx.Distribution;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 namespace WinFormsApp1
 {
@@ -34,15 +38,24 @@ namespace WinFormsApp1
         //Activity//
         private string selectedFilePath = "";
 
+        //File Management//
+        private string currentFolder;
+        private string FolderName;
+        private Stack<string> folderHistory = new Stack<string>();
+        private string saveFolder;
+
         int ProfessorID;
         public ProfessorForm(int UserId)
         {
             InitializeComponent();
             ProfessorID = UserId;
+
         }
 
         private void ProfessorForm_Load(object sender, EventArgs e)
         {
+            saveFolder = GetFolderPath(ProfessorID);
+
             //DataGridView Desgin//
 
             // WORKSTATION ATTRIBUTES //
@@ -59,6 +72,16 @@ namespace WinFormsApp1
 
             //Activity Caller//
             ActivitySectionSubject();
+            RecentActivity();
+
+            //File Management Caller//
+
+            lsServerFolderSetup();
+            LoadServerFolder(saveFolder, addToHistory: false);
+
+            //Grade Caller//
+            ActivityStatus();
+
         }
 
         private void btnHome_Click(object sender, EventArgs e)
@@ -77,10 +100,12 @@ namespace WinFormsApp1
         {
             pnlActivity.BringToFront();
             ActivitySectionSubject();
+            RecentActivity();
         }
         private void btnGrades_Click(object sender, EventArgs e)
         {
             pnlGrades.BringToFront();
+            ActivityStatus();
         }
         private void btnAttendance_Click(object sender, EventArgs e)
         {
@@ -96,6 +121,8 @@ namespace WinFormsApp1
         private void btnFile_Click(object sender, EventArgs e)
         {
             pnlFile.BringToFront();
+            lsServerFolderSetup();
+            LoadServerFolder(saveFolder, addToHistory: false);
         }
 
         //Home Page//
@@ -570,15 +597,23 @@ namespace WinFormsApp1
 
         private void btnAttendanceUpdate_Click(object sender, EventArgs e)
         {
-            FlowLayoutPanel currentColumn = (FlowLayoutPanel)flpAttendance.Controls[0];
+
             string DateToday = DateTime.Today.ToString("MMMdd");
 
             string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            MessageBox.Show($"Total controls in flpAttendance: {flpAttendance.Controls.Count}");
+
+            if (flpAttendance.Controls.Count == 0)
+            {
+                MessageBox.Show("No attendance data to update. Please load attendance first.");
+                return;
+            }
             try
             {
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
+                    FlowLayoutPanel currentColumn = (FlowLayoutPanel)flpAttendance.Controls[0];
                     foreach (Control ctrl in currentColumn.Controls)
                     {
                         if (ctrl is Guna.UI2.WinForms.Guna2ComboBox cmb && cmb.Tag != null)
@@ -714,7 +749,9 @@ namespace WinFormsApp1
 
                         cmd.ExecuteNonQuery();
                     }
+                    string folderName = txtClassSection.Text.Trim();
                     AutoCreateClassBtn();
+                    CreateFolderForSection(folderName);
                     MessageBox.Show("Created Succesfuly");
                 }
             }
@@ -722,6 +759,21 @@ namespace WinFormsApp1
             {
                 MessageBox.Show(ex.Message);
             }
+        }
+        private void CreateFolderForSection(string folderName)
+        {
+            string newFolderPath = Path.Combine(saveFolder, folderName);
+            if (!Directory.Exists(newFolderPath))
+            {
+                Directory.CreateDirectory(newFolderPath);
+                LoadServerFolder(saveFolder);
+            }
+            else
+            {
+                MessageBox.Show("Folder already exists.");
+            }
+
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
         }
         private static int CountTotalClass(int ProfessorID)
         {
@@ -844,6 +896,36 @@ namespace WinFormsApp1
             }
         }
 
+        private void RecentActivity()
+        {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = @"SELECT title, section, activity_subject, due_date FROM professor_activity 
+                                     WHERE professor_id = @professor_id 
+                                     ORDER BY start_time DESC 
+                                     LIMIT 5";
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@professor_id", ProfessorID);
+
+                        MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        adapter.Fill(dt);
+
+                        dgvRecentActivity.DataSource = dt;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
         private void cmbActivityTitle_SelectedIndexChanged(object sender, EventArgs e)
         {
             lblActivitytTitle.Visible = false;
@@ -857,6 +939,258 @@ namespace WinFormsApp1
         private void cmbActivitySubject_SelectedIndexChanged(object sender, EventArgs e)
         {
             lblActivitySubject.Visible = false;
+        }
+
+        //FILE MANAGEMENT PAGE//
+        private void lsServerFolderSetup()
+        {
+            FolderListView.View = View.LargeIcon;
+            FolderListView.LargeImageList = imageList1;
+            FolderListView.MultiSelect = false;
+        }
+        private void LoadServerFolder(string path, bool addToHistory = true)
+        {
+            if (addToHistory && !string.IsNullOrEmpty(currentFolder))
+            {
+                folderHistory.Push(currentFolder);
+            }
+
+            currentFolder = path;
+            FolderListView.Items.Clear();
+            imageList1.Images.Clear();
+            int imageIndex = 0;
+
+            //To Show Folder
+            foreach (string dir in Directory.GetDirectories(path))
+            {
+                imageList1.Images.Add(Properties.Resources.Folder);
+                ListViewItem item = new ListViewItem(Path.GetFileName(dir), imageIndex);
+                item.Tag = dir;
+                FolderListView.Items.Add(item);
+                imageIndex++;
+            }
+
+            //to Show File
+
+            foreach (string file in Directory.GetFiles(path))
+            {
+                Icon fileIcon = Icon.ExtractAssociatedIcon(file);
+                imageList1.Images.Add(Properties.Resources.Item);
+
+                ListViewItem item = new ListViewItem(Path.GetFileName(file), imageIndex);
+                item.Tag = file;
+                FolderListView.Items.Add(item);
+                imageIndex++;
+
+            }
+
+            BtnBack.Enabled = folderHistory.Count > 0;
+        }
+        private void btnBack()
+        {
+            if (folderHistory.Count > 0)
+            {
+                string previousFolder = folderHistory.Pop();
+                LoadServerFolder(previousFolder, addToHistory: false);
+            }
+        }
+        private void doubleClick()
+        {
+            if (FolderListView.SelectedItems.Count == 0) return;
+
+            string path = FolderListView.SelectedItems[0].Tag.ToString();
+
+            if (Directory.Exists(path))
+                LoadServerFolder(path);
+            else if (File.Exists(path))
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+        }
+
+        private void BtnBack_Click(object sender, EventArgs e)
+        {
+            btnBack();
+        }
+        private void FolderListView_DoubleClick(object sender, EventArgs e)
+        {
+            doubleClick();
+        }
+
+        private void btnAddFolder_Click(object sender, EventArgs e)
+        {
+            Guna.UI2.WinForms.Guna2TextBox txtFolderName = new Guna.UI2.WinForms.Guna2TextBox();
+            txtFolderName.Width = 150;
+            txtFolderName.Height = 20;
+            txtFolderName.Margin = new Padding(5);
+            txtFolderName.Location = new Point(230, 70);
+
+            Guna.UI2.WinForms.Guna2CircleButton enterFolderName = new Guna.UI2.WinForms.Guna2CircleButton();
+            enterFolderName.Width = 20;
+            enterFolderName.Height = 20;
+            enterFolderName.Text = "✔";
+            enterFolderName.Margin = new Padding(5);
+            enterFolderName.Location = new Point(230, 150);
+
+            enterFolderName.Click += (s, args) =>
+            {
+                string folderName = txtFolderName.Text.Trim();
+
+                if (string.IsNullOrEmpty(folderName))
+                {
+                    MessageBox.Show("Please enter a folder name.");
+                    return;
+                }
+
+                NewCreateFolder(folderName);
+
+                pnlFile.Controls.Remove(txtFolderName);
+                pnlFile.Controls.Remove(enterFolderName);
+            };
+
+            pnlFile.Controls.Add(enterFolderName);
+            pnlFile.Controls.Add(txtFolderName);
+
+
+
+        }
+        private void NewCreateFolder(string FolderName)
+        {
+            string newFolderPath = Path.Combine(saveFolder, FolderName);
+
+            if (!Directory.Exists(newFolderPath))
+            {
+                Directory.CreateDirectory(newFolderPath);
+                MessageBox.Show("Folder created!");
+                LoadServerFolder(saveFolder); // refresh the view to show the new folder
+            }
+            else
+            {
+                MessageBox.Show("Folder already exists.");
+            }
+        }
+        private static string GetFolderPath(int ProfessorID)
+        {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT FolderPath FROM mainfolderpath WHERE user_id = @user_id";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@user_id", ProfessorID);
+
+                        object result = cmd.ExecuteScalar();
+
+                        if (result != null && result != DBNull.Value)
+                        {
+                            return result.ToString();
+                        }
+                        else
+                        {
+                            return "Null"; // no matching row, or FolderPath is NULL in the DB
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                return "Null";
+            }
+
+        }
+
+
+        //Panel Grades//
+        private void ActivityStatus(string filter = "")
+        {
+
+            string connStr = $"Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = @"SELECT title, section, student_name, class_name, activity_status, score FROM submitted_activity
+                                     WHERE prof_id = @prof_id";
+
+                    if (!string.IsNullOrEmpty(filter))
+                    {
+                        query += " AND student_name LIKE @f1 OR class_name LIKE @f2";
+                    }
+                    if (!string.IsNullOrEmpty(cmbActivitySection.Text) && cmbActivitySection.Text != "Select Section")
+                    {
+                        query += " AND section = @section";
+                    }
+                    if (!string.IsNullOrEmpty(cmbActivityTitle.Text) && cmbActivityTitle.Text != "Select Title")
+                    {
+                        query += " AND title = @title";
+                    }
+                    if (!string.IsNullOrEmpty(cmbActivitySubject.Text) && cmbActivitySubject.Text != "Select Subject")
+                    {
+                        query += " AND class_name = @class_name";
+                    }
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@prof_id", ProfessorID);
+                        if (!string.IsNullOrEmpty(cmbActivityTitle.Text) && cmbActivityTitle.Text != "Select Title")
+                        {
+                            cmd.Parameters.AddWithValue("@title", cmbActivityTitle.Text);
+                        }
+
+                        if (!string.IsNullOrEmpty(cmbActivitySection.Text) && cmbActivitySection.Text != "Select Section")
+                        {
+                            cmd.Parameters.AddWithValue("@section", cmbActivitySection.Text);
+                        }
+
+                        if (!string.IsNullOrEmpty(cmbActivitySubject.Text) && cmbActivitySubject.Text != "Select Subject")
+                        {
+                            cmd.Parameters.AddWithValue("@class_name", cmbActivitySubject.Text);
+                        }
+
+                        if (!string.IsNullOrEmpty(filter))
+                        {
+                            string f = "%" + filter + "%";
+                            cmd.Parameters.AddWithValue("@f1", f);
+                            cmd.Parameters.AddWithValue("@f2", f);
+                        }
+
+                        MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        adapter.Fill(dt);
+
+                        dgvStudentActivitySubmitted.DataSource = dt;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+
+
+        private void txtSearchGrades_TextChanged(object sender, EventArgs e)
+        {
+            
+            ActivityStatus(txtSearchGrades.Text.Trim());
+        }
+
+        private void cmbActivityGrades_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            MessageBox.Show(cmbActivityGrades.Text);
+            ActivityStatus();
+        }
+
+        private void cmbSectionGrades_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void cmbSubjectGrades_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

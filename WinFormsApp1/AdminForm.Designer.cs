@@ -1907,10 +1907,10 @@
             Controls.Add(label6);
             Controls.Add(guna2Panel2);
             Controls.Add(guna2Panel1);
+            Controls.Add(pnlFileManagement);
             Controls.Add(pnlUserManagement);
             Controls.Add(panelDashoard);
             Controls.Add(pnlWorkstation);
-            Controls.Add(pnlFileManagement);
             DoubleBuffered = true;
             FormBorderStyle = FormBorderStyle.FixedSingle;
             Margin = new Padding(3, 2, 3, 2);
