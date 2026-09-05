@@ -81,6 +81,9 @@ namespace WinFormsApp1
 
             //Grade Caller//
             ActivityStatus();
+            lblGradesSubmitted.Text = CountTotalSubmitted(ProfessorID).ToString();
+            lblGradesGraded.Text = CountTotalGraded(ProfessorID).ToString();
+            lblGradesNotSubmitted.Text = CountTotalNotSubmitted(ProfessorID).ToString();
 
         }
 
@@ -1113,48 +1116,46 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = @"SELECT title, section, student_name, class_name, activity_status, score FROM submitted_activity
-                                     WHERE prof_id = @prof_id";
+                    string query = @"SELECT title, section, student_name, class_name, activity_status, score FROM submitted_activity WHERE prof_id = @prof_id";
 
                     if (!string.IsNullOrEmpty(filter))
                     {
-                        query += " AND student_name LIKE @f1 OR class_name LIKE @f2";
+                        query += " AND student_name LIKE @f1";
                     }
-                    if (!string.IsNullOrEmpty(cmbActivitySection.Text) && cmbActivitySection.Text != "Select Section")
-                    {
-                        query += " AND section = @section";
-                    }
-                    if (!string.IsNullOrEmpty(cmbActivityTitle.Text) && cmbActivityTitle.Text != "Select Title")
+                    if (!string.IsNullOrEmpty(cmbActivityGrades.Text))
                     {
                         query += " AND title = @title";
                     }
-                    if (!string.IsNullOrEmpty(cmbActivitySubject.Text) && cmbActivitySubject.Text != "Select Subject")
+                    if (!string.IsNullOrEmpty(cmbSectionGrades.Text))
+                    {
+                        query += " AND section = @section";
+                    }
+                    if (!string.IsNullOrEmpty(cmbSubjectGrades.Text))
                     {
                         query += " AND class_name = @class_name";
                     }
                     using (var cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@prof_id", ProfessorID);
-                        if (!string.IsNullOrEmpty(cmbActivityTitle.Text) && cmbActivityTitle.Text != "Select Title")
+                        if (!string.IsNullOrEmpty(cmbActivityGrades.Text))
                         {
-                            cmd.Parameters.AddWithValue("@title", cmbActivityTitle.Text);
+                            cmd.Parameters.AddWithValue("@title", cmbActivityGrades.Text);
                         }
 
-                        if (!string.IsNullOrEmpty(cmbActivitySection.Text) && cmbActivitySection.Text != "Select Section")
+                        if (!string.IsNullOrEmpty(cmbSectionGrades.Text))
                         {
-                            cmd.Parameters.AddWithValue("@section", cmbActivitySection.Text);
+                            cmd.Parameters.AddWithValue("@section", cmbSectionGrades.Text);
                         }
 
-                        if (!string.IsNullOrEmpty(cmbActivitySubject.Text) && cmbActivitySubject.Text != "Select Subject")
+                        if (!string.IsNullOrEmpty(cmbSubjectGrades.Text))
                         {
-                            cmd.Parameters.AddWithValue("@class_name", cmbActivitySubject.Text);
+                            cmd.Parameters.AddWithValue("@class_name", cmbSubjectGrades.Text);
                         }
 
                         if (!string.IsNullOrEmpty(filter))
                         {
                             string f = "%" + filter + "%";
                             cmd.Parameters.AddWithValue("@f1", f);
-                            cmd.Parameters.AddWithValue("@f2", f);
                         }
 
                         MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
@@ -1173,24 +1174,104 @@ namespace WinFormsApp1
 
         private void txtSearchGrades_TextChanged(object sender, EventArgs e)
         {
-            
+
             ActivityStatus(txtSearchGrades.Text.Trim());
         }
 
         private void cmbActivityGrades_SelectedIndexChanged(object sender, EventArgs e)
         {
-            MessageBox.Show(cmbActivityGrades.Text);
+            lblGradesActivity.Text = "";
             ActivityStatus();
         }
 
         private void cmbSectionGrades_SelectedIndexChanged(object sender, EventArgs e)
         {
-
+            lblGradesSection.Text = "";
+            ActivityStatus();
         }
 
         private void cmbSubjectGrades_SelectedIndexChanged(object sender, EventArgs e)
         {
+            lblGradesSubject.Text = "";
+            ActivityStatus();
+        }
 
+        private void btnGradesClearFilter_Click(object sender, EventArgs e)
+        {
+            txtSearchGrades.Text = "";
+            cmbActivityGrades.SelectedIndex = -1;
+            cmbSectionGrades.SelectedIndex = -1;
+            cmbSubjectGrades.SelectedIndex = -1;
+            lblGradesActivity.Text = "Activity";
+            lblGradesSection.Text = "Section";
+            lblGradesSubject.Text = "Subject";
+        }
+
+        private static int CountTotalSubmitted(int ProfessorID)
+        {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT COUNT(*) FROM submitted_activity WHERE prof_id = @prof_id AND activity_status = 'Submitted'";
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@prof_id", ProfessorID);
+                        int totalSubmitted = Convert.ToInt32(cmd.ExecuteScalar());
+                        return totalSubmitted;
+                    }
+                }
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+        private static int CountTotalGraded(int ProfessorID)
+        {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT COUNT(*) FROM submitted_activity WHERE prof_id = @prof_id AND score IS NOT NULL";
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@prof_id", ProfessorID);
+                        int totalSubmitted = Convert.ToInt32(cmd.ExecuteScalar());
+                        return totalSubmitted;
+                    }
+                }
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+        private static int CountTotalNotSubmitted(int ProfessorID)
+        {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT COUNT(*) FROM submitted_activity WHERE prof_id = @prof_id AND activity_status = 'Incomplete'";
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@prof_id", ProfessorID);
+                        int totalSubmitted = Convert.ToInt32(cmd.ExecuteScalar());
+                        return totalSubmitted;
+                    }
+                }
+            }
+            catch
+            {
+                return 0;
+            }
         }
     }
 }
