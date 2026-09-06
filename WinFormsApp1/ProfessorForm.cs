@@ -3,6 +3,7 @@ using DocumentFormat.OpenXml.VariantTypes;
 using Guna.UI2.WinForms;
 using MySql.Data.MySqlClient;
 using MySqlX.XDevAPI;
+using Org.BouncyCastle.Asn1.Cmp;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -17,7 +18,7 @@ using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using UMapx.Distribution;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
-
+using DevExpress.XtraPdfViewer;
 namespace WinFormsApp1
 {
     public partial class ProfessorForm : Form
@@ -1116,7 +1117,7 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = @"SELECT title, section, student_name, class_name, activity_status, score FROM submitted_activity WHERE prof_id = @prof_id";
+                    string query = @"SELECT user_id, title, section, student_name, class_name, activity_status, score FROM submitted_activity WHERE prof_id = @prof_id";
 
                     if (!string.IsNullOrEmpty(filter))
                     {
@@ -1164,6 +1165,7 @@ namespace WinFormsApp1
 
                         dgvStudentActivitySubmitted.DataSource = dt;
                     }
+                    GetSection();
                 }
             }
             catch (Exception ex)
@@ -1271,6 +1273,226 @@ namespace WinFormsApp1
             catch
             {
                 return 0;
+            }
+        }
+
+        private void CreatePanelForSubmittedFiles(int User_id, string Title, string Name, string Section, string ClassName, string Status)
+        {
+            Guna.UI2.WinForms.Guna2Panel panel = new Guna.UI2.WinForms.Guna2Panel();
+            panel.Width = 1000;
+            panel.Height = 950;
+            panel.Margin = new Padding(5);
+            panel.Location = new Point(150, 0);
+            panel.BorderRadius = 10;
+            panel.FillColor = Color.LightGray;
+
+            Label lblTitle = new Label();
+            lblTitle.Name = "📝 " + "lblTitle";
+            lblTitle.Text = Title;
+            lblTitle.Location = new Point(20, 50);
+            lblTitle.Size = new Size(200, 25);
+            lblTitle.Font = new Font("Arial", 12, FontStyle.Bold);
+            panel.Controls.Add(lblTitle);
+
+            Label lblName = new Label();
+            lblName.Name = "lblName";
+            lblName.Text = "👤 " + Name;
+            lblName.Location = new Point(20, 80);
+            lblName.Size = new Size(200, 25);
+            lblName.Font = new Font("Arial", 12, FontStyle.Bold);
+            panel.Controls.Add(lblName);
+
+            Label lblSection = new Label();
+            lblSection.Name = "lblSection";
+            lblSection.Text = "📝 " + Section;
+            lblSection.Location = new Point(20, 110);
+            lblSection.Size = new Size(200, 25);
+            lblSection.Font = new Font("Arial", 12, FontStyle.Bold);
+            panel.Controls.Add(lblSection);
+
+            Label lblClassNameGrades = new Label();
+            lblClassNameGrades.Name = "lblClassNameGrades";
+            lblClassNameGrades.Text = "📝 " + ClassName;
+            lblClassNameGrades.Location = new Point(20, 140);
+            lblClassNameGrades.Size = new Size(200, 25);
+            lblClassNameGrades.Font = new Font("Arial", 12, FontStyle.Bold);
+            panel.Controls.Add(lblClassNameGrades);
+
+            Label lblStatus = new Label();
+            lblStatus.Name = "lblStatus";
+            lblStatus.Text = "👤 " + Status;
+            lblStatus.Location = new Point(20, 170);
+            lblStatus.Size = new Size(350, 25);
+            lblStatus.Font = new Font("Arial", 12, FontStyle.Bold);
+            panel.Controls.Add(lblStatus);
+
+            Guna.UI2.WinForms.Guna2Panel pdfContainer = new Guna.UI2.WinForms.Guna2Panel();
+            pdfContainer.Location = new Point(20, 200);
+            pdfContainer.Size = new Size(960, 700);
+            pdfContainer.BorderRadius = 5;
+            pdfContainer.BorderColor = Color.Gray;
+            pdfContainer.BorderThickness = 1;
+            pdfContainer.FillColor = Color.White;
+            panel.Controls.Add(pdfContainer);
+
+            PdfViewer pdfViewer = new PdfViewer();
+            pdfViewer.Dock = DockStyle.Fill;
+            pdfContainer.Controls.Add(pdfViewer);
+
+            try
+            {
+                string pdfPath = @"C:\Users\mjm12\OneDrive\Desktop\Sti Activities and Assigment\quiz_1.pdf";  // Change this to your actual path
+                if (File.Exists(pdfPath))
+                {
+                    pdfViewer.LoadDocument(pdfPath);
+                }
+                else
+                {
+                    Label lblNoFile = new Label();
+                    lblNoFile.Text = "PDF file not found";
+                    lblNoFile.Location = new Point(200, 130);
+                    lblNoFile.Size = new Size(200, 25);
+                    lblNoFile.ForeColor = Color.Red;
+                    pdfContainer.Controls.Add(lblNoFile);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading PDF: " + ex.Message);
+            }
+
+            Guna.UI2.WinForms.Guna2CircleButton btnDispose = new Guna.UI2.WinForms.Guna2CircleButton();
+            btnDispose.Width = 50;
+            btnDispose.Height = 50;
+            btnDispose.Margin = new Padding(5);
+            btnDispose.Image = Properties.Resources.Exit;
+            btnDispose.FillColor = Color.Transparent;
+            btnDispose.Location = new Point(930, 1);
+            btnDispose.Click += (s, args) =>
+            {
+                pnlGrades.Controls.Remove(panel);
+                panel.Dispose();
+
+            };
+
+            Guna.UI2.WinForms.Guna2TextBox txtScore = new Guna.UI2.WinForms.Guna2TextBox();
+            txtScore.Width = 50;
+            txtScore.Height = 30;
+            txtScore.Location = new Point(800, 160);
+            panel.Controls.Add(txtScore);
+
+            Guna.UI2.WinForms.Guna2CircleButton btnUpdateScore = new Guna.UI2.WinForms.Guna2CircleButton();
+            btnUpdateScore.Width = 30;
+            btnUpdateScore.Height = 30;
+            btnUpdateScore.Text = "✔";
+            btnUpdateScore.Font = new Font("Arial", 12, FontStyle.Bold);
+            btnUpdateScore.Margin = new Padding(5);
+            btnUpdateScore.FillColor = Color.Transparent;
+            btnUpdateScore.Location = new Point(870, 160);
+            btnUpdateScore.Click += (s, args) =>
+            {
+                string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+
+                if (string.IsNullOrEmpty(txtScore.Text))
+                {
+                    MessageBox.Show("Please enter a score.");
+                    return;
+                }
+
+                try
+                {
+                    using (var conn = new MySqlConnection(connStr))
+                    {
+                        conn.Open();
+                        string query = @"UPDATE submitted_activity 
+                                         SET score = @score 
+                                         WHERE user_id = @user_id";
+                        using (var cmd = new MySqlCommand(query, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@score", txtScore.Text.Trim());
+                            cmd.Parameters.AddWithValue("@user_id", User_id);
+
+                            int rowsAffected = cmd.ExecuteNonQuery();
+                            if (rowsAffected > 0)
+                            {
+                                MessageBox.Show("Score updated successfully.");
+                                ActivityStatus();
+                            }
+                            else
+                            {
+                                MessageBox.Show("Failed to update score. Please check the details.");
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+
+                }
+            };
+
+            panel.Controls.Add(btnDispose);
+            panel.Controls.Add(btnUpdateScore);
+
+            pnlGrades.Controls.Add(panel);
+            panel.BringToFront();
+        }
+
+        private void dgvStudentActivitySubmitted_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            DataGridView.HitTestInfo hit = dgvStudentActivitySubmitted.HitTest(e.X, e.Y);
+
+            if (hit.RowIndex >= 0)
+            {
+                DataGridViewRow selectedRow = dgvStudentActivitySubmitted.Rows[hit.RowIndex];
+
+                string user_id = $" {selectedRow.Cells["user_id"].Value}";
+                string Title = $" {selectedRow.Cells["title"].Value}";
+                string Name = $" {selectedRow.Cells["student_name"].Value}";
+                string SectionGrades = $" {selectedRow.Cells["section"].Value}";
+                string ClassNameGrades = $" {selectedRow.Cells["class_name"].Value}";
+                string StatusGrades = $" {selectedRow.Cells["activity_status"].Value}";
+                int User_id = int.Parse(user_id);
+                CreatePanelForSubmittedFiles(User_id, Title, Name, SectionGrades, ClassNameGrades, StatusGrades);
+            }
+        }
+        private void GetSection()
+        {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = @"SELECT class_name, class_section FROM professor_class WHERE professor_id = @professor_id";
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@professor_id", ProfessorID);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                string className = reader.GetString("class_name");
+                                string classSection = reader.GetString("class_section");
+
+                                if (!cmbSubjectGrades.Items.Contains(className))
+                                {
+                                    cmbSubjectGrades.Items.Add(className);
+                                }
+
+                                if (!cmbSectionGrades.Items.Contains(classSection))
+                                {
+                                    cmbSectionGrades.Items.Add(classSection);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+
             }
         }
     }

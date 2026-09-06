@@ -1,3 +1,5 @@
+using System.Runtime.Serialization;
+
 namespace WinFormsApp1
 {
     internal static class Program
@@ -6,6 +8,11 @@ namespace WinFormsApp1
         static void Main()
         {
             ApplicationConfiguration.Initialize();
+
+            AppContext.SetSwitch("System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization", false);
+
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
 
             //using (SplashForm splash =
             //       new SplashForm())
