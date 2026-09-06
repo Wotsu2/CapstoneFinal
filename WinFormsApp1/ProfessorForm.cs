@@ -68,6 +68,7 @@ namespace WinFormsApp1
 
             // WORKSTATION ATTRIBUTES //
             StartServer();
+            StartBroadcastListener();
 
             // MYSTUDENT Load All Student IN DataGridView//
             LoadAllStudent();
@@ -1526,6 +1527,10 @@ namespace WinFormsApp1
             if (isBroadcasting)
             {
                 StopBroadcast();
+                foreach (string clientIp in commandClients.Keys)
+                {
+                    SendCommand(clientIp, "UNLOCK");
+                }
                 return;
             }
 
