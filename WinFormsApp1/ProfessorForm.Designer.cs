@@ -271,9 +271,9 @@
             label14 = new Label();
             label19 = new Label();
             guna2Panel15 = new Guna.UI2.WinForms.Guna2Panel();
-            guna2Button4 = new Guna.UI2.WinForms.Guna2Button();
+            btnShutdown = new Guna.UI2.WinForms.Guna2Button();
             guna2Button5 = new Guna.UI2.WinForms.Guna2Button();
-            guna2Button6 = new Guna.UI2.WinForms.Guna2Button();
+            btnRemoteControl = new Guna.UI2.WinForms.Guna2Button();
             btnStopSharing = new Guna.UI2.WinForms.Guna2Button();
             btnShareScreen = new Guna.UI2.WinForms.Guna2Button();
             btnWorkStationMonitoring = new Guna.UI2.WinForms.Guna2Button();
@@ -1213,9 +1213,9 @@
             // 
             guna2Panel15.BackColor = Color.Transparent;
             guna2Panel15.BorderRadius = 10;
-            guna2Panel15.Controls.Add(guna2Button4);
+            guna2Panel15.Controls.Add(btnShutdown);
             guna2Panel15.Controls.Add(guna2Button5);
-            guna2Panel15.Controls.Add(guna2Button6);
+            guna2Panel15.Controls.Add(btnRemoteControl);
             guna2Panel15.Controls.Add(btnStopSharing);
             guna2Panel15.Controls.Add(btnShareScreen);
             guna2Panel15.Controls.Add(btnWorkStationMonitoring);
@@ -1230,23 +1230,24 @@
             guna2Panel15.Size = new Size(1249, 81);
             guna2Panel15.TabIndex = 1;
             // 
-            // guna2Button4
+            // btnShutdown
             // 
-            guna2Button4.BackColor = Color.Transparent;
-            guna2Button4.CustomizableEdges = customizableEdges53;
-            guna2Button4.DisabledState.BorderColor = Color.DarkGray;
-            guna2Button4.DisabledState.CustomBorderColor = Color.DarkGray;
-            guna2Button4.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
-            guna2Button4.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            guna2Button4.FillColor = Color.White;
-            guna2Button4.Font = new Font("Segoe UI", 9F);
-            guna2Button4.ForeColor = Color.White;
-            guna2Button4.Image = Properties.Resources.home;
-            guna2Button4.Location = new Point(301, 18);
-            guna2Button4.Name = "guna2Button4";
-            guna2Button4.ShadowDecoration.CustomizableEdges = customizableEdges54;
-            guna2Button4.Size = new Size(52, 43);
-            guna2Button4.TabIndex = 15;
+            btnShutdown.BackColor = Color.Transparent;
+            btnShutdown.CustomizableEdges = customizableEdges53;
+            btnShutdown.DisabledState.BorderColor = Color.DarkGray;
+            btnShutdown.DisabledState.CustomBorderColor = Color.DarkGray;
+            btnShutdown.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            btnShutdown.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            btnShutdown.FillColor = Color.White;
+            btnShutdown.Font = new Font("Segoe UI", 9F);
+            btnShutdown.ForeColor = Color.White;
+            btnShutdown.Image = Properties.Resources.home;
+            btnShutdown.Location = new Point(301, 18);
+            btnShutdown.Name = "btnShutdown";
+            btnShutdown.ShadowDecoration.CustomizableEdges = customizableEdges54;
+            btnShutdown.Size = new Size(52, 43);
+            btnShutdown.TabIndex = 15;
+            btnShutdown.Click += btnShutdown_Click;
             // 
             // guna2Button5
             // 
@@ -1266,23 +1267,23 @@
             guna2Button5.Size = new Size(52, 43);
             guna2Button5.TabIndex = 14;
             // 
-            // guna2Button6
+            // btnRemoteControl
             // 
-            guna2Button6.BackColor = Color.Transparent;
-            guna2Button6.CustomizableEdges = customizableEdges57;
-            guna2Button6.DisabledState.BorderColor = Color.DarkGray;
-            guna2Button6.DisabledState.CustomBorderColor = Color.DarkGray;
-            guna2Button6.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
-            guna2Button6.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            guna2Button6.FillColor = Color.White;
-            guna2Button6.Font = new Font("Segoe UI", 9F);
-            guna2Button6.ForeColor = Color.White;
-            guna2Button6.Image = Properties.Resources.home;
-            guna2Button6.Location = new Point(185, 18);
-            guna2Button6.Name = "guna2Button6";
-            guna2Button6.ShadowDecoration.CustomizableEdges = customizableEdges58;
-            guna2Button6.Size = new Size(52, 43);
-            guna2Button6.TabIndex = 13;
+            btnRemoteControl.BackColor = Color.Transparent;
+            btnRemoteControl.CustomizableEdges = customizableEdges57;
+            btnRemoteControl.DisabledState.BorderColor = Color.DarkGray;
+            btnRemoteControl.DisabledState.CustomBorderColor = Color.DarkGray;
+            btnRemoteControl.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            btnRemoteControl.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            btnRemoteControl.FillColor = Color.White;
+            btnRemoteControl.Font = new Font("Segoe UI", 9F);
+            btnRemoteControl.ForeColor = Color.White;
+            btnRemoteControl.Image = Properties.Resources.home;
+            btnRemoteControl.Location = new Point(185, 18);
+            btnRemoteControl.Name = "btnRemoteControl";
+            btnRemoteControl.ShadowDecoration.CustomizableEdges = customizableEdges58;
+            btnRemoteControl.Size = new Size(52, 43);
+            btnRemoteControl.TabIndex = 13;
             // 
             // btnStopSharing
             // 
@@ -3122,7 +3123,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             AutoScroll = true;
             BackColor = Color.FromArgb(244, 243, 246);
-            ClientSize = new Size(1424, 823);
+            ClientSize = new Size(1370, 749);
             Controls.Add(guna2Panel2);
             Controls.Add(guna2Panel1);
             Controls.Add(pnlWorkstation);
@@ -3387,9 +3388,9 @@
         private Guna.UI2.WinForms.Guna2CircleButton BtnBack;
         private ImageList imageList1;
         private Guna.UI2.WinForms.Guna2Button btnGradesClearFilter;
-        private Guna.UI2.WinForms.Guna2Button guna2Button4;
+        private Guna.UI2.WinForms.Guna2Button btnShutdown;
         private Guna.UI2.WinForms.Guna2Button guna2Button5;
-        private Guna.UI2.WinForms.Guna2Button guna2Button6;
+        private Guna.UI2.WinForms.Guna2Button btnRemoteControl;
         private Guna.UI2.WinForms.Guna2Button btnStopSharing;
         private Guna.UI2.WinForms.Guna2Button btnShareScreen;
         private Guna.UI2.WinForms.Guna2Button btnWorkStationMonitoring;

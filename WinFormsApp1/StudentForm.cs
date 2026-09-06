@@ -1,13 +1,15 @@
-﻿using System;
+﻿using Org.BouncyCastle.Asn1.Cmp;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
-using System.Runtime.InteropServices;
 
 namespace WinFormsApp1
 {
@@ -20,6 +22,7 @@ namespace WinFormsApp1
         private string serverIp = "192.168.100.4"; //Should be Empty and configure it to setting
 
         private TcpClient broadcastClient;
+        private TcpListener Shutdownlistener;
         private BroadcastViewerForm broadcastViewer;
         public StudentForm()
         {
@@ -30,6 +33,7 @@ namespace WinFormsApp1
             ConnectToServer(serverIp);
             StartScreenShare(serverIp);
             ConnectBroadcastReceiver(serverIp);
+            StartListening();
         }
 
         private void btnHome_Click(object sender, EventArgs e)
@@ -234,6 +238,46 @@ namespace WinFormsApp1
                 totalRead += bytesRead;
             }
             return totalRead;
+        }
+
+        //ShutDown//
+        private async void StartListening()
+        {
+            Shutdownlistener = new TcpListener(IPAddress.Any, 8888);
+            Shutdownlistener.Start();
+
+            System.Threading.Thread t = new System.Threading.Thread(ListenForCommands);
+            t.IsBackground = true;
+            t.Start();
+        }
+
+        private void ListenForCommands()
+        {
+            while (true)
+            {
+                try
+                {
+                    TcpClient client = Shutdownlistener.AcceptTcpClient();
+                    NetworkStream stream = client.GetStream();
+
+                    byte[] buffer = new byte[1024];
+                    int bytesRead = stream.Read(buffer, 0, buffer.Length);
+                    string command = Encoding.UTF8.GetString(buffer, 0, bytesRead).Trim();
+
+                    if (command == "SHUTDOWN")
+                    {
+                        this.Invoke((MethodInvoker)delegate
+                        {
+                        });
+
+                        client.Close();
+                        System.Threading.Thread.Sleep(1000);
+                        System.Diagnostics.Process.Start("shutdown", "/s /f /t 0");
+                    }
+                    client.Close();
+                }
+                catch { }
+            }
         }
 
     }

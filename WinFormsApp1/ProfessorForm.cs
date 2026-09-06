@@ -38,7 +38,8 @@ namespace WinFormsApp1
         private System.Windows.Forms.Timer broadcastTimer;
         private TcpListener broadcastListener;
         private Dictionary<string, TcpClient> broadcastClients = new Dictionary<string, TcpClient>();
-
+        private TcpListener server;
+        private string SelectedIP = "";
 
         //Attendance//
 
@@ -84,8 +85,8 @@ namespace WinFormsApp1
 
             //File Management Caller//
 
-            lsServerFolderSetup();
-            LoadServerFolder(saveFolder, addToHistory: false);
+            //lsServerFolderSetup();
+            //LoadServerFolder(saveFolder, addToHistory: false);
 
             //Grade Caller//
             ActivityStatus();
@@ -223,6 +224,10 @@ namespace WinFormsApp1
             MainPcButton.BackColor = Color.LightGreen;
             MainPcButton.Tag = clientIp;
             MainPcButton.Click += WorkstationButton_Click;
+            MainPcButton.DoubleClick += (s, args) =>
+            {
+                SelectedIP = clientIp;
+            };
 
             flpMainWorkstations.Controls.Add(MainPcButton);
             workstationButtons[clientIp] = MainPcButton;
@@ -1581,6 +1586,30 @@ namespace WinFormsApp1
         private void btnStopSharing_Click(object sender, EventArgs e)
         {
             broadcastTimer?.Stop();
+        }
+
+        private void ShutdownStartListener(string clientIp)
+        {
+            try
+            {
+                TcpClient client = new TcpClient(clientIp, 8888);
+                NetworkStream stream = client.GetStream();
+
+                byte[] data = Encoding.UTF8.GetBytes("SHUTDOWN");
+                stream.Write(data, 0, data.Length);
+
+                client.Close();
+                MessageBox.Show("Shutdown command sent!");
+            }
+            catch
+            {
+                MessageBox.Show("Error: Client not reachable");
+            }
+        }
+
+        private void btnShutdown_Click(object sender, EventArgs e)
+        {
+            ShutdownStartListener(SelectedIP);
         }
     }
 }
