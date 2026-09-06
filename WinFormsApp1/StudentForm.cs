@@ -18,8 +18,9 @@ namespace WinFormsApp1
         private TcpClient screenClient;
         private bool isSharingScreen = false;
         private string serverIp = "192.168.100.4"; //Should be Empty and configure it to setting
-  
-        private TcpClient commandClient;
+
+        private TcpClient broadcastClient;
+        private BroadcastViewerForm broadcastViewer;
         public StudentForm()
         {
             InitializeComponent();
@@ -28,7 +29,7 @@ namespace WinFormsApp1
         {
             ConnectToServer(serverIp);
             StartScreenShare(serverIp);
-            ListenForCommands();
+            ConnectBroadcastReceiver(serverIp);
         }
         [DllImport("user32.dll")]
         private static extern bool BlockInput(bool fBlockIt);
@@ -167,40 +168,60 @@ namespace WinFormsApp1
         }
 
         //Professor can Lock the Input of the Client Computer When Sharing Screen//
-        private async void ListenForCommands()
+        private async void ConnectBroadcastReceiver(string serverIp)
         {
             try
             {
-                NetworkStream stream = commandClient.GetStream(); // reuse an existing connection, or a small dedicated one
+                broadcastClient = new TcpClient();
+                await broadcastClient.ConnectAsync(serverIp, 5005);
 
+                _ = ReceiveBroadcast();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Could not connect to broadcast: " + ex.Message);
+            }
+        }
+
+        private async Task ReceiveBroadcast()
+        {
+            NetworkStream stream = broadcastClient.GetStream();
+
+            try
+            {
                 while (true)
                 {
                     byte[] lengthBuffer = new byte[4];
                     int read = await ReadExactAsync(stream, lengthBuffer, 4);
                     if (read == 0) break;
 
-                    int msgLength = BitConverter.ToInt32(lengthBuffer, 0);
-                    byte[] msgBuffer = new byte[msgLength];
-                    await ReadExactAsync(stream, msgBuffer, msgLength);
+                    int imageLength = BitConverter.ToInt32(lengthBuffer, 0);
+                    byte[] imageBuffer = new byte[imageLength];
+                    int totalRead = await ReadExactAsync(stream, imageBuffer, imageLength);
+                    if (totalRead == 0) break;
 
-                    string command = Encoding.UTF8.GetString(msgBuffer);
+                    using (MemoryStream ms = new MemoryStream(imageBuffer))
+                    {
+                        Image frame = Image.FromStream(ms);
 
-                    if (command == "LOCK")
-                    {
-                        this.Invoke(new Action(() => LockInput()));
-                    }
-                    else if (command == "UNLOCK")
-                    {
-                        this.Invoke(new Action(() => UnlockInput()));
+                        this.Invoke(new Action(() => ShowBroadcastFrame(frame)));
                     }
                 }
             }
             catch { }
-            finally
+        }
+
+        private void ShowBroadcastFrame(Image frame)
+        {
+            if (broadcastViewer == null || broadcastViewer.IsDisposed)
             {
-                UnlockInput(); // always unlock if the connection to server is lost
-                client.Close();
+                broadcastViewer = new BroadcastViewerForm();
+                broadcastViewer.Show();
             }
+
+            Image oldImage = broadcastViewer.GetPictureBox().Image;
+            broadcastViewer.GetPictureBox().Image = frame;
+            oldImage?.Dispose();
         }
         private async Task<int> ReadExactAsync(NetworkStream stream, byte[] buffer, int count)
         {

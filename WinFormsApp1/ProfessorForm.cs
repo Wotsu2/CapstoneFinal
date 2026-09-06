@@ -1,4 +1,5 @@
 ﻿using ClosedXML.Excel;
+using DevExpress.XtraPdfViewer;
 using DocumentFormat.OpenXml.VariantTypes;
 using Guna.UI2.WinForms;
 using MySql.Data.MySqlClient;
@@ -10,6 +11,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
@@ -18,7 +20,6 @@ using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using UMapx.Distribution;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
-using DevExpress.XtraPdfViewer;
 namespace WinFormsApp1
 {
     public partial class ProfessorForm : Form
@@ -30,11 +31,15 @@ namespace WinFormsApp1
         private Dictionary<string, Button> workstationButtons = new Dictionary<string, Button>();
         private Dictionary<string, Button> miniWorkstationButtons = new Dictionary<string, Button>();
         private Dictionary<string, TcpClient> commandClients = new Dictionary<string, TcpClient>();
-        private Dictionary<string, PictureBox> screenViewers = new Dictionary<string, PictureBox>();
         private const int MAX_MINI_BUTTONS = 5;
         private int OnlineCount = 0;
         private int OfflineCount = 0;
         private string selectedWorkstationId = "";
+        private System.Windows.Forms.Timer broadcastTimer;
+        private bool isBroadcasting = false;
+        private TcpListener broadcastListener;
+        private Dictionary<string, TcpClient> broadcastClients = new Dictionary<string, TcpClient>();
+
 
         //Attendance//
 
@@ -1501,25 +1506,101 @@ namespace WinFormsApp1
             pnlWorkStationMonitoring.BringToFront();
         }
 
-        private void btnShareScreen_Click(object sender, EventArgs e)
+
+        private async void StartBroadcastListener()
         {
-            Button clickedButton = (Button)sender;
-            string workstationId = clickedButton.Tag.ToString();
+            broadcastListener = new TcpListener(IPAddress.Any, 5005); // new port for broadcast
+            broadcastListener.Start();
 
-            ScreenViewerForm viewer = new ScreenViewerForm(workstationId);
-            screenViewers[workstationId] = viewer.GetPictureBox();
-
-            SendCommand(workstationId, "LOCK"); // 🔒 lock the student's input immediately
-
-            viewer.FormClosed += (s, args) =>
+            while (true)
             {
-                screenViewers.Remove(workstationId);
-                SendCommand(workstationId, "UNLOCK"); // 🔓 unlock when the professor closes the viewer
-            };
+                TcpClient client = await broadcastListener.AcceptTcpClientAsync();
+                string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
 
-            viewer.Show();
+                broadcastClients[clientIp] = client;
+            }
         }
 
+        private void btnShareScreen_Click(object sender, EventArgs e)
+        {
+            if (isBroadcasting)
+            {
+                StopBroadcast();
+                return;
+            }
+
+            isBroadcasting = true;
+
+            // Lock every connected student's input
+            foreach (string clientIp in commandClients.Keys)
+            {
+                SendCommand(clientIp, "LOCK");
+            }
+
+            broadcastTimer = new System.Windows.Forms.Timer();
+            broadcastTimer.Interval = 300; // adjust for smoothness vs bandwidth
+            broadcastTimer.Tick += BroadcastTimer_Tick;
+            broadcastTimer.Start();
+        }
+        private void BroadcastTimer_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                Bitmap screenshot = CaptureScreen();
+
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    screenshot.Save(ms, ImageFormat.Jpeg);
+                    byte[] imageBytes = ms.ToArray();
+                    byte[] lengthPrefix = BitConverter.GetBytes(imageBytes.Length);
+
+                    // Send to every connected student
+                    foreach (var kvp in broadcastClients.ToList()) // broadcastClients: Dictionary<string, TcpClient>
+                    {
+                        try
+                        {
+                            NetworkStream stream = kvp.Value.GetStream();
+                            stream.Write(lengthPrefix, 0, lengthPrefix.Length);
+                            stream.Write(imageBytes, 0, imageBytes.Length);
+                        }
+                        catch
+                        {
+                            // that student's connection dropped — safe to ignore, will clean up separately
+                        }
+                    }
+                }
+
+                screenshot.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Broadcast error: " + ex.Message);
+            }
+        }
+        private void StopBroadcast()
+        {
+            isBroadcasting = false;
+            broadcastTimer?.Stop();
+
+            // Unlock every connected student's input
+            foreach (string clientIp in commandClients.Keys)
+            {
+                SendCommand(clientIp, "UNLOCK");
+            }
+        }
+
+        private Bitmap CaptureScreen()
+        {
+            Rectangle bounds = Screen.PrimaryScreen.Bounds;
+            Bitmap bitmap = new Bitmap(bounds.Width, bounds.Height);
+
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.CopyFromScreen(Point.Empty, Point.Empty, bounds.Size);
+            }
+
+            return bitmap;
+        }
         private void SendCommand(string workstationId, string command)
         {
             if (!commandClients.ContainsKey(workstationId)) return;
@@ -1539,7 +1620,6 @@ namespace WinFormsApp1
             {
                 Console.WriteLine("Failed to send command: " + ex.Message);
             }
-
         }
     }
 }
