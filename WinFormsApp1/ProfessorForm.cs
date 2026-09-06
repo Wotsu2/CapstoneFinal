@@ -29,6 +29,8 @@ namespace WinFormsApp1
         private int WorkStationNum = 0;
         private Dictionary<string, Button> workstationButtons = new Dictionary<string, Button>();
         private Dictionary<string, Button> miniWorkstationButtons = new Dictionary<string, Button>();
+        private Dictionary<string, TcpClient> commandClients = new Dictionary<string, TcpClient>();
+        private Dictionary<string, PictureBox> screenViewers = new Dictionary<string, PictureBox>();
         private const int MAX_MINI_BUTTONS = 5;
         private int OnlineCount = 0;
         private int OfflineCount = 0;
@@ -159,7 +161,6 @@ namespace WinFormsApp1
             listener = new TcpListener(IPAddress.Any, 5000);
             listener.Start();
 
-            lblTotalWorkstations.Text = "0";
             lblComputerOnline.Text = "0";
             lblComputerOffline.Text = "0";
 
@@ -312,7 +313,6 @@ namespace WinFormsApp1
             lblStudentOnline.Text = $"{connectedCount.ToString()} Online";
             lblComputerOnline.Text = connectedCount.ToString();
             lblComputerOffline.Text = disconnectedCount.ToString();
-            lblTotalWorkstations.Text = workstationButtons.Count.ToString();
         }
 
 
@@ -1494,6 +1494,52 @@ namespace WinFormsApp1
             {
 
             }
+        }
+
+        private void btnWorkStationMonitoring_Click(object sender, EventArgs e)
+        {
+            pnlWorkStationMonitoring.BringToFront();
+        }
+
+        private void btnShareScreen_Click(object sender, EventArgs e)
+        {
+            Button clickedButton = (Button)sender;
+            string workstationId = clickedButton.Tag.ToString();
+
+            ScreenViewerForm viewer = new ScreenViewerForm(workstationId);
+            screenViewers[workstationId] = viewer.GetPictureBox();
+
+            SendCommand(workstationId, "LOCK"); // 🔒 lock the student's input immediately
+
+            viewer.FormClosed += (s, args) =>
+            {
+                screenViewers.Remove(workstationId);
+                SendCommand(workstationId, "UNLOCK"); // 🔓 unlock when the professor closes the viewer
+            };
+
+            viewer.Show();
+        }
+
+        private void SendCommand(string workstationId, string command)
+        {
+            if (!commandClients.ContainsKey(workstationId)) return;
+
+            try
+            {
+                TcpClient client = commandClients[workstationId];
+                NetworkStream stream = client.GetStream();
+
+                byte[] data = Encoding.UTF8.GetBytes(command);
+                byte[] lengthPrefix = BitConverter.GetBytes(data.Length);
+
+                stream.Write(lengthPrefix, 0, lengthPrefix.Length);
+                stream.Write(data, 0, data.Length);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to send command: " + ex.Message);
+            }
+
         }
     }
 }

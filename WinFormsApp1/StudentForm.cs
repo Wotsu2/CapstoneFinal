@@ -7,6 +7,7 @@ using System.Drawing.Imaging;
 using System.Net.Sockets;
 using System.Text;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
 
 namespace WinFormsApp1
 {
@@ -17,6 +18,8 @@ namespace WinFormsApp1
         private TcpClient screenClient;
         private bool isSharingScreen = false;
         private string serverIp = "192.168.100.4"; //Should be Empty and configure it to setting
+  
+        private TcpClient commandClient;
         public StudentForm()
         {
             InitializeComponent();
@@ -25,6 +28,19 @@ namespace WinFormsApp1
         {
             ConnectToServer(serverIp);
             StartScreenShare(serverIp);
+            ListenForCommands();
+        }
+        [DllImport("user32.dll")]
+        private static extern bool BlockInput(bool fBlockIt);
+
+        private void LockInput()
+        {
+            BlockInput(true);
+        }
+
+        private void UnlockInput()
+        {
+            BlockInput(false);
         }
 
         private void btnHome_Click(object sender, EventArgs e)
@@ -150,6 +166,53 @@ namespace WinFormsApp1
             return bitmap;
         }
 
-        
+        //Professor can Lock the Input of the Client Computer When Sharing Screen//
+        private async void ListenForCommands()
+        {
+            try
+            {
+                NetworkStream stream = commandClient.GetStream(); // reuse an existing connection, or a small dedicated one
+
+                while (true)
+                {
+                    byte[] lengthBuffer = new byte[4];
+                    int read = await ReadExactAsync(stream, lengthBuffer, 4);
+                    if (read == 0) break;
+
+                    int msgLength = BitConverter.ToInt32(lengthBuffer, 0);
+                    byte[] msgBuffer = new byte[msgLength];
+                    await ReadExactAsync(stream, msgBuffer, msgLength);
+
+                    string command = Encoding.UTF8.GetString(msgBuffer);
+
+                    if (command == "LOCK")
+                    {
+                        this.Invoke(new Action(() => LockInput()));
+                    }
+                    else if (command == "UNLOCK")
+                    {
+                        this.Invoke(new Action(() => UnlockInput()));
+                    }
+                }
+            }
+            catch { }
+            finally
+            {
+                UnlockInput(); // always unlock if the connection to server is lost
+                client.Close();
+            }
+        }
+        private async Task<int> ReadExactAsync(NetworkStream stream, byte[] buffer, int count)
+        {
+            int totalRead = 0;
+            while (totalRead < count)
+            {
+                int bytesRead = await stream.ReadAsync(buffer, totalRead, count - totalRead);
+                if (bytesRead == 0) return 0;
+                totalRead += bytesRead;
+            }
+            return totalRead;
+        }
+
     }
 }
