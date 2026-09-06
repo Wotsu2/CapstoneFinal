@@ -28,7 +28,7 @@ namespace WinFormsApp1
 
 
             // Simulan sa Login form — ito ang tamang starting point ng app
-            Application.Run(new AdminForm());
+            Application.Run(new StudentForm());
 
         }
     }

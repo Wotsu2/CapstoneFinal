@@ -1,9 +1,11 @@
-﻿using Org.BouncyCastle.Asn1.Cmp;
+﻿using Guna.UI2.WinForms;
+using Org.BouncyCastle.Asn1.Cmp;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Net;
 using System.Net.Sockets;
@@ -30,35 +32,60 @@ namespace WinFormsApp1
         }
         private void StudentForm_Load(object sender, EventArgs e)
         {
-            ConnectToServer(serverIp);
-            StartScreenShare(serverIp);
-            ConnectBroadcastReceiver(serverIp);
-            StartListening();
+            //ConnectToServer(serverIp);
+            //StartScreenShare(serverIp);
+            //ConnectBroadcastReceiver(serverIp);
+            //StartListening();
+        }
+
+        private Guna2Button activeMenuButton;
+
+        private void SetActiveMenuButton(Guna2Button clickedBtn, Panel panelToShow)
+        {
+            // i-reset lahat ng buttons pabalik sa maroon (transparent) background
+            foreach (var b in new[] { btnHome, btnActivities, btnSubject, btnGrades, btnFile, btnApps })
+            {
+                b.FillColor = Color.Transparent;
+                b.ForeColor = Color.Firebrick;
+            }
+
+            // gawing "active" yung kaka-click lang
+            clickedBtn.FillColor = Color.Firebrick;
+            clickedBtn.ForeColor = Color.FromArgb(80, 12, 24); // maroon text sa puting background
+            activeMenuButton = clickedBtn;
+
+            // ipakita yung tamang panel
+            panelToShow.BringToFront();
         }
 
         private void btnHome_Click(object sender, EventArgs e)
         {
-            pnlHome.BringToFront();
+            SetActiveMenuButton(btnHome, pnlHome);
+            lblhometitle.Text = "Home";
         }
 
         private void btnActivities_Click(object sender, EventArgs e)
         {
-            pnlActivity.BringToFront();
+            SetActiveMenuButton(btnActivities, pnlActivity);
+            lblhometitle.Text = "Activity";
         }
 
         private void btnSubject_Click(object sender, EventArgs e)
         {
-            pnlSubject.BringToFront();
+            SetActiveMenuButton(btnSubject, pnlSubject);
+            lblhometitle.Text = "Subject";
         }
 
         private void btnGrades_Click(object sender, EventArgs e)
         {
-            pnlGrades.BringToFront();
+            SetActiveMenuButton(btnGrades, pnlGrades);
+            lblhometitle.Text = "Grade";
         }
 
         private void btnFile_Click(object sender, EventArgs e)
         {
-            pnlFile.BringToFront();
+            SetActiveMenuButton(btnFile, pnlFile);
+            lblhometitle.Text = "File";
         }
 
         private void btnApps_Click(object sender, EventArgs e)
@@ -200,7 +227,7 @@ namespace WinFormsApp1
                     }
                 }
             }
-            catch 
+            catch
             {
             }
             finally
@@ -280,5 +307,19 @@ namespace WinFormsApp1
             }
         }
 
+        private void label3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label8_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
