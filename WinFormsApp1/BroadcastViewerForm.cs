@@ -14,7 +14,6 @@ namespace WinFormsApp1
         {
             InitializeComponent();
             this.WindowState = FormWindowState.Maximized;
-            this.FormBorderStyle = FormBorderStyle.None; // fullscreen, no close button — prevents students dismissing it
             this.TopMost = true;
         }
         public PictureBox GetPictureBox() => pictureBoxBroadcast;

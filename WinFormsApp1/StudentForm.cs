@@ -156,7 +156,7 @@ namespace WinFormsApp1
         }
 
         //Professor can Lock the Input of the Client Computer When Sharing Screen//
-        private async void ConnectBroadcastReceiver(string serverIp)
+        private async Task ConnectBroadcastReceiver(string serverIp)
         {
             try
             {
