@@ -40,6 +40,7 @@ namespace WinFormsApp1
         private Dictionary<string, TcpClient> broadcastClients = new Dictionary<string, TcpClient>();
         private TcpListener server;
         private string SelectedIP = "";
+        private bool isRunning = false;
 
         //Attendance//
 
@@ -170,7 +171,7 @@ namespace WinFormsApp1
             lblComputerOnline.Text = "0";
             lblComputerOffline.Text = "0";
 
-            while (true)
+            while (isRunning)
             {
                 TcpClient client = await listener.AcceptTcpClientAsync();
                 string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
@@ -1517,7 +1518,7 @@ namespace WinFormsApp1
             broadcastListener = new TcpListener(IPAddress.Any, 5005); // new port for broadcast
             broadcastListener.Start();
 
-            while (true)
+            while (isRunning)
             {
                 TcpClient client = await broadcastListener.AcceptTcpClientAsync();
                 string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
@@ -1611,5 +1612,68 @@ namespace WinFormsApp1
         {
             ShutdownStartListener(SelectedIP);
         }
+
+        private void btnLogout_Click(object sender, EventArgs e)
+        {
+
+            //DialogResult result = MessageBox.Show("Are you sure you want to logout?",
+            //    "Logout Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            //if (result == DialogResult.Yes)
+            //{
+            //    StopServer();
+
+            //    ClearAllFormData();
+
+            //    GC.Collect();
+            //    GC.WaitForPendingFinalizers();
+
+            //    this.Close();
+
+            //    Login login = new Login();
+            //    login.Show();
+
+            //}
+        }
+
+        private void ClearAllFormData()
+        {
+            // Clear all textboxes, combos, grids, etc.
+            foreach (Control ctrl in this.Controls)
+            {
+                if (ctrl is TextBox)
+                    ((TextBox)ctrl).Text = "";
+                else if (ctrl is ComboBox)
+                    ((ComboBox)ctrl).SelectedIndex = -1;
+                else if (ctrl is DataGridView)
+                    ((DataGridView)ctrl).DataSource = null;
+                else if (ctrl is ListBox)
+                    ((ListBox)ctrl).Items.Clear();
+            }
+
+            // Clear any static data
+        }
+
+        private void StopServer()
+        {
+            isRunning = false;
+
+            if (listener != null)
+            {
+                listener.Stop();
+                listener = null;
+            }
+            if (broadcastListener != null)
+            {
+                broadcastListener.Stop();
+                broadcastListener = null;
+            }
+            if (server != null)
+            {
+                server.Stop();
+                server = null;
+            }
+        }
+
     }
 }
