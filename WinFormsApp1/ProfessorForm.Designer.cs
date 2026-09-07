@@ -274,7 +274,7 @@
             guna2Button4 = new Guna.UI2.WinForms.Guna2Button();
             guna2Button5 = new Guna.UI2.WinForms.Guna2Button();
             guna2Button6 = new Guna.UI2.WinForms.Guna2Button();
-            guna2Button3 = new Guna.UI2.WinForms.Guna2Button();
+            btnStopSharing = new Guna.UI2.WinForms.Guna2Button();
             btnShareScreen = new Guna.UI2.WinForms.Guna2Button();
             btnWorkStationMonitoring = new Guna.UI2.WinForms.Guna2Button();
             pnlStudent = new Panel();
@@ -1216,7 +1216,7 @@
             guna2Panel15.Controls.Add(guna2Button4);
             guna2Panel15.Controls.Add(guna2Button5);
             guna2Panel15.Controls.Add(guna2Button6);
-            guna2Panel15.Controls.Add(guna2Button3);
+            guna2Panel15.Controls.Add(btnStopSharing);
             guna2Panel15.Controls.Add(btnShareScreen);
             guna2Panel15.Controls.Add(btnWorkStationMonitoring);
             guna2Panel15.CustomizableEdges = customizableEdges65;
@@ -1284,23 +1284,24 @@
             guna2Button6.Size = new Size(52, 43);
             guna2Button6.TabIndex = 13;
             // 
-            // guna2Button3
+            // btnStopSharing
             // 
-            guna2Button3.BackColor = Color.Transparent;
-            guna2Button3.CustomizableEdges = customizableEdges59;
-            guna2Button3.DisabledState.BorderColor = Color.DarkGray;
-            guna2Button3.DisabledState.CustomBorderColor = Color.DarkGray;
-            guna2Button3.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
-            guna2Button3.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            guna2Button3.FillColor = Color.White;
-            guna2Button3.Font = new Font("Segoe UI", 9F);
-            guna2Button3.ForeColor = Color.White;
-            guna2Button3.Image = Properties.Resources.home;
-            guna2Button3.Location = new Point(127, 18);
-            guna2Button3.Name = "guna2Button3";
-            guna2Button3.ShadowDecoration.CustomizableEdges = customizableEdges60;
-            guna2Button3.Size = new Size(52, 43);
-            guna2Button3.TabIndex = 12;
+            btnStopSharing.BackColor = Color.Transparent;
+            btnStopSharing.CustomizableEdges = customizableEdges59;
+            btnStopSharing.DisabledState.BorderColor = Color.DarkGray;
+            btnStopSharing.DisabledState.CustomBorderColor = Color.DarkGray;
+            btnStopSharing.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            btnStopSharing.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            btnStopSharing.FillColor = Color.White;
+            btnStopSharing.Font = new Font("Segoe UI", 9F);
+            btnStopSharing.ForeColor = Color.White;
+            btnStopSharing.Image = Properties.Resources.Stop;
+            btnStopSharing.Location = new Point(127, 18);
+            btnStopSharing.Name = "btnStopSharing";
+            btnStopSharing.ShadowDecoration.CustomizableEdges = customizableEdges60;
+            btnStopSharing.Size = new Size(52, 43);
+            btnStopSharing.TabIndex = 12;
+            btnStopSharing.Click += btnStopSharing_Click;
             // 
             // btnShareScreen
             // 
@@ -3389,7 +3390,7 @@
         private Guna.UI2.WinForms.Guna2Button guna2Button4;
         private Guna.UI2.WinForms.Guna2Button guna2Button5;
         private Guna.UI2.WinForms.Guna2Button guna2Button6;
-        private Guna.UI2.WinForms.Guna2Button guna2Button3;
+        private Guna.UI2.WinForms.Guna2Button btnStopSharing;
         private Guna.UI2.WinForms.Guna2Button btnShareScreen;
         private Guna.UI2.WinForms.Guna2Button btnWorkStationMonitoring;
     }

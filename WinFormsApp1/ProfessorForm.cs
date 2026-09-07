@@ -1578,6 +1578,25 @@ namespace WinFormsApp1
             return bitmap;
         }
 
+        private void StopBroadcast()
+        {
+            broadcastTimer?.Stop();
 
+            foreach (var client in broadcastClients.Values)
+            {
+                try
+                {
+                    client.Close();
+                }
+                catch { }
+            }
+
+            broadcastClients.Clear();
+        }
+
+        private void btnStopSharing_Click(object sender, EventArgs e)
+        {
+            StopBroadcast();
+        }
     }
 }

@@ -199,6 +199,17 @@ namespace WinFormsApp1
             catch 
             {
             }
+            finally
+            {
+                this.Invoke(new Action(() =>
+                {
+                    if (broadcastViewer != null && !broadcastViewer.IsDisposed)
+                    {
+                        broadcastViewer.Close();
+                        broadcastViewer = null;
+                    }
+                }));
+            }
         }
 
         private void ShowBroadcastFrame(Image frame)
