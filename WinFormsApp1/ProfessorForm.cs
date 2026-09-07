@@ -36,7 +36,6 @@ namespace WinFormsApp1
         private int OfflineCount = 0;
         private string selectedWorkstationId = "";
         private System.Windows.Forms.Timer broadcastTimer;
-        private bool isBroadcasting = false;
         private TcpListener broadcastListener;
         private Dictionary<string, TcpClient> broadcastClients = new Dictionary<string, TcpClient>();
 
@@ -1524,19 +1523,6 @@ namespace WinFormsApp1
 
         private void btnShareScreen_Click(object sender, EventArgs e)
         {
-            if (isBroadcasting)
-            {
-                StopBroadcast();
-                return;
-            }
-
-            isBroadcasting = true;
-
-            // Lock every connected student's input
-            foreach (string clientIp in commandClients.Keys)
-            {
-                SendCommand(clientIp, "LOCK");
-            }
 
             broadcastTimer = new System.Windows.Forms.Timer();
             broadcastTimer.Interval = 300; // adjust for smoothness vs bandwidth
@@ -1578,17 +1564,6 @@ namespace WinFormsApp1
                 Console.WriteLine("Broadcast error: " + ex.Message);
             }
         }
-        private void StopBroadcast()
-        {
-            isBroadcasting = false;
-            broadcastTimer?.Stop();
-
-            // Unlock every connected student's input
-            foreach (string clientIp in commandClients.Keys)
-            {
-                SendCommand(clientIp, "UNLOCK");
-            }
-        }
 
         private Bitmap CaptureScreen()
         {
@@ -1602,26 +1577,7 @@ namespace WinFormsApp1
 
             return bitmap;
         }
-        private void SendCommand(string workstationId, string command)
-        {
-            if (!commandClients.ContainsKey(workstationId)) return;
 
-            try
-            {
-                TcpClient client = commandClients[workstationId];
-                NetworkStream stream = client.GetStream();
-
-                byte[] data = Encoding.UTF8.GetBytes(command);
-                byte[] lengthPrefix = BitConverter.GetBytes(data.Length);
-
-                stream.Write(lengthPrefix, 0, lengthPrefix.Length);
-                stream.Write(data, 0, data.Length);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Failed to send command: " + ex.Message);
-            }
-        }
 
     }
 }

@@ -20,7 +20,6 @@ namespace WinFormsApp1
         private string serverIp = "192.168.100.4"; //Should be Empty and configure it to setting
 
         private TcpClient broadcastClient;
-        private TcpClient commandClient;
         private BroadcastViewerForm broadcastViewer;
         public StudentForm()
         {
@@ -31,19 +30,6 @@ namespace WinFormsApp1
             ConnectToServer(serverIp);
             StartScreenShare(serverIp);
             ConnectBroadcastReceiver(serverIp);
-            //ListenForCommands();
-        }
-        [DllImport("user32.dll")]
-        private static extern bool BlockInput(bool fBlockIt);
-
-        private void LockInput()
-        {
-            BlockInput(true);
-        }
-
-        private void UnlockInput()
-        {
-            BlockInput(false);
         }
 
         private void btnHome_Click(object sender, EventArgs e)
@@ -212,7 +198,6 @@ namespace WinFormsApp1
             }
             catch 
             {
-                this.Invoke(new Action(() => CloseBroadcastViewer()));
             }
         }
 
@@ -238,45 +223,6 @@ namespace WinFormsApp1
                 totalRead += bytesRead;
             }
             return totalRead;
-        }
-        private async void ListenForCommands()
-        {
-            try
-            {
-                NetworkStream stream = commandClient.GetStream();
-
-                while (true)
-                {
-                    byte[] lengthBuffer = new byte[4];
-                    int read = await ReadExactAsync(stream, lengthBuffer, 4);
-                    if (read == 0) break;
-
-                    int msgLength = BitConverter.ToInt32(lengthBuffer, 0);
-                    byte[] msgBuffer = new byte[msgLength];
-                    await ReadExactAsync(stream, msgBuffer, msgLength);
-
-                    string command = Encoding.UTF8.GetString(msgBuffer);
-
-                    if (command == "LOCK")
-                    {
-                        this.Invoke(new Action(() => LockInput())); // ✅ calls the method above
-                    }
-                    else if (command == "UNLOCK")
-                    {
-                        this.Invoke(new Action(() => UnlockInput())); // ✅ calls the method above
-                    }
-                }
-            }
-            catch { }
-        }
-        private void CloseBroadcastViewer()
-        {
-            if (broadcastViewer != null && !broadcastViewer.IsDisposed)
-            {
-                broadcastViewer.Close();
-                broadcastViewer.Dispose();
-                broadcastViewer = null;
-            }
         }
 
     }
