@@ -1527,10 +1527,6 @@ namespace WinFormsApp1
             if (isBroadcasting)
             {
                 StopBroadcast();
-                foreach (string clientIp in commandClients.Keys)
-                {
-                    SendCommand(clientIp, "UNLOCK");
-                }
                 return;
             }
 
@@ -1626,5 +1622,6 @@ namespace WinFormsApp1
                 Console.WriteLine("Failed to send command: " + ex.Message);
             }
         }
+
     }
 }

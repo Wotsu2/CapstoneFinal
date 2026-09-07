@@ -31,7 +31,7 @@ namespace WinFormsApp1
             ConnectToServer(serverIp);
             StartScreenShare(serverIp);
             ConnectBroadcastReceiver(serverIp);
-            ListenForCommands();
+            //ListenForCommands();
         }
         [DllImport("user32.dll")]
         private static extern bool BlockInput(bool fBlockIt);
@@ -210,7 +210,10 @@ namespace WinFormsApp1
                     }
                 }
             }
-            catch { }
+            catch 
+            {
+                this.Invoke(new Action(() => CloseBroadcastViewer()));
+            }
         }
 
         private void ShowBroadcastFrame(Image frame)
@@ -265,6 +268,15 @@ namespace WinFormsApp1
                 }
             }
             catch { }
+        }
+        private void CloseBroadcastViewer()
+        {
+            if (broadcastViewer != null && !broadcastViewer.IsDisposed)
+            {
+                broadcastViewer.Close();
+                broadcastViewer.Dispose();
+                broadcastViewer = null;
+            }
         }
 
     }
