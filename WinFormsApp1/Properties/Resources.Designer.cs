@@ -193,6 +193,16 @@ namespace WinFormsApp1.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Avatar {
+            get {
+                object obj = ResourceManager.GetObject("Avatar", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Calendar {
             get {
                 object obj = ResourceManager.GetObject("Calendar", resourceCulture);
@@ -593,6 +603,16 @@ namespace WinFormsApp1.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Monitoring {
+            get {
+                object obj = ResourceManager.GetObject("Monitoring", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap NewFolder {
             get {
                 object obj = ResourceManager.GetObject("NewFolder", resourceCulture);
@@ -773,29 +793,9 @@ namespace WinFormsApp1.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Stop {
+        internal static System.Drawing.Bitmap StopDemo {
             get {
-                object obj = ResourceManager.GetObject("Stop", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap stopDemo {
-            get {
-                object obj = ResourceManager.GetObject("stopDemo", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap stopDemo1 {
-            get {
-                object obj = ResourceManager.GetObject("stopDemo1", resourceCulture);
+                object obj = ResourceManager.GetObject("StopDemo", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -956,6 +956,16 @@ namespace WinFormsApp1.Properties {
         internal static System.Drawing.Bitmap Vector_Item1 {
             get {
                 object obj = ResourceManager.GetObject("Vector_Item1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap visual {
+            get {
+                object obj = ResourceManager.GetObject("visual", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

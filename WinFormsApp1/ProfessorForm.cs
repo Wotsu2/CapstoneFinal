@@ -27,18 +27,25 @@ namespace WinFormsApp1
 
         // WorkStation //
         private TcpListener listener;
-        private int WorkStationNum = 0;
+        private TcpListener broadcastListener;
+        private TcpListener server;
+        private TcpListener screenListener;
+        
         private Dictionary<string, Button> workstationButtons = new Dictionary<string, Button>();
         private Dictionary<string, Button> miniWorkstationButtons = new Dictionary<string, Button>();
         private Dictionary<string, TcpClient> commandClients = new Dictionary<string, TcpClient>();
+        private Dictionary<string, PictureBox> screenViewers = new Dictionary<string, PictureBox>();
+        private Dictionary<string, TcpClient> broadcastClients = new Dictionary<string, TcpClient>();
+        private Dictionary<string, DateTime> lastThumbnailUpdate = new Dictionary<string, DateTime>();
+
+        private readonly TimeSpan thumbnailInterval = TimeSpan.FromSeconds(5); // adjust 5-10s as you like
+        private System.Windows.Forms.Timer broadcastTimer;
+
         private const int MAX_MINI_BUTTONS = 5;
         private int OnlineCount = 0;
         private int OfflineCount = 0;
+        private int WorkStationNum = 0;
         private string selectedWorkstationId = "";
-        private System.Windows.Forms.Timer broadcastTimer;
-        private TcpListener broadcastListener;
-        private Dictionary<string, TcpClient> broadcastClients = new Dictionary<string, TcpClient>();
-        private TcpListener server;
         private string SelectedIP = "";
         private bool isRunning = false;
 
@@ -64,12 +71,13 @@ namespace WinFormsApp1
         private void ProfessorForm_Load(object sender, EventArgs e)
         {
             saveFolder = GetFolderPath(ProfessorID);
-
+            isRunning = true;
             //DataGridView Desgin//
 
             // WORKSTATION ATTRIBUTES //
             StartServer();
             StartBroadcastListener();
+            StartScreenListener();
 
             // MYSTUDENT Load All Student IN DataGridView//
             LoadAllStudent();
@@ -86,8 +94,8 @@ namespace WinFormsApp1
 
             //File Management Caller//
 
-            //lsServerFolderSetup();
-            //LoadServerFolder(saveFolder, addToHistory: false);
+            lsServerFolderSetup();
+            LoadServerFolder(saveFolder, addToHistory: false);
 
             //Grade Caller//
             ActivityStatus();
@@ -100,35 +108,42 @@ namespace WinFormsApp1
         private void btnHome_Click(object sender, EventArgs e)
         {
             pnlHome.BringToFront();
+            lblPanelName.Text = "Home";
         }
         private void btnWorkstation_Click(object sender, EventArgs e)
         {
             pnlWorkstation.BringToFront();
+            lblPanelName.Text = "Workstations";
         }
         private void btnStudent_Click(object sender, EventArgs e)
         {
             pnlStudent.BringToFront();
+            lblPanelName.Text = "My Students";
         }
         private void btnActivities_Click(object sender, EventArgs e)
         {
             pnlActivity.BringToFront();
             ActivitySectionSubject();
             RecentActivity();
+            lblPanelName.Text = "Activities";
         }
         private void btnGrades_Click(object sender, EventArgs e)
         {
             pnlGrades.BringToFront();
+            lblPanelName.Text = "Grades";
             ActivityStatus();
         }
         private void btnAttendance_Click(object sender, EventArgs e)
         {
             pnlAttendance.BringToFront();
+            lblPanelName.Text = "Attendance";
             dgvAttendance();
         }
 
         private void btnSubject_Click(object sender, EventArgs e)
         {
             pnlSubject.BringToFront();
+            lblPanelName.Text = "Subjects";
         }
 
         private void btnFile_Click(object sender, EventArgs e)
@@ -136,6 +151,7 @@ namespace WinFormsApp1
             pnlFile.BringToFront();
             lsServerFolderSetup();
             LoadServerFolder(saveFolder, addToHistory: false);
+            lblPanelName.Text = "Files";
         }
 
         //Home Page//
@@ -155,13 +171,6 @@ namespace WinFormsApp1
         }
 
         // WorkStation Page //
-        public void WorkstationButton_Click(object sender, EventArgs e)
-        {
-            Button clickedButton = (Button)sender;
-            string workstationId = clickedButton.Tag.ToString();
-            selectedWorkstationId = workstationId;
-            //AddScreenViewer(workstationId);
-        }
 
         private async void StartServer()
         {
@@ -204,7 +213,6 @@ namespace WinFormsApp1
             {
                 Console.WriteLine("   ✅ Reusing existing button, setting to green");
                 Button existingBtn = workstationButtons[clientIp];
-                existingBtn.BackColor = Color.LightGreen;
                 if (miniWorkstationButtons.ContainsKey(clientIp))
                 {
                     miniWorkstationButtons[clientIp].BackColor = Color.LightGreen;
@@ -218,14 +226,11 @@ namespace WinFormsApp1
             WorkStationNum++;
 
             Button MainPcButton = new Button();
-            MainPcButton.Text = "PC " + WorkStationNum;
             MainPcButton.Height = 180;
-            MainPcButton.Width = 131;
+            MainPcButton.Width = 250;
             MainPcButton.Margin = new Padding(5);
-            MainPcButton.BackColor = Color.LightGreen;
             MainPcButton.Tag = clientIp;
-            MainPcButton.Click += WorkstationButton_Click;
-            MainPcButton.DoubleClick += (s, args) =>
+            MainPcButton.Click += (s, args) =>
             {
                 SelectedIP = clientIp;
             };
@@ -240,7 +245,6 @@ namespace WinFormsApp1
             miniButton.Margin = new Padding(3);
             miniButton.BackColor = Color.LightGreen;
             miniButton.Tag = clientIp;
-            miniButton.Click += WorkstationButton_Click;
             if (flpMiniWorkStations.Controls.Count < MAX_MINI_BUTTONS)
             {
                 flpMiniWorkStations.Controls.Add(miniButton);
@@ -277,14 +281,14 @@ namespace WinFormsApp1
             finally
             {
                 Console.WriteLine("🔴 Marking as disconnected: " + clientIp);
-
                 if (this.InvokeRequired)
                 {
                     this.Invoke(new Action(() =>
                     {
                         if (workstationButtons.ContainsKey(clientIp))
                         {
-                            workstationButtons[clientIp].BackColor = Color.Red;
+                            ApplyNoSignal(clientIp);
+                            lastThumbnailUpdate.Remove(clientIp);
                         }
 
                         // Update mini button
@@ -292,6 +296,8 @@ namespace WinFormsApp1
                         {
                             miniWorkstationButtons[clientIp].BackColor = Color.Red;
                         }
+                        
+
                         UpdateConnectedCount();
                     }));
                 }
@@ -299,14 +305,16 @@ namespace WinFormsApp1
                 {
                     if (workstationButtons.ContainsKey(clientIp))
                     {
-                        workstationButtons[clientIp].BackColor = Color.Red;
+                        ApplyNoSignal(clientIp);
+                        lastThumbnailUpdate.Remove(clientIp);
                     }
 
                     if (miniWorkstationButtons.ContainsKey(clientIp))
                     {
                         miniWorkstationButtons[clientIp].BackColor = Color.Red;
                     }
-
+                    lastThumbnailUpdate.Remove(clientIp);
+                        
                     UpdateConnectedCount();
                 }
 
@@ -325,6 +333,8 @@ namespace WinFormsApp1
             lblComputerOnline.Text = connectedCount.ToString();
             lblComputerOffline.Text = disconnectedCount.ToString();
         }
+
+        
 
 
         //My Student Page//
@@ -825,7 +835,6 @@ namespace WinFormsApp1
                 ClassButton.Width = 300;
                 ClassButton.Margin = new Padding(5);
                 ClassButton.BackColor = Color.LightGreen;
-                ClassButton.Click += WorkstationButton_Click;
 
                 flpSubjectClass.Controls.Add(ClassButton);
             }
@@ -1589,6 +1598,7 @@ namespace WinFormsApp1
             broadcastTimer?.Stop();
         }
 
+        //Button Shutdown//
         private void ShutdownStartListener(string clientIp)
         {
             try
@@ -1612,6 +1622,210 @@ namespace WinFormsApp1
         {
             ShutdownStartListener(SelectedIP);
         }
+
+        //Button Restart//
+        private void RestartStartListener(string clientIp)
+        {
+            try
+            {
+                TcpClient client = new TcpClient(clientIp, 8888);
+                NetworkStream stream = client.GetStream();
+                byte[] data = Encoding.UTF8.GetBytes("RESTART");
+                stream.Write(data, 0, data.Length);
+                client.Close();
+                MessageBox.Show("Restart command sent!");
+            }
+            catch
+            {
+                MessageBox.Show("Error: Client not reachable");
+            }
+        }
+        private void btnReboot_Click(object sender, EventArgs e)
+        {
+            RestartStartListener(SelectedIP);
+        }
+
+        //Button Remote View//
+
+        private async void StartScreenListener()
+        {
+            screenListener = new TcpListener(IPAddress.Any, 5002);
+            screenListener.Start();
+
+            while (true)
+            {
+                TcpClient client = await screenListener.AcceptTcpClientAsync();
+                _ = ReceiveScreenStream(client);
+            }
+        }
+
+        private async Task ReceiveScreenStream(TcpClient client)
+        {
+            NetworkStream stream = client.GetStream();
+            string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
+
+            try
+            {
+                while (client.Connected)
+                {
+
+                    byte[] lengthBuffer = new byte[4];
+                    int read = await ReadExactAsync(stream, lengthBuffer, 4);
+                    if (read == 0) break;
+
+                    int imageLength = BitConverter.ToInt32(lengthBuffer, 0);
+                    Console.WriteLine("Receiving frame: " + imageLength + " bytes from " + clientIp);
+                    byte[] imageBuffer = new byte[imageLength];
+
+                    int totalRead = await ReadExactAsync(stream, imageBuffer, imageLength);
+                    if (totalRead == 0) break;
+
+                    using (MemoryStream ms = new MemoryStream(imageBuffer))
+                    {
+                        Image frame = Image.FromStream(ms);
+
+                        if (this.InvokeRequired)
+                            this.Invoke(new Action(() => UpdateScreenViewer(clientIp, frame)));
+                        else
+                            UpdateScreenViewer(clientIp, frame);
+                    }
+                }
+            }
+            catch { }
+            finally
+            {
+                client.Close();
+            }
+        }
+
+        private async Task<int> ReadExactAsync(NetworkStream stream, byte[] buffer, int count)
+        {
+            int totalRead = 0;
+            while (totalRead < count)
+            {
+                int bytesRead = await stream.ReadAsync(buffer, totalRead, count - totalRead);
+                if (bytesRead == 0) return 0;
+                totalRead += bytesRead;
+            }
+            return totalRead;
+        }
+
+        private void UpdateScreenViewer(string clientIp, Image frame)
+        {
+            bool viewerIsOpen = screenViewers.ContainsKey(clientIp) && screenViewers[clientIp] != null;
+
+            if (viewerIsOpen)
+            {
+                PictureBox pb = screenViewers[clientIp];
+                Image oldImage = pb.Image;
+                pb.Image = (Image)frame.Clone();
+                oldImage?.Dispose();
+            }
+
+            bool shouldUpdateThumbnail = !lastThumbnailUpdate.ContainsKey(clientIp)
+                || (DateTime.Now - lastThumbnailUpdate[clientIp]) >= thumbnailInterval;
+
+            if (shouldUpdateThumbnail && workstationButtons.ContainsKey(clientIp))
+            {
+                Button btn = workstationButtons[clientIp];
+
+                Image thumbnail = ResizeImage(frame, btn.Width - 10, btn.Height - 30);
+                Image oldThumb = btn.BackgroundImage;
+
+                btn.BackgroundImage = thumbnail;
+                btn.BackgroundImageLayout = ImageLayout.Zoom;
+
+                oldThumb?.Dispose();
+
+                lastThumbnailUpdate[clientIp] = DateTime.Now;
+            }
+
+            if (!viewerIsOpen)
+            {
+                frame.Dispose();
+            }
+        }
+        private Image ResizeImage(Image original, int width, int height)
+        {
+            if (width <= 0 || height <= 0) return original;
+
+            Bitmap resized = new Bitmap(width, height);
+            using (Graphics g = Graphics.FromImage(resized))
+            {
+                g.DrawImage(original, 0, 0, width, height);
+            }
+            return resized;
+        }
+
+        private void ApplyNoSignal(string clientIp)
+        {
+            if (workstationButtons.ContainsKey(clientIp))
+            {
+                Button btn = workstationButtons[clientIp];
+                btn.BackColor = Color.Gray;
+
+                Image oldThumb = btn.BackgroundImage;
+                btn.BackgroundImage = CreateNoSignalImage(btn.Width, btn.Height);
+                btn.BackgroundImageLayout = ImageLayout.Stretch;
+                oldThumb?.Dispose();
+            }
+
+            if (miniWorkstationButtons.ContainsKey(clientIp))
+            {
+                Button miniBtn = miniWorkstationButtons[clientIp];
+                miniBtn.BackColor = Color.Gray;
+
+                Image oldMiniThumb = miniBtn.BackgroundImage;
+                miniBtn.BackgroundImage = CreateNoSignalImage(miniBtn.Width, miniBtn.Height);
+                miniBtn.BackgroundImageLayout = ImageLayout.Stretch;
+                oldMiniThumb?.Dispose();
+            }
+        }
+
+        private Image CreateNoSignalImage(int width, int height)
+        {
+            Bitmap bmp = new Bitmap(width, height);
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                g.Clear(Color.FromArgb(45, 45, 45));
+
+                using (Pen stripePen = new Pen(Color.FromArgb(60, 60, 60), 8))
+                {
+                    for (int i = -height; i < width; i += 20)
+                    {
+                        g.DrawLine(stripePen, i, height, i + height, 0);
+                    }
+                }
+
+                using (Font font = new Font("Segoe UI", 9, FontStyle.Bold))
+                using (Brush brush = new SolidBrush(Color.LightGray))
+                {
+                    string text = "NO SIGNAL";
+                    SizeF textSize = g.MeasureString(text, font);
+                    float x = (width - textSize.Width) / 2;
+                    float y = (height - textSize.Height) / 2;
+                    g.DrawString(text, font, brush, x, y);
+                }
+            }
+            return bmp;
+        }
+
+        private void AddScreenViewer(string workstationId)
+        {
+            ScreenViewerForm viewer = new ScreenViewerForm(workstationId);
+
+            screenViewers[workstationId] = viewer.GetPictureBox();
+
+            viewer.FormClosed += (s, args) => screenViewers.Remove(workstationId);
+
+            viewer.Show();
+        }
+
+        private void btnRemoteView_Click(object sender, EventArgs e)
+        {
+            AddScreenViewer(SelectedIP);
+        }
+
 
         private void btnLogout_Click(object sender, EventArgs e)
         {
@@ -1675,5 +1889,6 @@ namespace WinFormsApp1
             }
         }
 
+        
     }
 }

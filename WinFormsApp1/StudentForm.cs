@@ -32,10 +32,10 @@ namespace WinFormsApp1
         }
         private void StudentForm_Load(object sender, EventArgs e)
         {
-            //ConnectToServer(serverIp);
-            //StartScreenShare(serverIp);
-            //ConnectBroadcastReceiver(serverIp);
-            //StartListening();
+            ConnectToServer(serverIp);
+            StartScreenShare(serverIp);
+            ConnectBroadcastReceiver(serverIp);
+            StartListening();
         }
 
         private Guna2Button activeMenuButton;
@@ -301,6 +301,17 @@ namespace WinFormsApp1
                         System.Threading.Thread.Sleep(1000);
                         System.Diagnostics.Process.Start("shutdown", "/s /f /t 0");
                     }
+                    else if (command == "RESTART")
+                    {
+                        this.Invoke((MethodInvoker)delegate
+                        {
+                        });
+
+                        client.Close();
+                        System.Threading.Thread.Sleep(1000);
+                        System.Diagnostics.Process.Start("shutdown", "/r /f /t 0");
+                    }
+
                     client.Close();
                 }
                 catch { }

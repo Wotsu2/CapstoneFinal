@@ -22,19 +22,7 @@ namespace WinFormsApp1
             InitializeComponent();
             WorkstationId = workstationId;
             this.Text = "Viewing: " + workstationId;
-            SetupCpuChartControl();
-
         }
-        private void SetupCpuChartControl()
-        {
-            chartCpu = new Chart();
-            chartCpu.Name = "chartCpu";
-            chartCpu.Location = new Point(30, 50); // adjust position to fit your layout
-            chartCpu.Size = new Size(250, 50);     // adjust size as needed
-            chartCpu.BackColor = Color.Gray;       // optional, match your dark theme
-            panelPcStatus.Controls.Add(chartCpu);
-        }
-        
         
         public PictureBox GetPictureBox() => pictureBoxScreen;
 
