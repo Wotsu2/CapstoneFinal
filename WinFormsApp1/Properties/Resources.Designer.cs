@@ -243,6 +243,16 @@ namespace WinFormsApp1.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Configuration {
+            get {
+                object obj = ResourceManager.GetObject("Configuration", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Demo {
             get {
                 object obj = ResourceManager.GetObject("Demo", resourceCulture);
@@ -263,9 +273,9 @@ namespace WinFormsApp1.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Expand {
+        internal static System.Drawing.Bitmap ExpandBelow {
             get {
-                object obj = ResourceManager.GetObject("Expand", resourceCulture);
+                object obj = ResourceManager.GetObject("ExpandBelow", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -623,6 +633,16 @@ namespace WinFormsApp1.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Night_Mode {
+            get {
+                object obj = ResourceManager.GetObject("Night Mode", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap NotSubmitted {
             get {
                 object obj = ResourceManager.GetObject("NotSubmitted", resourceCulture);
@@ -723,6 +743,16 @@ namespace WinFormsApp1.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Profile {
+            get {
+                object obj = ResourceManager.GetObject("Profile", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap RemoteControl {
             get {
                 object obj = ResourceManager.GetObject("RemoteControl", resourceCulture);
@@ -766,6 +796,16 @@ namespace WinFormsApp1.Properties {
         internal static System.Drawing.Bitmap Shutdown {
             get {
                 object obj = ResourceManager.GetObject("Shutdown", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Sign_Out {
+            get {
+                object obj = ResourceManager.GetObject("Sign Out", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

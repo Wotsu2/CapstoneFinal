@@ -30,7 +30,7 @@ namespace WinFormsApp1
         private TcpListener broadcastListener;
         private TcpListener server;
         private TcpListener screenListener;
-        
+
         private Dictionary<string, Button> workstationButtons = new Dictionary<string, Button>();
         private Dictionary<string, Button> miniWorkstationButtons = new Dictionary<string, Button>();
         private Dictionary<string, TcpClient> commandClients = new Dictionary<string, TcpClient>();
@@ -152,6 +152,12 @@ namespace WinFormsApp1
             lsServerFolderSetup();
             LoadServerFolder(saveFolder, addToHistory: false);
             lblPanelName.Text = "Files";
+        }
+        private void btnAccount_Click(object sender, EventArgs e)
+        {
+
+            pnlSetting.BringToFront();
+            lblPanelName.Text = "Settings ";
         }
 
         //Home Page//
@@ -296,7 +302,7 @@ namespace WinFormsApp1
                         {
                             miniWorkstationButtons[clientIp].BackColor = Color.Red;
                         }
-                        
+
 
                         UpdateConnectedCount();
                     }));
@@ -314,7 +320,7 @@ namespace WinFormsApp1
                         miniWorkstationButtons[clientIp].BackColor = Color.Red;
                     }
                     lastThumbnailUpdate.Remove(clientIp);
-                        
+
                     UpdateConnectedCount();
                 }
 
@@ -334,7 +340,7 @@ namespace WinFormsApp1
             lblComputerOffline.Text = disconnectedCount.ToString();
         }
 
-        
+
 
 
         //My Student Page//
@@ -1827,9 +1833,8 @@ namespace WinFormsApp1
         }
 
 
-        private void btnLogout_Click(object sender, EventArgs e)
+        private void Logout()
         {
-
             //DialogResult result = MessageBox.Show("Are you sure you want to logout?",
             //    "Logout Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
@@ -1889,6 +1894,12 @@ namespace WinFormsApp1
             }
         }
 
-        
+
+
+        //Setting//
+        private void btnSettingProfileExpand_Click(object sender, EventArgs e)
+        {
+            pnlSettingProfile.Height = 635;
+        }
     }
 }
