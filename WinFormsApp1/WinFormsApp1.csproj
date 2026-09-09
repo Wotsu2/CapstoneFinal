@@ -58,6 +58,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="StudentProfilePicture\" />
     <Folder Include="StudentPhotos\" />
   </ItemGroup>
 

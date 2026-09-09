@@ -121,7 +121,7 @@ namespace WinFormsApp1
             }
             else if (role.Equals("Professor", StringComparison.OrdinalIgnoreCase))
             {
-                ProfessorForm profForm = new ProfessorForm(UserId); // pass ID if the form needs it
+                ProfessorForm profForm = new ProfessorForm(UserId, username); // pass ID and username if the form needs them
                 profForm.Show();
             }
             else if (role.Equals("Student", StringComparison.OrdinalIgnoreCase))

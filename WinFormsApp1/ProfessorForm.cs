@@ -28,7 +28,6 @@ namespace WinFormsApp1
         // WorkStation //
         private TcpListener listener;
         private TcpListener broadcastListener;
-        private TcpListener server;
         private TcpListener screenListener;
 
         private Dictionary<string, Button> workstationButtons = new Dictionary<string, Button>();
@@ -48,24 +47,23 @@ namespace WinFormsApp1
         private string selectedWorkstationId = "";
         private string SelectedIP = "";
         private bool isRunning = false;
-
-        //Attendance//
-
-        //Activity//
         private string selectedFilePath = "";
-
-        //File Management//
         private string currentFolder;
         private string FolderName;
         private Stack<string> folderHistory = new Stack<string>();
         private string saveFolder;
+        private string CurrentProfilePath;
+        private string SaveCurrentProfilePath;
 
         int ProfessorID;
-        public ProfessorForm(int UserId)
+        string ProfessorUsername;
+        public ProfessorForm(int UserId, string Username)
         {
             InitializeComponent();
+            InitializeSaveDirectory();
+            InitializeChangingPicture();
             ProfessorID = UserId;
-
+            ProfessorUsername = Username;
         }
 
         private void ProfessorForm_Load(object sender, EventArgs e)
@@ -102,6 +100,10 @@ namespace WinFormsApp1
             lblGradesSubmitted.Text = CountTotalSubmitted(ProfessorID).ToString();
             lblGradesGraded.Text = CountTotalGraded(ProfessorID).ToString();
             lblGradesNotSubmitted.Text = CountTotalNotSubmitted(ProfessorID).ToString();
+
+            //Setting//
+            lblProfUsername.Text = ProfessorUsername;
+            InitializeChangingPicture();
 
         }
 
@@ -158,6 +160,7 @@ namespace WinFormsApp1
 
             pnlSetting.BringToFront();
             lblPanelName.Text = "Settings ";
+            InitializeChangingPicture();
         }
 
         //Home Page//
@@ -188,23 +191,30 @@ namespace WinFormsApp1
 
             while (isRunning)
             {
-                TcpClient client = await listener.AcceptTcpClientAsync();
-                string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
-
-                Console.WriteLine("🟢 New TCP connection accepted from: " + clientIp);
-
-                Button wsButton = null;
-
-                if (this.InvokeRequired)
+                try
                 {
-                    this.Invoke(new Action(() => wsButton = OnWorkStationConnected(clientIp)));
-                }
-                else
-                {
-                    wsButton = OnWorkStationConnected(clientIp);
-                }
+                    TcpClient client = await listener.AcceptTcpClientAsync();
+                    string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
 
-                _ = MonitorDisconnected(client, wsButton, clientIp);
+                    Console.WriteLine("🟢 New TCP connection accepted from: " + clientIp);
+
+                    Button wsButton = null;
+
+                    if (this.InvokeRequired)
+                    {
+                        this.Invoke(new Action(() => wsButton = OnWorkStationConnected(clientIp)));
+                    }
+                    else
+                    {
+                        wsButton = OnWorkStationConnected(clientIp);
+                    }
+
+                    _ = MonitorDisconnected(client, wsButton, clientIp);
+                }
+                catch
+                {
+                    break;
+                }
             }
         }
 
@@ -1535,10 +1545,17 @@ namespace WinFormsApp1
 
             while (isRunning)
             {
-                TcpClient client = await broadcastListener.AcceptTcpClientAsync();
-                string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
+                try
+                {
+                    TcpClient client = await broadcastListener.AcceptTcpClientAsync();
+                    string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
 
-                broadcastClients[clientIp] = client;
+                    broadcastClients[clientIp] = client;
+                }
+                catch
+                {
+                    break;
+                }
             }
         }
 
@@ -1658,10 +1675,17 @@ namespace WinFormsApp1
             screenListener = new TcpListener(IPAddress.Any, 5002);
             screenListener.Start();
 
-            while (true)
+            while (isRunning)
             {
-                TcpClient client = await screenListener.AcceptTcpClientAsync();
-                _ = ReceiveScreenStream(client);
+                try
+                {
+                    TcpClient client = await screenListener.AcceptTcpClientAsync();
+                    _ = ReceiveScreenStream(client);
+                }
+                catch
+                {
+                    break;
+                }
             }
         }
 
@@ -1833,26 +1857,18 @@ namespace WinFormsApp1
         }
 
 
-        private void Logout()
+        //Setting Profile//
+        private void btnSettingProfileExpand_Click(object sender, EventArgs e)
         {
-            //DialogResult result = MessageBox.Show("Are you sure you want to logout?",
-            //    "Logout Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-            //if (result == DialogResult.Yes)
-            //{
-            //    StopServer();
-
-            //    ClearAllFormData();
-
-            //    GC.Collect();
-            //    GC.WaitForPendingFinalizers();
-
-            //    this.Close();
-
-            //    Login login = new Login();
-            //    login.Show();
-
-            //}
+            if (pnlSettingProfile.Height <= 350)
+            {
+                pnlSettingProfile.Height = 635;
+            }
+            else if (pnlSettingProfile.Height >= 635)
+            {
+                pnlSettingProfile.Height = 350;
+            }
         }
 
         private void ClearAllFormData()
@@ -1869,37 +1885,276 @@ namespace WinFormsApp1
                 else if (ctrl is ListBox)
                     ((ListBox)ctrl).Items.Clear();
             }
-
-            // Clear any static data
         }
 
         private void StopServer()
         {
             isRunning = false;
 
-            if (listener != null)
-            {
-                listener.Stop();
-                listener = null;
-            }
-            if (broadcastListener != null)
-            {
-                broadcastListener.Stop();
-                broadcastListener = null;
-            }
-            if (server != null)
-            {
-                server.Stop();
-                server = null;
-            }
+            try { listener?.Stop(); } catch { }
+            try { broadcastListener?.Stop(); } catch { }
+            try { screenListener?.Stop(); } catch { }
+
+            // 3. Dispose and nullify
+            try { listener?.Server?.Dispose(); } catch { }
+            try { broadcastListener?.Server?.Dispose(); } catch { }
+            try { screenListener?.Server?.Dispose(); } catch { }
+
+            listener = null;
+            broadcastListener = null;
+            screenListener = null;
+
         }
-
-
-
-        //Setting//
-        private void btnSettingProfileExpand_Click(object sender, EventArgs e)
+        private void Logout()
         {
-            pnlSettingProfile.Height = 635;
+            DialogResult result = MessageBox.Show("Are you sure you want to logout?",
+                "Logout Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                StopServer();
+
+                ClearAllFormData();
+
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+
+                this.Close();
+
+                Login login = new Login();
+                login.Show();
+
+            }
         }
+
+        private void btnSignOut_Click(object sender, EventArgs e)
+        {
+            Logout();
+        }
+
+        private void btnSignOut2_Click(object sender, EventArgs e)
+        {
+            Logout();
+        }
+        private void btnSettingChangeUsername_Click(object sender, EventArgs e)
+        {
+            pnlChangeUsername.Visible = true;
+            pnlChangePassword.Visible = false;
+            pnlChangePhoto.Visible = false;
+        }
+        private void btnExitChangeUsernamePanel_Click(object sender, EventArgs e)
+        {
+            pnlChangeUsername.Visible = false;
+        }
+
+        private void btnSubmitChangeUsername_Click(object sender, EventArgs e)
+        {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+
+            if (string.IsNullOrEmpty(txtCurrentUsername.Text) || string.IsNullOrEmpty(txtNewUsername.Text))
+            {
+                MessageBox.Show("Please enter both the current and new usernames.");
+                return;
+            }
+
+            if (txtCurrentUsername.Text != ProfessorUsername)
+            {
+                MessageBox.Show("Please enter the Correct usernames.");
+            }
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = @"UPDATE user_credential 
+                                         SET username = @new_username 
+                                         WHERE username = @current_username";
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@new_username", txtNewUsername.Text.Trim());
+                        cmd.Parameters.AddWithValue("@current_username", txtCurrentUsername.Text.Trim());
+
+                        cmd.ExecuteNonQuery();
+                    }
+                    ClearTextSettings();
+                    MessageBox.Show("Username updated successfully.");
+                }
+            }
+            catch
+            {
+
+            }
+        }
+        private void btnSettingChangePassword_Click(object sender, EventArgs e)
+        {
+            pnlChangePassword.Visible = true;
+            pnlChangeUsername.Visible = false;
+            pnlChangePhoto.Visible = false;
+        }
+
+        private void btnExitChangePasswordPanel_Click(object sender, EventArgs e)
+        {
+            pnlChangePassword.Visible = false;
+        }
+
+        private void btnSubmitChangePassword_Click(object sender, EventArgs e)
+        {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+
+            if (string.IsNullOrEmpty(txtCurrentPassword.Text) || string.IsNullOrEmpty(txtNewPassword.Text) || string.IsNullOrEmpty(txtConfirmPassword.Text))
+            {
+                MessageBox.Show("Please fill in all fields.");
+                return;
+            }
+            if (txtNewPassword.Text != txtConfirmPassword.Text)
+            {
+                MessageBox.Show("New password and confirm password do not match.");
+                return;
+            }
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = @"UPDATE user_credential 
+                                         SET p_word = @new_password 
+                                         WHERE username = @current_username";
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+
+                        cmd.Parameters.AddWithValue("@new_password", txtNewPassword.Text.Trim());
+                        cmd.Parameters.AddWithValue("@current_username", ProfessorUsername);
+
+                        cmd.ExecuteNonQuery();
+                    }
+                    ClearTextSettings();
+                    MessageBox.Show("Password updated successfully.");
+                }
+            }
+            catch
+            {
+
+            }
+        }
+        private void ClearTextSettings()
+        {
+            txtCurrentUsername.Text = "";
+            txtNewUsername.Text = "";
+            txtCurrentPassword.Text = "";
+            txtNewPassword.Text = "";
+            txtConfirmPassword.Text = "";
+        }
+        private void InitializeSaveDirectory()
+        {
+            // Create a "Images" folder inside the solution directory
+            string solutionDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            SaveCurrentProfilePath = Path.Combine(solutionDirectory, "StudentProfilePicture");
+
+            if (!Directory.Exists(SaveCurrentProfilePath))
+            {
+                Directory.CreateDirectory(SaveCurrentProfilePath);
+            }
+        }
+
+        private void btnUploadPhoto_Click(object sender, EventArgs e)
+        {
+            using (OpenFileDialog ofd = new OpenFileDialog())
+            {
+                ofd.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif";
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    CurrentProfilePath = ofd.FileName;
+                    picboxNewPicture.Image = Image.FromFile(CurrentProfilePath);
+                    picboxNewPicture.SizeMode = PictureBoxSizeMode.Zoom;
+                    btnSubmitChangePhoto.Enabled = true;
+                }
+            }
+        }
+
+        private void btnSubmitChangePhoto_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(CurrentProfilePath))
+            {
+                MessageBox.Show("Upload an image first!");
+                return;
+            }
+
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = @"UPDATE user_credential 
+                                     SET profile_picture = @profile_picture 
+                                     WHERE username = @username";
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        // Save the image to the designated folder
+                        string fileName = Path.GetFileName(CurrentProfilePath);
+                        string destinationPath = Path.Combine(SaveCurrentProfilePath, fileName);
+                        File.Copy(CurrentProfilePath, destinationPath, true);
+                        cmd.Parameters.AddWithValue("@profile_picture", destinationPath);
+                        cmd.Parameters.AddWithValue("@username", ProfessorUsername);
+                        cmd.ExecuteNonQuery();
+                    }
+                    InitializeChangingPicture();
+                    MessageBox.Show("Profile picture updated successfully.");
+                }
+            }
+            catch
+            {
+
+            }
+        }
+        private void InitializeChangingPicture()
+        {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = @"SELECT profile_picture FROM user_credential WHERE username = @username";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@username", ProfessorUsername);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                string profilePicturePath = reader.GetString("profile_picture");
+                                if (File.Exists(profilePicturePath))
+                                {
+                                    picboxSettingProfilePicture.Image = Image.FromFile(profilePicturePath);
+                                    picboxSettingProfilePicture.SizeMode = PictureBoxSizeMode.Zoom;
+                                    btnAccount.Image = Image.FromFile(profilePicturePath);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+
+            }
+        }
+        private void btnSettingChangePhoto_Click(object sender, EventArgs e)
+        {
+            pnlChangePhoto.Visible = true;
+            pnlChangeUsername.Visible = false;
+            pnlChangePassword.Visible = false;
+        }
+
+        private void btnExitChangePhotoPanel_Click(object sender, EventArgs e)
+        {
+            pnlChangePhoto.Visible = false;
+        }
+
     }
 }
