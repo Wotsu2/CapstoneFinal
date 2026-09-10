@@ -1442,7 +1442,7 @@
             guna2Panel1.Name = "guna2Panel1";
             guna2Panel1.ShadowDecoration.CustomizableEdges = customizableEdges74;
             guna2Panel1.ShadowDecoration.Enabled = true;
-            guna2Panel1.Size = new Size(1647, 100);
+            guna2Panel1.Size = new Size(1483, 100);
             guna2Panel1.TabIndex = 5;
             // 
             // guna2CircleButton1
@@ -1457,7 +1457,7 @@
             guna2CircleButton1.Font = new Font("Segoe UI", 9F);
             guna2CircleButton1.ForeColor = Color.White;
             guna2CircleButton1.Image = Properties.Resources.Group;
-            guna2CircleButton1.Location = new Point(1510, 26);
+            guna2CircleButton1.Location = new Point(1346, 26);
             guna2CircleButton1.Name = "guna2CircleButton1";
             guna2CircleButton1.ShadowDecoration.CustomizableEdges = customizableEdges71;
             guna2CircleButton1.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle;
@@ -1475,7 +1475,7 @@
             btnLoguot.FillColor = Color.FromArgb(109, 109, 109, 102);
             btnLoguot.Font = new Font("Segoe UI", 9F);
             btnLoguot.ForeColor = Color.White;
-            btnLoguot.Location = new Point(2691, 24);
+            btnLoguot.Location = new Point(2527, 24);
             btnLoguot.Name = "btnLoguot";
             btnLoguot.ShadowDecoration.CustomizableEdges = customizableEdges72;
             btnLoguot.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle;
@@ -1489,7 +1489,7 @@
             label10.BackColor = Color.Transparent;
             label10.Font = new Font("Segoe UI Black", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label10.ForeColor = Color.FromArgb(123, 15, 23);
-            label10.Location = new Point(1310, 43);
+            label10.Location = new Point(1146, 43);
             label10.Name = "label10";
             label10.Size = new Size(69, 21);
             label10.TabIndex = 9;
@@ -1502,7 +1502,7 @@
             label4.BackColor = Color.Transparent;
             label4.Font = new Font("Segoe UI Black", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label4.ForeColor = Color.FromArgb(123, 15, 23);
-            label4.Location = new Point(2491, 41);
+            label4.Location = new Point(2327, 41);
             label4.Name = "label4";
             label4.Size = new Size(69, 21);
             label4.TabIndex = 6;
@@ -1903,14 +1903,14 @@
             AutoScrollMargin = new Size(0, 100);
             BackgroundImage = Properties.Resources.Shade;
             BackgroundImageLayout = ImageLayout.Stretch;
-            ClientSize = new Size(1664, 775);
+            ClientSize = new Size(1370, 749);
             Controls.Add(label6);
             Controls.Add(guna2Panel2);
             Controls.Add(guna2Panel1);
-            Controls.Add(pnlFileManagement);
             Controls.Add(pnlUserManagement);
             Controls.Add(panelDashoard);
             Controls.Add(pnlWorkstation);
+            Controls.Add(pnlFileManagement);
             DoubleBuffered = true;
             FormBorderStyle = FormBorderStyle.FixedSingle;
             Margin = new Padding(3, 2, 3, 2);

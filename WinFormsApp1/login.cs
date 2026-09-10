@@ -13,6 +13,8 @@ namespace WinFormsApp1
 {
     public partial class Login : Form
     {
+        private string StudentSection;
+        private int userId;
         // Temporary hardcoded accounts (for testing lang, wala pang database)
         private readonly Dictionary<string, string> tempAccounts = new Dictionary<string, string>
         {
@@ -60,6 +62,35 @@ namespace WinFormsApp1
         {
 
         }
+        private void SelectSection(int userid)
+        {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            try
+            {
+                
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT school_section FROM user_information WHERE user_id = @user_id";
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@user_id", userid);
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read()) // <-- this was missing
+                            {
+                                StudentSection = reader.GetString("school_section");
+                            }
+                        }
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
 
         private void btnLogin_Click(object sender, EventArgs e)
         {
@@ -82,13 +113,14 @@ namespace WinFormsApp1
                         {
                             if (reader.Read())
                             {
-                                int userId = reader.GetInt32("user_id");
+                                userId = reader.GetInt32("user_id");
                                 string storedPassword = reader.GetString("p_word");
                                 string role = reader.GetString("roles");
 
                                 if (storedPassword == password)
                                 {
-                                    MessageBox.Show("Login successful!");
+                                    MessageBox.Show($"Login successful! Section{StudentSection}");
+                                    SelectSection(userId);
                                     OpenAppropriateForm(role, username, userId);
                                     this.Hide();
                                 }
@@ -126,7 +158,7 @@ namespace WinFormsApp1
             }
             else if (role.Equals("Student", StringComparison.OrdinalIgnoreCase))
             {
-                StudentForm studentForm = new StudentForm();
+                StudentForm studentForm = new StudentForm(StudentSection);
                 studentForm.Show();
             }
             else

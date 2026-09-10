@@ -1,4 +1,5 @@
 ﻿using Guna.UI2.WinForms;
+using MySql.Data.MySqlClient;
 using Org.BouncyCastle.Asn1.Cmp;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ using System.Drawing.Imaging;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Text;
 using System.Windows.Forms;
 
@@ -26,9 +28,17 @@ namespace WinFormsApp1
         private TcpClient broadcastClient;
         private TcpListener Shutdownlistener;
         private BroadcastViewerForm broadcastViewer;
-        public StudentForm()
+        private string StudentSection;
+
+
+        //Grades//
+        private string selectedGradeCategory = "";
+        private string selectedActivitiesCategory = "";
+
+        public StudentForm(string Section)
         {
             InitializeComponent();
+            StudentSection = Section;
         }
         private void StudentForm_Load(object sender, EventArgs e)
         {
@@ -36,6 +46,15 @@ namespace WinFormsApp1
             StartScreenShare(serverIp);
             ConnectBroadcastReceiver(serverIp);
             StartListening();
+
+            //Home Caller//
+            InitializeCreateButtonActivity();
+
+            //Activitiy Caller//
+            InitializeDataGridViewActivities();
+
+            //Grades Caller//
+            InitializeDataGridViewGrades();
         }
 
         private Guna2Button activeMenuButton;
@@ -318,19 +337,249 @@ namespace WinFormsApp1
             }
         }
 
-        private void label3_Click(object sender, EventArgs e)
+        //Home//
+        private static int CountTotalActivities(string StudentSection)
         {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT COUNT(*) FROM professor_activity WHERE section = @section";
 
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@section", StudentSection);
+                        int totalClass = Convert.ToInt32(cmd.ExecuteScalar());
+                        return totalClass;
+                    }
+                }
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+        private void InitializeCreateButtonActivity()
+        {
+            int totalClasses = CountTotalActivities(StudentSection);
+            MessageBox.Show($"{totalClasses}");
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT title, start_time, due_date, activity_status FROM professor_activity WHERE section = @section";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@section", StudentSection);
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                string title = reader.GetString("title");
+                                string start_time = reader.GetString("start_time");
+                                string due_date = reader.GetString("due_date");
+                                string activity_status = reader.GetString("activity_status");
+
+                                for (int i = 0; i < totalClasses; i++)
+                                {
+                                    Guna.UI2.WinForms.Guna2Button ActivityButton = new Guna.UI2.WinForms.Guna2Button();
+                                    ActivityButton.Height = 180;
+                                    ActivityButton.Width = 180;
+                                    ActivityButton.Margin = new Padding(5);
+                                    ActivityButton.BorderColor = Color.Black;
+                                    ActivityButton.BorderThickness = 1;
+
+                                    Label Title = new Label();
+                                    Title.Text = title;
+                                    Title.ForeColor = Color.Black;
+                                    Title.BackColor = Color.Green;
+                                    Title.Location = new Point(60, 50);
+                                    ActivityButton.Controls.Add(Title);
+
+                                    Label StartTime = new Label();
+                                    StartTime.Text = start_time;
+                                    StartTime.ForeColor = Color.Black;
+                                    StartTime.BackColor = Color.Transparent;
+                                    StartTime.Location = new Point(180, 0);
+                                    //ActivityButton.Controls.Add(StartTime);
+
+                                    Label DueDate = new Label();
+                                    DueDate.Text = due_date;
+                                    DueDate.ForeColor = Color.Black;
+                                    DueDate.BackColor = Color.Violet;
+                                    DueDate.Location = new Point(60, 0);
+                                    ActivityButton.Controls.Add(DueDate);
+
+                                    Label Status = new Label();
+                                    Status.Text = activity_status;
+                                    Status.ForeColor = Color.Black;
+                                    Status.BackColor = Color.Transparent;
+                                    Status.Location = new Point(0, 120);
+                                    ActivityButton.Controls.Add(Status);
+
+
+                                    flpPendingActivities.Controls.Add(ActivityButton);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message);
+            }
         }
 
-        private void pictureBox1_Click(object sender, EventArgs e)
+        //Activities//
+        private void InitializeDataGridViewActivities()
         {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
 
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT title, start_time, due_date, activity_status FROM professor_activity WHERE section = @section";
+                    if (!string.IsNullOrEmpty(selectedActivitiesCategory))
+                    {
+                        query += " AND activity_status = @activity_status";
+                    }
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@section", StudentSection);
+
+                        if (!string.IsNullOrEmpty(selectedActivitiesCategory))
+                            cmd.Parameters.AddWithValue("@activity_status", selectedActivitiesCategory);
+
+                        MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        adapter.Fill(dt);
+
+                        dgvStudentActivities.DataSource = dt;
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading activities: " + ex.Message);
+            }
+        }
+        private void btnActivitiesAll_Click(object sender, EventArgs e)
+        {
+            selectedActivitiesCategory = "";
+            btnActivitiesAll.FillColor = Color.Maroon;
+            btnActivitiesPending.FillColor = Color.White;
+            btnActivitiesSubmitted.FillColor = Color.White;
+            btnActivitiesPassDue.FillColor = Color.White;
+            InitializeDataGridViewActivities();
         }
 
-        private void label8_Click(object sender, EventArgs e)
+        private void btnActivitiesPending_Click(object sender, EventArgs e)
         {
+            selectedActivitiesCategory = "Pending";
+            btnActivitiesPending.FillColor = Color.Maroon;
+            btnActivitiesAll.FillColor = Color.White;
+            btnActivitiesSubmitted.FillColor = Color.White;
+            btnActivitiesPassDue.FillColor = Color.White;
+            InitializeDataGridViewActivities();
+        }
+
+        private void btnActivitiesSubmitted_Click(object sender, EventArgs e)
+        {
+            selectedActivitiesCategory = "Submitted";
+            btnActivitiesSubmitted.FillColor = Color.Maroon;
+            btnActivitiesAll.FillColor = Color.White;
+            btnActivitiesPending.FillColor = Color.White;
+            btnActivitiesPassDue.FillColor = Color.White;
+            InitializeDataGridViewActivities();
+        }
+
+        private void btnActivitiesPassDue_Click(object sender, EventArgs e)
+        {
+            selectedActivitiesCategory = "Incomplete";
+            btnActivitiesPassDue.FillColor = Color.Maroon;
+            btnActivitiesSubmitted.FillColor = Color.White;
+            btnActivitiesAll.FillColor = Color.White;
+            btnActivitiesPending.FillColor = Color.White;
+            InitializeDataGridViewActivities();
+        }
+
+        //Grades//
+
+        private void InitializeDataGridViewGrades()
+        {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT title, start_time, due_date, activity_status, score FROM professor_activity WHERE section = @section";
+
+                    if (!string.IsNullOrEmpty(selectedGradeCategory))
+                    {
+                        query += " AND activity_status = @activity_status";
+                    }
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@section", StudentSection);
+
+                        if (!string.IsNullOrEmpty(selectedGradeCategory))
+                            cmd.Parameters.AddWithValue("@activity_status", selectedGradeCategory);
+
+                        MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        adapter.Fill(dt);
+
+                        dgvStudentGrades.DataSource = dt;
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading activities: " + ex.Message);
+            }
+        }
+
+        private void btnGradesAll_Click(object sender, EventArgs e)
+        {
+            selectedGradeCategory = "";
+            btnGradesAll.FillColor = Color.Maroon;
+            btnGradesDue.FillColor = Color.White;
+            btnGradesSubmitted.FillColor = Color.White;
+            InitializeDataGridViewGrades();
 
         }
+        private void btnGradesSubmitted_Click(object sender, EventArgs e)
+        {
+            selectedGradeCategory = "Submitted";
+            InitializeDataGridViewGrades();
+            btnGradesAll.FillColor = Color.White;
+            btnGradesDue.FillColor = Color.White;
+            btnGradesSubmitted.FillColor = Color.Maroon;
+        }
+        private void btnGradesDue_Click(object sender, EventArgs e)
+        {
+            selectedGradeCategory = "Incomplete";
+            InitializeDataGridViewGrades();
+            btnGradesAll.FillColor = Color.White;
+            btnGradesDue.FillColor = Color.Maroon;
+            btnGradesSubmitted.FillColor = Color.White;
+        }
+
+        
     }
 }

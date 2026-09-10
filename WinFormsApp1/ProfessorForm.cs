@@ -54,6 +54,8 @@ namespace WinFormsApp1
         private string saveFolder;
         private string CurrentProfilePath;
         private string SaveCurrentProfilePath;
+        private string AuthenticationPhoto;
+        private string SaveAuthenticationPhoto;
 
         int ProfessorID;
         string ProfessorUsername;
@@ -92,8 +94,8 @@ namespace WinFormsApp1
 
             //File Management Caller//
 
-            lsServerFolderSetup();
-            LoadServerFolder(saveFolder, addToHistory: false);
+            //lsServerFolderSetup();
+            //  LoadServerFolder(saveFolder, addToHistory: false);
 
             //Grade Caller//
             ActivityStatus();
@@ -104,6 +106,7 @@ namespace WinFormsApp1
             //Setting//
             lblProfUsername.Text = ProfessorUsername;
             InitializeChangingPicture();
+            InitializeAuthenticationSaveDirectory();
 
         }
 
@@ -111,16 +114,19 @@ namespace WinFormsApp1
         {
             pnlHome.BringToFront();
             lblPanelName.Text = "Home";
+            InitializeChangingPicture();
         }
         private void btnWorkstation_Click(object sender, EventArgs e)
         {
             pnlWorkstation.BringToFront();
             lblPanelName.Text = "Workstations";
+            InitializeChangingPicture();
         }
         private void btnStudent_Click(object sender, EventArgs e)
         {
             pnlStudent.BringToFront();
             lblPanelName.Text = "My Students";
+            InitializeChangingPicture();
         }
         private void btnActivities_Click(object sender, EventArgs e)
         {
@@ -128,24 +134,28 @@ namespace WinFormsApp1
             ActivitySectionSubject();
             RecentActivity();
             lblPanelName.Text = "Activities";
+            InitializeChangingPicture();
         }
         private void btnGrades_Click(object sender, EventArgs e)
         {
             pnlGrades.BringToFront();
             lblPanelName.Text = "Grades";
             ActivityStatus();
+            InitializeChangingPicture();
         }
         private void btnAttendance_Click(object sender, EventArgs e)
         {
             pnlAttendance.BringToFront();
             lblPanelName.Text = "Attendance";
             dgvAttendance();
+            InitializeChangingPicture();
         }
 
         private void btnSubject_Click(object sender, EventArgs e)
         {
             pnlSubject.BringToFront();
             lblPanelName.Text = "Subjects";
+            InitializeChangingPicture();
         }
 
         private void btnFile_Click(object sender, EventArgs e)
@@ -154,12 +164,14 @@ namespace WinFormsApp1
             lsServerFolderSetup();
             LoadServerFolder(saveFolder, addToHistory: false);
             lblPanelName.Text = "Files";
+            InitializeChangingPicture();
         }
         private void btnAccount_Click(object sender, EventArgs e)
         {
 
             pnlSetting.BringToFront();
             lblPanelName.Text = "Settings ";
+            InitializeChangingPicture();
             InitializeChangingPicture();
         }
 
@@ -1863,9 +1875,9 @@ namespace WinFormsApp1
 
             if (pnlSettingProfile.Height <= 350)
             {
-                pnlSettingProfile.Height = 635;
+                pnlSettingProfile.Height = 733;
             }
-            else if (pnlSettingProfile.Height >= 635)
+            else if (pnlSettingProfile.Height >= 733)
             {
                 pnlSettingProfile.Height = 350;
             }
@@ -2075,7 +2087,7 @@ namespace WinFormsApp1
 
         private void btnSubmitChangePhoto_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(CurrentProfilePath))
+            if (string.IsNullOrEmpty(AuthenticationPhoto))
             {
                 MessageBox.Show("Upload an image first!");
                 return;
@@ -2156,5 +2168,111 @@ namespace WinFormsApp1
             pnlChangePhoto.Visible = false;
         }
 
+        private void AuthenticationGetValue(int Prof_Id)
+        {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT authentication_condition FROM user_credential WHERE user_id = @user_id";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@user_id", Prof_Id);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                string className = reader.GetString("authentication_condition");
+
+                                if (className == "Enabled")
+                                {
+                                }
+                                else if (className == "Disabled")
+                                {
+
+                                }
+                            }
+                        }
+
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch
+            {
+            }
+        }
+        private void tgSettingAuthentication_CheckedChanged(object sender, EventArgs e)
+        {
+            btnUploadAuthenticationPhoto.Enabled = tgSettingAuthentication.Checked;
+            btnSaveAuthenticationPhoto.Enabled = tgSettingAuthentication.Checked;
+        }
+        private void btn_Click(object sender, EventArgs e)
+        {
+            using (OpenFileDialog ofd = new OpenFileDialog())
+            {
+                ofd.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif";
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    AuthenticationPhoto = ofd.FileName;
+                    picboxNewPicture.Image = Image.FromFile(AuthenticationPhoto);
+                    picboxNewPicture.SizeMode = PictureBoxSizeMode.Zoom;
+                    btnSubmitChangePhoto.Enabled = true;
+                }
+            }
+        }
+        private void InitializeAuthenticationSaveDirectory()
+        {
+            // Create a "Images" folder inside the solution directory
+            string solutionDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            SaveAuthenticationPhoto = Path.Combine(solutionDirectory, "StudentAuthenticationPhoto");
+
+            if (!Directory.Exists(SaveAuthenticationPhoto))
+            {
+                Directory.CreateDirectory(SaveAuthenticationPhoto);
+            }
+        }
+        private void btnSaveAuthenticationPhoto_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(AuthenticationPhoto))
+            {
+                MessageBox.Show("Upload an image first!");
+                return;
+            }
+
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = @"UPDATE user_credential 
+                                     SET authentication_photo = @authentication_photo 
+                                     WHERE username = @username";
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        // Save the image to the designated folder
+                        string fileName = Path.GetFileName(AuthenticationPhoto);
+                        string destinationPath = Path.Combine(SaveAuthenticationPhoto, fileName);
+                        File.Copy(AuthenticationPhoto, destinationPath, true);
+                        cmd.Parameters.AddWithValue("@authentication_photo", destinationPath);
+                        cmd.Parameters.AddWithValue("@username", ProfessorUsername);
+                        cmd.ExecuteNonQuery();
+                    }
+                    InitializeAuthenticationSaveDirectory();
+                    MessageBox.Show("Profile picture updated successfully.");
+                }
+            }
+            catch
+            {
+
+            }
+        }
+
+        
     }
 }
