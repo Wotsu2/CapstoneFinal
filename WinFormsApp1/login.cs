@@ -158,7 +158,7 @@ namespace WinFormsApp1
             }
             else if (role.Equals("Student", StringComparison.OrdinalIgnoreCase))
             {
-                StudentForm studentForm = new StudentForm(StudentSection);
+                StudentForm studentForm = new StudentForm(UserId, StudentSection);
                 studentForm.Show();
             }
             else

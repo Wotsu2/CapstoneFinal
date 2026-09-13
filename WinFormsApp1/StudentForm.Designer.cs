@@ -767,6 +767,7 @@
             dgvStudentActivities.ThemeStyle.RowsStyle.BorderStyle = DataGridViewCellBorderStyle.None;
             dgvStudentActivities.ThemeStyle.RowsStyle.Font = new Font("Segoe UI", 9F);
             dgvStudentActivities.ThemeStyle.RowsStyle.Height = 45;
+            dgvStudentActivities.CellDoubleClick += dgvStudentActivities_CellDoubleClick;
             // 
             // guna2Panel11
             // 
@@ -1571,14 +1572,14 @@
             AutoScaleMode = AutoScaleMode.Font;
             AutoScroll = true;
             BackColor = Color.FromArgb(244, 243, 246);
-            ClientSize = new Size(1370, 749);
+            ClientSize = new Size(1427, 802);
             Controls.Add(guna2Panel2);
             Controls.Add(guna2Panel1);
+            Controls.Add(pnlActivity);
             Controls.Add(pnlHome);
             Controls.Add(pnlFile);
             Controls.Add(pnlGrades);
             Controls.Add(pnlSubject);
-            Controls.Add(pnlActivity);
             Name = "StudentForm";
             Text = "CDSGA ";
             Load += StudentForm_Load;

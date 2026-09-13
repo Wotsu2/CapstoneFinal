@@ -29,6 +29,7 @@ namespace WinFormsApp1
         private TcpListener listener;
         private TcpListener broadcastListener;
         private TcpListener screenListener;
+        private TcpListener activityFileListener;
 
         private Dictionary<string, Button> workstationButtons = new Dictionary<string, Button>();
         private Dictionary<string, Button> miniWorkstationButtons = new Dictionary<string, Button>();
@@ -52,10 +53,12 @@ namespace WinFormsApp1
         private string FolderName;
         private Stack<string> folderHistory = new Stack<string>();
         private string saveFolder;
+
         private string CurrentProfilePath;
         private string SaveCurrentProfilePath;
         private string AuthenticationPhoto;
         private string SaveAuthenticationPhoto;
+        private string ProfessorName;
 
         int ProfessorID;
         string ProfessorUsername;
@@ -108,6 +111,9 @@ namespace WinFormsApp1
             InitializeChangingPicture();
             InitializeAuthenticationSaveDirectory();
 
+            //GetFIle Caller//
+            StartActivityFileServer();
+            NameGet();
         }
 
         private void btnHome_Click(object sender, EventArgs e)
@@ -828,6 +834,7 @@ namespace WinFormsApp1
 
             string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
         }
+
         private static int CountTotalClass(int ProfessorID)
         {
             string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
@@ -2273,6 +2280,118 @@ namespace WinFormsApp1
             }
         }
 
-        
+        //FileReceiver//
+
+        private void NameGet()
+        {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT lastname, firstname, middlename FROM user_information WHERE user_id = @user_id";
+
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@user_id", ProfessorID);
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                string Lastname = reader.GetString("lastname");
+                                string Firstname = reader.GetString("firstname");
+                                string Middlename = reader.GetString("middlename");
+
+                                ProfessorName = $"{Lastname}_{Firstname}_{Middlename}";
+
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading activities: " + ex.Message);
+            }
+        }
+
+        private async void StartActivityFileServer()
+        {
+            activityFileListener = new TcpListener(IPAddress.Any, 5001);
+            activityFileListener.Start();
+
+            while (true)
+            {
+                try
+                {
+                    TcpClient client = await activityFileListener.AcceptTcpClientAsync();
+                    _ = HandleActivityFileReceive(client);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("❌ StartActivityFileServer loop error: " + ex.Message);
+                }
+            }
+        }
+
+        private async Task HandleActivityFileReceive(TcpClient client)
+        {
+            string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
+
+            try
+            {
+                using (client)
+                using (NetworkStream stream = client.GetStream())
+                using (BinaryReader reader = new BinaryReader(stream))
+                {
+                    string Section = reader.ReadString();
+                    string fileName = reader.ReadString();
+                    int fileLength = reader.ReadInt32();
+                    byte[] fileBytes = reader.ReadBytes(fileLength);
+
+                    // Save into a folder specific to this student/activity — adjust path as needed
+                    string professorFolder = Path.Combine(saveFolder, SanitizeFolderName(ProfessorName));
+                    string sectionFolder = Path.Combine(professorFolder, SanitizeFolderName(Section));
+
+                    if (!Directory.Exists(sectionFolder))
+                        Directory.CreateDirectory(sectionFolder);
+
+                    string savePath = Path.Combine(sectionFolder, fileName);
+                    File.WriteAllBytes(savePath, fileBytes);
+
+                    if (this.InvokeRequired)
+                        this.Invoke(new Action(() => OnActivityFileReceived(clientIp, fileName)));
+                    else
+                        OnActivityFileReceived(clientIp, fileName);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (this.InvokeRequired)
+                    this.Invoke(new Action(() => MessageBox.Show("Activity file receive error: " + ex.Message)));
+            }
+        }
+        private void OnActivityFileReceived(string clientIp, string fileName)
+        {
+            Console.WriteLine($"📥 Activity file received from {clientIp}: {fileName}");
+
+            // e.g., update a counter, refresh a DataGridView, log to database, etc.
+            // fileSubmittedCount++;
+            // lblFileSubmitted.Text = fileSubmittedCount.ToString();
+        }
+        private string SanitizeFolderName(string name)
+        {
+            foreach (char c in Path.GetInvalidFileNameChars())
+            {
+                name = name.Replace(c, '_');
+            }
+            return name;
+        }
+
+
+
     }
 }

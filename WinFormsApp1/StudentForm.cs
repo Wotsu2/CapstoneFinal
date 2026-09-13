@@ -29,16 +29,21 @@ namespace WinFormsApp1
         private TcpListener Shutdownlistener;
         private BroadcastViewerForm broadcastViewer;
         private string StudentSection;
+        private string userId;
 
 
         //Grades//
         private string selectedGradeCategory = "";
         private string selectedActivitiesCategory = "";
+        private string file_path;
+        private string studentname;
+        private string activitySubject;
 
-        public StudentForm(string Section)
+        public StudentForm(int UserId, string Section)
         {
             InitializeComponent();
             StudentSection = Section;
+            userId = UserId.ToString();
         }
         private void StudentForm_Load(object sender, EventArgs e)
         {
@@ -52,6 +57,8 @@ namespace WinFormsApp1
 
             //Activitiy Caller//
             InitializeDataGridViewActivities();
+            getActivityPath();
+            NameGet();
 
             //Grades Caller//
             InitializeDataGridViewGrades();
@@ -512,6 +519,96 @@ namespace WinFormsApp1
             btnActivitiesAll.FillColor = Color.White;
             btnActivitiesPending.FillColor = Color.White;
             InitializeDataGridViewActivities();
+        }
+        private void getActivityPath()
+        {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT activity_subject, file_path FROM professor_activity WHERE section = @section";
+
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@section", StudentSection);
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                file_path = reader.GetString("file_path");
+                                activitySubject = reader.GetString("activity_subject");
+
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading activities: " + ex.Message);
+            }
+        }
+        private void NameGet()
+        {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT lastname, firstname, middlename FROM user_information WHERE user_id = @user_id";
+
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@user_id", userId);
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                string Lastname = reader.GetString("lastname");
+                                string Firstname = reader.GetString("firstname");
+                                string Middlename = reader.GetString("middlename");
+
+                                studentname = $"{Lastname}_{Firstname}_{Middlename}";
+
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading activities: " + ex.Message);
+            }
+        }
+        private void dgvStudentActivities_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+            MessageBox.Show($"Row {e.RowIndex} double-clicked.");
+            if (e.RowIndex >= 0)
+            {
+                DataGridViewRow row = dgvStudentActivities.Rows[e.RowIndex];
+                string Title = GetSafeValue(row, "title");
+                string StartTime = GetSafeValue(row, "start_time");
+                string DueDate = GetSafeValue(row, "due_date");
+                string ActivityStatus = GetSafeValue(row, "activity_status");
+                string Description = GetSafeValue(row, "description");
+
+                ActivityForm activityForm = new ActivityForm(userId, studentname, Title, DueDate, Description, StudentSection, activitySubject, ActivityStatus, file_path);
+            }
+        }
+
+        private string GetSafeValue(DataGridViewRow row, string columnName)
+        {
+            object raw = row.Cells[columnName].Value;
+            return (raw == null || raw == DBNull.Value) ? "" : raw.ToString();
         }
 
         //Grades//
