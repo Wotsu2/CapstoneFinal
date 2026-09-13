@@ -64,7 +64,7 @@ namespace WinFormsApp1
         }
         private void SelectSection(int userid)
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = "Server=192.168.100.4;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
             try
             {
                 
@@ -96,7 +96,7 @@ namespace WinFormsApp1
         {
             string username = txtUsername.Text;
             string password = txtPassword.Text;
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = "Server=192.168.100.4;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
 
             try
             {

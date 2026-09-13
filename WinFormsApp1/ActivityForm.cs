@@ -135,7 +135,7 @@ namespace WinFormsApp1
 
         private void UpdateSubmittedFile()
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = "Server=192.168.100.4;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
             try
             {
                 using (var conn = new MySqlConnection(connStr))

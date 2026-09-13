@@ -347,7 +347,8 @@ namespace WinFormsApp1
         //Home//
         private static int CountTotalActivities(string StudentSection)
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            
+            string connStr = $"Server=192.168.100.4;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -372,7 +373,7 @@ namespace WinFormsApp1
         {
             int totalClasses = CountTotalActivities(StudentSection);
             MessageBox.Show($"{totalClasses}");
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = "Server=192.168.100.4;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -447,7 +448,7 @@ namespace WinFormsApp1
         //Activities//
         private void InitializeDataGridViewActivities()
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = "Server=192.168.100.4;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
 
             try
             {
@@ -522,7 +523,7 @@ namespace WinFormsApp1
         }
         private void getActivityPath()
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = "Server=192.168.100.4;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
 
             try
             {
@@ -555,7 +556,7 @@ namespace WinFormsApp1
         }
         private void NameGet()
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = "Server=192.168.100.4;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -615,7 +616,7 @@ namespace WinFormsApp1
 
         private void InitializeDataGridViewGrades()
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = "Server=192.168.100.4;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
 
             try
             {
