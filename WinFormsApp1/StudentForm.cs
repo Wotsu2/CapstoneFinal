@@ -344,6 +344,7 @@ namespace WinFormsApp1
             }
         }
 
+
         //Home//
         private static int CountTotalActivities(string StudentSection)
         {
@@ -601,8 +602,11 @@ namespace WinFormsApp1
                 string DueDate = GetSafeValue(row, "due_date");
                 string ActivityStatus = GetSafeValue(row, "activity_status");
                 string Description = GetSafeValue(row, "description");
+                string profId = GetSafeValue(row, "prof_id");
 
-                ActivityForm activityForm = new ActivityForm(userId, studentname, Title, DueDate, Description, StudentSection, activitySubject, ActivityStatus, file_path);
+                ActivityForm activityForm = new ActivityForm(profId, userId, studentname, Title, DueDate, Description, StudentSection, activitySubject, ActivityStatus, file_path);
+
+                activityForm.Show();
             }
         }
 
@@ -623,7 +627,7 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = "SELECT title, start_time, due_date, activity_status, score FROM professor_activity WHERE section = @section";
+                    string query = "SELECT prof_id title, start_time, due_date, activity_status, score FROM submitted_activity WHERE user_id = @user_id";
 
                     if (!string.IsNullOrEmpty(selectedGradeCategory))
                     {
@@ -632,7 +636,7 @@ namespace WinFormsApp1
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@section", StudentSection);
+                        cmd.Parameters.AddWithValue("@user_id", userId);
 
                         if (!string.IsNullOrEmpty(selectedGradeCategory))
                             cmd.Parameters.AddWithValue("@activity_status", selectedGradeCategory);

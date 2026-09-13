@@ -13,6 +13,7 @@ namespace WinFormsApp1
 {
     public partial class ActivityForm : Form
     {
+        private string profId;
         private string userId;
         private string title;
         private string dueDate;
@@ -25,9 +26,9 @@ namespace WinFormsApp1
         private string activitySubject;
 
 
-        private string serverIp = "";
+        private string serverIp = "192.168.100.4";
 
-        public ActivityForm(string UserId, string Studentname, string Title, string Due_Date, string Description, string StudentSection, string ActivitySubject, string Status, string PDF_Path)
+        public ActivityForm(string profId, string UserId, string Studentname, string Title, string Due_Date, string Description, string StudentSection, string ActivitySubject, string Status, string PDF_Path)
         {
             InitializeComponent();
             InitializeActivityDetails();
@@ -40,6 +41,7 @@ namespace WinFormsApp1
             studentSection = StudentSection;
             studentname = Studentname;
             activitySubject = ActivitySubject;
+            profId = profId;
         }
 
         private void InitializeActivityDetails()
@@ -118,6 +120,8 @@ namespace WinFormsApp1
                         byte[] fileBytes = File.ReadAllBytes(PathAnswer);
 
                         writer.Write(studentSection);
+                        writer.Write(profId);
+                        writer.Write(userId);
                         writer.Write(fileName);
                         writer.Write(fileBytes.Length);
                         writer.Write(fileBytes);
@@ -141,18 +145,19 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = @"INSERT INTO submitted_activity (user_id, title, seciton, student_name, classname, activity_status) 
-                                VALUES (@user_id, @title, @seciton, @student_name, @classname, @activity_status)";
+                    string query = @"INSERT INTO submitted_activity (prof_id, user_id, title, section, student_name, class_name, activity_status) 
+                                VALUES (@prof_id, @user_id, @title, @seciton, @student_name, @classname, @activity_status)";
 
 
                     using (var cmd = new MySqlCommand(query, conn))
-                    {
+                    { 
+                        cmd.Parameters.AddWithValue("@prof_id", profId);
                         cmd.Parameters.AddWithValue("@user_id", userId);
                         cmd.Parameters.AddWithValue("@title", title);
                         cmd.Parameters.AddWithValue("@seciton", studentSection);
                         cmd.Parameters.AddWithValue("@student_name", studentname);
                         cmd.Parameters.AddWithValue("@classname", activitySubject);
-                        cmd.Parameters.AddWithValue("@activity_status", status);
+                        cmd.Parameters.AddWithValue("@activity_status", "Submitted");
 
                         cmd.ExecuteNonQuery();
                     }

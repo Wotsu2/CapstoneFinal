@@ -30,6 +30,8 @@ namespace WinFormsApp1
         private TcpListener broadcastListener;
         private TcpListener screenListener;
         private TcpListener activityFileListener;
+        private TcpListener activityDownloadListener;
+
 
         private Dictionary<string, Button> workstationButtons = new Dictionary<string, Button>();
         private Dictionary<string, Button> miniWorkstationButtons = new Dictionary<string, Button>();
@@ -2348,6 +2350,8 @@ namespace WinFormsApp1
                 using (BinaryReader reader = new BinaryReader(stream))
                 {
                     string Section = reader.ReadString();
+                    string prof_ID = reader.ReadString();
+                    string user_ID = reader.ReadString();
                     string fileName = reader.ReadString();
                     int fileLength = reader.ReadInt32();
                     byte[] fileBytes = reader.ReadBytes(fileLength);
@@ -2363,9 +2367,9 @@ namespace WinFormsApp1
                     File.WriteAllBytes(savePath, fileBytes);
 
                     if (this.InvokeRequired)
-                        this.Invoke(new Action(() => OnActivityFileReceived(clientIp, fileName)));
+                        this.Invoke(new Action(() => OnActivityFileReceived(prof_ID, user_ID, savePath)));
                     else
-                        OnActivityFileReceived(clientIp, fileName);
+                        OnActivityFileReceived(prof_ID, user_ID, savePath);
                 }
             }
             catch (Exception ex)
@@ -2374,13 +2378,34 @@ namespace WinFormsApp1
                     this.Invoke(new Action(() => MessageBox.Show("Activity file receive error: " + ex.Message)));
             }
         }
-        private void OnActivityFileReceived(string clientIp, string fileName)
+        private void OnActivityFileReceived(string prof_ID, string user_ID, string savePath)
         {
-            Console.WriteLine($"📥 Activity file received from {clientIp}: {fileName}");
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = @"UPDATE submitted_activity 
+                                     SET file_path = @file_path 
+                                     WHERE prof_id = @prof_id AND user_id = @user_id";
 
-            // e.g., update a counter, refresh a DataGridView, log to database, etc.
-            // fileSubmittedCount++;
-            // lblFileSubmitted.Text = fileSubmittedCount.ToString();
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        // Save the image to the designated folder
+                        cmd.Parameters.AddWithValue("@filepath", savePath);
+                        cmd.Parameters.AddWithValue("@prof_id", prof_ID);
+                        cmd.Parameters.AddWithValue("@user_id", user_ID);
+                        cmd.ExecuteNonQuery();
+                    }
+                    MessageBox.Show("Profile picture updated successfully.");
+                }
+            }
+            catch
+            {
+
+            }
+
         }
         private string SanitizeFolderName(string name)
         {
@@ -2391,7 +2416,9 @@ namespace WinFormsApp1
             return name;
         }
 
-
+        /// <summary>
+        /// //
+        /// </summary>
 
     }
 }
