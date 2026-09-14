@@ -28,10 +28,10 @@ namespace WinFormsApp1
 
         private string serverIp = "192.168.100.4";
 
-        public ActivityForm(string profId, string UserId, string Studentname, string Title, string Due_Date, string Description, string StudentSection, string ActivitySubject, string Status, string PDF_Path)
+        public ActivityForm(string prof_id, string UserId, string Studentname, string Title, string Due_Date, string Description, string StudentSection, string ActivitySubject, string Status, string PDF_Path)
         {
             InitializeComponent();
-            InitializeActivityDetails();
+            
             title = Title;
             dueDate = Due_Date;
             description = Description;
@@ -41,17 +41,17 @@ namespace WinFormsApp1
             studentSection = StudentSection;
             studentname = Studentname;
             activitySubject = ActivitySubject;
-            profId = profId;
+            profId = prof_id;
+            InitializeActivityDetails();
         }
 
         private void InitializeActivityDetails()
         {
-
-            lblActivityTitle.Text = title;
+            MessageBox.Show($"{title}, {dueDate}, {description}, {status}, {AcitvitypdfPath}, {userId}, {studentSection}, {studentname}, {activitySubject}, {profId}");
+            lblActivityTitle.Text = $"{title}";
             lblActivityDescription.Text = description;
             lblActivityDueDate.Text = "Due Date: " + dueDate;
             lblActivityStatus.Text = status;
-
 
             Guna.UI2.WinForms.Guna2Panel pdfContainer = new Guna.UI2.WinForms.Guna2Panel();
             pdfContainer.Location = new Point(20, 280);
@@ -68,18 +68,17 @@ namespace WinFormsApp1
 
             try
             {
-                string pdfPath = $"{AcitvitypdfPath}";  // Change this to your actual path
-                if (File.Exists(pdfPath))
+                if (!string.IsNullOrEmpty(AcitvitypdfPath) && File.Exists(AcitvitypdfPath))
                 {
-                    pdfViewer.LoadDocument(pdfPath);
+                    pdfViewer.LoadDocument(AcitvitypdfPath);
                 }
                 else
                 {
                     Label lblNoFile = new Label();
-                    lblNoFile.Text = "PDF file not found";
+                    lblNoFile.Text = "No attachment for this activity.";
                     lblNoFile.Location = new Point(200, 130);
-                    lblNoFile.Size = new Size(200, 25);
-                    lblNoFile.ForeColor = Color.Red;
+                    lblNoFile.Size = new Size(400, 25);
+                    lblNoFile.ForeColor = Color.Gray;
                     pdfContainer.Controls.Add(lblNoFile);
                 }
             }

@@ -895,17 +895,42 @@ namespace WinFormsApp1
 
         private void btnPostActivity_Click(object sender, EventArgs e)
         {
+            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+
             DateTime now = DateTime.Now;
             string FullDateTime = now.ToString("MMM-dd HH:mm:ss");
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+
+            // Read the PDF into memory if the professor picked one
+            byte[] pdfBytes = null;
+            string pdfName = null;
+
+            if (!string.IsNullOrEmpty(selectedFilePath) && File.Exists(selectedFilePath))
+            {
+                try
+                {
+                    pdfBytes = File.ReadAllBytes(selectedFilePath);
+                    pdfName = Path.GetFileName(selectedFilePath);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Could not read the selected file: " + ex.Message);
+                    return;
+                }
+            }
+
             try
             {
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
                     string query = @"INSERT INTO professor_activity 
-                                    (professor_id, title, description, section, activity_subject, start_time, due_date, activity_status, score, file_path) 
-                                    VALUE (@professor_id, @title, @description, @section, @activity_subject, @start_time, @due_date, @activity_status, score, @file_path)";
+                            (professor_id, title, description, section, activity_subject, 
+                             start_time, due_date, activity_status, score, 
+                             activity_file, activity_filename) 
+                            VALUES (@professor_id, @title, @description, @section, @activity_subject, 
+                                    @start_time, @due_date, @activity_status, @score, 
+                                    @activity_file, @activity_filename)";
+
                     using (var cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@professor_id", ProfessorID);
@@ -917,15 +942,23 @@ namespace WinFormsApp1
                         cmd.Parameters.AddWithValue("@due_date", dtpActivityDeadline.Value);
                         cmd.Parameters.AddWithValue("@activity_status", "Pending");
                         cmd.Parameters.AddWithValue("@score", txtActivityScore.Text.Trim());
-                        cmd.Parameters.AddWithValue("@file_path", Path.GetFileName(selectedFilePath));
+                        cmd.Parameters.AddWithValue("@activity_file", (object)pdfBytes ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@activity_filename", (object)pdfName ?? DBNull.Value);
+
                         cmd.ExecuteNonQuery();
                     }
-                    MessageBox.Show("Activity Posted Succesfuly");
+
+                    MessageBox.Show("Activity Posted Successfully");
+
+                    // Reset the UI
+                    selectedFilePath = "";
+                    btnActivityUploadFile.Text = "Upload File";
+                    RecentActivity();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                MessageBox.Show("Error posting activity: " + ex.Message);
             }
         }
         private void ActivitySectionSubject()
@@ -1174,7 +1207,7 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = @"SELECT user_id, title, section, student_name, class_name, activity_status, score FROM submitted_activity WHERE prof_id = @prof_id";
+                    string query = @"SELECT user_id, title, section, student_name, class_name, activity_status, score, file_path FROM submitted_activity WHERE prof_id = @prof_id";
 
                     if (!string.IsNullOrEmpty(filter))
                     {
@@ -1333,7 +1366,7 @@ namespace WinFormsApp1
             }
         }
 
-        private void CreatePanelForSubmittedFiles(int User_id, string Title, string Name, string Section, string ClassName, string Status)
+        private void CreatePanelForSubmittedFiles(int User_id, string Title, string Name, string Section, string ClassName, string Status, string filePath)
         {
             Guna.UI2.WinForms.Guna2Panel panel = new Guna.UI2.WinForms.Guna2Panel();
             panel.Width = 1000;
@@ -1396,12 +1429,14 @@ namespace WinFormsApp1
             pdfViewer.Dock = DockStyle.Fill;
             pdfContainer.Controls.Add(pdfViewer);
 
+            MessageBox.Show($"File Path: [{filePath}]"); // Debugging line to check the file path
             try
             {
-                string pdfPath = @"C:\Users\mjm12\OneDrive\Desktop\Sti Activities and Assigment\quiz_1.pdf";  // Change this to your actual path
-                if (File.Exists(pdfPath))
+                string file_path = @$"{filePath}";
+                file_path = file_path.Trim();
+                if (File.Exists(file_path))
                 {
-                    pdfViewer.LoadDocument(pdfPath);
+                    pdfViewer.LoadDocument(file_path);
                 }
                 else
                 {
@@ -1510,7 +1545,8 @@ namespace WinFormsApp1
                 string ClassNameGrades = $" {selectedRow.Cells["class_name"].Value}";
                 string StatusGrades = $" {selectedRow.Cells["activity_status"].Value}";
                 int User_id = int.Parse(user_id);
-                CreatePanelForSubmittedFiles(User_id, Title, Name, SectionGrades, ClassNameGrades, StatusGrades);
+                string filePath = $" {selectedRow.Cells["file_path"].Value}";
+                CreatePanelForSubmittedFiles(User_id, Title, Name, SectionGrades, ClassNameGrades, StatusGrades, filePath);
             }
         }
         private void GetSection()
@@ -2357,8 +2393,7 @@ namespace WinFormsApp1
                     byte[] fileBytes = reader.ReadBytes(fileLength);
 
                     // Save into a folder specific to this student/activity — adjust path as needed
-                    string professorFolder = Path.Combine(saveFolder, SanitizeFolderName(ProfessorName));
-                    string sectionFolder = Path.Combine(professorFolder, SanitizeFolderName(Section));
+                    string sectionFolder = Path.Combine(saveFolder, SanitizeFolderName(Section));
 
                     if (!Directory.Exists(sectionFolder))
                         Directory.CreateDirectory(sectionFolder);
@@ -2366,10 +2401,8 @@ namespace WinFormsApp1
                     string savePath = Path.Combine(sectionFolder, fileName);
                     File.WriteAllBytes(savePath, fileBytes);
 
-                    if (this.InvokeRequired)
-                        this.Invoke(new Action(() => OnActivityFileReceived(prof_ID, user_ID, savePath)));
-                    else
-                        OnActivityFileReceived(prof_ID, user_ID, savePath);
+                    OnActivityFileReceived(prof_ID, user_ID, savePath);
+
                 }
             }
             catch (Exception ex)
@@ -2380,6 +2413,7 @@ namespace WinFormsApp1
         }
         private void OnActivityFileReceived(string prof_ID, string user_ID, string savePath)
         {
+            MessageBox.Show(savePath);
             string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
             try
             {
@@ -2393,17 +2427,17 @@ namespace WinFormsApp1
                     using (var cmd = new MySqlCommand(query, conn))
                     {
                         // Save the image to the designated folder
-                        cmd.Parameters.AddWithValue("@filepath", savePath);
+                        cmd.Parameters.AddWithValue("@file_path", savePath);
                         cmd.Parameters.AddWithValue("@prof_id", prof_ID);
                         cmd.Parameters.AddWithValue("@user_id", user_ID);
                         cmd.ExecuteNonQuery();
                     }
-                    MessageBox.Show("Profile picture updated successfully.");
+                    ActivityStatus();
                 }
             }
-            catch
+            catch (Exception ex)
             {
-
+                MessageBox.Show(ex.Message);
             }
 
         }
