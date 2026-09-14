@@ -483,6 +483,101 @@ namespace WinFormsApp1
                 MessageBox.Show("Error loading activities: " + ex.Message);
             }
         }
+        private void dgvStudentActivities_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+            if (e.RowIndex >= 0)
+            {
+                if (e.RowIndex < 0) return;
+
+                DataGridViewRow row = dgvStudentActivities.Rows[e.RowIndex];
+
+                string activityId = GetSafeValue(row, "id");               // if you added the id column
+                string Title = GetSafeValue(row, "title");
+                string DueDate = GetSafeValue(row, "due_date");
+                string ActivityStatus = GetSafeValue(row, "activity_status");
+                string Description = GetSafeValue(row, "description");
+                string profId = GetSafeValue(row, "prof_id");
+                string className = GetSafeValue(row, "class_name");
+
+                // Fetch the PDF bytes from DB and write to a temp file
+                string tempPdfPath = FetchActivityPdf(activityId, profId, Title, StudentSection, className);
+
+                ActivityForm activityForm = new ActivityForm(
+                    profId, userId, studentname, Title, DueDate, Description,
+                    StudentSection, activitySubject, ActivityStatus, tempPdfPath);
+
+                activityForm.Show();
+            }
+        }
+        private string FetchActivityPdf(string activityId, string profId, string title, string section, string className)
+        {
+            string connStr = "Server=192.168.100.4;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    // Prefer id if available; otherwise fall back to composite key
+                    string query;
+                    if (!string.IsNullOrEmpty(activityId))
+                    {
+                        query = @"SELECT activity_file, activity_filename 
+                          FROM professor_activity 
+                          WHERE activity_id = @activity_id";
+                    }
+                    else
+                    {
+                        query = @"SELECT activity_file, activity_filename 
+                          FROM professor_activity 
+                          WHERE prof_id = @prof_id 
+                            AND title = @title 
+                            AND section = @section 
+                            AND class_name = @class_name
+                          LIMIT 1";
+                    }
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        if (!string.IsNullOrEmpty(activityId))
+                            cmd.Parameters.AddWithValue("@activity_id", activityId);
+                        else
+                        {
+                            cmd.Parameters.AddWithValue("@prof_id", profId);
+                            cmd.Parameters.AddWithValue("@title", title);
+                            cmd.Parameters.AddWithValue("@section", section);
+                            cmd.Parameters.AddWithValue("@class_name", className);
+                        }
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (!reader.Read()) return null;
+
+                            if (reader.IsDBNull(reader.GetOrdinal("activity_file")))
+                                return null;
+
+                            byte[] pdfBytes = (byte[])reader["activity_file"];
+                            string pdfName = reader["activity_filename"] as string ?? "activity.pdf";
+
+                            // Write to a per-user temp folder so parallel students don't collide
+                            string tempFolder = Path.Combine(Path.GetTempPath(), "cdsga_activities", userId);
+                            Directory.CreateDirectory(tempFolder);
+
+                            string tempPath = Path.Combine(tempFolder, pdfName);
+                            File.WriteAllBytes(tempPath, pdfBytes);
+
+                            return tempPath;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error fetching activity PDF: " + ex.Message);
+                return null;
+            }
+        }
         private void btnActivitiesAll_Click(object sender, EventArgs e)
         {
             selectedActivitiesCategory = "";
@@ -590,25 +685,7 @@ namespace WinFormsApp1
                 MessageBox.Show("Error loading activities: " + ex.Message);
             }
         }
-        private void dgvStudentActivities_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
-        {
-
-            MessageBox.Show($"Row {e.RowIndex} double-clicked.");
-            if (e.RowIndex >= 0)
-            {
-                DataGridViewRow row = dgvStudentActivities.Rows[e.RowIndex];
-                string Title = GetSafeValue(row, "title");
-                string StartTime = GetSafeValue(row, "start_time");
-                string DueDate = GetSafeValue(row, "due_date");
-                string ActivityStatus = GetSafeValue(row, "activity_status");
-                string Description = GetSafeValue(row, "description");
-                string profId = GetSafeValue(row, "prof_id");
-
-                ActivityForm activityForm = new ActivityForm(profId, userId, studentname, Title, DueDate, Description, StudentSection, activitySubject, ActivityStatus, file_path);
-
-                activityForm.Show();
-            }
-        }
+        
 
         private string GetSafeValue(DataGridViewRow row, string columnName)
         {
@@ -627,7 +704,7 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = "SELECT prof_id title, start_time, due_date, activity_status, score FROM submitted_activity WHERE user_id = @user_id";
+                    string query = "SELECT title, start_time, due_date, activity_status, score FROM submitted_activity WHERE user_id = @user_id";
 
                     if (!string.IsNullOrEmpty(selectedGradeCategory))
                     {

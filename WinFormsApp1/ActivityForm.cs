@@ -52,7 +52,6 @@ namespace WinFormsApp1
             lblActivityDueDate.Text = "Due Date: " + dueDate;
             lblActivityStatus.Text = status;
 
-
             Guna.UI2.WinForms.Guna2Panel pdfContainer = new Guna.UI2.WinForms.Guna2Panel();
             pdfContainer.Location = new Point(20, 280);
             pdfContainer.Size = new Size(760, 500);
@@ -68,18 +67,17 @@ namespace WinFormsApp1
 
             try
             {
-                string pdfPath = $"{AcitvitypdfPath}";  // Change this to your actual path
-                if (File.Exists(pdfPath))
+                if (!string.IsNullOrEmpty(AcitvitypdfPath) && File.Exists(AcitvitypdfPath))
                 {
-                    pdfViewer.LoadDocument(pdfPath);
+                    pdfViewer.LoadDocument(AcitvitypdfPath);
                 }
                 else
                 {
                     Label lblNoFile = new Label();
-                    lblNoFile.Text = "PDF file not found";
+                    lblNoFile.Text = "No attachment for this activity.";
                     lblNoFile.Location = new Point(200, 130);
-                    lblNoFile.Size = new Size(200, 25);
-                    lblNoFile.ForeColor = Color.Red;
+                    lblNoFile.Size = new Size(400, 25);
+                    lblNoFile.ForeColor = Color.Gray;
                     pdfContainer.Controls.Add(lblNoFile);
                 }
             }
