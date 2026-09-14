@@ -38,6 +38,9 @@ namespace WinFormsApp1
         private string file_path;
         private string studentname;
         private string activitySubject;
+        private string descpt;
+        private string ActivityID;
+        private string ProfessorID;
 
         public StudentForm(int UserId, string Section)
         {
@@ -57,7 +60,6 @@ namespace WinFormsApp1
 
             //Activitiy Caller//
             InitializeDataGridViewActivities();
-            getActivityPath();
             NameGet();
 
             //Grades Caller//
@@ -456,7 +458,7 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = "SELECT title, start_time, due_date, activity_status FROM professor_activity WHERE section = @section";
+                    string query = "SELECT activity_id, title, start_time, due_date, activity_subject, activity_status, description FROM professor_activity WHERE section = @section";
                     if (!string.IsNullOrEmpty(selectedActivitiesCategory))
                     {
                         query += " AND activity_status = @activity_status";
@@ -475,6 +477,11 @@ namespace WinFormsApp1
 
                         dgvStudentActivities.DataSource = dt;
 
+                        if (dgvStudentActivities.Columns.Contains("description"))
+                        {
+                            dgvStudentActivities.Columns["description"].Visible = false;
+                        }
+
                     }
                 }
             }
@@ -492,17 +499,17 @@ namespace WinFormsApp1
 
                 DataGridViewRow row = dgvStudentActivities.Rows[e.RowIndex];
 
-                string activityId = GetSafeValue(row, "id");               // if you added the id column
+                string activityId = GetSafeValue(row, "activity_id");            // if you added the id column
                 string Title = GetSafeValue(row, "title");
                 string DueDate = GetSafeValue(row, "due_date");
                 string ActivityStatus = GetSafeValue(row, "activity_status");
                 string Description = GetSafeValue(row, "description");
-                string profId = GetSafeValue(row, "prof_id");
-                string className = GetSafeValue(row, "class_name");
+                string profId = ProfessorID;
+                string className = GetSafeValue(row, "activity_subject");
 
                 // Fetch the PDF bytes from DB and write to a temp file
                 string tempPdfPath = FetchActivityPdf(activityId, profId, Title, StudentSection, className);
-
+                GetDescription(activityId, profId, Title, StudentSection, className);
                 ActivityForm activityForm = new ActivityForm(
                     profId, userId, studentname, Title, DueDate, Description,
                     StudentSection, activitySubject, ActivityStatus, tempPdfPath);
@@ -512,6 +519,7 @@ namespace WinFormsApp1
         }
         private string FetchActivityPdf(string activityId, string profId, string title, string section, string className)
         {
+            MessageBox.Show($"Activity ID is: {activityId}");
             string connStr = "Server=192.168.100.4;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
             try
             {
@@ -531,10 +539,10 @@ namespace WinFormsApp1
                     {
                         query = @"SELECT activity_file, activity_filename 
                           FROM professor_activity 
-                          WHERE prof_id = @prof_id 
+                          WHERE professor_id = @professor_id 
                             AND title = @title 
                             AND section = @section 
-                            AND class_name = @class_name
+                            AND activity_subject = @activity_subject
                           LIMIT 1";
                     }
 
@@ -544,10 +552,10 @@ namespace WinFormsApp1
                             cmd.Parameters.AddWithValue("@activity_id", activityId);
                         else
                         {
-                            cmd.Parameters.AddWithValue("@prof_id", profId);
+                            cmd.Parameters.AddWithValue("@professor_id", profId);
                             cmd.Parameters.AddWithValue("@title", title);
                             cmd.Parameters.AddWithValue("@section", section);
-                            cmd.Parameters.AddWithValue("@class_name", className);
+                            cmd.Parameters.AddWithValue("@activity_subject", className);
                         }
 
                         using (var reader = cmd.ExecuteReader())
@@ -577,6 +585,86 @@ namespace WinFormsApp1
                 MessageBox.Show("Error fetching activity PDF: " + ex.Message);
                 return null;
             }
+        }
+        private void GetDescription(string activityId, string profId, string title, string section, string className)
+        {
+            string connStr = "Server=192.168.100.4;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = @"SELECT description, activity_id, professor_id
+                             FROM professor_activity 
+                             WHERE activity_id = @activity_id
+                             LIMIT 1";
+
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@activity_id", activityId);
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                string Description = reader.GetString("description");
+                                string activity_id = reader.GetString("activity_id");
+                                string professor_id = reader.GetString("professor_id");
+
+                                descpt = $"{Description}";
+                                ActivityID = activity_id;
+                                ProfessorID = professor_id;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading activities: " + ex.Message);
+            }
+
+        }
+        private void NameGet()
+        {
+            string connStr = "Server=192.168.100.4;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT lastname, firstname, middlename FROM user_information WHERE user_id = @user_id";
+
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@user_id", userId);
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                string Lastname = reader.GetString("lastname");
+                                string Firstname = reader.GetString("firstname");
+                                string Middlename = reader.GetString("middlename");
+
+                                studentname = $"{Lastname}_{Firstname}_{Middlename}";
+
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading activities: " + ex.Message);
+            }
+        }
+        private string GetSafeValue(DataGridViewRow row, string columnName)
+        {
+            object raw = row.Cells[columnName].Value;
+            return (raw == null || raw == DBNull.Value) ? "" : raw.ToString();
         }
         private void btnActivitiesAll_Click(object sender, EventArgs e)
         {
@@ -617,81 +705,7 @@ namespace WinFormsApp1
             btnActivitiesPending.FillColor = Color.White;
             InitializeDataGridViewActivities();
         }
-        private void getActivityPath()
-        {
-            string connStr = "Server=192.168.100.4;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
-
-            try
-            {
-                using (var conn = new MySqlConnection(connStr))
-                {
-                    conn.Open();
-                    string query = "SELECT activity_subject, file_path FROM professor_activity WHERE section = @section";
-
-
-                    using (var cmd = new MySqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@section", StudentSection);
-
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                file_path = reader.GetString("file_path");
-                                activitySubject = reader.GetString("activity_subject");
-
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error loading activities: " + ex.Message);
-            }
-        }
-        private void NameGet()
-        {
-            string connStr = "Server=192.168.100.4;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
-            try
-            {
-                using (var conn = new MySqlConnection(connStr))
-                {
-                    conn.Open();
-                    string query = "SELECT lastname, firstname, middlename FROM user_information WHERE user_id = @user_id";
-
-
-                    using (var cmd = new MySqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@user_id", userId);
-
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                string Lastname = reader.GetString("lastname");
-                                string Firstname = reader.GetString("firstname");
-                                string Middlename = reader.GetString("middlename");
-
-                                studentname = $"{Lastname}_{Firstname}_{Middlename}";
-
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error loading activities: " + ex.Message);
-            }
-        }
         
-
-        private string GetSafeValue(DataGridViewRow row, string columnName)
-        {
-            object raw = row.Cells[columnName].Value;
-            return (raw == null || raw == DBNull.Value) ? "" : raw.ToString();
-        }
 
         //Grades//
 
@@ -704,7 +718,7 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = "SELECT title, start_time, due_date, activity_status, score FROM submitted_activity WHERE user_id = @user_id";
+                    string query = "SELECT title, section, class_name, activity_status, score FROM submitted_activity WHERE user_id = @user_id";
 
                     if (!string.IsNullOrEmpty(selectedGradeCategory))
                     {

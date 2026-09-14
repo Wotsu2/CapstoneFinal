@@ -28,10 +28,10 @@ namespace WinFormsApp1
 
         private string serverIp = "192.168.100.4";
 
-        public ActivityForm(string profId, string UserId, string Studentname, string Title, string Due_Date, string Description, string StudentSection, string ActivitySubject, string Status, string PDF_Path)
+        public ActivityForm(string prof_id, string UserId, string Studentname, string Title, string Due_Date, string Description, string StudentSection, string ActivitySubject, string Status, string PDF_Path)
         {
             InitializeComponent();
-            InitializeActivityDetails();
+            
             title = Title;
             dueDate = Due_Date;
             description = Description;
@@ -41,13 +41,14 @@ namespace WinFormsApp1
             studentSection = StudentSection;
             studentname = Studentname;
             activitySubject = ActivitySubject;
-            profId = profId;
+            profId = prof_id;
+            InitializeActivityDetails();
         }
 
         private void InitializeActivityDetails()
         {
-
-            lblActivityTitle.Text = title;
+            MessageBox.Show($"{title}, {dueDate}, {description}, {status}, {AcitvitypdfPath}, {userId}, {studentSection}, {studentname}, {activitySubject}, {profId}");
+            lblActivityTitle.Text = $"{title}";
             lblActivityDescription.Text = description;
             lblActivityDueDate.Text = "Due Date: " + dueDate;
             lblActivityStatus.Text = status;
