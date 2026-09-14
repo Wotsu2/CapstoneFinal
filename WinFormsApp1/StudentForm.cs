@@ -38,9 +38,6 @@ namespace WinFormsApp1
         private string file_path;
         private string studentname;
         private string activitySubject;
-        private string descpt;
-        private string ActivityID;
-        private string ProfessorID;
 
         public StudentForm(int UserId, string Section)
         {
@@ -458,7 +455,7 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = "SELECT activity_id, title, start_time, due_date, activity_subject, activity_status, description FROM professor_activity WHERE section = @section";
+                    string query = "SELECT activity_id, title, start_time, due_date, activity_subject, activity_status, description, professor_id FROM professor_activity WHERE section = @section";
                     if (!string.IsNullOrEmpty(selectedActivitiesCategory))
                     {
                         query += " AND activity_status = @activity_status";
@@ -480,6 +477,10 @@ namespace WinFormsApp1
                         if (dgvStudentActivities.Columns.Contains("description"))
                         {
                             dgvStudentActivities.Columns["description"].Visible = false;
+                        }
+                        if (dgvStudentActivities.Columns.Contains("professor_id"))
+                        {
+                            dgvStudentActivities.Columns["professor_id"].Visible = false;
                         }
 
                     }
@@ -504,12 +505,11 @@ namespace WinFormsApp1
                 string DueDate = GetSafeValue(row, "due_date");
                 string ActivityStatus = GetSafeValue(row, "activity_status");
                 string Description = GetSafeValue(row, "description");
-                string profId = ProfessorID;
+                string profId = GetSafeValue(row, "professor_id");
                 string className = GetSafeValue(row, "activity_subject");
 
                 // Fetch the PDF bytes from DB and write to a temp file
                 string tempPdfPath = FetchActivityPdf(activityId, profId, Title, StudentSection, className);
-                GetDescription(activityId, profId, Title, StudentSection, className);
                 ActivityForm activityForm = new ActivityForm(
                     profId, userId, studentname, Title, DueDate, Description,
                     StudentSection, activitySubject, ActivityStatus, tempPdfPath);
@@ -585,46 +585,6 @@ namespace WinFormsApp1
                 MessageBox.Show("Error fetching activity PDF: " + ex.Message);
                 return null;
             }
-        }
-        private void GetDescription(string activityId, string profId, string title, string section, string className)
-        {
-            string connStr = "Server=192.168.100.4;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
-            try
-            {
-                using (var conn = new MySqlConnection(connStr))
-                {
-                    conn.Open();
-                    string query = @"SELECT description, activity_id, professor_id
-                             FROM professor_activity 
-                             WHERE activity_id = @activity_id
-                             LIMIT 1";
-
-
-                    using (var cmd = new MySqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@activity_id", activityId);
-
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                string Description = reader.GetString("description");
-                                string activity_id = reader.GetString("activity_id");
-                                string professor_id = reader.GetString("professor_id");
-
-                                descpt = $"{Description}";
-                                ActivityID = activity_id;
-                                ProfessorID = professor_id;
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error loading activities: " + ex.Message);
-            }
-
         }
         private void NameGet()
         {
