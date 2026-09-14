@@ -19,28 +19,33 @@ namespace WinFormsApp1
 
         private float elapsed;
         private float finalTransition;
+        private float deltaSeconds;
+        private float lastElapsed;
 
         private bool finalState;
+        private bool loginOpened;
 
         // ============================================================
         // TIMELINE
         // ============================================================
 
-        private const float INITIALIZING_END = 1.8f;
+        private const float INITIALIZING_END = 3.0f;
 
-        private const float CORE_START = 1.4f;
-        private const float CORE_END = 3.7f;
+        private const float CORE_START = 3.0f;
+        private const float CORE_END = 4.25f;
 
-        private const float LOGO_START = 2.8f;
-        private const float LOGO_END = 5.4f;
+        private const float LOGO_START = 3.0f;
+        private const float LOGO_END = 4.25f;
 
-        private const float TITLE_START = 4.6f;
+        private const float TITLE_START = 4.0f;
 
-        private const float LOADING_START = 5.7f;
-        private const float READY_START = 7.0f;
+        private const float LOADING_START = 0.0f;
+        private const float LOADING_DURATION = 8.0f;
+        private const float READY_START = 8.0f;
 
-        private const float FINAL_TRANSITION_START = 7.5f;
-        private const float FINAL_TRANSITION_DURATION = 1.5f;
+        private const float FINAL_TRANSITION_START = 8.0f;
+        private const float FINAL_TRANSITION_DURATION = 0.65f;
+        private const float ACTIVE_DURATION = 5.0f;
 
         // ============================================================
         // CONSTRUCTOR
@@ -75,6 +80,7 @@ namespace WinFormsApp1
             enterButton.Enabled = false;
 
             stopwatch.Start();
+            lastElapsed = 0f;
         }
 
         // ============================================================
@@ -83,13 +89,16 @@ namespace WinFormsApp1
 
         private void SplashForm_Load(object sender, EventArgs e)
         {
-            CenterEnterButton();
+            if (enterButton != null)
+                enterButton.Visible = false;
+
+            animationTimer.Interval = 16;
             animationTimer.Start();
         }
 
         private void SplashForm_Resize(object sender, EventArgs e)
         {
-            CenterEnterButton();
+            // Enter System button removed; no button positioning needed.
         }
 
         private void SplashForm_FormClosed(object sender, FormClosedEventArgs e)
@@ -121,8 +130,12 @@ namespace WinFormsApp1
 
         private void animationTimer_Tick(object sender, EventArgs e)
         {
-            elapsed =
-                (float)stopwatch.Elapsed.TotalSeconds;
+            float now = (float)stopwatch.Elapsed.TotalSeconds;
+
+            // Real frame time keeps movement consistent if a frame is delayed.
+            deltaSeconds = Clamp(now - lastElapsed, 0f, 0.05f);
+            lastElapsed = now;
+            elapsed = now;
 
             if (elapsed >= FINAL_TRANSITION_START)
             {
@@ -136,17 +149,16 @@ namespace WinFormsApp1
                         1f
                     );
 
-                if (finalTransition > 0.12f)
+                // After the 8-second loading sequence, show SYSTEM ACTIVE
+                // for 5 seconds, then automatically open Login.cs.
+                if (!loginOpened &&
+                    elapsed >= FINAL_TRANSITION_START + ACTIVE_DURATION)
                 {
-                    enterButton.Visible = true;
-                    enterButton.Enabled = true;
+                    OpenLoginForm();
                 }
-
-                AnimateEnterButton();
             }
 
-            UpdateParticles();
-
+            UpdateParticles(deltaSeconds);
             Invalidate();
         }
 
@@ -158,7 +170,7 @@ namespace WinFormsApp1
             float t =
                 EaseOutCubic(
                     Clamp(
-                        (finalTransition - 0.12f) / 0.88f,
+                        (finalTransition - 0.05f) / 0.95f,
                         0f,
                         1f
                     )
@@ -253,14 +265,14 @@ namespace WinFormsApp1
             }
         }
 
-        private void UpdateParticles()
+        private void UpdateParticles(float dt)
         {
             if (particles.Count == 0)
                 return;
 
             foreach (Particle p in particles)
             {
-                p.Y -= p.Speed * 0.016f;
+                p.Y -= p.Speed * dt;
 
                 if (p.Y < -10)
                 {
@@ -280,7 +292,7 @@ namespace WinFormsApp1
 
             float appear =
                 Clamp(
-                    (elapsed - 0.4f) / 1.2f,
+                    (elapsed - 0.25f) / 1.5f,
                     0f,
                     1f
                 );
@@ -291,7 +303,7 @@ namespace WinFormsApp1
                     0.55f +
                     0.45f *
                     (float)Math.Sin(
-                        elapsed * 2.5f + p.Phase
+                        elapsed * 1.8f + p.Phase
                     );
 
                 int alpha =
@@ -551,7 +563,7 @@ namespace WinFormsApp1
 
             DrawCenteredString(
                 g,
-                "INITIALIZING CDSGA HUB",
+                "ANALYZING CDSGA HUB",
                 font,
                 brush,
                 ClientSize.Width / 2,
@@ -578,7 +590,7 @@ namespace WinFormsApp1
 
             DrawCenteredString(
                 g,
-                "Loading laboratory management environment",
+                "Analyzing laboratory management environment",
                 small,
                 smallBrush,
                 ClientSize.Width / 2,
@@ -596,294 +608,141 @@ namespace WinFormsApp1
                 return;
 
             float progress =
-                Clamp(
-                    (elapsed - CORE_START) /
-                    (CORE_END - CORE_START),
-                    0f,
-                    1f
+                EaseOutCubic(
+                    Clamp(
+                        (elapsed - CORE_START) /
+                        (CORE_END - CORE_START),
+                        0f,
+                        1f
+                    )
                 );
 
-            progress =
-                EaseOutCubic(progress);
-
-            int cx =
-                ClientSize.Width / 2;
-
-            int cy =
-                (int)(
-                    ClientSize.Height * 0.39f
-                );
+            int cx = ClientSize.Width / 2;
+            int cy = (int)(ClientSize.Height * 0.33f);
 
             float pulse =
                 0.5f +
-                0.5f *
-                (float)Math.Sin(
-                    elapsed * 2.8f
+                0.5f * (float)Math.Sin(elapsed * 2.2f);
+
+            // Soft red atmospheric glow behind the ring.
+            int glowSize = (int)((205 + pulse * 18) * progress);
+            if (glowSize > 2)
+            {
+                using GraphicsPath glowPath = new GraphicsPath();
+                glowPath.AddEllipse(
+                    cx - glowSize / 2,
+                    cy - glowSize / 2,
+                    glowSize,
+                    glowSize
                 );
 
-            // ========================================================
-            // OUTER AURA
-            // ========================================================
+                using PathGradientBrush glowBrush =
+                    new PathGradientBrush(glowPath);
 
-            int aura =
-                (int)(
-                    190 +
-                    pulse * 25
-                );
-
-            using GraphicsPath auraPath =
-                new GraphicsPath();
-
-            auraPath.AddEllipse(
-                cx - aura / 2,
-                cy - aura / 2,
-                aura,
-                aura
-            );
-
-            using PathGradientBrush auraBrush =
-                new PathGradientBrush(auraPath);
-
-            auraBrush.CenterColor =
-                Color.FromArgb(
-                    (int)(48 * progress),
-                    220,
-                    20,
-                    20
-                );
-
-            auraBrush.SurroundColors =
-                new[]
-                {
+                glowBrush.CenterColor =
                     Color.FromArgb(
-                        0,
-                        0,
-                        0,
-                        0
-                    )
-                };
-
-            g.FillPath(
-                auraBrush,
-                auraPath
-            );
-
-            // ========================================================
-            // ORBIT RINGS
-            // ========================================================
-
-            float rotation =
-                elapsed * 0.7f;
-
-            using Pen orbitPen =
-                new Pen(
-                    Color.FromArgb(
-                        (int)(95 * progress),
-                        230,
+                        (int)(38 * progress),
+                        255,
                         35,
-                        35
-                    ),
-                    1.2f
-                );
+                        25
+                    );
 
-            using Pen orbitSoft =
-                new Pen(
-                    Color.FromArgb(
-                        (int)(45 * progress),
-                        255,
-                        45,
-                        45
-                    ),
-                    2.2f
-                );
-
-            Rectangle orbit1 =
-                new Rectangle(
-                    cx - 96,
-                    cy - 34,
-                    192,
-                    68
-                );
-
-            Rectangle orbit2 =
-                new Rectangle(
-                    cx - 72,
-                    cy - 104,
-                    144,
-                    208
-                );
-
-            g.TranslateTransform(
-                cx,
-                cy
-            );
-
-            g.RotateTransform(
-                rotation * 25f
-            );
-
-            g.DrawEllipse(
-                orbitPen,
-                -96,
-                -34,
-                192,
-                68
-            );
-
-            g.ResetTransform();
-
-            g.TranslateTransform(
-                cx,
-                cy
-            );
-
-            g.RotateTransform(
-                -rotation * 18f
-            );
-
-            g.DrawEllipse(
-                orbitSoft,
-                -72,
-                -104,
-                144,
-                208
-            );
-
-            g.ResetTransform();
-
-            // ========================================================
-            // CORE CIRCLE
-            // ========================================================
-
-            int coreSize =
-                (int)(
-                    86 *
-                    progress
-                );
-
-            if (coreSize <= 2)
-                return;
-
-            using GraphicsPath corePath =
-                new GraphicsPath();
-
-            corePath.AddEllipse(
-                cx - coreSize / 2,
-                cy - coreSize / 2,
-                coreSize,
-                coreSize
-            );
-
-            using PathGradientBrush coreBrush =
-                new PathGradientBrush(corePath);
-
-            coreBrush.CenterColor =
-                Color.FromArgb(
-                    230,
-                    255,
-                    45,
-                    40
-                );
-
-            coreBrush.SurroundColors =
-                new[]
+                glowBrush.SurroundColors = new[]
                 {
-                    Color.FromArgb(
-                        20,
-                        100,
-                        0,
-                        0
-                    )
+                    Color.FromArgb(0, 0, 0, 0)
                 };
 
-            g.FillPath(
-                coreBrush,
-                corePath
+                g.FillPath(glowBrush, glowPath);
+            }
+
+            // Main circular HUD ring.
+            float rotation = elapsed * 24f;
+
+            int ringSize = (int)(158 * progress);
+            int ringLeft = cx - ringSize / 2;
+            int ringTop = cy - ringSize / 2;
+
+            using Pen outerRing = new Pen(
+                Color.FromArgb((int)(215 * progress), 255, 176, 45),
+                2.2f
             );
 
-            using Pen coreBorder =
-                new Pen(
-                    Color.FromArgb(
-                        240,
-                        255,
-                        50,
-                        45
-                    ),
-                    2
-                );
+            using Pen innerRing = new Pen(
+                Color.FromArgb((int)(150 * progress), 214, 104, 25),
+                1.2f
+            );
 
+            using Pen softRing = new Pen(
+                Color.FromArgb((int)(90 * progress), 255, 75, 35),
+                1f
+            );
+
+            g.DrawEllipse(outerRing, ringLeft, ringTop, ringSize, ringSize);
             g.DrawEllipse(
-                coreBorder,
-                cx - coreSize / 2,
-                cy - coreSize / 2,
-                coreSize,
-                coreSize
+                innerRing,
+                ringLeft + 10,
+                ringTop + 10,
+                ringSize - 20,
+                ringSize - 20
+            );
+            g.DrawEllipse(
+                softRing,
+                ringLeft + 18,
+                ringTop + 18,
+                ringSize - 36,
+                ringSize - 36
             );
 
-            // ========================================================
-            // CORE SYMBOL
-            // ========================================================
-
-            using Pen symbol =
-                new Pen(
-                    Color.FromArgb(
-                        230,
-                        255,
-                        230,
-                        225
-                    ),
-                    2
-                );
-
-            int s = coreSize / 4;
-
-            g.DrawLine(
-                symbol,
-                cx - s,
-                cy,
-                cx + s,
-                cy
+            // Rotating HUD arcs.
+            Rectangle arcRect = new Rectangle(
+                ringLeft - 4,
+                ringTop - 4,
+                ringSize + 8,
+                ringSize + 8
             );
 
-            g.DrawLine(
-                symbol,
-                cx,
-                cy - s,
-                cx,
-                cy + s
+            using Pen arcPen = new Pen(
+                Color.FromArgb((int)(230 * progress), 255, 190, 55),
+                3f
             );
 
-            // rotating light point
-            double angle =
-                elapsed * 2.5;
+            g.DrawArc(arcPen, arcRect, rotation, 55f);
+            g.DrawArc(arcPen, arcRect, rotation + 180f, 55f);
 
-            float px =
-                cx +
-                (float)Math.Cos(angle) *
-                105;
-
-            float py =
-                cy +
-                (float)Math.Sin(angle) *
-                105;
-
-            using SolidBrush point =
-                new SolidBrush(
-                    Color.FromArgb(
-                        230,
-                        255,
-                        55,
-                        50
-                    )
-                );
-
-            g.FillEllipse(
-                point,
-                px - 3,
-                py - 3,
-                6,
-                6
+            using Pen tickPen = new Pen(
+                Color.FromArgb((int)(180 * progress), 245, 160, 40),
+                1f
             );
+
+            // Small technical ticks around the circle.
+            for (int i = 0; i < 24; i++)
+            {
+                double a = (Math.PI * 2.0 * i / 24.0) + elapsed * 0.18;
+                float outer = ringSize / 2f - 1f;
+                float inner = outer - (i % 3 == 0 ? 9f : 5f);
+
+                float x1 = cx + (float)Math.Cos(a) * inner;
+                float y1 = cy + (float)Math.Sin(a) * inner;
+                float x2 = cx + (float)Math.Cos(a) * outer;
+                float y2 = cy + (float)Math.Sin(a) * outer;
+
+                g.DrawLine(tickPen, x1, y1, x2, y2);
+            }
+
+            // Four bright locator points.
+            using SolidBrush pointBrush = new SolidBrush(
+                Color.FromArgb((int)(235 * progress), 255, 190, 60)
+            );
+
+            float pointRadius = ringSize / 2f;
+            for (int i = 0; i < 4; i++)
+            {
+                double a = i * Math.PI / 2.0;
+                float px = cx + (float)Math.Cos(a) * pointRadius;
+                float py = cy + (float)Math.Sin(a) * pointRadius;
+
+                g.FillEllipse(pointBrush, px - 3.5f, py - 3.5f, 7f, 7f);
+            }
         }
 
         // ============================================================
@@ -892,73 +751,44 @@ namespace WinFormsApp1
 
         private void DrawLogo(Graphics g)
         {
-            if (logoImage == null)
-                return;
-
-            if (elapsed < LOGO_START)
+            if (logoImage == null || elapsed < LOGO_START)
                 return;
 
             float progress =
-                Clamp(
-                    (elapsed - LOGO_START) /
-                    1.6f,
-                    0f,
-                    1f
-                );
-
-            float scale =
-                EaseOutBack(progress);
-
-            float fade =
-                EaseOutCubic(
+                EaseOutBack(
                     Clamp(
-                        (elapsed - LOGO_START) /
-                        0.65f,
+                        (elapsed - LOGO_START) / 1.15f,
                         0f,
                         1f
                     )
                 );
 
+            float fade =
+                EaseOutCubic(
+                    Clamp(
+                        (elapsed - LOGO_START) / 0.7f,
+                        0f,
+                        1f
+                    )
+                );
+
+            int cx = ClientSize.Width / 2;
+            int cy = (int)(ClientSize.Height * 0.33f);
+
             int maxSize =
-                (int)(
-                    Math.Min(
-                        ClientSize.Width,
-                        ClientSize.Height
-                    ) * 0.27f
-                );
+                (int)(Math.Min(ClientSize.Width, ClientSize.Height) * 0.155f);
 
-            int size =
-                (int)(
-                    maxSize *
-                    scale
-                );
+            int size = Math.Max(1, (int)(maxSize * progress));
 
-            if (size <= 0)
-                return;
+            // Keep the logo safely inside the circular HUD.
+            DrawLogoGlow(g, cx, cy, size, fade);
 
-            int cx =
-                ClientSize.Width / 2;
-
-            int cy =
-                (int)(
-                    ClientSize.Height * 0.39f
-                );
-
-            DrawLogoGlow(
-                g,
-                cx,
-                cy,
+            Rectangle destination = new Rectangle(
+                cx - size / 2,
+                cy - size / 2,
                 size,
-                fade
+                size
             );
-
-            Rectangle destination =
-                new Rectangle(
-                    cx - size / 2,
-                    cy - size / 2,
-                    size,
-                    size
-                );
 
             DrawImageWithOpacity(
                 g,
@@ -1083,8 +913,8 @@ namespace WinFormsApp1
 
             using Font titleFont =
                 new Font(
-                    "Segoe UI",
-                    40,
+                    "Segoe UI Semibold",
+                    38,
                     FontStyle.Bold,
                     GraphicsUnit.Pixel
                 );
@@ -1092,7 +922,7 @@ namespace WinFormsApp1
             using Font subtitleFont =
                 new Font(
                     "Segoe UI",
-                    14,
+                    13,
                     FontStyle.Regular,
                     GraphicsUnit.Pixel
                 );
@@ -1157,7 +987,7 @@ namespace WinFormsApp1
             float progress =
                 Clamp(
                     (elapsed - LOADING_START) /
-                    1.2f,
+                    LOADING_DURATION,
                     0f,
                     1f
                 );
@@ -1297,11 +1127,13 @@ namespace WinFormsApp1
 
         private void DrawTransitionLayer(Graphics g)
         {
+            // No off-screen Bitmap is created per frame. This avoids GC spikes
+            // and makes the splash-to-main transition visibly smoother.
             float fadeOut =
                 1f -
                 EaseInOutCubic(
                     Clamp(
-                        finalTransition / 0.7f,
+                        finalTransition / 0.78f,
                         0f,
                         1f
                     )
@@ -1310,52 +1142,19 @@ namespace WinFormsApp1
             if (fadeOut <= 0.01f)
                 return;
 
-            using Bitmap layer =
-                new Bitmap(
-                    ClientSize.Width,
-                    ClientSize.Height
+            int alpha = (int)(255f * (1f - fadeOut));
+
+            using SolidBrush fadeBrush =
+                new SolidBrush(
+                    Color.FromArgb(
+                        alpha,
+                        0,
+                        0,
+                        0
+                    )
                 );
 
-            using Graphics lg =
-                Graphics.FromImage(layer);
-
-            lg.SmoothingMode =
-                SmoothingMode.AntiAlias;
-
-            lg.InterpolationMode =
-                InterpolationMode.HighQualityBicubic;
-
-            DrawCore(lg);
-            DrawLogo(lg);
-            DrawTitle(lg);
-            DrawLoading(lg);
-
-            using ImageAttributes attributes =
-                new ImageAttributes();
-
-            ColorMatrix matrix =
-                new ColorMatrix();
-
-            matrix.Matrix33 =
-                fadeOut;
-
-            attributes.SetColorMatrix(matrix);
-
-            g.DrawImage(
-                layer,
-                new Rectangle(
-                    0,
-                    0,
-                    ClientSize.Width,
-                    ClientSize.Height
-                ),
-                0,
-                0,
-                layer.Width,
-                layer.Height,
-                GraphicsUnit.Pixel,
-                attributes
-            );
+            g.FillRectangle(fadeBrush, ClientRectangle);
         }
 
         // ============================================================
@@ -1364,168 +1163,131 @@ namespace WinFormsApp1
 
         private void DrawFinalScreen(Graphics g)
         {
-            float t =
+            float transitionT =
                 EaseOutCubic(
-                    Clamp(
-                        (finalTransition - 0.12f) /
-                        0.88f,
-                        0f,
-                        1f
-                    )
+                    Clamp(finalTransition, 0f, 1f)
                 );
 
-            if (t <= 0)
-                return;
+            int cx = ClientSize.Width / 2;
+            int cy = (int)(ClientSize.Height * 0.31f);
 
-            int cx =
-                ClientSize.Width / 2;
-
-            // ========================================================
-            // CENTRAL AURA
-            // ========================================================
-
+            // Background red glow.
             float pulse =
                 0.5f +
-                0.5f *
-                (float)Math.Sin(
-                    elapsed * 2.3f
-                );
+                0.5f * (float)Math.Sin(elapsed * 2.5f);
 
-            int aura =
-                (int)(
-                    320 +
-                    pulse * 25
-                );
+            int glowSize = (int)(260 + pulse * 18);
 
-            using GraphicsPath auraPath =
-                new GraphicsPath();
-
-            auraPath.AddEllipse(
-                cx - aura / 2,
-                (int)(
-                    ClientSize.Height * 0.30f
-                ),
-                aura,
-                aura
+            using GraphicsPath glowPath = new GraphicsPath();
+            glowPath.AddEllipse(
+                cx - glowSize / 2,
+                cy - glowSize / 2,
+                glowSize,
+                glowSize
             );
 
-            using PathGradientBrush auraBrush =
-                new PathGradientBrush(auraPath);
+            using PathGradientBrush glowBrush =
+                new PathGradientBrush(glowPath);
 
-            auraBrush.CenterColor =
-                Color.FromArgb(
-                    (int)(55 * t),
-                    190,
-                    15,
-                    15
-                );
-
-            auraBrush.SurroundColors =
-                new[]
-                {
-                    Color.FromArgb(
-                        0,
-                        0,
-                        0,
-                        0
-                    )
-                };
-
-            g.FillPath(
-                auraBrush,
-                auraPath
+            glowBrush.CenterColor = Color.FromArgb(
+                (int)(42 * transitionT),
+                240,
+                35,
+                25
             );
 
-            // ========================================================
-            // LOGO
-            // ========================================================
+            glowBrush.SurroundColors = new[]
+            {
+                Color.FromArgb(0, 0, 0, 0)
+            };
 
+            g.FillPath(glowBrush, glowPath);
+
+            // Circular HUD around the real logo.
+            int ringSize = 168;
+            int left = cx - ringSize / 2;
+            int top = cy - ringSize / 2;
+
+            using Pen ring = new Pen(
+                Color.FromArgb((int)(230 * transitionT), 255, 177, 45),
+                2.4f
+            );
+
+            using Pen ring2 = new Pen(
+                Color.FromArgb((int)(135 * transitionT), 220, 104, 25),
+                1.2f
+            );
+
+            g.DrawEllipse(ring, left, top, ringSize, ringSize);
+            g.DrawEllipse(ring2, left + 11, top + 11, ringSize - 22, ringSize - 22);
+
+            Rectangle arcRect = new Rectangle(left - 5, top - 5, ringSize + 10, ringSize + 10);
+            using Pen arcPen = new Pen(
+                Color.FromArgb((int)(225 * transitionT), 255, 185, 50),
+                3f
+            );
+
+            float rotation = elapsed * 26f;
+            g.DrawArc(arcPen, arcRect, rotation, 52f);
+            g.DrawArc(arcPen, arcRect, rotation + 180f, 52f);
+
+            using Pen tickPen = new Pen(
+                Color.FromArgb((int)(155 * transitionT), 245, 160, 40),
+                1f
+            );
+
+            for (int i = 0; i < 24; i++)
+            {
+                double a = Math.PI * 2.0 * i / 24.0;
+                float outer = ringSize / 2f - 1f;
+                float inner = outer - (i % 3 == 0 ? 9f : 5f);
+
+                g.DrawLine(
+                    tickPen,
+                    cx + (float)Math.Cos(a) * inner,
+                    cy + (float)Math.Sin(a) * inner,
+                    cx + (float)Math.Cos(a) * outer,
+                    cy + (float)Math.Sin(a) * outer
+                );
+            }
+
+            // Real CCS logo centered inside the ring.
             if (logoImage != null)
             {
-                int logoSize =
-                    (int)(
-                        135 *
-                        t
-                    );
+                int logoSize = 104;
+                DrawLogoGlow(g, cx, cy, logoSize, transitionT);
 
-                int logoY =
-                    (int)(
-                        ClientSize.Height * 0.25f -
-                        25 * (1f - t)
-                    );
-
-                Rectangle logoRect =
-                    new Rectangle(
-                        cx - logoSize / 2,
-                        logoY,
-                        logoSize,
-                        logoSize
-                    );
+                Rectangle logoRect = new Rectangle(
+                    cx - logoSize / 2,
+                    cy - logoSize / 2,
+                    logoSize,
+                    logoSize
+                );
 
                 DrawImageWithOpacity(
                     g,
                     logoImage,
                     logoRect,
-                    t
+                    transitionT
                 );
             }
 
-            // ========================================================
-            // TEXT
-            // ========================================================
+            // Main title.
+            using Font titleFont = new Font(
+                "Segoe UI Semibold",
+                42,
+                FontStyle.Bold,
+                GraphicsUnit.Pixel
+            );
 
-            float textT =
-                EaseOutCubic(
-                    Clamp(
-                        (finalTransition - 0.28f) /
-                        0.72f,
-                        0f,
-                        1f
-                    )
-                );
-
-            int titleY =
-                (int)(
-                    ClientSize.Height * 0.52f -
-                    18 *
-                    (1f - textT)
-                );
-
-            using Font titleFont =
-                new Font(
-                    "Segoe UI",
-                    36,
-                    FontStyle.Bold,
-                    GraphicsUnit.Pixel
-                );
-
-            using Font subtitleFont =
-                new Font(
-                    "Segoe UI",
-                    15,
-                    FontStyle.Regular,
-                    GraphicsUnit.Pixel
-                );
-
-            using SolidBrush titleBrush =
-                new SolidBrush(
-                    Color.FromArgb(
-                        (int)(255 * textT),
-                        255,
-                        245,
-                        238
-                    )
-                );
-
-            using SolidBrush subtitleBrush =
-                new SolidBrush(
-                    Color.FromArgb(
-                        (int)(205 * textT),
-                        225,
-                        225,
-                        225
-                    )
-                );
+            using SolidBrush titleBrush = new SolidBrush(
+                Color.FromArgb(
+                    (int)(255 * transitionT),
+                    248,
+                    248,
+                    248
+                )
+            );
 
             DrawCenteredString(
                 g,
@@ -1533,152 +1295,190 @@ namespace WinFormsApp1
                 titleFont,
                 titleBrush,
                 cx,
-                titleY
+                (int)(ClientSize.Height * 0.60f)
+            );
+
+            using Font subtitleFont = new Font(
+                "Segoe UI",
+                14,
+                FontStyle.Regular,
+                GraphicsUnit.Pixel
+            );
+
+            using SolidBrush subtitleBrush = new SolidBrush(
+                Color.FromArgb(
+                    (int)(205 * transitionT),
+                    220,
+                    220,
+                    220
+                )
             );
 
             DrawCenteredString(
                 g,
-                "College of Computer Studies",
+                "COLLEGE OF COMPUTER STUDIES",
                 subtitleFont,
                 subtitleBrush,
                 cx,
-                titleY + 48
+                (int)(ClientSize.Height * 0.655f)
             );
 
-            // ========================================================
-            // ONLINE INDICATOR
-            // ========================================================
+            // Green active status pill.
+            float activeElapsed = Math.Max(0f, elapsed - FINAL_TRANSITION_START);
 
-            float statusT =
-                EaseOutCubic(
-                    Clamp(
-                        (finalTransition - 0.4f) /
-                        0.6f,
-                        0f,
-                        1f
-                    )
-                );
+            int secondsLeft = Math.Max(
+                0,
+                (int)Math.Ceiling(ACTIVE_DURATION - activeElapsed)
+            );
 
-            int statusY =
-                titleY + 86;
+            int pillWidth = 190;
+            int pillHeight = 38;
+            int pillX = cx - pillWidth / 2;
+            int pillY = (int)(ClientSize.Height * 0.735f);
 
-            int dotX =
-                cx - 74;
+            using GraphicsPath pillPath = RoundedRect(
+                new Rectangle(pillX, pillY, pillWidth, pillHeight),
+                19
+            );
 
-            using SolidBrush dot =
-                new SolidBrush(
-                    Color.FromArgb(
-                        (int)(230 * statusT),
-                        65,
-                        255,
-                        145
-                    )
-                );
+            using SolidBrush pillBrush = new SolidBrush(
+                Color.FromArgb(
+                    (int)(120 * transitionT),
+                    10,
+                    18,
+                    13
+                )
+            );
+
+            using Pen pillPen = new Pen(
+                Color.FromArgb(
+                    (int)(190 * transitionT),
+                    65,
+                    165,
+                    75
+                ),
+                1.3f
+            );
+
+            g.FillPath(pillBrush, pillPath);
+            g.DrawPath(pillPen, pillPath);
+
+            int dotSize = 9;
+            using SolidBrush dotBrush = new SolidBrush(
+                Color.FromArgb(
+                    (int)(245 * transitionT),
+                    45,
+                    220,
+                    105
+                )
+            );
 
             g.FillEllipse(
-                dot,
-                dotX,
-                statusY - 4,
-                8,
-                8
+                dotBrush,
+                pillX + 20,
+                pillY + pillHeight / 2 - dotSize / 2,
+                dotSize,
+                dotSize
             );
 
-            using Font statusFont =
-                new Font(
-                    "Segoe UI",
-                    10,
-                    FontStyle.Regular,
-                    GraphicsUnit.Pixel
-                );
+            using Font statusFont = new Font(
+                "Segoe UI Semibold",
+                12,
+                FontStyle.Bold,
+                GraphicsUnit.Pixel
+            );
 
-            using SolidBrush statusBrush =
-                new SolidBrush(
-                    Color.FromArgb(
-                        (int)(170 * statusT),
-                        205,
-                        225,
-                        215
-                    )
-                );
+            using SolidBrush statusBrush = new SolidBrush(
+                Color.FromArgb(
+                    (int)(240 * transitionT),
+                    205,
+                    245,
+                    215
+                )
+            );
 
-            g.DrawString(
-                "SYSTEM ONLINE",
+            DrawCenteredString(
+                g,
+                "SYSTEM ACTIVE",
                 statusFont,
                 statusBrush,
-                dotX + 16,
-                statusY - 9
+                cx + 10,
+                pillY + pillHeight / 2f
             );
 
-            // ========================================================
-            // BUTTON AURA
-            // ========================================================
+            using Font countdownFont = new Font(
+                "Segoe UI",
+                12,
+                FontStyle.Regular,
+                GraphicsUnit.Pixel
+            );
 
-            if (t > 0.25f)
+            using SolidBrush countdownBrush = new SolidBrush(
+                Color.FromArgb(
+                    (int)(190 * transitionT),
+                    190,
+                    220,
+                    198
+                )
+            );
+
+            DrawCenteredString(
+                g,
+                secondsLeft > 0
+                    ? "Opening Login in " + secondsLeft
+                    : "OPENING LOGIN...",
+                countdownFont,
+                countdownBrush,
+                cx,
+                pillY + 57
+            );
+        }
+
+        private static GraphicsPath RoundedRect(Rectangle rect, int radius)
+        {
+            GraphicsPath path = new GraphicsPath();
+            int d = radius * 2;
+
+            path.AddArc(rect.X, rect.Y, d, d, 180, 90);
+            path.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
+            path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90);
+            path.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
+            path.CloseFigure();
+
+            return path;
+        }
+
+        // ============================================================
+        // AUTOMATIC LOGIN
+        // ============================================================
+
+        private void OpenLoginForm()
+        {
+            if (loginOpened)
+                return;
+
+            loginOpened = true;
+            animationTimer.Stop();
+            stopwatch.Stop();
+
+            try
             {
-                float pulseButton =
-                    0.5f +
-                    0.5f *
-                    (float)Math.Sin(
-                        elapsed * 3f
-                    );
+                Login loginForm = new Login();
 
-                int buttonWidth =
-                    enterButton.Width + 45;
+                loginForm.FormClosed += (s, e) =>
+                {
+                    if (!IsDisposed)
+                        Close();
+                };
 
-                int buttonHeight =
-                    enterButton.Height + 25;
-
-                int buttonX =
-                    cx -
-                    buttonWidth / 2;
-
-                int buttonY =
-                    enterButton.Top -
-                    12;
-
-                using GraphicsPath buttonPath =
-                    new GraphicsPath();
-
-                buttonPath.AddRectangle(
-                    new Rectangle(
-                        buttonX,
-                        buttonY,
-                        buttonWidth,
-                        buttonHeight
-                    )
-                );
-
-                using PathGradientBrush buttonGlow =
-                    new PathGradientBrush(
-                        buttonPath
-                    );
-
-                buttonGlow.CenterColor =
-                    Color.FromArgb(
-                        (int)(
-                            30 +
-                            pulseButton * 35
-                        ),
-                        255,
-                        25,
-                        25
-                    );
-
-                buttonGlow.SurroundColors =
-                    new[]
-                    {
-                        Color.FromArgb(
-                            0,
-                            255,
-                            0,
-                            0
-                        )
-                    };
-
-                g.FillPath(
-                    buttonGlow,
-                    buttonPath
-                );
+                loginForm.Show();
+                Hide();
+            }
+            catch
+            {
+                // If Login.cs is not available or cannot be created,
+                // keep the splash closed cleanly instead of crashing.
+                Close();
             }
         }
 

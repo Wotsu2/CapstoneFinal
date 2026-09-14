@@ -14,12 +14,12 @@ namespace WinFormsApp1
         private FilterInfoCollection videoDevices;
         private VideoCaptureDevice videoSource;
 
-        private Panel pnlBrand;
         private Panel pnlInstructions;
         private Panel pnlCamera;
         private ScannerView scannerView;
         private Label lblCamTitle;
         private Button btnStart;
+
         private System.Windows.Forms.Timer countdownTimer;
         private int countdown = 3;
 
@@ -41,6 +41,15 @@ namespace WinFormsApp1
 
         private static readonly Color ClrSuccessGlow = Color.FromArgb(0, 200, 100);
         private static readonly Color ClrErrorGlow = Color.FromArgb(230, 55, 75);
+
+        // ---- NEW: colors for the reference-image style design ----
+        private static readonly Color ClrCardBg = Color.FromArgb(228, 228, 230);      // light gray container card
+        private static readonly Color ClrReminderBg = Color.FromArgb(214, 208, 122);  // olive "Important Reminder"
+        private static readonly Color ClrReminderText = Color.FromArgb(70, 60, 10);
+        private static readonly Color ClrTealBg = Color.FromArgb(150, 214, 200);      // teal privacy banner
+        private static readonly Color ClrTealText = Color.FromArgb(30, 70, 60);
+        private static readonly Color ClrGoodText = Color.FromArgb(20, 140, 70);
+        private static readonly Color ClrBadText = Color.FromArgb(200, 30, 40);
 
         public bool VerificationPassed { get; private set; } = false;
 
@@ -64,96 +73,38 @@ namespace WinFormsApp1
         private void SetupUI()
         {
             this.Text = "Face Verification — Colegio De San Gabriel Arcangel Inc.";
-            this.ClientSize = new Size(1040, 660);
+            this.ClientSize = new Size(1040, 820);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.BackColor = ClrCream;
             this.Font = new Font("Segoe UI", 9F);
 
-            int sidebarWidth = 320;
-            int contentWidth = this.ClientSize.Width - sidebarWidth;
-
-            // ================= LEFT BRAND SIDEBAR (persistent) =================
-            pnlBrand = new Panel
-            {
-                Dock = DockStyle.Left,
-                Width = sidebarWidth,
-                BackColor = ClrMaroon
-            };
-            pnlBrand.Paint += PnlBrand_Paint;
-
-            var picLogo = new PictureBox
-            {
-                Size = new Size(120, 120),
-                Location = new Point((sidebarWidth - 120) / 2, 80),
-                SizeMode = PictureBoxSizeMode.Zoom,
-                BackColor = Color.Transparent
-            };
-            try
-            {
-                // Ginagamit yung parehong logo na nasa Login form mo
-                picLogo.Image = Properties.Resources._519651826_1547683232876514_5721937903657253200_n_removebg_preview;
-            }
-            catch { /* kung hindi ma-load, tuloy pa rin nang walang logo image */ }
-
-            var lblSchoolName = new Label
-            {
-                Text = "COLEGIO DE SAN GABRIEL\nARCANGEL INC.",
-                ForeColor = ClrGold,
-                Font = new Font("Segoe UI Semibold", 13F, FontStyle.Bold),
-                TextAlign = ContentAlignment.MiddleCenter,
-                Size = new Size(sidebarWidth - 40, 60),
-                Location = new Point(20, 215)
-            };
-
-            var lblDivider = new Panel
-            {
-                BackColor = ClrGold,
-                Size = new Size(60, 2),
-                Location = new Point((sidebarWidth - 60) / 2, 288)
-            };
-
-            var lblTagline = new Label
-            {
-                Text = "STUDENT IDENTITY\nVERIFICATION PORTAL",
-                ForeColor = Color.FromArgb(220, 210, 200),
-                Font = new Font("Consolas", 9F, FontStyle.Regular),
-                TextAlign = ContentAlignment.MiddleCenter,
-                Size = new Size(sidebarWidth - 40, 40),
-                Location = new Point(20, 306)
-            };
-
-            var lblFooter = new Label
-            {
-                Text = "🔒 Secured by AI Facial\nRecognition Technology",
-                ForeColor = Color.FromArgb(180, 150, 160),
-                Font = new Font("Segoe UI", 8.5F),
-                TextAlign = ContentAlignment.MiddleCenter,
-                Size = new Size(sidebarWidth - 40, 40),
-                Location = new Point(20, this.ClientSize.Height - 70)
-            };
-
-            pnlBrand.Controls.Add(picLogo);
-            pnlBrand.Controls.Add(lblSchoolName);
-            pnlBrand.Controls.Add(lblDivider);
-            pnlBrand.Controls.Add(lblTagline);
-            pnlBrand.Controls.Add(lblFooter);
+            int contentWidth = this.ClientSize.Width;
 
             // ================= RIGHT: INSTRUCTIONS PANEL =================
-            pnlInstructions = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = ClrCream };
+            pnlInstructions = new Panel { Dock = DockStyle.Fill, AutoScroll = false, BackColor = ClrCream };
 
             int pad = 40;
             int innerWidth = contentWidth - pad * 2;
             int y = 30;
 
+            // ---- Title with camera icon ----
+            var lblTitleIcon = new Label
+            {
+                Text = "📷",
+                Font = new Font("Segoe UI", 20, FontStyle.Bold),
+                ForeColor = ClrMaroon,
+                AutoSize = true,
+                Location = new Point(pad, y)
+            };
             var lblTitle = new Label
             {
                 Text = "Take Live Selfie",
                 Font = new Font("Segoe UI Semibold", 22, FontStyle.Bold),
                 ForeColor = ClrMaroon,
                 AutoSize = true,
-                Location = new Point(pad, y)
+                Location = new Point(pad + 46, y)
             };
             y += 46;
 
@@ -167,109 +118,150 @@ namespace WinFormsApp1
             };
             y += 46;
 
+            // ---- "Important Reminder" banner (olive style, gaya ng reference) ----
             var pnlWarning = new RoundedPanel(14)
             {
                 Location = new Point(pad, y),
-                Size = new Size(innerWidth, 70),
-                BackColor = ClrAmberBg
+                Size = new Size(innerWidth, 78),
+                BackColor = ClrReminderBg
             };
             var lblWarnIcon = new Label
             {
                 Text = "⚠",
-                Font = new Font("Segoe UI", 16, FontStyle.Bold),
-                ForeColor = Color.FromArgb(217, 160, 20),
+                Font = new Font("Segoe UI", 18, FontStyle.Bold),
+                ForeColor = ClrReminderText,
                 AutoSize = true,
-                Location = new Point(14, 10)
+                Location = new Point(18, 22)
             };
             var lblWarnTitle = new Label
             {
-                Text = "Photosensitivity warning",
-                Font = new Font("Segoe UI Semibold", 10, FontStyle.Bold),
-                ForeColor = ClrAmberText,
+                Text = "Important Reminder",
+                Font = new Font("Segoe UI Semibold", 12, FontStyle.Bold),
+                ForeColor = ClrReminderText,
                 AutoSize = true,
-                Location = new Point(48, 8)
+                Location = new Point(56, 12)
             };
             var lblWarnDesc = new Label
             {
-                Text = "This check displays colored lights. Use caution if you are photosensitive.",
-                Font = new Font("Segoe UI", 9),
-                ForeColor = ClrAmberText,
-                Size = new Size(innerWidth - 60, 36),
-                Location = new Point(48, 28)
+                Text = "Make sure you are in a well-lit area and look directly at the camera.\nAvoid using filters, hats, sunglasses, or anything that may cover your face.",
+                Font = new Font("Segoe UI", 9.5F),
+                ForeColor = ClrReminderText,
+                Size = new Size(innerWidth - 76, 46),
+                Location = new Point(56, 34)
             };
             pnlWarning.Controls.Add(lblWarnIcon);
             pnlWarning.Controls.Add(lblWarnTitle);
             pnlWarning.Controls.Add(lblWarnDesc);
-            y += 88;
+            y += 96;
+
+            // ---- Light-gray container card: align title + good/bad avatar cards ----
+            int cardContainerHeight = 40 + 210;
+            var pnlGuideContainer = new RoundedPanel(16)
+            {
+                Location = new Point(pad, y),
+                Size = new Size(innerWidth, cardContainerHeight),
+                BackColor = ClrCardBg
+            };
 
             var lblAlign = new Label
             {
-                Text = "Align your face and press Start Liveness to proceed",
+                Text = "Align your face and follow the requirements below",
                 Font = new Font("Segoe UI Semibold", 12, FontStyle.Bold),
                 ForeColor = Color.FromArgb(30, 20, 20),
                 TextAlign = ContentAlignment.MiddleCenter,
                 Size = new Size(innerWidth, 36),
-                Location = new Point(pad, y)
+                Location = new Point(0, 24)
             };
-            y += 48;
 
-            int cardW = (innerWidth - 20) / 2;
-            var pnlGood = new FaceGuideCard(true) { Location = new Point(pad, y), Size = new Size(cardW, 140) };
-            var pnlBad = new FaceGuideCard(false) { Location = new Point(pad + cardW + 20, y), Size = new Size(cardW, 140) };
-            y += 156;
+            int cardW = (innerWidth - 20 - 40) / 2;
+            var pnlGood = new FaceGuideCard(true)
+            {
+                Location = new Point(20, 74),
+                Size = new Size(cardW, 190)
+            };
+            var pnlBad = new FaceGuideCard(false)
+            {
+                Location = new Point(20 + cardW + 20, 74),
+                Size = new Size(cardW, 190)
+            };
 
+            pnlGuideContainer.Controls.Add(lblAlign);
+            pnlGuideContainer.Controls.Add(pnlGood);
+            pnlGuideContainer.Controls.Add(pnlBad);
+
+            y += cardContainerHeight + 20;
+
+            // ---- Checklist items (2x2 grid, title + subtitle, gaya ng reference) ----
             string[,] items = new string[,]
             {
-                { "Hijab-friendly verification", "true" },
-                { "Avoid wearing cap", "false" },
-                { "Use enough lighting", "true" },
-                { "Avoid wearing glasses", "false" }
+                { "Your face is clearly visible", "Make sure your entire face is in the frame.", "true" },
+                { "No Cap / Hat / Head Covering", "Your hair and face must be fully visible.", "false" },
+                { "Good lighting (not too dark or too bright)", "Your face should be evenly lit.", "true" },
+                { "No Glasses (or any item that covers your eyes)", "Remove sunglasses, prescription glasses, or face masks.", "false" }
             };
 
+            int chCardW = (innerWidth - 20) / 2;
             for (int i = 0; i < 4; i++)
             {
                 int col = i % 2;
                 int row = i / 2;
-                bool positive = items[i, 1] == "true";
-                var item = new ChecklistItem(items[i, 0], positive)
+                bool positive = items[i, 2] == "true";
+                var item = new ChecklistItem(items[i, 0], items[i, 1], positive)
                 {
-                    Location = new Point(pad + col * (cardW + 20), y + row * 52),
-                    Size = new Size(cardW, 46)
+                    Location = new Point(pad + col * (chCardW + 20), y + row * 62),
+                    Size = new Size(chCardW, 56)
                 };
                 pnlInstructions.Controls.Add(item);
             }
-            y += 116;
+            y += 62 * 2 + 24;
 
-            var lblConsent = new Label
+            // ---- Teal privacy banner ----
+            var pnlPrivacy = new RoundedPanel(28)
             {
-                Text = "By proceeding, you allow the collection and use of your camera image for identity verification purposes only.",
-                Font = new Font("Segoe UI", 8.5F),
-                ForeColor = Color.Gray,
-                Size = new Size(innerWidth, 30),
                 Location = new Point(pad, y),
-                TextAlign = ContentAlignment.MiddleCenter
+                Size = new Size(innerWidth, 56),
+                BackColor = ClrTealBg
             };
-            y += 44;
+            var lblPrivacyIcon = new Label
+            {
+                Text = "ⓘ",
+                Font = new Font("Segoe UI", 13, FontStyle.Bold),
+                ForeColor = Color.FromArgb(40, 90, 80),
+                AutoSize = true,
+                Location = new Point(20, 16)
+            };
+            var lblPrivacy = new Label
+            {
+                Text = "Your selfie will be used for verification purposes only and will be securely stored in accordance with our data privacy policy",
+                Font = new Font("Segoe UI", 9.5F),
+                ForeColor = ClrTealText,
+                Size = new Size(innerWidth - 60, 40),
+                Location = new Point(48, 8),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            pnlPrivacy.Controls.Add(lblPrivacyIcon);
+            pnlPrivacy.Controls.Add(lblPrivacy);
+            y += 76;
 
+            // ---- Start button (black, gaya ng reference) ----
             btnStart = new RoundedButton
             {
-                Text = "Start Liveness",
-                Size = new Size(innerWidth, 50),
+                Text = "📷   Start Liveness",
+                Size = new Size(innerWidth, 56),
                 Location = new Point(pad, y),
-                BackColor = ClrMaroon,
-                HoverColor = ClrMaroonLight,
-                ForeColor = ClrGoldSoft,
-                Font = new Font("Segoe UI Semibold", 11.5F, FontStyle.Bold)
+                BackColor = Color.Black,
+                HoverColor = Color.FromArgb(40, 40, 40),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold)
             };
             btnStart.Click += BtnStart_Click;
 
+            pnlInstructions.Controls.Add(lblTitleIcon);
             pnlInstructions.Controls.Add(lblTitle);
             pnlInstructions.Controls.Add(lblDesc);
             pnlInstructions.Controls.Add(pnlWarning);
-            pnlInstructions.Controls.Add(lblAlign);
-            pnlInstructions.Controls.Add(pnlGood);
-            pnlInstructions.Controls.Add(pnlBad);
-            pnlInstructions.Controls.Add(lblConsent);
+            pnlInstructions.Controls.Add(pnlGuideContainer);
+            pnlInstructions.Controls.Add(pnlPrivacy);
             pnlInstructions.Controls.Add(btnStart);
 
             // ================= RIGHT: CAMERA / SCANNER PANEL =================
@@ -307,31 +299,84 @@ namespace WinFormsApp1
             pnlCamera.Controls.Add(lblCamTitle);
             pnlCamera.Controls.Add(lblSubTitle);
 
-            // Dock order: Fill panels muna, tapos Left sidebar sa huli
+            // Dock order: Fill panels
             this.Controls.Add(pnlCamera);
             this.Controls.Add(pnlInstructions);
-            this.Controls.Add(pnlBrand);
 
             countdownTimer = new System.Windows.Forms.Timer { Interval = 1000 };
             countdownTimer.Tick += CountdownTimer_Tick;
         }
 
-        private void PnlBrand_Paint(object sender, PaintEventArgs e)
+        private bool IsVirtualCamera(string cameraName)
         {
-            var g = e.Graphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
+            string name = (cameraName ?? string.Empty).ToLowerInvariant();
 
-            // Subtle gold accent stripe sa gilid
-            using (var goldPen = new Pen(ClrGold, 3f))
-                g.DrawLine(goldPen, pnlBrand.Width - 2, 0, pnlBrand.Width - 2, pnlBrand.Height);
+            return name.Contains("iriun") ||
+                   name.Contains("ivcam") ||
+                   name.Contains("droidcam") ||
+                   name.Contains("obs virtual") ||
+                   name.Contains("obs camera") ||
+                   name.Contains("virtual camera") ||
+                   name.Contains("virtual webcam") ||
+                   name.Contains("manycam") ||
+                   name.Contains("xsplit") ||
+                   name.Contains("snap camera") ||
+                   name.Contains("splitcam") ||
+                   name.Contains("epoccam");
+        }
 
-            // Maroon gradient para may depth
-            using (var brush = new LinearGradientBrush(
-                new Rectangle(0, 0, pnlBrand.Width, pnlBrand.Height),
-                ClrMaroonDark, ClrMaroon, 90f))
+        private bool IsLikelyExternalWebcam(FilterInfo device)
+        {
+            if (device == null)
+                return false;
+
+            string name = (device.Name ?? string.Empty).ToLowerInvariant();
+            string moniker = (device.MonikerString ?? string.Empty).ToLowerInvariant();
+
+            if (IsVirtualCamera(name))
+                return false;
+
+            // Strong indicators of a separately connected physical webcam.
+            bool externalName =
+                name.Contains("usb") ||
+                name.Contains("uvc") ||
+                name.Contains("webcam") ||
+                name.Contains("external") ||
+                name.Contains("logitech") ||
+                name.Contains("brio") ||
+                name.Contains("c920") ||
+                name.Contains("c922") ||
+                name.Contains("c930") ||
+                name.Contains("c925") ||
+                name.Contains("streamcam") ||
+                name.Contains("lifecam") ||
+                name.Contains("hd pro webcam") ||
+                name.Contains("full hd camera") ||
+                name.Contains("1080p camera") ||
+                name.Contains("720p camera");
+
+            // DirectShow USB PnP monikers commonly contain usb#vid_...
+            bool usbPnP =
+                moniker.Contains("\\usb#") ||
+                moniker.Contains("usb#vid_") ||
+                moniker.Contains("usb\\vid_");
+
+            return externalName || usbPnP;
+        }
+
+        private int FindExternalWebcamIndex()
+        {
+            if (videoDevices == null || videoDevices.Count == 0)
+                return -1;
+
+            // First choice: a camera whose name clearly identifies it as external.
+            for (int i = 0; i < videoDevices.Count; i++)
             {
-                g.FillRectangle(brush, 0, 0, pnlBrand.Width - 4, pnlBrand.Height);
+                if (IsLikelyExternalWebcam(videoDevices[i]))
+                    return i;
             }
+
+            return -1;
         }
 
         // ================= CAMERA LOGIC =================
@@ -339,33 +384,91 @@ namespace WinFormsApp1
         {
             if (faceHelper == null)
             {
-                MessageBox.Show("Hindi available ang face recognition. Suriin ang Models folder.",
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(
+                    "Hindi available ang face recognition. Suriin ang Models folder.",
+                    "Face Recognition Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
                 return;
             }
 
-            videoDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
-
-            if (videoDevices.Count == 0)
+            try
             {
-                MessageBox.Show("Walang nakitang camera. Siguraduhing naka-connect yung webcam/phone camera mo.",
-                    "Camera Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                // Reload devices para makita ang external webcam na bagong sinaksak.
+                videoDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
+
+                int externalCameraIndex = FindExternalWebcamIndex();
+
+                // IMPORTANT: Walang fallback sa ibang camera.
+                // Iriun/virtual cameras at built-in cameras na walang external
+                // indicator ay hindi gagamitin.
+                if (externalCameraIndex < 0)
+                {
+                    MessageBox.Show(
+                        "Walang compatible EXTERNAL WEBCAM na nakita.\n\n" +
+                        "Siguraduhing:\n" +
+                        "• Naka-connect ang physical USB webcam\n" +
+                        "• Naka-enable ito sa Windows\n" +
+                        "• Hindi ito Iriun o ibang virtual camera\n\n" +
+                        "Hindi gagamitin ng system ang built-in laptop camera o virtual camera.",
+                        "External Webcam Required",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return;
+                }
+
+                string selectedCameraName = videoDevices[externalCameraIndex].Name;
+
+                DialogResult result = MessageBox.Show(
+                    "EXTERNAL WEBCAM SELECTED\n\n" +
+                    "Camera: " + selectedCameraName + "\n\n" +
+                    "FACE VERIFICATION REQUIREMENTS\n\n" +
+                    "• Remove your glasses\n" +
+                    "• Remove your cap or hat\n" +
+                    "• Make sure your full face is visible\n" +
+                    "• Look directly at the camera\n" +
+                    "• Make sure there is enough lighting\n\n" +
+                    "Are you ready to continue?",
+                    "Before You Continue",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+
+                if (result != DialogResult.Yes)
+                    return;
+
+                StopCamera();
+
+                videoSource = new VideoCaptureDevice(
+                    videoDevices[externalCameraIndex].MonikerString);
+
+                videoSource.NewFrame += VideoSource_NewFrame;
+                videoSource.Start();
+
+                pnlInstructions.Visible = false;
+                pnlCamera.Visible = true;
+
+                countdown = 3;
+
+                scannerView.AccentColor = ClrGold;
+                scannerView.ScanningActive = true;
+                scannerView.ShowSuccess = false;
+                scannerView.ShowError = false;
+                scannerView.StatusText =
+                    "NO GLASSES • NO CAP • HOLD STILL • " + countdown;
+
+                countdownTimer.Start();
             }
+            catch (Exception ex)
+            {
+                StopCamera();
 
-            videoSource = new VideoCaptureDevice(videoDevices[0].MonikerString);
-            videoSource.NewFrame += VideoSource_NewFrame;
-            videoSource.Start();
-
-            pnlInstructions.Visible = false;
-            pnlCamera.Visible = true;
-
-            countdown = 3;
-            scannerView.AccentColor = ClrGold;
-            scannerView.ScanningActive = true;
-            scannerView.ShowSuccess = false;
-            scannerView.ShowError = false;
-            scannerView.StatusText = "HOLD STILL • " + countdown;
+                MessageBox.Show(
+                    "Hindi ma-start ang external webcam.\n\n" +
+                    ex.Message,
+                    "Camera Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
         }
 
         private void VideoSource_NewFrame(object sender, NewFrameEventArgs eventArgs)
@@ -391,7 +494,7 @@ namespace WinFormsApp1
             countdown--;
             if (countdown > 0)
             {
-                scannerView.StatusText = "HOLD STILL • " + countdown;
+                scannerView.StatusText = "NO GLASSES • NO CAP • HOLD STILL • " + countdown;
             }
             else
             {
@@ -475,7 +578,7 @@ namespace WinFormsApp1
                 scannerView.ShowError = false;
                 scannerView.AccentColor = ClrGold;
                 scannerView.ScanningActive = true;
-                scannerView.StatusText = "HOLD STILL • " + countdown;
+                scannerView.StatusText = "NO GLASSES • NO CAP • HOLD STILL • " + countdown;
                 countdownTimer.Start();
             };
             retryTimer.Start();
@@ -483,10 +586,23 @@ namespace WinFormsApp1
 
         private void StopCamera()
         {
-            if (videoSource != null && videoSource.IsRunning)
+            if (videoSource != null)
             {
-                videoSource.SignalToStop();
-                videoSource.WaitForStop();
+                try
+                {
+                    videoSource.NewFrame -= VideoSource_NewFrame;
+
+                    if (videoSource.IsRunning)
+                    {
+                        videoSource.SignalToStop();
+                        videoSource.WaitForStop();
+                    }
+                }
+                catch { }
+                finally
+                {
+                    videoSource = null;
+                }
             }
         }
 
@@ -583,81 +699,153 @@ namespace WinFormsApp1
         }
     }
 
-    public class FaceGuideCard : RoundedPanel
+    // ---- FaceGuideCard: gumagamit na ng CartoonG / CartoonR resource images ----
+    // Circular avatar + badge overlay (green ✓ sa Good, red ✕ sa Bad) + caption sa ilalim,
+    // gaya ng "Good Fit" / "Too Far/ Not Centered" sa reference image.
+    public class FaceGuideCard : Panel
     {
         private bool isGood;
 
-        public FaceGuideCard(bool good) : base(16)
+        public FaceGuideCard(bool good)
         {
             isGood = good;
-            BackColor = Color.FromArgb(248, 245, 240);
-            SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
+            BackColor = Color.Transparent;
+
+            SetStyle(
+                ControlStyles.AllPaintingInWmPaint |
+                ControlStyles.UserPaint |
+                ControlStyles.OptimizedDoubleBuffer,
+                true);
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
+
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.InterpolationMode =
+                System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
 
-            int cx = Width / 2;
-            int ovalW = 70, ovalH = 84;
-            int ovalX = cx - ovalW / 2;
-            int ovalY = 12;
+            // =========================
+            // AVATAR IMAGE
+            // =========================
+            int avatarSize = 120;
+            int avatarX = (Width - avatarSize) / 2;
+            int avatarY = 6;
 
-            using (var bg = new SolidBrush(Color.FromArgb(230, 225, 220)))
-                g.FillEllipse(bg, ovalX, ovalY, ovalW, ovalH);
+            Image avatarImg = null;
 
-            Color lineColor = isGood ? Color.FromArgb(22, 163, 74) : Color.FromArgb(200, 200, 205);
-            using (var pen = new Pen(lineColor, 2.5f))
-                g.DrawEllipse(pen, ovalX + 8, ovalY + 6, ovalW - 16, ovalH - 20);
-
-            using (var faceLine = new Pen(Color.FromArgb(160, 160, 165), 2f))
+            try
             {
-                g.DrawLine(faceLine, cx - 12, ovalY + 32, cx - 6, ovalY + 32);
-                g.DrawLine(faceLine, cx + 6, ovalY + 32, cx + 12, ovalY + 32);
-                g.DrawArc(faceLine, cx - 10, ovalY + 44, 20, 12, 0, 180);
+                avatarImg = isGood
+                    ? Properties.Resources.CartoonG
+                    : Properties.Resources.CartoonR;
+            }
+            catch
+            {
+                avatarImg = null;
             }
 
-            int badgeSize = 22;
-            int badgeX = cx + ovalW / 2 - badgeSize - 6;
-            int badgeY = ovalY + ovalH - badgeSize - 2;
-            Color badgeColor = isGood ? Color.FromArgb(22, 163, 74) : Color.FromArgb(220, 38, 38);
-            using (var badgeBrush = new SolidBrush(badgeColor))
-                g.FillEllipse(badgeBrush, badgeX, badgeY, badgeSize, badgeSize);
-            using (var whitePen = new Pen(Color.White, 2.2f))
+            using (var path = new GraphicsPath())
             {
-                if (isGood)
+                path.AddEllipse(
+                    avatarX,
+                    avatarY,
+                    avatarSize,
+                    avatarSize);
+
+                GraphicsState state = g.Save();
+
+                g.SetClip(path);
+
+                // Background
+                using (var bgBrush = new SolidBrush(
+                    isGood
+                        ? Color.FromArgb(220, 245, 230)
+                        : Color.FromArgb(250, 225, 230)))
                 {
-                    g.DrawLine(whitePen, badgeX + 5, badgeY + 11, badgeX + 9, badgeY + 15);
-                    g.DrawLine(whitePen, badgeX + 9, badgeY + 15, badgeX + 17, badgeY + 6);
+                    g.FillEllipse(
+                        bgBrush,
+                        avatarX,
+                        avatarY,
+                        avatarSize,
+                        avatarSize);
                 }
-                else
+
+                // Image
+                if (avatarImg != null)
                 {
-                    g.DrawLine(whitePen, badgeX + 6, badgeY + 6, badgeX + 16, badgeY + 16);
-                    g.DrawLine(whitePen, badgeX + 16, badgeY + 6, badgeX + 6, badgeY + 16);
+                    g.DrawImage(
+                        avatarImg,
+                        new Rectangle(
+                            avatarX,
+                            avatarY,
+                            avatarSize,
+                            avatarSize));
                 }
+
+                g.Restore(state);
             }
 
-            string caption = isGood ? "Good Fit" : "Too Far";
-            Color capColor = isGood ? Color.FromArgb(22, 163, 74) : Color.FromArgb(140, 140, 145);
-            using (var font = new Font("Segoe UI Semibold", 10, FontStyle.Bold))
-            using (var brush = new SolidBrush(capColor))
+            // White border around image
+            using (var pen = new Pen(Color.White, 3))
             {
-                var size = g.MeasureString(caption, font);
-                g.DrawString(caption, font, brush, cx - size.Width / 2, ovalY + ovalH + 14);
+                g.DrawEllipse(
+                    pen,
+                    avatarX,
+                    avatarY,
+                    avatarSize,
+                    avatarSize);
+            }
+
+            // =========================
+            // CAPTION
+            // =========================
+            string caption = isGood
+                ? "Good Fit"
+                : "Too Far / Not Centered";
+
+            Color captionColor = isGood
+                ? Color.FromArgb(20, 140, 70)
+                : Color.FromArgb(200, 30, 40);
+
+            using (var font = new Font(
+                "Segoe UI Semibold",
+                12.5F,
+                FontStyle.Bold))
+            using (var brush = new SolidBrush(captionColor))
+            {
+                SizeF textSize =
+                    g.MeasureString(caption, font);
+
+                float textX =
+                    (Width - textSize.Width) / 2F;
+
+                float textY =
+                    avatarY + avatarSize + 14;
+
+                g.DrawString(
+                    caption,
+                    font,
+                    brush,
+                    textX,
+                    textY);
             }
         }
     }
 
+    // ---- ChecklistItem: badge + bold title + gray subtitle (2-line, gaya ng reference) ----
     public class ChecklistItem : Panel
     {
         private bool positive;
-        private string text;
+        private string title;
+        private string subtitle;
 
-        public ChecklistItem(string labelText, bool isPositive)
+        public ChecklistItem(string titleText, string subtitleText, bool isPositive)
         {
-            text = labelText;
+            title = titleText;
+            subtitle = subtitleText;
             positive = isPositive;
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true);
             BackColor = Color.Transparent;
@@ -670,7 +858,7 @@ namespace WinFormsApp1
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
             int badgeSize = 22;
-            int badgeY = (Height - badgeSize) / 2;
+            int badgeY = 2;
             Color color = positive ? Color.FromArgb(22, 163, 74) : Color.FromArgb(220, 38, 38);
 
             using (var brush = new SolidBrush(color))
@@ -690,12 +878,18 @@ namespace WinFormsApp1
                 }
             }
 
-            using (var font = new Font("Segoe UI", 9.5F))
-            using (var brush = new SolidBrush(Color.FromArgb(50, 45, 45)))
+            int textX = badgeSize + 12;
+            using (var titleFont = new Font("Segoe UI Semibold", 10, FontStyle.Bold))
+            using (var titleBrush = new SolidBrush(color))
             {
-                var rect = new RectangleF(badgeSize + 10, 0, Width - badgeSize - 10, Height);
-                var sf = new StringFormat { LineAlignment = StringAlignment.Center };
-                g.DrawString(text, font, brush, rect, sf);
+                g.DrawString(title, titleFont, titleBrush, textX, 0);
+            }
+
+            using (var subFont = new Font("Segoe UI", 8.5F))
+            using (var subBrush = new SolidBrush(color))
+            {
+                g.DrawString(subtitle, subFont, subBrush,
+                    new RectangleF(textX, 20, Width - textX, Height - 20));
             }
         }
     }
@@ -774,15 +968,15 @@ namespace WinFormsApp1
 
             int cx = Width / 2;
             int cy = Height / 2 - 6;
-            int ovalW = (int)(Width * 0.62);
-            int ovalH = (int)(Height * 0.6);
-            var faceRect = new Rectangle(cx - ovalW / 2, cy - ovalH / 2, ovalW, ovalH);
+            int faceW = (int)(Width * 0.58);
+            int faceH = (int)(Height * 0.62);
+            var faceRect = new Rectangle(cx - faceW / 2, cy - faceH / 2, faceW, faceH);
 
-            using (var vignettePath = new GraphicsPath())
+            // Face-shaped guide: mas natural kaysa sa perfect oval/circle.
+            using (var facePath = CreateFaceShape(faceRect))
             {
-                vignettePath.AddEllipse(faceRect);
                 var region = new Region(new Rectangle(0, 0, Width, Height));
-                region.Exclude(vignettePath);
+                region.Exclude(facePath);
                 using (var overlayBrush = new SolidBrush(Color.FromArgb(155, 10, 5, 8)))
                     g.FillRegion(overlayBrush, region);
                 region.Dispose();
@@ -794,13 +988,17 @@ namespace WinFormsApp1
 
             float pulse = (float)(Math.Sin(pulsePhase) * 0.5 + 0.5);
             int glowExpand = (int)(6 + pulse * 6);
+            using (var glowPath = CreateFaceShape(Rectangle.Inflate(faceRect, glowExpand, glowExpand)))
             using (var glowPen = new Pen(Color.FromArgb((int)(60 + pulse * 60), accent), 10f))
-                g.DrawEllipse(glowPen, Rectangle.Inflate(faceRect, glowExpand, glowExpand));
+                g.DrawPath(glowPen, glowPath);
 
+            using (var glowPath2 = CreateFaceShape(faceRect))
             using (var glowPen2 = new Pen(Color.FromArgb(90, accent), 6f))
-                g.DrawEllipse(glowPen2, faceRect);
+                g.DrawPath(glowPen2, glowPath2);
+
+            using (var faceOutline = CreateFaceShape(faceRect))
             using (var pen = new Pen(accent, 2.2f))
-                g.DrawEllipse(pen, faceRect);
+                g.DrawPath(pen, faceOutline);
 
             int bx = faceRect.X - 16, by = faceRect.Y - 16;
             int bw = faceRect.Width + 32, bh = faceRect.Height + 32;
@@ -825,9 +1023,8 @@ namespace WinFormsApp1
                     g.DrawArc(arcPen, bx - 8, by - 8, bw + 16, bh + 16, rotationAngle + 180, 50);
                 }
 
-                using (var clipPath = new GraphicsPath())
+                using (var clipPath = CreateFaceShape(faceRect))
                 {
-                    clipPath.AddEllipse(faceRect);
                     var oldClip = g.Clip;
                     g.SetClip(clipPath);
 
@@ -896,6 +1093,52 @@ namespace WinFormsApp1
                     bgPath.Dispose();
                 }
             }
+        }
+
+        private GraphicsPath CreateFaceShape(Rectangle r)
+        {
+            var path = new GraphicsPath();
+
+            float x = r.X;
+            float y = r.Y;
+            float w = r.Width;
+            float h = r.Height;
+            float cx = x + w / 2f;
+
+            // Forehead -> temples -> cheeks -> jaw -> chin.
+            path.AddBezier(
+                cx, y,
+                x + w * 0.73f, y,
+                x + w * 0.94f, y + h * 0.17f,
+                x + w * 0.92f, y + h * 0.36f);
+            path.AddBezier(
+                x + w * 0.92f, y + h * 0.36f,
+                x + w * 0.91f, y + h * 0.58f,
+                x + w * 0.80f, y + h * 0.76f,
+                x + w * 0.65f, y + h * 0.86f);
+            path.AddBezier(
+                x + w * 0.65f, y + h * 0.86f,
+                x + w * 0.59f, y + h * 0.91f,
+                x + w * 0.56f, y + h * 0.98f,
+                cx, y + h);
+            path.AddBezier(
+                cx, y + h,
+                x + w * 0.44f, y + h * 0.98f,
+                x + w * 0.41f, y + h * 0.91f,
+                x + w * 0.35f, y + h * 0.86f);
+            path.AddBezier(
+                x + w * 0.35f, y + h * 0.86f,
+                x + w * 0.20f, y + h * 0.76f,
+                x + w * 0.09f, y + h * 0.58f,
+                x + w * 0.08f, y + h * 0.36f);
+            path.AddBezier(
+                x + w * 0.08f, y + h * 0.36f,
+                x + w * 0.06f, y + h * 0.17f,
+                x + w * 0.27f, y,
+                cx, y);
+            path.CloseFigure();
+
+            return path;
         }
 
         private void DrawGridBackground(Graphics g)

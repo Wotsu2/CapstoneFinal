@@ -29,7 +29,14 @@ namespace WinFormsApp1
 
             // Simulan sa Login form — ito ang tamang starting point ng app
 
-            Application.Run(new Login());
+            Bitmap studentreferencesPhoto = new Bitmap("StudentPhotos/student01.jpg");
+
+            string photoPath = Path.Combine(
+    Application.StartupPath,
+    "StudentPhotos",
+    "student01.jpg"
+);
+            Application.Run(new LivenessCheckForm(studentreferencesPhoto));
 
         }
     }
