@@ -1575,11 +1575,11 @@
             ClientSize = new Size(1427, 802);
             Controls.Add(guna2Panel2);
             Controls.Add(guna2Panel1);
+            Controls.Add(pnlGrades);
+            Controls.Add(pnlSubject);
             Controls.Add(pnlActivity);
             Controls.Add(pnlHome);
             Controls.Add(pnlFile);
-            Controls.Add(pnlGrades);
-            Controls.Add(pnlSubject);
             Name = "StudentForm";
             Text = "CDSGA ";
             Load += StudentForm_Load;
