@@ -13,7 +13,7 @@ namespace WinFormsApp1
 {
     public partial class ActivityForm : Form
     {
-        private string profId;
+        private int profId;
         private string userId;
         private string title;
         private string dueDate;
@@ -25,10 +25,10 @@ namespace WinFormsApp1
         private string studentname;
         private string activitySubject;
 
-
+        private string DatabaseIP = "localhost";
         private string serverIp = "192.168.100.4";
 
-        public ActivityForm(string prof_id, string UserId, string Studentname, string Title, string Due_Date, string Description, string StudentSection, string ActivitySubject, string Status, string PDF_Path)
+        public ActivityForm(int prof_id, string UserId, string Studentname, string Title, string Due_Date, string Description, string StudentSection, string ActivitySubject, string Status, string PDF_Path)
         {
             InitializeComponent();
             
@@ -138,7 +138,7 @@ namespace WinFormsApp1
 
         private void UpdateSubmittedFile()
         {
-            string connStr = "Server=192.168.100.4;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
             try
             {
                 using (var conn = new MySqlConnection(connStr))

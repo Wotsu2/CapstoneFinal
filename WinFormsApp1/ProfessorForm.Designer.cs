@@ -4211,6 +4211,8 @@
             ClientSize = new Size(1370, 749);
             Controls.Add(guna2Panel2);
             Controls.Add(guna2Panel1);
+            Controls.Add(pnlSetting);
+            Controls.Add(pnlWorkstation);
             Controls.Add(pnlHome);
             Controls.Add(pnlStudent);
             Controls.Add(pnlActivity);
@@ -4218,8 +4220,6 @@
             Controls.Add(pnlSubject);
             Controls.Add(pnlAttendance);
             Controls.Add(pnlGrades);
-            Controls.Add(pnlSetting);
-            Controls.Add(pnlWorkstation);
             Name = "ProfessorForm";
             StartPosition = FormStartPosition.CenterScreen;
             Load += ProfessorForm_Load;

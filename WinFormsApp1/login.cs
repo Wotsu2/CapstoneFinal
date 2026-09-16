@@ -14,7 +14,8 @@ namespace WinFormsApp1
     public partial class Login : Form
     {
         private string StudentSection;
-        private int userId;
+        private string DatabaseIP = "localhost";
+        private int UserId;
         // Temporary hardcoded accounts (for testing lang, wala pang database)
         private readonly Dictionary<string, string> tempAccounts = new Dictionary<string, string>
         {
@@ -64,7 +65,7 @@ namespace WinFormsApp1
         }
         private void SelectSection(int userid)
         {
-            string connStr = "Server=192.168.100.4;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
             try
             {
                 
@@ -92,11 +93,77 @@ namespace WinFormsApp1
             }
         }
 
+        private void FaceAuthentication(string username)
+        {
+            string saveAuthenticationPhoto = Path.Combine(
+        AppDomain.CurrentDomain.BaseDirectory,
+        "StudentAuthenticationPhoto");
+
+            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    string query = "SELECT authentication_photo FROM user_credential WHERE username = @username";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@username", username);
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (!reader.Read())
+                            {
+                                MessageBox.Show("User not found.", "Login Error",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                return;
+                            }
+
+                            if (reader.IsDBNull(reader.GetOrdinal("authentication_photo")))
+                            {
+                                MessageBox.Show("No face photo stored for this user.", "Login Error",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                return;
+                            }
+
+                            string faceFileName = reader.GetString("authentication_photo");
+
+                            // ⭐ Use the local variable
+                            string faceFullPath = Path.Combine(saveAuthenticationPhoto, faceFileName);
+
+                            if (!File.Exists(faceFullPath))
+                            {
+                                MessageBox.Show("Reference photo not found: " + faceFullPath,
+                                    "Login Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                return;
+                            }
+
+                            Bitmap studentreferencesPhoto;
+                            using (var fs = new FileStream(faceFullPath, FileMode.Open, FileAccess.Read))
+                            {
+                                studentreferencesPhoto = new Bitmap(fs);
+                            }
+
+                            LivenessCheckForm livenessForm = new LivenessCheckForm(studentreferencesPhoto, UserId, StudentSection, username);
+                            livenessForm.Show();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Face authentication error: " + ex.Message);
+            }
+        }
+
         private void btnLogin_Click(object sender, EventArgs e)
         {
             string username = txtUsername.Text;
             string password = txtPassword.Text;
-            string connStr = "Server=192.168.100.4;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
 
             try
             {
@@ -113,15 +180,15 @@ namespace WinFormsApp1
                         {
                             if (reader.Read())
                             {
-                                userId = reader.GetInt32("user_id");
+                                UserId = reader.GetInt32("user_id");
                                 string storedPassword = reader.GetString("p_word");
                                 string role = reader.GetString("roles");
 
                                 if (storedPassword == password)
                                 {
                                     MessageBox.Show($"Login successful! Section{StudentSection}");
-                                    SelectSection(userId);
-                                    OpenAppropriateForm(role, username, userId);
+                                    SelectSection(UserId);
+                                    OpenAppropriateForm(role, username, UserId);
                                     this.Hide();
                                 }
                                 else
@@ -158,8 +225,7 @@ namespace WinFormsApp1
             }
             else if (role.Equals("Student", StringComparison.OrdinalIgnoreCase))
             {
-                StudentForm studentForm = new StudentForm(UserId, StudentSection);
-                studentForm.Show();
+                FaceAuthentication(username);
             }
             else
             {

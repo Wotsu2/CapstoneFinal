@@ -61,6 +61,7 @@ namespace WinFormsApp1
         private string AuthenticationPhoto;
         private string SaveAuthenticationPhoto;
         private string ProfessorName;
+        private string DatabaseIP = "localhost";
 
         int ProfessorID;
         string ProfessorUsername;
@@ -2017,6 +2018,7 @@ namespace WinFormsApp1
             if (txtCurrentUsername.Text != ProfessorUsername)
             {
                 MessageBox.Show("Please enter the Correct usernames.");
+                return;
             }
 
             try
@@ -2213,43 +2215,6 @@ namespace WinFormsApp1
             pnlChangePhoto.Visible = false;
         }
 
-        private void AuthenticationGetValue(int Prof_Id)
-        {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
-            try
-            {
-                using (var conn = new MySqlConnection(connStr))
-                {
-                    conn.Open();
-                    string query = "SELECT authentication_condition FROM user_credential WHERE user_id = @user_id";
-
-                    using (var cmd = new MySqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@user_id", Prof_Id);
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                string className = reader.GetString("authentication_condition");
-
-                                if (className == "Enabled")
-                                {
-                                }
-                                else if (className == "Disabled")
-                                {
-
-                                }
-                            }
-                        }
-
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-            }
-            catch
-            {
-            }
-        }
         private void tgSettingAuthentication_CheckedChanged(object sender, EventArgs e)
         {
             btnUploadAuthenticationPhoto.Enabled = tgSettingAuthentication.Checked;
