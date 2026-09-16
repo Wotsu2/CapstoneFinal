@@ -30,6 +30,7 @@ namespace WinFormsApp1
         private TcpClient broadcastClient;
         private TcpListener Shutdownlistener;
         private BroadcastViewerForm broadcastViewer;
+        private volatile bool isSignedOut = false;
         private string StudentSection;
         private string userId;
         private string activityId;
@@ -133,6 +134,8 @@ namespace WinFormsApp1
         {
             try
             {
+                isSignedOut = false;
+
                 client = new TcpClient();
                 await client.ConnectAsync(serverIp, 5000); // use the SERVER's actual IP here And Should be Empty and configure it to setting
 
@@ -150,7 +153,7 @@ namespace WinFormsApp1
         {
             try
             {
-                while (client.Connected)
+                while (!isSignedOut && client != null && client.Connected)
                 {
                     await Task.Delay(2000); // just idle — connection itself signals "online"
                 }
@@ -243,7 +246,8 @@ namespace WinFormsApp1
 
             try
             {
-                while (isSharingScreen)
+                isSignedOut = false;
+                while (!isSignedOut)
                 {
                     byte[] lengthBuffer = new byte[4];
                     int read = await ReadExactAsync(stream, lengthBuffer, 4);
@@ -1086,6 +1090,8 @@ AND class_date = @class_date";
 
         private void StopServer()
         {
+            isSignedOut = true;
+
             try
             {
                 if (screenShareTimer != null)

@@ -1952,15 +1952,17 @@ namespace WinFormsApp1
             try { listener?.Stop(); } catch { }
             try { broadcastListener?.Stop(); } catch { }
             try { screenListener?.Stop(); } catch { }
-
+            try { activityFileListener?.Stop(); } catch { }
             // 3. Dispose and nullify
             try { listener?.Server?.Dispose(); } catch { }
             try { broadcastListener?.Server?.Dispose(); } catch { }
             try { screenListener?.Server?.Dispose(); } catch { }
+            try { activityFileListener?.Server.Dispose(); } catch { }
 
             listener = null;
             broadcastListener = null;
             screenListener = null;
+            activityFileListener = null;
 
         }
         private void Logout()
@@ -2326,7 +2328,7 @@ namespace WinFormsApp1
             activityFileListener = new TcpListener(IPAddress.Any, 5001);
             activityFileListener.Start();
 
-            while (true)
+            while (isRunning)
             {
                 try
                 {
