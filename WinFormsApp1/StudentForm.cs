@@ -55,7 +55,7 @@ namespace WinFormsApp1
             InitializeComponent();
             StudentSection = Section;
             userId = UserId.ToString();
-
+            
             StudentUsername = Username;
             initializeShowReminderForm();
 
@@ -92,7 +92,7 @@ namespace WinFormsApp1
             InitializeChangingPicture();
             InitializeAuthenticationSaveDirectory();
 
-            
+            lblStudentName.Text = studentname;
         }
 
         private void initializeShowReminderForm()
@@ -412,7 +412,7 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
-                    string query = @"SELECT activity_id, title, start_time, due_date, activity_status 
+                    string query = @"SELECT activity_id, title, start_time, due_date, activity_subject activity_status 
                          FROM professor_activity 
                          WHERE section = @section";
 
@@ -428,6 +428,7 @@ namespace WinFormsApp1
                                 string title = reader.GetString("title");
                                 string start_time = reader.GetString("start_time");
                                 string due_date = reader.GetString("due_date");
+                                string className = reader.GetString("activity_subject");
                                 string activity_status = reader.GetString("activity_status");
 
                                 Guna.UI2.WinForms.Guna2Button ActivityButton = new Guna.UI2.WinForms.Guna2Button();
@@ -435,6 +436,8 @@ namespace WinFormsApp1
                                 ActivityButton.Width = 180;
                                 ActivityButton.Margin = new Padding(5);
                                 ActivityButton.BorderColor = Color.Black;
+                                ActivityButton.FillColor = Color.Transparent;
+                                ActivityButton.BackColor = Color.Transparent;
                                 ActivityButton.BorderThickness = 1;
 
                                 // ⭐ Capture the ID locally so each button uses its OWN id
@@ -447,23 +450,32 @@ namespace WinFormsApp1
                                 Label Title = new Label();
                                 Title.Text = title;
                                 Title.ForeColor = Color.Black;
-                                Title.BackColor = Color.Green;
-                                Title.Location = new Point(60, 50);
+                                Title.BackColor = Color.Transparent;
+                                Title.Location = new Point(20, 50);
                                 ActivityButton.Controls.Add(Title);
 
                                 Label DueDate = new Label();
-                                DueDate.Text = due_date;
+                                DueDate.Text = $"Due: {due_date}";
                                 DueDate.ForeColor = Color.Black;
-                                DueDate.BackColor = Color.Violet;
-                                DueDate.Location = new Point(60, 0);
+                                DueDate.BackColor = Color.DarkViolet;
+                                DueDate.Width = 150;
+                                DueDate.Location = new Point(55, 0);
                                 ActivityButton.Controls.Add(DueDate);
 
                                 Label Status = new Label();
                                 Status.Text = activity_status;
                                 Status.ForeColor = Color.Black;
                                 Status.BackColor = Color.Transparent;
-                                Status.Location = new Point(0, 120);
+                                Status.Width = 150;
+                                Status.Location = new Point(40, 90);
                                 ActivityButton.Controls.Add(Status);
+
+                                Label ViewActivity = new Label();
+                                ViewActivity.Text = "View Activity >";
+                                ViewActivity.ForeColor = Color.Maroon;
+                                ViewActivity.BackColor = Color.Transparent;
+                                ViewActivity.Location = new Point(80, 150);
+                                ActivityButton.Controls.Add(ViewActivity);
 
                                 // ⭐ Labels swallow clicks — forward them to the button
                                 Title.Click += (s, e) => ActivityButton.PerformClick();

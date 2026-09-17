@@ -1,4 +1,5 @@
 ﻿using AForge.Video.DirectShow;
+using DocumentFormat.OpenXml.Office.SpreadSheetML.Y2023.MsForms;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,8 @@ namespace WinFormsApp1
         private string StudentSection;
         private string DatabaseIP = "localhost";
         private int UserId;
+        private string question;
+        private string answer;
         // Temporary hardcoded accounts (for testing lang, wala pang database)
         private readonly Dictionary<string, string> tempAccounts = new Dictionary<string, string>
         {
@@ -139,12 +142,44 @@ namespace WinFormsApp1
             }
         }
 
+        private void InitializeGetQandA(string username)
+        {
+            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT question, answer FROM question_and_answer WHERE username = @username";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@username", username);
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                question = reader.GetString("question");
+                                answer = reader.GetString("answer");
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred: " + ex.Message);
+            }
+        }
+
         private void btnLogin_Click(object sender, EventArgs e)
         {
             string username = txtUsername.Text;
             string password = txtPassword.Text;
+            InitializeGetQandA(username);
             string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
-
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -163,13 +198,13 @@ namespace WinFormsApp1
                                 UserId = reader.GetInt32("user_id");
                                 string storedPassword = reader.GetString("p_word");
                                 string role = reader.GetString("roles");
-                                string authentication_photo = reader.GetString("authentication_photo");
+                                string authentication_photo = reader.IsDBNull(reader.GetOrdinal("authentication_photo")) ? "" : reader.GetString("authentication_photo");
+
 
                                 if (storedPassword == password)
                                 {
-                                    MessageBox.Show($"Login successful! Section{StudentSection}");
                                     SelectSection(UserId);
-                                    OpenAppropriateForm(role, username, UserId, authentication_photo);
+                                    OpenAppropriateForm(role, username, UserId, authentication_photo, question, answer);
                                     this.Hide();
                                 }
                                 else
@@ -177,11 +212,6 @@ namespace WinFormsApp1
                                     MessageBox.Show("Incorrect password.", "Login Error",
                                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                                 }
-                            }
-                            else
-                            {
-                                MessageBox.Show("ID Number not found.", "Login Error",
-                                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
                             }
                         }
                     }
@@ -192,7 +222,7 @@ namespace WinFormsApp1
                 MessageBox.Show("An error occurred: " + ex.Message);
             }
         }
-        private void OpenAppropriateForm(string role, string username, int UserId, string authenticationPhoto)
+        private void OpenAppropriateForm(string role, string username, int UserId, string authenticationPhoto, string question, string answer)
         {
             if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
             {
@@ -210,11 +240,19 @@ namespace WinFormsApp1
 
                 if (cameraDetected)
                 {
-                    MessageBox.Show("Camera Detected. Proceeding with face authentication if available.");
                     if (string.IsNullOrEmpty(authenticationPhoto))
                     {
-                        StudentForm studentForm = new StudentForm(UserId, StudentSection, username); // pass ID and username if the form needs them
-                        studentForm.Show();
+                        if (string.IsNullOrEmpty(question) && string.IsNullOrEmpty(answer))
+                        {
+                            StudentForm studentform = new StudentForm(UserId, StudentSection, username);
+                            studentform.Show();
+                        }
+                        else if (!string.IsNullOrEmpty(question) && !string.IsNullOrEmpty(answer))
+                        {
+                            QandAForm QandAform = new QandAForm(UserId, StudentSection, username); // pass ID and username if the form needs them
+                            QandAform.Show();
+                        }
+                        
                     }
                     else if (!string.IsNullOrEmpty(authenticationPhoto))
                     {
@@ -223,16 +261,15 @@ namespace WinFormsApp1
                 }
                 else
                 {
-                    MessageBox.Show("Camera didn't Detected");
-                    if (string.IsNullOrEmpty(authenticationPhoto))
+                    if (string.IsNullOrEmpty(question) && string.IsNullOrEmpty(answer))
                     {
-                        StudentForm studentForm = new StudentForm(UserId, StudentSection, username); // pass ID and username if the form needs them
-                        studentForm.Show();
+                        StudentForm studentform = new StudentForm(UserId, StudentSection, username);
+                        studentform.Show();
                     }
-                    else if (!string.IsNullOrEmpty(authenticationPhoto))
+                    else if (!string.IsNullOrEmpty(question) && !string.IsNullOrEmpty(answer))
                     {
-                        StudentForm studentForm = new StudentForm(UserId, StudentSection, username); // pass ID and username if the form needs them
-                        studentForm.Show();
+                        QandAForm QandAform = new QandAForm(UserId, StudentSection, username); // pass ID and username if the form needs them
+                        QandAform.Show();
                     }
                 }
                 

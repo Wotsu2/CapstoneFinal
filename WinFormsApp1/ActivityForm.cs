@@ -47,7 +47,6 @@ namespace WinFormsApp1
 
         private void InitializeActivityDetails()
         {
-            MessageBox.Show($"{title}, {dueDate}, {description}, {status}, {AcitvitypdfPath}, {userId}, {studentSection}, {studentname}, {activitySubject}, {profId}");
             lblActivityTitle.Text = $"{title}";
             lblActivityDescription.Text = description;
             lblActivityDueDate.Text = "Due Date: " + dueDate;

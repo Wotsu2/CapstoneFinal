@@ -100,8 +100,8 @@ namespace WinFormsApp1
 
             //File Management Caller//
 
-            //lsServerFolderSetup();
-            //  LoadServerFolder(saveFolder, addToHistory: false);
+            lsServerFolderSetup();
+            LoadServerFolder(saveFolder, addToHistory: false);
 
             //Grade Caller//
             ActivityStatus();
