@@ -1,4 +1,5 @@
-﻿using MySql.Data.MySqlClient;
+﻿using AForge.Video.DirectShow;
+using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -27,42 +28,21 @@ namespace WinFormsApp1
         public Login()
         {
             InitializeComponent();
+            IsAnyCameraDetected();
         }
-
-        private void Users_Click(object sender, EventArgs e)
+        private bool IsAnyCameraDetected()
         {
-
+            try
+            {
+                var devices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
+                return devices != null && devices.Count > 0;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
-        private void guna2TextBox1_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label7_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void guna2PictureBox1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void Login_Load(object sender, EventArgs e)
-        {
-
-        }
-
-        private void txtIdNumber_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void txtPassword_TextChanged(object sender, EventArgs e)
-        {
-
-        }
         private void SelectSection(int userid)
         {
             string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
@@ -170,7 +150,7 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = "SELECT user_id, username, p_word, roles FROM user_credential WHERE username = @username";
+                    string query = "SELECT user_id, username, p_word, roles, authentication_photo FROM user_credential WHERE username = @username";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -183,12 +163,13 @@ namespace WinFormsApp1
                                 UserId = reader.GetInt32("user_id");
                                 string storedPassword = reader.GetString("p_word");
                                 string role = reader.GetString("roles");
+                                string authentication_photo = reader.GetString("authentication_photo");
 
                                 if (storedPassword == password)
                                 {
                                     MessageBox.Show($"Login successful! Section{StudentSection}");
                                     SelectSection(UserId);
-                                    OpenAppropriateForm(role, username, UserId);
+                                    OpenAppropriateForm(role, username, UserId, authentication_photo);
                                     this.Hide();
                                 }
                                 else
@@ -206,12 +187,12 @@ namespace WinFormsApp1
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-
+                MessageBox.Show("An error occurred: " + ex.Message);
             }
         }
-        private void OpenAppropriateForm(string role, string username, int UserId)
+        private void OpenAppropriateForm(string role, string username, int UserId, string authenticationPhoto)
         {
             if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
             {
@@ -225,7 +206,36 @@ namespace WinFormsApp1
             }
             else if (role.Equals("Student", StringComparison.OrdinalIgnoreCase))
             {
-                FaceAuthentication(username);
+                bool cameraDetected = IsAnyCameraDetected();
+
+                if (cameraDetected)
+                {
+                    MessageBox.Show("Camera Detected. Proceeding with face authentication if available.");
+                    if (string.IsNullOrEmpty(authenticationPhoto))
+                    {
+                        StudentForm studentForm = new StudentForm(UserId, StudentSection, username); // pass ID and username if the form needs them
+                        studentForm.Show();
+                    }
+                    else if (!string.IsNullOrEmpty(authenticationPhoto))
+                    {
+                        FaceAuthentication(username);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Camera didn't Detected");
+                    if (string.IsNullOrEmpty(authenticationPhoto))
+                    {
+                        StudentForm studentForm = new StudentForm(UserId, StudentSection, username); // pass ID and username if the form needs them
+                        studentForm.Show();
+                    }
+                    else if (!string.IsNullOrEmpty(authenticationPhoto))
+                    {
+                        StudentForm studentForm = new StudentForm(UserId, StudentSection, username); // pass ID and username if the form needs them
+                        studentForm.Show();
+                    }
+                }
+                
             }
             else
             {

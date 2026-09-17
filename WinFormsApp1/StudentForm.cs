@@ -30,6 +30,8 @@ namespace WinFormsApp1
         private TcpClient broadcastClient;
         private TcpListener Shutdownlistener;
         private BroadcastViewerForm broadcastViewer;
+        private Guna2Button activeMenuButton;
+
         private volatile bool isSignedOut = false;
         private string StudentSection;
         private string userId;
@@ -45,6 +47,7 @@ namespace WinFormsApp1
         private string SaveCurrentProfilePath;
         private string AuthenticationPhoto;
         private string SaveAuthenticationPhoto;
+        private string Isauthentication_photoEmpty;
         private string DatabaseIP = "localhost";
 
         public StudentForm(int UserId, string Section, string Username)
@@ -54,6 +57,13 @@ namespace WinFormsApp1
             userId = UserId.ToString();
 
             StudentUsername = Username;
+            initializeShowReminderForm();
+
+            if (string.IsNullOrEmpty(Isauthentication_photoEmpty))
+            {
+                FacialRecognitionReminderForm reminderForm = new FacialRecognitionReminderForm(int.Parse(userId), StudentUsername);
+                reminderForm.ShowDialog();
+            }
         }
         private void StudentForm_Load(object sender, EventArgs e)
         {
@@ -81,9 +91,42 @@ namespace WinFormsApp1
             InitializeSaveDirectory();
             InitializeChangingPicture();
             InitializeAuthenticationSaveDirectory();
+
+            
         }
 
-        private Guna2Button activeMenuButton;
+        private void initializeShowReminderForm()
+        {
+            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT authentication_photo FROM user_credential WHERE username = @username";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@username", StudentUsername);
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                Isauthentication_photoEmpty = reader.GetString("authentication_photo");
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred: " + ex.Message);
+            }
+        }
+
+        
 
         private void SetActiveMenuButton(Guna2Button clickedBtn, Panel panelToShow)
         {

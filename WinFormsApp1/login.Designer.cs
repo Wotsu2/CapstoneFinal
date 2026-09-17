@@ -123,7 +123,6 @@
             txtUsername.Size = new Size(422, 56);
             txtUsername.TabIndex = 5;
             txtUsername.TextOffset = new Point(30, 0);
-            txtUsername.TextChanged += txtIdNumber_TextChanged;
             // 
             // txtPassword
             // 
@@ -152,7 +151,6 @@
             txtPassword.Size = new Size(422, 56);
             txtPassword.TabIndex = 6;
             txtPassword.TextOffset = new Point(30, 0);
-            txtPassword.TextChanged += txtPassword_TextChanged;
             // 
             // btnLogin
             // 
@@ -186,7 +184,6 @@
             guna2PictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             guna2PictureBox1.TabIndex = 0;
             guna2PictureBox1.TabStop = false;
-            guna2PictureBox1.Click += guna2PictureBox1_Click;
             // 
             // Login
             // 
@@ -204,8 +201,8 @@
             FormBorderStyle = FormBorderStyle.None;
             Margin = new Padding(3, 2, 3, 2);
             Name = "Login";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "Form3";
-            Load += Login_Load;
             ((System.ComponentModel.ISupportInitialize)guna2PictureBox2).EndInit();
             ((System.ComponentModel.ISupportInitialize)guna2PictureBox1).EndInit();
             ResumeLayout(false);

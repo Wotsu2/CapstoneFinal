@@ -233,6 +233,16 @@ namespace WinFormsApp1.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Camera {
+            get {
+                object obj = ResourceManager.GetObject("Camera", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap CartoonG {
             get {
                 object obj = ResourceManager.GetObject("CartoonG", resourceCulture);
@@ -1036,6 +1046,26 @@ namespace WinFormsApp1.Properties {
         internal static System.Drawing.Bitmap visual {
             get {
                 object obj = ResourceManager.GetObject("visual", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap WarningSign {
+            get {
+                object obj = ResourceManager.GetObject("WarningSign", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap white_ekis {
+            get {
+                object obj = ResourceManager.GetObject("white ekis", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
