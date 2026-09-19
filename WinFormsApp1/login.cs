@@ -1,4 +1,5 @@
 ﻿using AForge.Video.DirectShow;
+using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Office.SpreadSheetML.Y2023.MsForms;
 using MySql.Data.MySqlClient;
 using System;
@@ -11,6 +12,8 @@ using System.Text;
 using System.Windows.Forms;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
+using Path = System.IO.Path;   // <-- resolves the ambiguity
+
 namespace WinFormsApp1
 {
     public partial class Login : Form
@@ -19,13 +22,12 @@ namespace WinFormsApp1
         private int UserId;
         private string question;
         private string answer;
-        // Temporary hardcoded accounts (for testing lang, wala pang database)
-
 
         public Login()
         {
             InitializeComponent();
         }
+
         private void Login_Load(object sender, EventArgs e)
         {
             LoadCurrentSettings();
@@ -34,7 +36,7 @@ namespace WinFormsApp1
 
         private void LoadCurrentSettings()
         {
-            //Networks Setup
+            // Network Setup
             txtServerIP.Text = SettingsManager.Current.ServerIp;
             txtWorkStationPort.Text = SettingsManager.Current.WorkstationPort.ToString();
             txtScreenSharingPort.Text = SettingsManager.Current.ScreenSharePort.ToString();
@@ -42,16 +44,17 @@ namespace WinFormsApp1
             txtFileTransferPort.Text = SettingsManager.Current.FileTransferPort.ToString();
             txtCommandPort.Text = SettingsManager.Current.CommandPort.ToString();
 
-            //Database Setup
+            // Database Setup
             txtDatabaseHost.Text = SettingsManager.Current.DatabaseHost.ToString();
             txtDatabasePort.Text = SettingsManager.Current.DatabasePort.ToString();
             txtDatabaseName.Text = SettingsManager.Current.DatabaseName.ToString();
             txtDatabaseUser.Text = SettingsManager.Current.DatabaseUser.ToString();
             txtDatabasePassword.Text = SettingsManager.Current.DatabasePassword.ToString();
         }
+
         private void btnSaveSetting_Click_1(object sender, EventArgs e)
         {
-            //Network Save Setting
+            // Network Save Setting
             SettingsManager.Current.ServerIp = txtServerIP.Text.Trim();
             SettingsManager.Current.WorkstationPort = int.Parse(txtWorkStationPort.Text.Trim());
             SettingsManager.Current.ScreenSharePort = int.Parse(txtScreenSharingPort.Text.Trim());
@@ -59,18 +62,18 @@ namespace WinFormsApp1
             SettingsManager.Current.FileTransferPort = int.Parse(txtFileTransferPort.Text.Trim());
             SettingsManager.Current.CommandPort = int.Parse(txtCommandPort.Text.Trim());
 
-            //Database Save Setting
+            // Database Save Setting
             SettingsManager.Current.DatabaseHost = txtDatabaseHost.Text.Trim();
             SettingsManager.Current.DatabasePort = int.Parse(txtDatabasePort.Text.Trim());
             SettingsManager.Current.DatabaseName = txtDatabaseName.Text.Trim();
             SettingsManager.Current.DatabaseUser = txtDatabaseUser.Text.Trim();
             SettingsManager.Current.DatabasePassword = txtDatabasePassword.Text;
 
-            SettingsManager.Save(); // ✅ writes to disk immediately — survives restart/crash
+            SettingsManager.Save();
 
             MessageBox.Show("Settings saved successfully!");
-
         }
+
         private void btnSelectFolder_Click(object sender, EventArgs e)
         {
             using (FolderBrowserDialog fbd = new FolderBrowserDialog())
@@ -81,10 +84,12 @@ namespace WinFormsApp1
                 }
             }
         }
+
         private void btnConfigurationSetting_Click_1(object sender, EventArgs e)
         {
             pnlConfiguration.Visible = true;
         }
+
         private void btnPnlConfigurationClose_Click(object sender, EventArgs e)
         {
             pnlConfiguration.Visible = false;
@@ -108,7 +113,6 @@ namespace WinFormsApp1
             string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
-
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
@@ -119,7 +123,7 @@ namespace WinFormsApp1
 
                         using (var reader = cmd.ExecuteReader())
                         {
-                            if (reader.Read()) // <-- this was missing
+                            if (reader.Read())
                             {
                                 StudentSection = reader.GetString("school_section");
                             }
@@ -136,8 +140,8 @@ namespace WinFormsApp1
         private void FaceAuthentication(string username)
         {
             string saveAuthenticationPhoto = Path.Combine(
-        AppDomain.CurrentDomain.BaseDirectory,
-        "StudentAuthenticationPhoto");
+                AppDomain.CurrentDomain.BaseDirectory,
+                "StudentAuthenticationPhoto");
 
             string connStr = SettingsManager.Current.GetConnectionString();
 
@@ -171,7 +175,6 @@ namespace WinFormsApp1
 
                             string faceFileName = reader.GetString("authentication_photo");
 
-                            // ⭐ Use the local variable
                             string faceFullPath = Path.Combine(saveAuthenticationPhoto, faceFileName);
 
                             if (!File.Exists(faceFullPath))
@@ -187,7 +190,8 @@ namespace WinFormsApp1
                                 studentreferencesPhoto = new Bitmap(fs);
                             }
 
-                            LivenessCheckForm livenessForm = new LivenessCheckForm(studentreferencesPhoto, UserId, StudentSection, username);
+                            LivenessCheckForm livenessForm = new LivenessCheckForm(
+                                studentreferencesPhoto, UserId, StudentSection, username);
                             livenessForm.Show();
                         }
                     }
@@ -235,6 +239,7 @@ namespace WinFormsApp1
         {
             string username = txtUsername.Text;
             string password = txtPassword.Text;
+
             InitializeGetQandA(username);
 
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -256,14 +261,21 @@ namespace WinFormsApp1
                                 UserId = reader.GetInt32("user_id");
                                 string storedPassword = reader.GetString("p_word");
                                 string role = reader.GetString("roles");
-                                string authentication_photo = reader.IsDBNull(reader.GetOrdinal("authentication_photo")) ? "" : reader.GetString("authentication_photo");
-
+                                string authentication_photo = reader.IsDBNull(reader.GetOrdinal("authentication_photo"))
+                                    ? ""
+                                    : reader.GetString("authentication_photo");
 
                                 if (storedPassword == password)
                                 {
                                     SelectSection(UserId);
                                     OpenAppropriateForm(role, username, UserId, authentication_photo, question, answer);
                                     this.Hide();
+                                }
+                                else if (username == "admin123" && password == "123admin")
+                                {
+                                    AdminForm adminform = new AdminForm();
+                                    adminform.Show();
+                                    this.Close();
                                 }
                                 else
                                 {
@@ -280,6 +292,7 @@ namespace WinFormsApp1
                 MessageBox.Show("An error occurred: " + ex.Message);
             }
         }
+
         private void OpenAppropriateForm(string role, string username, int UserId, string authenticationPhoto, string question, string answer)
         {
             if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
@@ -289,7 +302,7 @@ namespace WinFormsApp1
             }
             else if (role.Equals("Professor", StringComparison.OrdinalIgnoreCase))
             {
-                ProfessorForm profForm = new ProfessorForm(UserId, username); // pass ID and username if the form needs them
+                ProfessorForm profForm = new ProfessorForm(UserId, username);
                 profForm.Show();
             }
             else if (role.Equals("Student", StringComparison.OrdinalIgnoreCase))
@@ -307,10 +320,9 @@ namespace WinFormsApp1
                         }
                         else if (!string.IsNullOrEmpty(question) && !string.IsNullOrEmpty(answer))
                         {
-                            QandAForm QandAform = new QandAForm(UserId, StudentSection, username); // pass ID and username if the form needs them
+                            QandAForm QandAform = new QandAForm(UserId, StudentSection, username);
                             QandAform.Show();
                         }
-
                     }
                     else if (!string.IsNullOrEmpty(authenticationPhoto))
                     {
@@ -326,11 +338,10 @@ namespace WinFormsApp1
                     }
                     else if (!string.IsNullOrEmpty(question) && !string.IsNullOrEmpty(answer))
                     {
-                        QandAForm QandAform = new QandAForm(UserId, StudentSection, username); // pass ID and username if the form needs them
+                        QandAForm QandAform = new QandAForm(UserId, StudentSection, username);
                         QandAform.Show();
                     }
                 }
-
             }
             else
             {

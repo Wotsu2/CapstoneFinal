@@ -1,10 +1,14 @@
 ﻿using Microsoft.VisualBasic.ApplicationServices;
 using MySql.Data.MySqlClient;
+using Org.BouncyCastle.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -15,17 +19,31 @@ namespace WinFormsApp1
 {
     public partial class AdminForm : Form
     {
-        // DASHBOARD ATTRIBUTES //
+        // USER DETAILS //
+        private Panel overlayPanel;
+        private Panel userDetailsPanel;
+        private PictureBox detailsPhoto;
+        private Label detailsName;
+        private Label detailsRoleBadge;
+        private Label detailsUsername, detailsLastName, detailsFirstName,
+                      detailsMiddleName, detailsRole, detailsYear,
+                      detailsSection, detailsCourse;
+        private Button detailsInfoTab, detailsHistoryTab;
+        private Panel detailsInfoPage, detailsHistoryPage;
+
+        // CONTEXT MENU //
+        private ContextMenuStrip userContextMenu;
+        private int contextUserId = -1;
+
+        // DASHBOARD //
         private Panel PanelIndicator;
 
-        // USER MANAGEMENT ATTRIBUTES //
-
-        // FILE MANAGEMENT ATTRIBUTES //
+        // FILE MANAGEMENT //
         private string currentFolder;
         private Stack<string> folderHistory = new Stack<string>();
         private string saveFolder = @"C:\ReceivedFileFolder";
 
-        // WORKSTATION ATTRIBUTES //
+        // WORKSTATION //
         private TcpListener listener;
         private TcpListener fileListener;
         private int fileSubmittedCount = 0;
@@ -37,31 +55,35 @@ namespace WinFormsApp1
         private string selectedWorkstationId = "";
         private bool isRunning;
 
-
         public AdminForm()
         {
             InitializeComponent();
+
+            InitializeUserDetailsPanel();
+            InitializeUserContextMenu();
+
+            UserDataList.CellClick += UserDataList_CellClick;
+            UserDataList.CellMouseDown += UserDataList_CellMouseDown;
+
+            LoadUserData();
         }
 
         private void admindash_Load(object sender, EventArgs e)
         {
             lblTotalUsers.Text = TotalUsers().ToString();
 
-            // USER MANAGEMENT //
             LoadUserData();
 
-            // FILE MANAGEMENT //
-
-            // WORKSTATION ATTRIBUTES //
             StartServer();
             StartScreenListener();
-            //StartReceivingFileServer(5001);
         }
 
+        // =========================================================
+        //  NAVIGATION
+        // =========================================================
         private void btnDashboard_Click_1(object sender, EventArgs e)
         {
             panelDashoard.BringToFront();
-
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnDashboard);
         }
@@ -69,20 +91,16 @@ namespace WinFormsApp1
         private void btnUserManagement_Click(object sender, EventArgs e)
         {
             pnlUserManagement.BringToFront();
-
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnUserManagement);
-
             LoadUserData();
         }
 
         private void btnFileManagement_Click(object sender, EventArgs e)
         {
             pnlFileManagement.BringToFront();
-
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnFileManagement);
-
             lsServerFolderSetup();
             LoadServerFolder(saveFolder, addToHistory: false);
         }
@@ -90,7 +108,6 @@ namespace WinFormsApp1
         private void btnWorkstation_Click(object sender, EventArgs e)
         {
             pnlWorkstation.BringToFront();
-
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnWorkstation);
         }
@@ -114,23 +131,30 @@ namespace WinFormsApp1
                 ContextSectionText.Enabled = true;
                 ContextCourseText.Enabled = true;
             }
-            else if (ContextCourseText.Text == "Admin")
+            else if (ContextRoleText.Text == "Admin")
             {
                 ContextYearText.Enabled = false;
                 ContextSectionText.Enabled = false;
                 ContextCourseText.Enabled = false;
             }
         }
-
-        private void AccountCreateButton_Click(object sender, EventArgs e)
+        private void cmbSelection_SelectedIndexChanged(object sender, EventArgs e)
         {
-            pnlCreateAccount.BringToFront();
-        }
+            switch (cmbSelection.Text)
+            {
+                case "Users":
+                    LoadUserData();          // refresh grid every time you switch back
+                    pnlUserList.BringToFront();
+                    break;
 
-        private void UserListButton_Click(object sender, EventArgs e)
-        {
-            LoadUserData();
-            pnlUserList.BringToFront();
+                case "Create Account":
+                    pnlCreateAccount.BringToFront();
+                    break;
+
+                default:
+                    // ignore unknown selections
+                    break;
+            }
         }
 
         private void SearchButton_TextChanged(object sender, EventArgs e)
@@ -148,51 +172,746 @@ namespace WinFormsApp1
             btnBack();
         }
 
-        //Client to Server Connection//
-
-
-        //User Management Total User//
-        private static int TotalUsers()
+        // =========================================================
+        //  USER DETAILS MODAL
+        // =========================================================
+        private void InitializeUserDetailsPanel()
         {
-            string connStr = SettingsManager.Current.GetConnectionString();
+            overlayPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.FromArgb(120, 0, 0, 0),
+                Visible = false
+            };
+            overlayPanel.Click += (s, e) => HideUserDetails();
+            this.Controls.Add(overlayPanel);
+            overlayPanel.BringToFront();
 
+            userDetailsPanel = new Panel
+            {
+                Size = new Size(680, 500),
+                BackColor = Color.White,
+                Visible = false,
+                BorderStyle = BorderStyle.FixedSingle
+            };
+
+            int modalWidth = userDetailsPanel.Width;
+
+            var header = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 160,
+                BackColor = Color.FromArgb(13, 71, 161)
+            };
+            header.Width = modalWidth;
+
+            var btnClose = new Button
+            {
+                Text = "✕",
+                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
+                ForeColor = Color.White,
+                BackColor = Color.FromArgb(30, 30, 30),
+                FlatStyle = FlatStyle.Flat,
+                Size = new Size(36, 36),
+                Location = new Point(16, 16),
+                Cursor = Cursors.Hand
+            };
+            btnClose.FlatAppearance.BorderSize = 0;
+            btnClose.Click += (s, e) => HideUserDetails();
+
+            detailsRoleBadge = new Label
+            {
+                Text = "Student",
+                ForeColor = Color.White,
+                BackColor = Color.FromArgb(20, 20, 20),
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Size = new Size(90, 26),
+                Location = new Point(modalWidth - 110, 20),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
+            };
+
+            detailsName = new Label
+            {
+                Text = "Full Name",
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 15F, FontStyle.Bold),
+                AutoSize = true,
+                Location = new Point(210, 105),
+                BackColor = Color.Transparent
+            };
+
+            header.Controls.Add(btnClose);
+            header.Controls.Add(detailsRoleBadge);
+            header.Controls.Add(detailsName);
+
+            detailsPhoto = new PictureBox
+            {
+                Size = new Size(120, 120),
+                Location = new Point(60, 100),
+                BackColor = Color.FromArgb(0, 188, 212),
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BorderStyle = BorderStyle.None
+            };
+            detailsPhoto.Paint += (s, e) =>
+            {
+                var g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                using (var path = new GraphicsPath())
+                {
+                    path.AddEllipse(0, 0, detailsPhoto.Width - 1, detailsPhoto.Height - 1);
+                    detailsPhoto.Region = new Region(path);
+                }
+            };
+
+            detailsInfoTab = new Button
+            {
+                Text = "Info",
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.White,
+                ForeColor = Color.Black,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Size = new Size(80, 32),
+                Location = new Point(270, 175),
+                Cursor = Cursors.Hand
+            };
+            detailsInfoTab.FlatAppearance.BorderColor = Color.LightGray;
+
+            detailsHistoryTab = new Button
+            {
+                Text = "History",
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.White,
+                ForeColor = Color.Black,
+                Font = new Font("Segoe UI", 9F),
+                Size = new Size(100, 32),
+                Location = new Point(352, 175),
+                Cursor = Cursors.Hand
+            };
+            detailsHistoryTab.FlatAppearance.BorderColor = Color.LightGray;
+
+            detailsInfoPage = new Panel
+            {
+                Location = new Point(0, 217),
+                Size = new Size(modalWidth, 278),
+                BackColor = Color.White,
+                AutoScroll = true
+            };
+
+            int y = 15;
+            detailsUsername = MakeInfoRow(detailsInfoPage, "Username:", ref y);
+            detailsLastName = MakeInfoRow(detailsInfoPage, "Last Name:", ref y);
+            detailsFirstName = MakeInfoRow(detailsInfoPage, "First Name:", ref y);
+            detailsMiddleName = MakeInfoRow(detailsInfoPage, "Middle name:", ref y);
+            detailsRole = MakeInfoRow(detailsInfoPage, "Role:", ref y);
+            detailsYear = MakeInfoRow(detailsInfoPage, "Year:", ref y);
+            detailsSection = MakeInfoRow(detailsInfoPage, "Section:", ref y);
+            detailsCourse = MakeInfoRow(detailsInfoPage, "Course:", ref y);
+
+            detailsHistoryPage = new Panel
+            {
+                Location = new Point(0, 217),
+                Size = new Size(modalWidth, 278),
+                BackColor = Color.White,
+                Visible = false,
+                AutoScroll = true
+            };
+
+            var historyCard = new Panel
+            {
+                Location = new Point(30, 20),
+                Size = new Size(400, 70),
+                BackColor = Color.FromArgb(245, 245, 245),
+                BorderStyle = BorderStyle.FixedSingle
+            };
+            historyCard.Controls.Add(new Label
+            {
+                Text = "🕒  Account History",
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Location = new Point(10, 10),
+                AutoSize = true
+            });
+            historyCard.Controls.Add(new Label
+            {
+                Text = "Create account last August 30, 2026",
+                Font = new Font("Segoe UI", 8F),
+                Location = new Point(10, 36),
+                AutoSize = true
+            });
+            detailsHistoryPage.Controls.Add(historyCard);
+
+            detailsInfoTab.Click += (s, e) =>
+            {
+                detailsInfoPage.Visible = true;
+                detailsHistoryPage.Visible = false;
+                detailsInfoTab.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+                detailsHistoryTab.Font = new Font("Segoe UI", 9F);
+            };
+            detailsHistoryTab.Click += (s, e) =>
+            {
+                detailsInfoPage.Visible = false;
+                detailsHistoryPage.Visible = true;
+                detailsInfoTab.Font = new Font("Segoe UI", 9F);
+                detailsHistoryTab.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            };
+
+            userDetailsPanel.Controls.Add(detailsInfoPage);
+            userDetailsPanel.Controls.Add(detailsHistoryPage);
+            userDetailsPanel.Controls.Add(detailsInfoTab);
+            userDetailsPanel.Controls.Add(detailsHistoryTab);
+            userDetailsPanel.Controls.Add(header);
+            userDetailsPanel.Controls.Add(detailsPhoto);
+            detailsPhoto.BringToFront();
+
+            this.Controls.Add(userDetailsPanel);
+            userDetailsPanel.BringToFront();
+        }
+
+        private Label MakeInfoRow(Panel parent, string label, ref int y)
+        {
+            var lbl = new Label
+            {
+                Text = label,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                ForeColor = Color.Black,
+                Location = new Point(60, y),
+                AutoSize = true
+            };
+            var val = new Label
+            {
+                Text = "-",
+                Font = new Font("Segoe UI", 9.5F),
+                ForeColor = Color.DimGray,
+                Location = new Point(220, y),
+                AutoSize = false,
+                Size = new Size(420, 22)
+            };
+            parent.Controls.Add(lbl);
+            parent.Controls.Add(val);
+            y += 32;
+            return val;
+        }
+
+        private void ShowUserDetails()
+        {
+            overlayPanel.Visible = true;
+            overlayPanel.BringToFront();
+
+            userDetailsPanel.Visible = true;
+            userDetailsPanel.BringToFront();
+
+            CenterUserDetailsPanel();
+        }
+
+        private void HideUserDetails()
+        {
+            userDetailsPanel.Visible = false;
+            overlayPanel.Visible = false;
+        }
+
+        private void CenterUserDetailsPanel()
+        {
+            if (userDetailsPanel == null) return;
+
+            Control parent = UserDataList.Parent ?? this;
+
+            Point screenPt = parent.PointToScreen(Point.Empty);
+            Point formPt = this.PointToClient(screenPt);
+
+            userDetailsPanel.Left = formPt.X + (parent.ClientSize.Width - userDetailsPanel.Width) / 2;
+            userDetailsPanel.Top = formPt.Y + (parent.ClientSize.Height - userDetailsPanel.Height) / 2;
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            if (userDetailsPanel != null && userDetailsPanel.Visible)
+                CenterUserDetailsPanel();
+        }
+
+        private void UserDataList_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+
+            var row = UserDataList.Rows[e.RowIndex];
+
+            string fullName = $"{SafeCell(row, "firstname")} {SafeCell(row, "middlename")} {SafeCell(row, "lastname")}".Trim();
+            detailsName.Text = string.IsNullOrWhiteSpace(fullName) ? "Unknown" : fullName;
+
+            string role = SafeCell(row, "roles");
+            detailsRoleBadge.Text = string.IsNullOrEmpty(role) ? "User" : role;
+
+            detailsUsername.Text = SafeCell(row, "username");
+            detailsLastName.Text = SafeCell(row, "lastname");
+            detailsFirstName.Text = SafeCell(row, "firstname");
+            detailsMiddleName.Text = SafeCell(row, "middlename");
+            detailsRole.Text = SafeCell(row, "roles");
+            detailsYear.Text = SafeCell(row, "school_year");
+            detailsSection.Text = SafeCell(row, "school_section");
+            detailsCourse.Text = SafeCell(row, "school_course");
+
+            detailsPhoto.Image = LoadUserPhoto(row);
+
+            detailsInfoPage.Visible = true;
+            detailsHistoryPage.Visible = false;
+            detailsInfoTab.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            detailsHistoryTab.Font = new Font("Segoe UI", 9F);
+
+            ShowUserDetails();
+        }
+
+        private string SafeCell(DataGridViewRow row, string col)
+        {
+            if (!UserDataList.Columns.Contains(col)) return "";
+            var v = row.Cells[col].Value;
+            return (v == null || v == DBNull.Value) ? "" : v.ToString();
+        }
+
+        private Image LoadUserPhoto(DataGridViewRow row)
+        {
+            if (UserDataList.Columns.Contains("profile_picture"))
+            {
+                object raw = row.Cells["profile_picture"].Value;
+
+                byte[] bytes = raw as byte[];
+                if (bytes != null && bytes.Length > 0)
+                {
+                    try
+                    {
+                        using (var ms = new MemoryStream(bytes))
+                            return Image.FromStream(ms);
+                    }
+                    catch { }
+                }
+
+                string path = raw as string;
+                if (!string.IsNullOrEmpty(path) && File.Exists(path))
+                {
+                    using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+                        return Image.FromStream(fs);
+                }
+            }
+
+            return MakePlaceholderAvatar();
+        }
+
+        private Image MakePlaceholderAvatar()
+        {
+            var bmp = new Bitmap(120, 120);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.Clear(Color.FromArgb(0, 188, 212));
+
+                using (var b = new SolidBrush(Color.White))
+                {
+                    g.FillEllipse(b, 40, 20, 42, 42);
+                    g.FillPie(b, 22, 66, 76, 76, 180, 180);
+                }
+            }
+            return bmp;
+        }
+
+        // =========================================================
+        //  CONTEXT MENU (right-click)
+        // =========================================================
+        private void InitializeUserContextMenu()
+        {
+            userContextMenu = new ContextMenuStrip();
+
+            var editItem = new ToolStripMenuItem("Edit Info") { Name = "cmEdit" };
+            var deleteItem = new ToolStripMenuItem("Delete Info") { Name = "cmDelete" };
+            var resetItem = new ToolStripMenuItem("Reset Password") { Name = "cmReset" };
+            var bulkSecItem = new ToolStripMenuItem("Update Section (Bulk)") { Name = "cmBulkSection" };
+            var bulkYrItem = new ToolStripMenuItem("Update Year (Bulk)") { Name = "cmBulkYear" };
+            var bulkSemItem = new ToolStripMenuItem("Update Semester (Bulk)") { Name = "cmBulkSemester" };
+
+            editItem.Click += ContextEdit_Click;
+            deleteItem.Click += ContextDelete_Click;
+            resetItem.Click += ContextResetPassword_Click;
+            bulkSecItem.Click += ContextBulkSection_Click;
+            bulkYrItem.Click += ContextBulkYear_Click;
+            bulkSemItem.Click += ContextBulkSemester_Click;
+
+            userContextMenu.Items.Add(editItem);
+            userContextMenu.Items.Add(deleteItem);
+            userContextMenu.Items.Add(new ToolStripSeparator());
+            userContextMenu.Items.Add(resetItem);
+            userContextMenu.Items.Add(new ToolStripSeparator());
+            userContextMenu.Items.Add(bulkYrItem);
+            userContextMenu.Items.Add(bulkSecItem);
+            userContextMenu.Items.Add(bulkSemItem);
+
+            UserDataList.ContextMenuStrip = userContextMenu;
+        }
+
+        private void UserDataList_CellMouseDown(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (e.Button != MouseButtons.Right || e.RowIndex < 0) return;
+
+            if (!UserDataList.Rows[e.RowIndex].Selected)
+            {
+                UserDataList.ClearSelection();
+                UserDataList.Rows[e.RowIndex].Selected = true;
+            }
+
+            var row = UserDataList.Rows[e.RowIndex];
+
+            if (UserDataList.Columns.Contains("user_id") &&
+                row.Cells["user_id"].Value != null &&
+                row.Cells["user_id"].Value != DBNull.Value)
+            {
+                contextUserId = Convert.ToInt32(row.Cells["user_id"].Value);
+            }
+            else
+            {
+                contextUserId = -1;
+            }
+        }
+
+        private void ContextEdit_Click(object sender, EventArgs e)
+        {
+            if (contextUserId < 0) { MessageBox.Show("No user selected."); return; }
+
+            string lastName = "", firstName = "", middleName = "",
+                   email = "", year = "", section = "", course = "", username = "";
+
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = "SELECT COUNT(*) FROM user_credential";
-
-                    using (var cmd = new MySqlCommand(query, conn))
+                    string q = @"SELECT u.username, i.lastname, i.firstname, i.middlename,
+                                        i.email, i.school_year, i.school_section, i.school_course
+                                 FROM user_credential u
+                                 LEFT JOIN user_information i ON u.user_id = i.user_id
+                                 WHERE u.user_id = @id";
+                    using (var cmd = new MySqlCommand(q, conn))
                     {
-                        int total = Convert.ToInt32(cmd.ExecuteScalar());
-                        return total;
+                        cmd.Parameters.AddWithValue("@id", contextUserId);
+                        using (var r = cmd.ExecuteReader())
+                        {
+                            if (r.Read())
+                            {
+                                username = r["username"].ToString();
+                                lastName = r["lastname"].ToString();
+                                firstName = r["firstname"].ToString();
+                                middleName = r["middlename"].ToString();
+                                email = r["email"].ToString();
+                                year = r["school_year"].ToString();
+                                section = r["school_section"].ToString();
+                                course = r["school_course"].ToString();
+                            }
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
-                return 0;
+                MessageBox.Show("Error loading user: " + ex.Message);
+                return;
+            }
+
+            using (var dlg = new Form())
+            {
+                dlg.Text = "Edit User Info";
+                dlg.Size = new Size(420, 460);
+                dlg.StartPosition = FormStartPosition.CenterParent;
+                dlg.FormBorderStyle = FormBorderStyle.FixedDialog;
+                dlg.MaximizeBox = false;
+                dlg.MinimizeBox = false;
+
+                int top = 20;
+                Label MakeLabel(string t) => new Label { Text = t, Left = 20, Top = top, Width = 120 };
+
+                TextBox MakeBox(string val)
+                {
+                    var tb = new TextBox { Left = 150, Top = top - 3, Width = 230, Text = val };
+                    top += 34;
+                    return tb;
+                }
+
+                var lblUser = MakeLabel("Username:"); var tbUser = MakeBox(username);
+                var lblLast = MakeLabel("Last Name:"); var tbLast = MakeBox(lastName);
+                var lblFirst = MakeLabel("First Name:"); var tbFirst = MakeBox(firstName);
+                var lblMid = MakeLabel("Middle Name:"); var tbMid = MakeBox(middleName);
+                var lblMail = MakeLabel("Email:"); var tbMail = MakeBox(email);
+                var lblYear = MakeLabel("Year:"); var tbYear = MakeBox(year);
+                var lblSec = MakeLabel("Section:"); var tbSec = MakeBox(section);
+                var lblCourse = MakeLabel("Course:"); var tbCourse = MakeBox(course);
+
+                tbUser.Enabled = false;
+
+                var btnSave = new Button { Text = "Save", Left = 220, Top = top + 10, Width = 80, DialogResult = DialogResult.OK };
+                var btnCancel = new Button { Text = "Cancel", Left = 306, Top = top + 10, Width = 80, DialogResult = DialogResult.Cancel };
+
+                dlg.Controls.AddRange(new Control[]
+                {
+                    lblUser, tbUser, lblLast, tbLast, lblFirst, tbFirst, lblMid, tbMid,
+                    lblMail, tbMail, lblYear, tbYear, lblSec, tbSec, lblCourse, tbCourse,
+                    btnSave, btnCancel
+                });
+                dlg.AcceptButton = btnSave;
+                dlg.CancelButton = btnCancel;
+
+                if (dlg.ShowDialog(this) != DialogResult.OK) return;
+
+                try
+                {
+                    using (var conn = new MySqlConnection(connStr))
+                    {
+                        conn.Open();
+                        string q = @"UPDATE user_information
+                                     SET lastname = @ln, firstname = @fn, middlename = @mn,
+                                         email = @em, school_year = @yr,
+                                         school_section = @sec, school_course = @cr
+                                     WHERE user_id = @id";
+                        using (var cmd = new MySqlCommand(q, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@ln", tbLast.Text.Trim().ToUpper());
+                            cmd.Parameters.AddWithValue("@fn", tbFirst.Text.Trim().ToUpper());
+                            cmd.Parameters.AddWithValue("@mn", tbMid.Text.Trim().ToUpper());
+                            cmd.Parameters.AddWithValue("@em", tbMail.Text.Trim());
+                            cmd.Parameters.AddWithValue("@yr", tbYear.Text.Trim().ToUpper());
+                            cmd.Parameters.AddWithValue("@sec", tbSec.Text.Trim().ToUpper());
+                            cmd.Parameters.AddWithValue("@cr", tbCourse.Text.Trim().ToUpper());
+                            cmd.Parameters.AddWithValue("@id", contextUserId);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    MessageBox.Show("User info updated.");
+                    LoadUserData();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error updating user: " + ex.Message);
+                }
             }
         }
 
-        //User Management Load User//
-        private void LoadUserData(string filter = "")
+        private void ContextDelete_Click(object sender, EventArgs e)
         {
+            if (contextUserId < 0) { MessageBox.Show("No user selected."); return; }
+
+            var confirm = MessageBox.Show(
+                "Are you sure you want to delete this user?",
+                "Confirm Delete",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (confirm != DialogResult.Yes) return;
+
             string connStr = SettingsManager.Current.GetConnectionString();
-            UserDataList.ReadOnly = true;
             try
             {
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
 
-                    string query = "SELECT u.username, u.roles, u.user_status, " +
-                       "i.lastname, i.firstname, i.middlename, " +
-                       "i.email, i.school_year, i.school_section, i.school_semester, i.school_course " +
-                       "FROM user_credential u " +
-                       "LEFT JOIN user_information i ON u.user_id = i.user_id";
+                    string[] deletes =
+                    {
+                        "DELETE FROM mainfolderpath      WHERE user_id = @id",
+                        "DELETE FROM professor_attendance WHERE student_id = @id",
+                        "DELETE FROM user_information    WHERE user_id = @id",
+                        "DELETE FROM user_credential     WHERE user_id = @id"
+                    };
+
+                    foreach (var q in deletes)
+                    {
+                        using (var cmd = new MySqlCommand(q, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@id", contextUserId);
+                            try { cmd.ExecuteNonQuery(); }
+                            catch { }
+                        }
+                    }
+                }
+                MessageBox.Show("User deleted.");
+                LoadUserData();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error deleting user: " + ex.Message);
+            }
+        }
+
+        private void ContextResetPassword_Click(object sender, EventArgs e)
+        {
+            if (contextUserId < 0) { MessageBox.Show("No user selected."); return; }
+
+            var confirm = MessageBox.Show(
+                "Reset this user's password to the default '12345678'?",
+                "Confirm Reset",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (confirm != DialogResult.Yes) return;
+
+            string connStr = SettingsManager.Current.GetConnectionString();
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string q = @"UPDATE user_credential SET p_word = @pw WHERE user_id = @id";
+                    using (var cmd = new MySqlCommand(q, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@pw", "12345678");
+                        cmd.Parameters.AddWithValue("@id", contextUserId);
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                MessageBox.Show("Password reset to default: 12345678");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error resetting password: " + ex.Message);
+            }
+        }
+
+        // =========================================================
+        //  BULK UPDATE (multi-row selection)
+        // =========================================================
+        private void ContextBulkSection_Click(object sender, EventArgs e)
+        {
+            BulkUpdateField("school_section", "Section", "e.g. 4-1");
+        }
+
+        private void ContextBulkYear_Click(object sender, EventArgs e)
+        {
+            BulkUpdateField("school_year", "Year", "e.g. 4TH YEAR");
+        }
+
+        private void ContextBulkSemester_Click(object sender, EventArgs e)
+        {
+            BulkUpdateField("school_semester", "Semester", "e.g. 1ST SEMESTER / 2ND SEMESTER");
+        }
+
+        private void BulkUpdateField(string columnName, string displayName, string hint)
+        {
+            var ids = GetSelectedUserIds();
+            if (ids.Count == 0)
+            {
+                MessageBox.Show("No rows selected. Hold Ctrl or Shift and click multiple rows first.");
+                return;
+            }
+
+            string newValue = Prompt(
+                $"Enter the new {displayName} for {ids.Count} selected user(s).\n({hint})",
+                "");
+
+            if (string.IsNullOrWhiteSpace(newValue)) return;
+
+            newValue = newValue.Trim().ToUpper();
+
+            var confirm = MessageBox.Show(
+                $"Update {displayName} of {ids.Count} user(s) to \"{newValue}\"?",
+                "Confirm Bulk Update",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (confirm != DialogResult.Yes) return;
+
+            string connStr = SettingsManager.Current.GetConnectionString();
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    var paramNames = new List<string>();
+                    for (int i = 0; i < ids.Count; i++)
+                        paramNames.Add("@id" + i);
+
+                    string q = $"UPDATE user_information SET {columnName} = @newVal " +
+                               $"WHERE user_id IN ({string.Join(",", paramNames)})";
+
+                    using (var cmd = new MySqlCommand(q, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@newVal", newValue);
+                        for (int i = 0; i < ids.Count; i++)
+                            cmd.Parameters.AddWithValue(paramNames[i], ids[i]);
+
+                        int rows = cmd.ExecuteNonQuery();
+                        MessageBox.Show($"{rows} user(s) updated to {displayName} = \"{newValue}\".");
+                    }
+                }
+                LoadUserData();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error during bulk update: " + ex.Message);
+            }
+        }
+
+        private List<int> GetSelectedUserIds()
+        {
+            var list = new List<int>();
+            if (!UserDataList.Columns.Contains("user_id")) return list;
+
+            foreach (DataGridViewRow row in UserDataList.SelectedRows)
+            {
+                if (row.Cells["user_id"].Value != null &&
+                    row.Cells["user_id"].Value != DBNull.Value)
+                {
+                    list.Add(Convert.ToInt32(row.Cells["user_id"].Value));
+                }
+            }
+            return list;
+        }
+
+        private string Prompt(string label, string defaultValue)
+        {
+            using (var frm = new Form())
+            {
+                frm.Text = "Bulk Update";
+                frm.Width = 420;
+                frm.Height = 160;
+                frm.StartPosition = FormStartPosition.CenterParent;
+                frm.FormBorderStyle = FormBorderStyle.FixedDialog;
+                frm.MinimizeBox = false;
+                frm.MaximizeBox = false;
+
+                var lbl = new Label { Text = label, Left = 12, Top = 12, Width = 380, Height = 40 };
+                var txt = new TextBox { Text = defaultValue ?? "", Left = 12, Top = 56, Width = 380 };
+                var ok = new Button { Text = "OK", Left = 230, Top = 90, Width = 75, DialogResult = DialogResult.OK };
+                var cancel = new Button { Text = "Cancel", Left = 316, Top = 90, Width = 75, DialogResult = DialogResult.Cancel };
+
+                frm.Controls.Add(lbl);
+                frm.Controls.Add(txt);
+                frm.Controls.Add(ok);
+                frm.Controls.Add(cancel);
+                frm.AcceptButton = ok;
+                frm.CancelButton = cancel;
+
+                return frm.ShowDialog() == DialogResult.OK ? txt.Text : null;
+            }
+        }
+
+        // =========================================================
+        //  USER MANAGEMENT
+        // =========================================================
+        private void LoadUserData(string filter = "")
+        {
+            string connStr = SettingsManager.Current.GetConnectionString();
+            UserDataList.ReadOnly = true;
+
+            UserDataList.MultiSelect = true;
+            UserDataList.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    string query = @"SELECT u.user_id, u.username, u.roles, u.user_status, u.profile_picture,
+                                            i.lastname, i.firstname, i.middlename,
+                                            i.email, i.school_year, i.school_section,
+                                            i.school_semester, i.school_course
+                                     FROM user_credential u
+                                     LEFT JOIN user_information i ON u.user_id = i.user_id";
 
                     if (!string.IsNullOrEmpty(filter))
                     {
@@ -214,6 +933,12 @@ namespace WinFormsApp1
                             adapter.Fill(dt);
                             UserDataList.DataSource = dt;
 
+                            if (UserDataList.Columns.Contains("user_id"))
+                                UserDataList.Columns["user_id"].Visible = false;
+
+                            if (UserDataList.Columns.Contains("profile_picture"))
+                                UserDataList.Columns["profile_picture"].Visible = false;
+
                             UserDataList.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
                         }
                     }
@@ -225,7 +950,33 @@ namespace WinFormsApp1
             }
         }
 
-        //User Management Create Account//
+        private static int TotalUsers()
+        {
+            string connStr = SettingsManager.Current.GetConnectionString();
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = "SELECT COUNT(*) FROM user_credential";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        return Convert.ToInt32(cmd.ExecuteScalar());
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+                return 0;
+            }
+        }
+
+        // =========================================================
+        //  CREATE ACCOUNT
+        // =========================================================
         string semester;
         private void CreateUser()
         {
@@ -274,8 +1025,8 @@ namespace WinFormsApp1
                             cmd.Parameters.AddWithValue("@school_semester", semester);
                             cmd.Parameters.AddWithValue("@school_course", ContextCourseText.Text.ToUpper());
                             cmd.ExecuteNonQuery();
-
                         }
+
                         string AttendanceQuery = "INSERT INTO professor_attendance (student_id, student_name) VALUES (@student_id, @student_name)";
                         using (MySqlCommand cmd3 = new MySqlCommand(AttendanceQuery, conn))
                         {
@@ -291,7 +1042,6 @@ namespace WinFormsApp1
                             cmd3.Parameters.AddWithValue("@FolderPath", $"C:\\ReceivedFileFolder\\{LastnameText.Text.ToUpper()}_{FirstnameText.Text.ToUpper()}_{MiddlenameText.Text.ToUpper()}");
                             cmd3.ExecuteNonQuery();
                         }
-
                     }
 
                     string FolderName = $"{LastnameText.Text.ToUpper()}_{FirstnameText.Text.ToUpper()}_{MiddlenameText.Text.ToUpper()}";
@@ -300,7 +1050,6 @@ namespace WinFormsApp1
                     ClearText();
                     LoadUserData();
                     CreateFolder(FolderName);
-
                 }
             }
             catch (Exception ex)
@@ -334,10 +1083,11 @@ namespace WinFormsApp1
             ContextRoleText.SelectedIndex = -1;
             ContextYearText.SelectedIndex = -1;
             ContextSectionText.SelectedIndex = -1;
-            ContextRoleText.SelectedIndex = -1;
         }
 
-        // WORKSTATION FUNCTIONS //
+        // =========================================================
+        //  WORKSTATION
+        // =========================================================
         public void WorkstationButton_Click(object sender, EventArgs e)
         {
             Button clickedButton = (Button)sender;
@@ -363,13 +1113,9 @@ namespace WinFormsApp1
                 Button wsButton = null;
 
                 if (this.InvokeRequired)
-                {
                     this.Invoke(new Action(() => wsButton = OnWorkStationConnected(clientIp)));
-                }
                 else
-                {
                     wsButton = OnWorkStationConnected(clientIp);
-                }
 
                 _ = MonitorDisconnected(client, wsButton, clientIp);
             }
@@ -381,7 +1127,6 @@ namespace WinFormsApp1
             Console.WriteLine("   Existing keys: [" + string.Join(", ", workstationButtons.Keys) + "]");
             Console.WriteLine("   Contains this IP? " + workstationButtons.ContainsKey(clientIp));
 
-            // If this PC already has a button (reconnecting), just turn it green again
             if (workstationButtons.ContainsKey(clientIp))
             {
                 Console.WriteLine("   ✅ Reusing existing button, setting to green");
@@ -391,7 +1136,6 @@ namespace WinFormsApp1
                 return existingBtn;
             }
 
-            // New PC — create a fresh button
             Console.WriteLine("   🆕 Creating new button");
             WorkStationNum++;
 
@@ -423,7 +1167,7 @@ namespace WinFormsApp1
                 while (client.Connected)
                 {
                     int bytesRead = await stream.ReadAsync(buffer, 0, 1);
-                    if (bytesRead == 0) break; // client disconnected
+                    if (bytesRead == 0) break;
                 }
             }
             catch (Exception ex)
@@ -438,7 +1182,7 @@ namespace WinFormsApp1
                 {
                     this.Invoke(new Action(() =>
                     {
-                        wsButton.BackColor = Color.Red; // red = offline
+                        wsButton.BackColor = Color.Red;
                         UpdateConnectedCount();
                     }));
                 }
@@ -462,7 +1206,9 @@ namespace WinFormsApp1
             lblTotalWorkstations.Text = workstationButtons.Count.ToString();
         }
 
-        //WorkStation Screen Sharing//
+        // =========================================================
+        //  SCREEN SHARING
+        // =========================================================
         private async void StartScreenListener()
         {
             screenListener = new TcpListener(IPAddress.Any, SettingsManager.Current.ScreenSharePort);
@@ -484,7 +1230,6 @@ namespace WinFormsApp1
             {
                 while (client.Connected)
                 {
-
                     byte[] lengthBuffer = new byte[4];
                     int read = await ReadExactAsync(stream, lengthBuffer, 4);
                     if (read == 0) break;
@@ -552,11 +1297,9 @@ namespace WinFormsApp1
             viewer.Show();
         }
 
-
-
-        //Server Folder Management//
-
-
+        // =========================================================
+        //  SERVER FOLDER MANAGEMENT
+        // =========================================================
         private void lsServerFolderSetup()
         {
             lvServerFolder.View = View.LargeIcon;
@@ -567,16 +1310,13 @@ namespace WinFormsApp1
         private void LoadServerFolder(string path, bool addToHistory = true)
         {
             if (addToHistory && !string.IsNullOrEmpty(currentFolder))
-            {
                 folderHistory.Push(currentFolder);
-            }
 
             currentFolder = path;
             lvServerFolder.Items.Clear();
             imageListIcon.Images.Clear();
             int imageIndex = 0;
 
-            //To Show Folder
             foreach (string dir in Directory.GetDirectories(path))
             {
                 imageListIcon.Images.Add(Properties.Resources.Folder);
@@ -585,8 +1325,6 @@ namespace WinFormsApp1
                 lvServerFolder.Items.Add(item);
                 imageIndex++;
             }
-
-            //to Show File
 
             foreach (string file in Directory.GetFiles(path))
             {
@@ -597,11 +1335,11 @@ namespace WinFormsApp1
                 item.Tag = file;
                 lvServerFolder.Items.Add(item);
                 imageIndex++;
-
             }
 
             BtnBack.Enabled = folderHistory.Count > 0;
         }
+
         private void btnBack()
         {
             if (folderHistory.Count > 0)
@@ -610,6 +1348,7 @@ namespace WinFormsApp1
                 LoadServerFolder(previousFolder, addToHistory: false);
             }
         }
+
         private void doubleClick()
         {
             if (lvServerFolder.SelectedItems.Count == 0) return;
@@ -620,6 +1359,11 @@ namespace WinFormsApp1
                 LoadServerFolder(path);
             else if (File.Exists(path))
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+        }
+
+        private void btnLogout_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
