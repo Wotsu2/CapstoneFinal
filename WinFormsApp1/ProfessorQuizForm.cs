@@ -682,8 +682,9 @@ namespace WinFormsApp1
                 return;
             }
 
-            using (MySqlConnection connection =
-                   DatabaseConnection.GetConnection())
+            string connStr = SettingsManager.Current.GetConnectionString();
+
+            using (var connection = new MySqlConnection(connStr))
             {
                 MySqlTransaction transaction =
                     null;
@@ -700,26 +701,26 @@ namespace WinFormsApp1
                     // =================================================
 
                     string quizSql = @"
-INSERT INTO quizzes
-(
-    quiz_title,
-    assessment_type,
-    subject,
-    exam_period,
-    created_by
-)
-VALUES
-(
-    @quiz_title,
-    @assessment_type,
-    @subject,
-    @exam_period,
-    @created_by
-);";
+                        INSERT INTO quizzes
+                        (
+                            quiz_title,
+                            assessment_type,
+                            subject,
+                            exam_period,
+                            created_by
+                        )
+                        VALUES
+                        (
+                            @quiz_title,
+                            @assessment_type,
+                            @subject,
+                            @exam_period,
+                            @created_by
+                        );";
 
                     int quizId;
 
-                    using (MySqlCommand command =
+                    using (var command =
                            new MySqlCommand(
                                quizSql,
                                connection,
@@ -757,28 +758,28 @@ VALUES
                     // =================================================
 
                     string questionSql = @"
-INSERT INTO questions
-(
-    quiz_id,
-    question_text,
-    question_type,
-    choice_a,
-    choice_b,
-    choice_c,
-    choice_d,
-    correct_answer
-)
-VALUES
-(
-    @quiz_id,
-    @question_text,
-    @question_type,
-    @choice_a,
-    @choice_b,
-    @choice_c,
-    @choice_d,
-    @correct_answer
-);";
+                        INSERT INTO questions
+                        (
+                            quiz_id,
+                            question_text,
+                            question_type,
+                            choice_a,
+                            choice_b,
+                            choice_c,
+                            choice_d,
+                            correct_answer
+                        )
+                        VALUES
+                        (
+                            @quiz_id,
+                            @question_text,
+                            @question_type,
+                            @choice_a,
+                            @choice_b,
+                            @choice_c,
+                            @choice_d,
+                            @correct_answer
+                        );";
 
                     for (int i = 0;
                          i < importedQuestions.Count;
@@ -926,7 +927,7 @@ VALUES
                         // INSERT
                         // =================================================
 
-                        using (MySqlCommand command =
+                        using (var command =
                                new MySqlCommand(
                                    questionSql,
                                    connection,

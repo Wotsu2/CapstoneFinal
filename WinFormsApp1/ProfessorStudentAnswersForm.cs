@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Data;
 using System.Drawing;
 using System.Windows.Forms;
@@ -216,13 +215,12 @@ namespace WinFormsApp1
 
         private void LoadStudentInformation()
         {
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
-                using (MySqlConnection conn =
-                    DatabaseConnection.GetConnection())
+                using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-
                     string query = @"
                         SELECT
                             u.full_name,
@@ -233,22 +231,20 @@ namespace WinFormsApp1
                             qa.total_questions,
                             qa.percentage
                         FROM quiz_attempts qa
-                        INNER JOIN users u
+                        INNER JOIN user_credential u
                             ON qa.user_id = u.user_id
                         INNER JOIN quizzes q
                             ON qa.quiz_id = q.quiz_id
                         WHERE qa.attempt_id = @attemptId
                         LIMIT 1";
 
-                    using (MySqlCommand cmd =
-                        new MySqlCommand(query, conn))
+                    using (var cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue(
                             "@attemptId",
                             attemptId);
 
-                        using (MySqlDataReader reader =
-                            cmd.ExecuteReader())
+                        using (var reader = cmd.ExecuteReader())
                         {
                             if (!reader.Read())
                                 return;
@@ -329,13 +325,12 @@ namespace WinFormsApp1
 
         private void LoadAnswers()
         {
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
-                using (MySqlConnection conn =
-                    DatabaseConnection.GetConnection())
+                using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-
                     string query = @"
                         SELECT
                             q.question_id,
@@ -350,15 +345,13 @@ namespace WinFormsApp1
                         WHERE sa.attempt_id = @attemptId
                         ORDER BY q.question_id";
 
-                    using (MySqlCommand cmd =
-                        new MySqlCommand(query, conn))
+                    using (var cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue(
                             "@attemptId",
                             attemptId);
 
-                        using (MySqlDataReader reader =
-                            cmd.ExecuteReader())
+                        using (var reader = cmd.ExecuteReader())
                         {
                             DataTable table =
                                 new DataTable();
@@ -487,4 +480,3 @@ namespace WinFormsApp1
         }
     }
 }
-

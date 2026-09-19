@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Data;
 using System.Drawing;
 using System.Windows.Forms;
@@ -355,13 +354,12 @@ namespace WinFormsApp1
 
         private void LoadAssessments()
         {
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
-                using (MySqlConnection conn =
-                       DatabaseConnection.GetConnection())
+                using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-
                     string query = @"
                         SELECT
                             quiz_id,
@@ -370,11 +368,9 @@ namespace WinFormsApp1
                         FROM quizzes
                         ORDER BY created_at DESC";
 
-                    using (MySqlCommand cmd =
-                           new MySqlCommand(query, conn))
+                    using (var cmd = new MySqlCommand(query, conn))
                     {
-                        using (MySqlDataReader reader =
-                               cmd.ExecuteReader())
+                        using (var reader = cmd.ExecuteReader())
                         {
                             cmbAssessment.Items.Clear();
 
@@ -434,13 +430,12 @@ namespace WinFormsApp1
 
         private void LoadGrades()
         {
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
-                using (MySqlConnection conn =
-                       DatabaseConnection.GetConnection())
+                using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-
                     string query = @"
                         SELECT
                             qa.attempt_id,
@@ -454,7 +449,7 @@ namespace WinFormsApp1
 
                         FROM quiz_attempts qa
 
-                        INNER JOIN users u
+                        INNER JOIN user_credential u
                             ON qa.user_id = u.user_id
 
                         INNER JOIN quizzes q
@@ -476,8 +471,7 @@ namespace WinFormsApp1
                     query +=
                         " ORDER BY qa.submitted_at DESC";
 
-                    using (MySqlCommand cmd =
-                           new MySqlCommand(query, conn))
+                    using (var cmd = new MySqlCommand(query, conn))
                     {
                         if (selected != null &&
                             selected.QuizID > 0)
@@ -487,16 +481,13 @@ namespace WinFormsApp1
                                 selected.QuizID);
                         }
 
-                        using (MySqlDataAdapter adapter =
-                               new MySqlDataAdapter(cmd))
+                        using (var adapter = new MySqlDataAdapter(cmd))
                         {
-                            gradesTable =
-                                new DataTable();
+                            gradesTable = new DataTable();
 
                             adapter.Fill(gradesTable);
 
-                            dgvGrades.DataSource =
-                                gradesTable;
+                            dgvGrades.DataSource = gradesTable;
 
                             ApplyFilter();
                         }

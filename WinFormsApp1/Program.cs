@@ -31,7 +31,7 @@ namespace WinFormsApp1
             // Simulan sa Login form — ito ang tamang starting point ng app
 
             
-            Application.Run(new Login());
+            Application.Run(new ProfessorQuizForm());
 
 
         }
