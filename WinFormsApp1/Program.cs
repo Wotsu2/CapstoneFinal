@@ -10,6 +10,9 @@ namespace WinFormsApp1
         {
             ApplicationConfiguration.Initialize();
             Application.EnableVisualStyles();
+
+            SettingsManager.Load();
+
             Application.SetCompatibleTextRenderingDefault(false);
 
             Application.Run(new Login());

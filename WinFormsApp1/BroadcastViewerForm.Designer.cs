@@ -37,7 +37,7 @@
             pictureBoxBroadcast.Dock = DockStyle.Fill;
             pictureBoxBroadcast.Location = new Point(0, 0);
             pictureBoxBroadcast.Name = "pictureBoxBroadcast";
-            pictureBoxBroadcast.Size = new Size(1385, 792);
+            pictureBoxBroadcast.Size = new Size(1370, 749);
             pictureBoxBroadcast.SizeMode = PictureBoxSizeMode.Zoom;
             pictureBoxBroadcast.TabIndex = 0;
             pictureBoxBroadcast.TabStop = false;
@@ -46,8 +46,9 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1385, 792);
+            ClientSize = new Size(1370, 749);
             Controls.Add(pictureBoxBroadcast);
+            MinimizeBox = false;
             Name = "BroadcastViewerForm";
             Text = "BroadcastViewerForm";
             ((System.ComponentModel.ISupportInitialize)pictureBoxBroadcast).EndInit();
