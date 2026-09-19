@@ -220,12 +220,6 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges173 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges174 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges175 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges185 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges186 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges187 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges188 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges202 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges203 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges183 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges184 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges176 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -235,6 +229,12 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges180 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges181 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges182 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges185 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges186 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges187 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges188 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges202 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges203 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges189 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges190 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges191 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -248,6 +248,18 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges199 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges200 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges201 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges204 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges205 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges214 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges215 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges206 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges207 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges208 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges209 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges210 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges211 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges212 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges213 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges226 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges227 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges216 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -260,18 +272,6 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges223 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges224 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges225 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges214 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges215 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges206 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges207 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges208 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges209 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges210 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges211 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges212 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges213 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges204 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges205 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             guna2Panel1 = new Guna.UI2.WinForms.Guna2Panel();
             btnFile = new Guna.UI2.WinForms.Guna2Button();
             btnSubject = new Guna.UI2.WinForms.Guna2Button();
@@ -311,7 +311,7 @@
             guna2Panel10 = new Guna.UI2.WinForms.Guna2Panel();
             label12 = new Label();
             pictureBox4 = new PictureBox();
-            guna2Button7 = new Guna.UI2.WinForms.Guna2Button();
+            btnCreateAssessment = new Guna.UI2.WinForms.Guna2Button();
             label11 = new Label();
             pictureBox3 = new PictureBox();
             btnHomeCreateActivity = new Guna.UI2.WinForms.Guna2Button();
@@ -444,16 +444,16 @@
             pnlSetting = new Panel();
             btnSignOut = new Guna.UI2.WinForms.Guna2Button();
             guna2Button4 = new Guna.UI2.WinForms.Guna2Button();
-            guna2Button2 = new Guna.UI2.WinForms.Guna2Button();
-            btnSettingPanel = new Guna.UI2.WinForms.Guna2Button();
-            label3 = new Label();
-            pnlSettingProfile = new Guna.UI2.WinForms.Guna2Panel();
             pnlChangePhoto = new Guna.UI2.WinForms.Guna2Panel();
             btnUploadPhoto = new Guna.UI2.WinForms.Guna2Button();
             picboxNewPicture = new Guna.UI2.WinForms.Guna2CirclePictureBox();
             label55 = new Label();
             btnExitChangePhotoPanel = new Guna.UI2.WinForms.Guna2Button();
             btnSubmitChangePhoto = new Guna.UI2.WinForms.Guna2Button();
+            guna2Button2 = new Guna.UI2.WinForms.Guna2Button();
+            btnSettingPanel = new Guna.UI2.WinForms.Guna2Button();
+            label3 = new Label();
+            pnlSettingProfile = new Guna.UI2.WinForms.Guna2Panel();
             btnSettingChangePhoto = new Guna.UI2.WinForms.Guna2Button();
             btnSettingChangeUsername = new Guna.UI2.WinForms.Guna2Button();
             btnSettingChangePassword = new Guna.UI2.WinForms.Guna2Button();
@@ -463,6 +463,16 @@
             lblProfUsername = new Label();
             label28 = new Label();
             picboxSettingProfilePicture = new Guna.UI2.WinForms.Guna2CirclePictureBox();
+            pnlSettingConfiguration = new Guna.UI2.WinForms.Guna2Panel();
+            label29 = new Label();
+            pnlChangeUsername = new Guna.UI2.WinForms.Guna2Panel();
+            label50 = new Label();
+            btnExitChangeUsernamePanel = new Guna.UI2.WinForms.Guna2Button();
+            btnSubmitChangeUsername = new Guna.UI2.WinForms.Guna2Button();
+            label35 = new Label();
+            txtNewUsername = new Guna.UI2.WinForms.Guna2TextBox();
+            label34 = new Label();
+            txtCurrentUsername = new Guna.UI2.WinForms.Guna2TextBox();
             pnlChangePassword = new Guna.UI2.WinForms.Guna2Panel();
             label54 = new Label();
             txtConfirmPassword = new Guna.UI2.WinForms.Guna2TextBox();
@@ -473,16 +483,6 @@
             txtNewPassword = new Guna.UI2.WinForms.Guna2TextBox();
             label53 = new Label();
             txtCurrentPassword = new Guna.UI2.WinForms.Guna2TextBox();
-            pnlChangeUsername = new Guna.UI2.WinForms.Guna2Panel();
-            label50 = new Label();
-            btnExitChangeUsernamePanel = new Guna.UI2.WinForms.Guna2Button();
-            btnSubmitChangeUsername = new Guna.UI2.WinForms.Guna2Button();
-            label35 = new Label();
-            txtNewUsername = new Guna.UI2.WinForms.Guna2TextBox();
-            label34 = new Label();
-            txtCurrentUsername = new Guna.UI2.WinForms.Guna2TextBox();
-            pnlSettingConfiguration = new Guna.UI2.WinForms.Guna2Panel();
-            label29 = new Label();
             guna2Panel1.SuspendLayout();
             guna2Panel3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
@@ -531,13 +531,13 @@
             guna2Panel33.SuspendLayout();
             guna2Panel32.SuspendLayout();
             pnlSetting.SuspendLayout();
-            pnlSettingProfile.SuspendLayout();
             pnlChangePhoto.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)picboxNewPicture).BeginInit();
+            pnlSettingProfile.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)picboxSettingProfilePicture).BeginInit();
-            pnlChangePassword.SuspendLayout();
-            pnlChangeUsername.SuspendLayout();
             pnlSettingConfiguration.SuspendLayout();
+            pnlChangeUsername.SuspendLayout();
+            pnlChangePassword.SuspendLayout();
             SuspendLayout();
             // 
             // guna2Panel1
@@ -1054,7 +1054,7 @@
             guna2Panel10.BorderRadius = 10;
             guna2Panel10.Controls.Add(label12);
             guna2Panel10.Controls.Add(pictureBox4);
-            guna2Panel10.Controls.Add(guna2Button7);
+            guna2Panel10.Controls.Add(btnCreateAssessment);
             guna2Panel10.Controls.Add(label11);
             guna2Panel10.Controls.Add(pictureBox3);
             guna2Panel10.CustomizableEdges = customizableEdges43;
@@ -1088,24 +1088,25 @@
             pictureBox4.TabIndex = 11;
             pictureBox4.TabStop = false;
             // 
-            // guna2Button7
+            // btnCreateAssessment
             // 
-            guna2Button7.BackColor = Color.Transparent;
-            guna2Button7.CustomizableEdges = customizableEdges41;
-            guna2Button7.DisabledState.BorderColor = Color.DarkGray;
-            guna2Button7.DisabledState.CustomBorderColor = Color.DarkGray;
-            guna2Button7.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
-            guna2Button7.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            guna2Button7.FillColor = Color.White;
-            guna2Button7.Font = new Font("Segoe UI", 9F);
-            guna2Button7.ForeColor = Color.White;
-            guna2Button7.Image = Properties.Resources.PlusSignBlack;
-            guna2Button7.ImageSize = new Size(12, 12);
-            guna2Button7.Location = new Point(207, 21);
-            guna2Button7.Name = "guna2Button7";
-            guna2Button7.ShadowDecoration.CustomizableEdges = customizableEdges42;
-            guna2Button7.Size = new Size(14, 15);
-            guna2Button7.TabIndex = 7;
+            btnCreateAssessment.BackColor = Color.Transparent;
+            btnCreateAssessment.CustomizableEdges = customizableEdges41;
+            btnCreateAssessment.DisabledState.BorderColor = Color.DarkGray;
+            btnCreateAssessment.DisabledState.CustomBorderColor = Color.DarkGray;
+            btnCreateAssessment.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            btnCreateAssessment.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            btnCreateAssessment.FillColor = Color.White;
+            btnCreateAssessment.Font = new Font("Segoe UI", 9F);
+            btnCreateAssessment.ForeColor = Color.White;
+            btnCreateAssessment.Image = Properties.Resources.PlusSignBlack;
+            btnCreateAssessment.ImageSize = new Size(12, 12);
+            btnCreateAssessment.Location = new Point(207, 21);
+            btnCreateAssessment.Name = "btnCreateAssessment";
+            btnCreateAssessment.ShadowDecoration.CustomizableEdges = customizableEdges42;
+            btnCreateAssessment.Size = new Size(14, 15);
+            btnCreateAssessment.TabIndex = 7;
+            btnCreateAssessment.Click += btnCreateAssessment_Click;
             // 
             // label11
             // 
@@ -3397,89 +3398,6 @@
             guna2Button4.TextAlign = HorizontalAlignment.Left;
             guna2Button4.TextOffset = new Point(25, 0);
             // 
-            // guna2Button2
-            // 
-            guna2Button2.Animated = true;
-            guna2Button2.BorderRadius = 10;
-            guna2Button2.CustomBorderColor = Color.Black;
-            guna2Button2.CustomBorderThickness = new Padding(0, 0, 0, 1);
-            guna2Button2.CustomizableEdges = customizableEdges185;
-            guna2Button2.DisabledState.BorderColor = Color.DarkGray;
-            guna2Button2.DisabledState.CustomBorderColor = Color.DarkGray;
-            guna2Button2.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
-            guna2Button2.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            guna2Button2.FillColor = Color.Transparent;
-            guna2Button2.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            guna2Button2.ForeColor = Color.Black;
-            guna2Button2.Image = Properties.Resources.Configuration;
-            guna2Button2.ImageAlign = HorizontalAlignment.Left;
-            guna2Button2.ImageOffset = new Point(15, 0);
-            guna2Button2.Location = new Point(57, 215);
-            guna2Button2.Name = "guna2Button2";
-            guna2Button2.ShadowDecoration.CustomizableEdges = customizableEdges186;
-            guna2Button2.Size = new Size(261, 45);
-            guna2Button2.TabIndex = 19;
-            guna2Button2.Text = "Configuration";
-            guna2Button2.TextAlign = HorizontalAlignment.Left;
-            guna2Button2.TextOffset = new Point(25, 0);
-            // 
-            // btnSettingPanel
-            // 
-            btnSettingPanel.Animated = true;
-            btnSettingPanel.BorderRadius = 10;
-            btnSettingPanel.CustomBorderColor = Color.Black;
-            btnSettingPanel.CustomBorderThickness = new Padding(0, 0, 0, 1);
-            btnSettingPanel.CustomizableEdges = customizableEdges187;
-            btnSettingPanel.DisabledState.BorderColor = Color.DarkGray;
-            btnSettingPanel.DisabledState.CustomBorderColor = Color.DarkGray;
-            btnSettingPanel.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
-            btnSettingPanel.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnSettingPanel.FillColor = Color.Transparent;
-            btnSettingPanel.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnSettingPanel.ForeColor = Color.Black;
-            btnSettingPanel.Image = Properties.Resources.Profile;
-            btnSettingPanel.ImageAlign = HorizontalAlignment.Left;
-            btnSettingPanel.ImageOffset = new Point(15, 0);
-            btnSettingPanel.ImageSize = new Size(15, 15);
-            btnSettingPanel.Location = new Point(57, 153);
-            btnSettingPanel.Name = "btnSettingPanel";
-            btnSettingPanel.ShadowDecoration.CustomizableEdges = customizableEdges188;
-            btnSettingPanel.Size = new Size(261, 45);
-            btnSettingPanel.TabIndex = 18;
-            btnSettingPanel.Text = "Profile";
-            btnSettingPanel.TextAlign = HorizontalAlignment.Left;
-            btnSettingPanel.TextOffset = new Point(25, 0);
-            // 
-            // label3
-            // 
-            label3.AutoSize = true;
-            label3.Font = new Font("Arial", 26.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label3.Location = new Point(52, 75);
-            label3.Name = "label3";
-            label3.Size = new Size(153, 41);
-            label3.TabIndex = 17;
-            label3.Text = "Settings";
-            // 
-            // pnlSettingProfile
-            // 
-            pnlSettingProfile.BorderRadius = 20;
-            pnlSettingProfile.Controls.Add(btnSettingChangePhoto);
-            pnlSettingProfile.Controls.Add(btnSettingChangeUsername);
-            pnlSettingProfile.Controls.Add(btnSettingChangePassword);
-            pnlSettingProfile.Controls.Add(btnSettingProfileExpand);
-            pnlSettingProfile.Controls.Add(btnSettingProfileExpand2);
-            pnlSettingProfile.Controls.Add(btnSignOut2);
-            pnlSettingProfile.Controls.Add(lblProfUsername);
-            pnlSettingProfile.Controls.Add(label28);
-            pnlSettingProfile.Controls.Add(picboxSettingProfilePicture);
-            pnlSettingProfile.CustomizableEdges = customizableEdges202;
-            pnlSettingProfile.FillColor = Color.White;
-            pnlSettingProfile.Location = new Point(391, 151);
-            pnlSettingProfile.Name = "pnlSettingProfile";
-            pnlSettingProfile.ShadowDecoration.CustomizableEdges = customizableEdges203;
-            pnlSettingProfile.Size = new Size(852, 347);
-            pnlSettingProfile.TabIndex = 0;
-            // 
             // pnlChangePhoto
             // 
             pnlChangePhoto.BackColor = Color.White;
@@ -3595,6 +3513,89 @@
             btnSubmitChangePhoto.TabIndex = 31;
             btnSubmitChangePhoto.Text = "Change";
             btnSubmitChangePhoto.Click += btnSubmitChangePhoto_Click;
+            // 
+            // guna2Button2
+            // 
+            guna2Button2.Animated = true;
+            guna2Button2.BorderRadius = 10;
+            guna2Button2.CustomBorderColor = Color.Black;
+            guna2Button2.CustomBorderThickness = new Padding(0, 0, 0, 1);
+            guna2Button2.CustomizableEdges = customizableEdges185;
+            guna2Button2.DisabledState.BorderColor = Color.DarkGray;
+            guna2Button2.DisabledState.CustomBorderColor = Color.DarkGray;
+            guna2Button2.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            guna2Button2.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            guna2Button2.FillColor = Color.Transparent;
+            guna2Button2.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            guna2Button2.ForeColor = Color.Black;
+            guna2Button2.Image = Properties.Resources.Configuration;
+            guna2Button2.ImageAlign = HorizontalAlignment.Left;
+            guna2Button2.ImageOffset = new Point(15, 0);
+            guna2Button2.Location = new Point(57, 215);
+            guna2Button2.Name = "guna2Button2";
+            guna2Button2.ShadowDecoration.CustomizableEdges = customizableEdges186;
+            guna2Button2.Size = new Size(261, 45);
+            guna2Button2.TabIndex = 19;
+            guna2Button2.Text = "Configuration";
+            guna2Button2.TextAlign = HorizontalAlignment.Left;
+            guna2Button2.TextOffset = new Point(25, 0);
+            // 
+            // btnSettingPanel
+            // 
+            btnSettingPanel.Animated = true;
+            btnSettingPanel.BorderRadius = 10;
+            btnSettingPanel.CustomBorderColor = Color.Black;
+            btnSettingPanel.CustomBorderThickness = new Padding(0, 0, 0, 1);
+            btnSettingPanel.CustomizableEdges = customizableEdges187;
+            btnSettingPanel.DisabledState.BorderColor = Color.DarkGray;
+            btnSettingPanel.DisabledState.CustomBorderColor = Color.DarkGray;
+            btnSettingPanel.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            btnSettingPanel.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            btnSettingPanel.FillColor = Color.Transparent;
+            btnSettingPanel.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnSettingPanel.ForeColor = Color.Black;
+            btnSettingPanel.Image = Properties.Resources.Profile;
+            btnSettingPanel.ImageAlign = HorizontalAlignment.Left;
+            btnSettingPanel.ImageOffset = new Point(15, 0);
+            btnSettingPanel.ImageSize = new Size(15, 15);
+            btnSettingPanel.Location = new Point(57, 153);
+            btnSettingPanel.Name = "btnSettingPanel";
+            btnSettingPanel.ShadowDecoration.CustomizableEdges = customizableEdges188;
+            btnSettingPanel.Size = new Size(261, 45);
+            btnSettingPanel.TabIndex = 18;
+            btnSettingPanel.Text = "Profile";
+            btnSettingPanel.TextAlign = HorizontalAlignment.Left;
+            btnSettingPanel.TextOffset = new Point(25, 0);
+            // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.Font = new Font("Arial", 26.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label3.Location = new Point(52, 75);
+            label3.Name = "label3";
+            label3.Size = new Size(153, 41);
+            label3.TabIndex = 17;
+            label3.Text = "Settings";
+            // 
+            // pnlSettingProfile
+            // 
+            pnlSettingProfile.BorderRadius = 20;
+            pnlSettingProfile.Controls.Add(btnSettingChangePhoto);
+            pnlSettingProfile.Controls.Add(btnSettingChangeUsername);
+            pnlSettingProfile.Controls.Add(btnSettingChangePassword);
+            pnlSettingProfile.Controls.Add(btnSettingProfileExpand);
+            pnlSettingProfile.Controls.Add(btnSettingProfileExpand2);
+            pnlSettingProfile.Controls.Add(btnSignOut2);
+            pnlSettingProfile.Controls.Add(lblProfUsername);
+            pnlSettingProfile.Controls.Add(label28);
+            pnlSettingProfile.Controls.Add(picboxSettingProfilePicture);
+            pnlSettingProfile.CustomizableEdges = customizableEdges202;
+            pnlSettingProfile.FillColor = Color.White;
+            pnlSettingProfile.Location = new Point(391, 151);
+            pnlSettingProfile.Name = "pnlSettingProfile";
+            pnlSettingProfile.ShadowDecoration.CustomizableEdges = customizableEdges203;
+            pnlSettingProfile.Size = new Size(852, 347);
+            pnlSettingProfile.TabIndex = 0;
             // 
             // btnSettingChangePhoto
             // 
@@ -3779,6 +3780,164 @@
             picboxSettingProfilePicture.TabIndex = 0;
             picboxSettingProfilePicture.TabStop = false;
             // 
+            // pnlSettingConfiguration
+            // 
+            pnlSettingConfiguration.BorderRadius = 20;
+            pnlSettingConfiguration.Controls.Add(label29);
+            pnlSettingConfiguration.CustomizableEdges = customizableEdges204;
+            pnlSettingConfiguration.FillColor = Color.White;
+            pnlSettingConfiguration.Location = new Point(391, 151);
+            pnlSettingConfiguration.Name = "pnlSettingConfiguration";
+            pnlSettingConfiguration.ShadowDecoration.CustomizableEdges = customizableEdges205;
+            pnlSettingConfiguration.Size = new Size(852, 350);
+            pnlSettingConfiguration.TabIndex = 36;
+            // 
+            // label29
+            // 
+            label29.AutoSize = true;
+            label29.Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label29.Location = new Point(42, 29);
+            label29.Name = "label29";
+            label29.Size = new Size(143, 28);
+            label29.TabIndex = 17;
+            label29.Text = "Configuration";
+            // 
+            // pnlChangeUsername
+            // 
+            pnlChangeUsername.BackColor = Color.White;
+            pnlChangeUsername.BorderColor = Color.Black;
+            pnlChangeUsername.BorderRadius = 10;
+            pnlChangeUsername.BorderThickness = 1;
+            pnlChangeUsername.Controls.Add(label50);
+            pnlChangeUsername.Controls.Add(btnExitChangeUsernamePanel);
+            pnlChangeUsername.Controls.Add(btnSubmitChangeUsername);
+            pnlChangeUsername.Controls.Add(label35);
+            pnlChangeUsername.Controls.Add(txtNewUsername);
+            pnlChangeUsername.Controls.Add(label34);
+            pnlChangeUsername.Controls.Add(txtCurrentUsername);
+            pnlChangeUsername.CustomizableEdges = customizableEdges214;
+            pnlChangeUsername.Location = new Point(27, 407);
+            pnlChangeUsername.Name = "pnlChangeUsername";
+            pnlChangeUsername.ShadowDecoration.CustomizableEdges = customizableEdges215;
+            pnlChangeUsername.Size = new Size(326, 325);
+            pnlChangeUsername.TabIndex = 30;
+            pnlChangeUsername.Visible = false;
+            // 
+            // label50
+            // 
+            label50.AutoSize = true;
+            label50.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
+            label50.Location = new Point(13, 15);
+            label50.Name = "label50";
+            label50.Size = new Size(166, 25);
+            label50.TabIndex = 17;
+            label50.Text = "Change Username";
+            // 
+            // btnExitChangeUsernamePanel
+            // 
+            btnExitChangeUsernamePanel.Animated = true;
+            btnExitChangeUsernamePanel.BackColor = Color.Transparent;
+            btnExitChangeUsernamePanel.BorderRadius = 10;
+            btnExitChangeUsernamePanel.CustomizableEdges = customizableEdges206;
+            btnExitChangeUsernamePanel.DisabledState.BorderColor = Color.DarkGray;
+            btnExitChangeUsernamePanel.DisabledState.CustomBorderColor = Color.DarkGray;
+            btnExitChangeUsernamePanel.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            btnExitChangeUsernamePanel.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            btnExitChangeUsernamePanel.FillColor = Color.Transparent;
+            btnExitChangeUsernamePanel.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnExitChangeUsernamePanel.ForeColor = Color.Black;
+            btnExitChangeUsernamePanel.Image = Properties.Resources.Exit;
+            btnExitChangeUsernamePanel.ImageSize = new Size(10, 10);
+            btnExitChangeUsernamePanel.Location = new Point(290, 8);
+            btnExitChangeUsernamePanel.Name = "btnExitChangeUsernamePanel";
+            btnExitChangeUsernamePanel.ShadowDecoration.BorderRadius = 10;
+            btnExitChangeUsernamePanel.ShadowDecoration.CustomizableEdges = customizableEdges207;
+            btnExitChangeUsernamePanel.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
+            btnExitChangeUsernamePanel.Size = new Size(31, 22);
+            btnExitChangeUsernamePanel.TabIndex = 32;
+            btnExitChangeUsernamePanel.Click += btnExitChangeUsernamePanel_Click;
+            // 
+            // btnSubmitChangeUsername
+            // 
+            btnSubmitChangeUsername.Animated = true;
+            btnSubmitChangeUsername.BackColor = Color.Transparent;
+            btnSubmitChangeUsername.BorderRadius = 10;
+            btnSubmitChangeUsername.CustomizableEdges = customizableEdges208;
+            btnSubmitChangeUsername.DisabledState.BorderColor = Color.DarkGray;
+            btnSubmitChangeUsername.DisabledState.CustomBorderColor = Color.DarkGray;
+            btnSubmitChangeUsername.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            btnSubmitChangeUsername.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            btnSubmitChangeUsername.FillColor = Color.Transparent;
+            btnSubmitChangeUsername.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnSubmitChangeUsername.ForeColor = Color.Black;
+            btnSubmitChangeUsername.Location = new Point(240, 270);
+            btnSubmitChangeUsername.Name = "btnSubmitChangeUsername";
+            btnSubmitChangeUsername.ShadowDecoration.BorderRadius = 10;
+            btnSubmitChangeUsername.ShadowDecoration.CustomizableEdges = customizableEdges209;
+            btnSubmitChangeUsername.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
+            btnSubmitChangeUsername.Size = new Size(71, 38);
+            btnSubmitChangeUsername.TabIndex = 31;
+            btnSubmitChangeUsername.Text = "Change";
+            btnSubmitChangeUsername.Click += btnSubmitChangeUsername_Click;
+            // 
+            // label35
+            // 
+            label35.AutoSize = true;
+            label35.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label35.Location = new Point(43, 139);
+            label35.Name = "label35";
+            label35.Size = new Size(87, 15);
+            label35.TabIndex = 3;
+            label35.Text = "New Username";
+            // 
+            // txtNewUsername
+            // 
+            txtNewUsername.CustomizableEdges = customizableEdges210;
+            txtNewUsername.DefaultText = "";
+            txtNewUsername.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
+            txtNewUsername.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
+            txtNewUsername.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
+            txtNewUsername.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
+            txtNewUsername.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
+            txtNewUsername.Font = new Font("Segoe UI", 9F);
+            txtNewUsername.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
+            txtNewUsername.Location = new Point(41, 160);
+            txtNewUsername.Name = "txtNewUsername";
+            txtNewUsername.PlaceholderText = "";
+            txtNewUsername.SelectedText = "";
+            txtNewUsername.ShadowDecoration.CustomizableEdges = customizableEdges211;
+            txtNewUsername.Size = new Size(214, 28);
+            txtNewUsername.TabIndex = 2;
+            // 
+            // label34
+            // 
+            label34.AutoSize = true;
+            label34.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label34.Location = new Point(43, 78);
+            label34.Name = "label34";
+            label34.Size = new Size(102, 15);
+            label34.TabIndex = 1;
+            label34.Text = "Current Username";
+            // 
+            // txtCurrentUsername
+            // 
+            txtCurrentUsername.CustomizableEdges = customizableEdges212;
+            txtCurrentUsername.DefaultText = "";
+            txtCurrentUsername.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
+            txtCurrentUsername.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
+            txtCurrentUsername.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
+            txtCurrentUsername.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
+            txtCurrentUsername.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
+            txtCurrentUsername.Font = new Font("Segoe UI", 9F);
+            txtCurrentUsername.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
+            txtCurrentUsername.Location = new Point(41, 99);
+            txtCurrentUsername.Name = "txtCurrentUsername";
+            txtCurrentUsername.PlaceholderText = "";
+            txtCurrentUsername.SelectedText = "";
+            txtCurrentUsername.ShadowDecoration.CustomizableEdges = customizableEdges213;
+            txtCurrentUsername.Size = new Size(214, 28);
+            txtCurrentUsername.TabIndex = 0;
+            // 
             // pnlChangePassword
             // 
             pnlChangePassword.BackColor = Color.White;
@@ -3946,164 +4105,6 @@
             txtCurrentPassword.Size = new Size(214, 28);
             txtCurrentPassword.TabIndex = 0;
             // 
-            // pnlChangeUsername
-            // 
-            pnlChangeUsername.BackColor = Color.White;
-            pnlChangeUsername.BorderColor = Color.Black;
-            pnlChangeUsername.BorderRadius = 10;
-            pnlChangeUsername.BorderThickness = 1;
-            pnlChangeUsername.Controls.Add(label50);
-            pnlChangeUsername.Controls.Add(btnExitChangeUsernamePanel);
-            pnlChangeUsername.Controls.Add(btnSubmitChangeUsername);
-            pnlChangeUsername.Controls.Add(label35);
-            pnlChangeUsername.Controls.Add(txtNewUsername);
-            pnlChangeUsername.Controls.Add(label34);
-            pnlChangeUsername.Controls.Add(txtCurrentUsername);
-            pnlChangeUsername.CustomizableEdges = customizableEdges214;
-            pnlChangeUsername.Location = new Point(27, 407);
-            pnlChangeUsername.Name = "pnlChangeUsername";
-            pnlChangeUsername.ShadowDecoration.CustomizableEdges = customizableEdges215;
-            pnlChangeUsername.Size = new Size(326, 325);
-            pnlChangeUsername.TabIndex = 30;
-            pnlChangeUsername.Visible = false;
-            // 
-            // label50
-            // 
-            label50.AutoSize = true;
-            label50.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
-            label50.Location = new Point(13, 15);
-            label50.Name = "label50";
-            label50.Size = new Size(166, 25);
-            label50.TabIndex = 17;
-            label50.Text = "Change Username";
-            // 
-            // btnExitChangeUsernamePanel
-            // 
-            btnExitChangeUsernamePanel.Animated = true;
-            btnExitChangeUsernamePanel.BackColor = Color.Transparent;
-            btnExitChangeUsernamePanel.BorderRadius = 10;
-            btnExitChangeUsernamePanel.CustomizableEdges = customizableEdges206;
-            btnExitChangeUsernamePanel.DisabledState.BorderColor = Color.DarkGray;
-            btnExitChangeUsernamePanel.DisabledState.CustomBorderColor = Color.DarkGray;
-            btnExitChangeUsernamePanel.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
-            btnExitChangeUsernamePanel.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnExitChangeUsernamePanel.FillColor = Color.Transparent;
-            btnExitChangeUsernamePanel.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnExitChangeUsernamePanel.ForeColor = Color.Black;
-            btnExitChangeUsernamePanel.Image = Properties.Resources.Exit;
-            btnExitChangeUsernamePanel.ImageSize = new Size(10, 10);
-            btnExitChangeUsernamePanel.Location = new Point(290, 8);
-            btnExitChangeUsernamePanel.Name = "btnExitChangeUsernamePanel";
-            btnExitChangeUsernamePanel.ShadowDecoration.BorderRadius = 10;
-            btnExitChangeUsernamePanel.ShadowDecoration.CustomizableEdges = customizableEdges207;
-            btnExitChangeUsernamePanel.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
-            btnExitChangeUsernamePanel.Size = new Size(31, 22);
-            btnExitChangeUsernamePanel.TabIndex = 32;
-            btnExitChangeUsernamePanel.Click += btnExitChangeUsernamePanel_Click;
-            // 
-            // btnSubmitChangeUsername
-            // 
-            btnSubmitChangeUsername.Animated = true;
-            btnSubmitChangeUsername.BackColor = Color.Transparent;
-            btnSubmitChangeUsername.BorderRadius = 10;
-            btnSubmitChangeUsername.CustomizableEdges = customizableEdges208;
-            btnSubmitChangeUsername.DisabledState.BorderColor = Color.DarkGray;
-            btnSubmitChangeUsername.DisabledState.CustomBorderColor = Color.DarkGray;
-            btnSubmitChangeUsername.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
-            btnSubmitChangeUsername.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnSubmitChangeUsername.FillColor = Color.Transparent;
-            btnSubmitChangeUsername.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnSubmitChangeUsername.ForeColor = Color.Black;
-            btnSubmitChangeUsername.Location = new Point(240, 270);
-            btnSubmitChangeUsername.Name = "btnSubmitChangeUsername";
-            btnSubmitChangeUsername.ShadowDecoration.BorderRadius = 10;
-            btnSubmitChangeUsername.ShadowDecoration.CustomizableEdges = customizableEdges209;
-            btnSubmitChangeUsername.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
-            btnSubmitChangeUsername.Size = new Size(71, 38);
-            btnSubmitChangeUsername.TabIndex = 31;
-            btnSubmitChangeUsername.Text = "Change";
-            btnSubmitChangeUsername.Click += btnSubmitChangeUsername_Click;
-            // 
-            // label35
-            // 
-            label35.AutoSize = true;
-            label35.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label35.Location = new Point(43, 139);
-            label35.Name = "label35";
-            label35.Size = new Size(87, 15);
-            label35.TabIndex = 3;
-            label35.Text = "New Username";
-            // 
-            // txtNewUsername
-            // 
-            txtNewUsername.CustomizableEdges = customizableEdges210;
-            txtNewUsername.DefaultText = "";
-            txtNewUsername.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
-            txtNewUsername.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
-            txtNewUsername.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
-            txtNewUsername.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
-            txtNewUsername.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtNewUsername.Font = new Font("Segoe UI", 9F);
-            txtNewUsername.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtNewUsername.Location = new Point(41, 160);
-            txtNewUsername.Name = "txtNewUsername";
-            txtNewUsername.PlaceholderText = "";
-            txtNewUsername.SelectedText = "";
-            txtNewUsername.ShadowDecoration.CustomizableEdges = customizableEdges211;
-            txtNewUsername.Size = new Size(214, 28);
-            txtNewUsername.TabIndex = 2;
-            // 
-            // label34
-            // 
-            label34.AutoSize = true;
-            label34.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label34.Location = new Point(43, 78);
-            label34.Name = "label34";
-            label34.Size = new Size(102, 15);
-            label34.TabIndex = 1;
-            label34.Text = "Current Username";
-            // 
-            // txtCurrentUsername
-            // 
-            txtCurrentUsername.CustomizableEdges = customizableEdges212;
-            txtCurrentUsername.DefaultText = "";
-            txtCurrentUsername.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
-            txtCurrentUsername.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
-            txtCurrentUsername.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
-            txtCurrentUsername.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
-            txtCurrentUsername.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtCurrentUsername.Font = new Font("Segoe UI", 9F);
-            txtCurrentUsername.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtCurrentUsername.Location = new Point(41, 99);
-            txtCurrentUsername.Name = "txtCurrentUsername";
-            txtCurrentUsername.PlaceholderText = "";
-            txtCurrentUsername.SelectedText = "";
-            txtCurrentUsername.ShadowDecoration.CustomizableEdges = customizableEdges213;
-            txtCurrentUsername.Size = new Size(214, 28);
-            txtCurrentUsername.TabIndex = 0;
-            // 
-            // pnlSettingConfiguration
-            // 
-            pnlSettingConfiguration.BorderRadius = 20;
-            pnlSettingConfiguration.Controls.Add(label29);
-            pnlSettingConfiguration.CustomizableEdges = customizableEdges204;
-            pnlSettingConfiguration.FillColor = Color.White;
-            pnlSettingConfiguration.Location = new Point(391, 151);
-            pnlSettingConfiguration.Name = "pnlSettingConfiguration";
-            pnlSettingConfiguration.ShadowDecoration.CustomizableEdges = customizableEdges205;
-            pnlSettingConfiguration.Size = new Size(852, 350);
-            pnlSettingConfiguration.TabIndex = 36;
-            // 
-            // label29
-            // 
-            label29.AutoSize = true;
-            label29.Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label29.Location = new Point(42, 29);
-            label29.Name = "label29";
-            label29.Size = new Size(143, 28);
-            label29.TabIndex = 17;
-            label29.Text = "Configuration";
-            // 
             // ProfessorForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -4113,8 +4114,6 @@
             ClientSize = new Size(1370, 749);
             Controls.Add(guna2Panel2);
             Controls.Add(guna2Panel1);
-            Controls.Add(pnlSetting);
-            Controls.Add(pnlWorkstation);
             Controls.Add(pnlHome);
             Controls.Add(pnlStudent);
             Controls.Add(pnlActivity);
@@ -4122,6 +4121,8 @@
             Controls.Add(pnlSubject);
             Controls.Add(pnlAttendance);
             Controls.Add(pnlGrades);
+            Controls.Add(pnlSetting);
+            Controls.Add(pnlWorkstation);
             Name = "ProfessorForm";
             StartPosition = FormStartPosition.CenterScreen;
             Load += ProfessorForm_Load;
@@ -4202,18 +4203,18 @@
             guna2Panel32.ResumeLayout(false);
             pnlSetting.ResumeLayout(false);
             pnlSetting.PerformLayout();
-            pnlSettingProfile.ResumeLayout(false);
-            pnlSettingProfile.PerformLayout();
             pnlChangePhoto.ResumeLayout(false);
             pnlChangePhoto.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)picboxNewPicture).EndInit();
+            pnlSettingProfile.ResumeLayout(false);
+            pnlSettingProfile.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)picboxSettingProfilePicture).EndInit();
-            pnlChangePassword.ResumeLayout(false);
-            pnlChangePassword.PerformLayout();
-            pnlChangeUsername.ResumeLayout(false);
-            pnlChangeUsername.PerformLayout();
             pnlSettingConfiguration.ResumeLayout(false);
             pnlSettingConfiguration.PerformLayout();
+            pnlChangeUsername.ResumeLayout(false);
+            pnlChangeUsername.PerformLayout();
+            pnlChangePassword.ResumeLayout(false);
+            pnlChangePassword.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -4254,7 +4255,7 @@
         private PictureBox pictureBox3;
         private Label label12;
         private PictureBox pictureBox4;
-        private Guna.UI2.WinForms.Guna2Button guna2Button7;
+        private Guna.UI2.WinForms.Guna2Button btnCreateAssessment;
         private Panel pnlHome;
         private Label lblPanelName;
         public Label lblStudentOnline;

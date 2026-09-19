@@ -10,7 +10,7 @@ namespace WinFormsApp1
 {
     public class ProfessorQuizForm : Form
     {
-        private int professorUserId = 1;
+        private int professorUserId;
 
         private ComboBox cmbAssessmentType;
         private ComboBox cmbExamPeriod;
@@ -37,8 +37,9 @@ namespace WinFormsApp1
         private static readonly Color ClrBlackHover = Color.FromArgb(50, 50, 50);
         private static readonly Color ClrLabelGray = Color.FromArgb(50, 50, 50);
 
-        public ProfessorQuizForm()
+        public ProfessorQuizForm(int professorID)
         {
+            professorUserId = professorID;
             BuildProfessorInterface();
         }
 

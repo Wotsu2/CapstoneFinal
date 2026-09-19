@@ -12,7 +12,7 @@ namespace WinFormsApp1
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            Application.Run(new ProfessorQuizForm());
+            Application.Run(new Login());
 
 
             //using (SplashForm splash =
@@ -31,7 +31,7 @@ namespace WinFormsApp1
             // Simulan sa Login form — ito ang tamang starting point ng app
 
             
-            Application.Run(new ProfessorQuizForm());
+
 
 
         }

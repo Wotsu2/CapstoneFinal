@@ -97,8 +97,8 @@ namespace WinFormsApp1
 
             //File Management Caller//
 
-            lsServerFolderSetup();
-            LoadServerFolder(saveFolder, addToHistory: false);
+            //lsServerFolderSetup();
+            //LoadServerFolder(saveFolder, addToHistory: false);
 
             //Grade Caller//
             ActivityStatus();
@@ -166,8 +166,8 @@ namespace WinFormsApp1
         private void btnFile_Click(object sender, EventArgs e)
         {
             pnlFile.BringToFront();
-            lsServerFolderSetup();
-            LoadServerFolder(saveFolder, addToHistory: false);
+            //lsServerFolderSetup();
+            //LoadServerFolder(saveFolder, addToHistory: false);
             lblPanelName.Text = "Files";
             InitializeChangingPicture();
         }
@@ -2441,6 +2441,11 @@ namespace WinFormsApp1
             return name;
         }
 
+        private void btnCreateAssessment_Click(object sender, EventArgs e)
+        {
+            ProfessorQuizForm profQuiz = new ProfessorQuizForm(ProfessorID);
+            profQuiz.ShowDialog();
+        }
 
         /// <summary>
         /// //
