@@ -1,11 +1,12 @@
-﻿using System;
+﻿using AForge.Video;
+using AForge.Video.DirectShow;
+using FaceONNX;
+using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
 using System.Windows.Forms;
-using AForge.Video;
-using AForge.Video.DirectShow;
-using FaceONNX;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace WinFormsApp1
 {
@@ -51,10 +52,18 @@ namespace WinFormsApp1
         private static readonly Color ClrGoodText = Color.FromArgb(20, 140, 70);
         private static readonly Color ClrBadText = Color.FromArgb(200, 30, 40);
 
+
+        private int UserId;
+        private string StudentSection;
+        private string Username;
+
         public bool VerificationPassed { get; private set; } = false;
 
-        public LivenessCheckForm(Bitmap studentReferencePhoto)
+        public LivenessCheckForm(Bitmap studentReferencePhoto, int userId, string section, string username)
         {
+            UserId = userId;
+            StudentSection = section;
+            Username = username;
             referencePhoto = studentReferencePhoto;
             SetupUI();
 
@@ -549,6 +558,8 @@ namespace WinFormsApp1
                         StopCamera();
                         this.DialogResult = DialogResult.OK;
                         this.Close();
+                        StudentForm studentForm = new StudentForm(UserId, StudentSection, Username);
+                        studentForm.Show();
                     };
                     closeTimer.Start();
                 }
