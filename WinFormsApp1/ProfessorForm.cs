@@ -30,12 +30,9 @@ namespace WinFormsApp1
         private TcpListener broadcastListener;
         private TcpListener screenListener;
         private TcpListener activityFileListener;
-        private TcpListener activityDownloadListener;
-
 
         private Dictionary<string, Button> workstationButtons = new Dictionary<string, Button>();
         private Dictionary<string, Button> miniWorkstationButtons = new Dictionary<string, Button>();
-        private Dictionary<string, TcpClient> commandClients = new Dictionary<string, TcpClient>();
         private Dictionary<string, PictureBox> screenViewers = new Dictionary<string, PictureBox>();
         private Dictionary<string, TcpClient> broadcastClients = new Dictionary<string, TcpClient>();
         private Dictionary<string, DateTime> lastThumbnailUpdate = new Dictionary<string, DateTime>();
@@ -112,7 +109,6 @@ namespace WinFormsApp1
             //Setting//
             lblProfUsername.Text = ProfessorUsername;
             InitializeChangingPicture();
-            InitializeAuthenticationSaveDirectory();
 
             //GetFIle Caller//
             StartActivityFileServer();
@@ -204,7 +200,7 @@ namespace WinFormsApp1
 
         private async void StartServer()
         {
-            listener = new TcpListener(IPAddress.Any, 5000);
+            listener = new TcpListener(IPAddress.Any, SettingsManager.Current.WorkstationPort);
             listener.Start();
 
             lblComputerOnline.Text = "0";
@@ -379,7 +375,7 @@ namespace WinFormsApp1
         private void LoadAllStudent(string filter = "")
         {
             string dbsName = "cdsga_hub";
-            string connStr = $"Server=localhost;Port=3306;Database={dbsName};Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
@@ -456,19 +452,16 @@ namespace WinFormsApp1
         }
         private void cmbSemester_SelectedIndexChanged(object sender, EventArgs e)
         {
-            lblSemester.Text = "";
             LoadAllStudent();
         }
 
         private void cmbYear_SelectedIndexChanged(object sender, EventArgs e)
         {
-            lblYear.Text = "";
             LoadAllStudent();
         }
 
         private void cmbSection_SelectedIndexChanged(object sender, EventArgs e)
         {
-            lblSection.Text = "";
             LoadAllStudent();
         }
 
@@ -477,9 +470,6 @@ namespace WinFormsApp1
             cmbYear.SelectedIndex = -1;
             cmbSection.SelectedIndex = -1;
             cmbSemester.SelectedIndex = -1;
-            lblSemester.Text = "Semester";
-            lblYear.Text = "Year";
-            lblSection.Text = "Section";
             txtBoxSearch.Text = "";
             LoadAllStudent();
         }
@@ -488,7 +478,7 @@ namespace WinFormsApp1
 
         private void dgvAttendance()
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
@@ -523,7 +513,7 @@ namespace WinFormsApp1
 
         private static int TotalUsers()
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
@@ -595,7 +585,7 @@ namespace WinFormsApp1
             }
             string AttendanceDateNow = DateTime.Today.ToString("MMMdd");
 
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
@@ -639,7 +629,8 @@ namespace WinFormsApp1
         private List<(int StudentId, string StudentName)> GetAllStudents()
         {
             List<(int, string)> list = new List<(int, string)>();
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             using (var conn = new MySqlConnection(connStr))
             {
@@ -662,7 +653,8 @@ namespace WinFormsApp1
 
             string DateToday = DateTime.Today.ToString("MMMdd");
 
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
+
             MessageBox.Show($"Total controls in flpAttendance: {flpAttendance.Controls.Count}");
 
             if (flpAttendance.Controls.Count == 0)
@@ -727,7 +719,7 @@ namespace WinFormsApp1
 
         private void btnExportAttendance_Click(object sender, EventArgs e)
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
@@ -790,7 +782,7 @@ namespace WinFormsApp1
 
         private void btnCreateClass_Click(object sender, EventArgs e)
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -834,49 +826,163 @@ namespace WinFormsApp1
             {
                 MessageBox.Show("Folder already exists.");
             }
-
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
         }
 
-        private static int CountTotalClass(int ProfessorID)
+        private void AutoCreateClassBtn()
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            flpSubjectClass.Controls.Clear();
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = "SELECT COUNT(*) FROM professor_class WHERE professor_id = @professor_id";
+
+                    string query = @"SELECT class_id, class_name, class_date, class_time, class_section 
+                             FROM professor_class WHERE professor_id = @professor_id";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@professor_id", ProfessorID);
-                        int totalClass = Convert.ToInt32(cmd.ExecuteScalar());
-                        return totalClass;
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                Panel cardPanel = new Panel
+                                {
+                                    Size = new Size(350, 250),
+                                    BackColor = Color.White,
+                                    BorderStyle = BorderStyle.FixedSingle,
+                                    Margin = new Padding(10),
+                                    Tag = reader["class_id"].ToString()
+                                };
+
+                                Label lblMenu = new Label
+                                {
+                                    Text = "•••",
+                                    Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+                                    Location = new Point(300, 10),
+                                    AutoSize = true,
+                                    Cursor = Cursors.Hand
+                                };
+                                cardPanel.Controls.Add(lblMenu);
+
+                                // --- Class Title ---
+                                Label lblTitle = new Label
+                                {
+                                    Text = reader["class_name"].ToString(),
+                                    Font = new Font("Segoe UI", 20F, FontStyle.Bold),
+                                    Location = new Point(20, 50),
+                                    AutoSize = true
+                                };
+                                cardPanel.Controls.Add(lblTitle);
+
+                                Label lblProfName = new Label
+                                {
+                                    Text = "Prof. " + ProfessorID,
+                                    Font = new Font("Segoe UI", 14F, FontStyle.Bold),
+                                    Location = new Point(20, 100),
+                                    AutoSize = true
+                                };
+                                cardPanel.Controls.Add(lblProfName);
+
+                                // --- Day ---
+                                Label lblDay = new Label
+                                {
+                                    Text = reader["class_date"].ToString(),
+                                    Font = new Font("Segoe UI", 14F, FontStyle.Bold),
+                                    Location = new Point(50, 150),
+                                    AutoSize = true
+                                };
+                                cardPanel.Controls.Add(lblDay);
+
+                                // --- Time ---
+                                Label lblTime = new Label
+                                {
+                                    Text = reader["class_time"].ToString(),
+                                    Font = new Font("Segoe UI", 10F, FontStyle.Regular),
+                                    Location = new Point(50, 180),
+                                    AutoSize = true
+                                };
+                                cardPanel.Controls.Add(lblTime);
+
+                                // --- Section ---
+                                Label lblSection = new Label
+                                {
+                                    Text = reader["class_section"].ToString(),
+                                    Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+                                    Location = new Point(200, 210),
+                                    AutoSize = true,
+                                    TextAlign = ContentAlignment.MiddleRight
+                                };
+                                cardPanel.Controls.Add(lblSection);
+
+                                ContextMenuStrip rightClickMenu = new ContextMenuStrip();
+                                ToolStripMenuItem deleteMenuItem = new ToolStripMenuItem("Delete Class");
+
+                                deleteMenuItem.Click += DeleteClass_Click;
+                                rightClickMenu.Items.Add(deleteMenuItem);
+
+                                // Assign the menu to the PANEL
+                                cardPanel.ContextMenuStrip = rightClickMenu;
+
+                                flpSubjectClass.Controls.Add(cardPanel);
+                            }
+                        }
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                return 0;
+                MessageBox.Show("Error loading classes: " + ex.Message);
             }
         }
-        private void AutoCreateClassBtn()
+        private void DeleteClass_Click(object sender, EventArgs e)
         {
-            int totalClasses = CountTotalClass(ProfessorID);
-            //MessageBox.Show($"Creating {totalClasses} classes"); // Debug line
-            for (int i = 0; i < CountTotalClass(ProfessorID); i++)
-            {
-                Button ClassButton = new Button();
-                ClassButton.Text = "Class " + (i + 1);
-                ClassButton.Height = 200;
-                ClassButton.Width = 300;
-                ClassButton.Margin = new Padding(5);
-                ClassButton.BackColor = Color.LightGreen;
+            ToolStripMenuItem menuItem = sender as ToolStripMenuItem;
+            if (menuItem == null) return;
 
-                flpSubjectClass.Controls.Add(ClassButton);
+            ContextMenuStrip menu = menuItem.Owner as ContextMenuStrip;
+            if (menu == null) return;
+
+            Panel clickedCard = menu.SourceControl as Panel;
+            if (clickedCard == null) return;
+
+            string classId = clickedCard.Tag.ToString();
+
+            DialogResult result = MessageBox.Show("Are you sure you want to delete this class?",
+                                                  "Confirm Delete",
+                                                  MessageBoxButtons.YesNo,
+                                                  MessageBoxIcon.Warning);
+
+            if (result == DialogResult.Yes)
+            {
+                string connStr = SettingsManager.Current.GetConnectionString();
+                try
+                {
+                    using (var conn = new MySqlConnection(connStr))
+                    {
+                        conn.Open();
+                        // FIXED: Using 'class_id' in the WHERE clause
+                        string query = "DELETE FROM professor_class WHERE class_id = @id";
+
+                        using (var cmd = new MySqlCommand(query, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@id", classId);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    flpSubjectClass.Controls.Remove(clickedCard);
+                    clickedCard.Dispose();
+                    menu.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error deleting class: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
-            //MessageBox.Show($"Total buttons: {flpSubjectClass.Controls.Count}");
         }
 
         //Creating Activity Page//
@@ -896,7 +1002,7 @@ namespace WinFormsApp1
 
         private void btnPostActivity_Click(object sender, EventArgs e)
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             DateTime now = DateTime.Now;
             string FullDateTime = now.ToString("MMM-dd HH:mm:ss");
@@ -964,7 +1070,7 @@ namespace WinFormsApp1
         }
         private void ActivitySectionSubject()
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -993,7 +1099,7 @@ namespace WinFormsApp1
 
         private void RecentActivity()
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -1019,21 +1125,6 @@ namespace WinFormsApp1
             {
                 MessageBox.Show(ex.Message);
             }
-        }
-
-        private void cmbActivityTitle_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            lblActivitytTitle.Visible = false;
-        }
-
-        private void cmbActivitySection_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            lblActivitySection.Visible = false;
-        }
-
-        private void cmbActivitySubject_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            lblActivitySubject.Visible = false;
         }
 
         //FILE MANAGEMENT PAGE//
@@ -1164,7 +1255,7 @@ namespace WinFormsApp1
         }
         private static string GetFolderPath(int ProfessorID)
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -1201,7 +1292,7 @@ namespace WinFormsApp1
         private void ActivityStatus(string filter = "")
         {
 
-            string connStr = $"Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
@@ -1302,7 +1393,7 @@ namespace WinFormsApp1
 
         private static int CountTotalSubmitted(int ProfessorID)
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -1324,7 +1415,7 @@ namespace WinFormsApp1
         }
         private static int CountTotalGraded(int ProfessorID)
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -1346,7 +1437,7 @@ namespace WinFormsApp1
         }
         private static int CountTotalNotSubmitted(int ProfessorID)
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -1484,7 +1575,7 @@ namespace WinFormsApp1
             btnUpdateScore.Location = new Point(870, 160);
             btnUpdateScore.Click += (s, args) =>
             {
-                string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+                string connStr = SettingsManager.Current.GetConnectionString();
 
                 if (string.IsNullOrEmpty(txtScore.Text))
                 {
@@ -1552,7 +1643,7 @@ namespace WinFormsApp1
         }
         private void GetSection()
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
@@ -1598,7 +1689,7 @@ namespace WinFormsApp1
 
         private async void StartBroadcastListener()
         {
-            broadcastListener = new TcpListener(IPAddress.Any, 5005); // new port for broadcast
+            broadcastListener = new TcpListener(IPAddress.Any, SettingsManager.Current.BroadcastPort); // new port for broadcast
             broadcastListener.Start();
 
             while (isRunning)
@@ -1677,6 +1768,8 @@ namespace WinFormsApp1
         private void btnStopSharing_Click(object sender, EventArgs e)
         {
             broadcastTimer?.Stop();
+            BroadcastViewerForm broadcastform = new BroadcastViewerForm();
+            broadcastform.Close();
         }
 
         //Button Shutdown//
@@ -1684,7 +1777,7 @@ namespace WinFormsApp1
         {
             try
             {
-                TcpClient client = new TcpClient(clientIp, 8888);
+                TcpClient client = new TcpClient(clientIp, SettingsManager.Current.CommandPort);
                 NetworkStream stream = client.GetStream();
 
                 byte[] data = Encoding.UTF8.GetBytes("SHUTDOWN");
@@ -1709,7 +1802,7 @@ namespace WinFormsApp1
         {
             try
             {
-                TcpClient client = new TcpClient(clientIp, 8888);
+                TcpClient client = new TcpClient(clientIp, SettingsManager.Current.CommandPort);
                 NetworkStream stream = client.GetStream();
                 byte[] data = Encoding.UTF8.GetBytes("RESTART");
                 stream.Write(data, 0, data.Length);
@@ -1730,7 +1823,7 @@ namespace WinFormsApp1
 
         private async void StartScreenListener()
         {
-            screenListener = new TcpListener(IPAddress.Any, 5002);
+            screenListener = new TcpListener(IPAddress.Any, SettingsManager.Current.ScreenSharePort);
             screenListener.Start();
 
             while (isRunning)
@@ -2009,7 +2102,7 @@ namespace WinFormsApp1
 
         private void btnSubmitChangeUsername_Click(object sender, EventArgs e)
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             if (string.IsNullOrEmpty(txtCurrentUsername.Text) || string.IsNullOrEmpty(txtNewUsername.Text))
             {
@@ -2061,7 +2154,7 @@ namespace WinFormsApp1
 
         private void btnSubmitChangePassword_Click(object sender, EventArgs e)
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             if (string.IsNullOrEmpty(txtCurrentPassword.Text) || string.IsNullOrEmpty(txtNewPassword.Text) || string.IsNullOrEmpty(txtConfirmPassword.Text))
             {
@@ -2142,7 +2235,7 @@ namespace WinFormsApp1
                 return;
             }
 
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
@@ -2173,7 +2266,7 @@ namespace WinFormsApp1
         }
         private void InitializeChangingPicture()
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -2217,79 +2310,11 @@ namespace WinFormsApp1
             pnlChangePhoto.Visible = false;
         }
 
-        private void tgSettingAuthentication_CheckedChanged(object sender, EventArgs e)
-        {
-            btnUploadAuthenticationPhoto.Enabled = tgSettingAuthentication.Checked;
-            btnSaveAuthenticationPhoto.Enabled = tgSettingAuthentication.Checked;
-        }
-        private void btn_Click(object sender, EventArgs e)
-        {
-            using (OpenFileDialog ofd = new OpenFileDialog())
-            {
-                ofd.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif";
-                if (ofd.ShowDialog() == DialogResult.OK)
-                {
-                    AuthenticationPhoto = ofd.FileName;
-                    picboxNewPicture.Image = Image.FromFile(AuthenticationPhoto);
-                    picboxNewPicture.SizeMode = PictureBoxSizeMode.Zoom;
-                    btnSubmitChangePhoto.Enabled = true;
-                }
-            }
-        }
-        private void InitializeAuthenticationSaveDirectory()
-        {
-            // Create a "Images" folder inside the solution directory
-            string solutionDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            SaveAuthenticationPhoto = Path.Combine(solutionDirectory, "StudentAuthenticationPhoto");
-
-            if (!Directory.Exists(SaveAuthenticationPhoto))
-            {
-                Directory.CreateDirectory(SaveAuthenticationPhoto);
-            }
-        }
-        private void btnSaveAuthenticationPhoto_Click(object sender, EventArgs e)
-        {
-            if (string.IsNullOrEmpty(AuthenticationPhoto))
-            {
-                MessageBox.Show("Upload an image first!");
-                return;
-            }
-
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
-
-            try
-            {
-                using (var conn = new MySqlConnection(connStr))
-                {
-                    conn.Open();
-                    string query = @"UPDATE user_credential 
-                                     SET authentication_photo = @authentication_photo 
-                                     WHERE username = @username";
-                    using (var cmd = new MySqlCommand(query, conn))
-                    {
-                        // Save the image to the designated folder
-                        string fileName = Path.GetFileName(AuthenticationPhoto);
-                        string destinationPath = Path.Combine(SaveAuthenticationPhoto, fileName);
-                        File.Copy(AuthenticationPhoto, destinationPath, true);
-                        cmd.Parameters.AddWithValue("@authentication_photo", destinationPath);
-                        cmd.Parameters.AddWithValue("@username", ProfessorUsername);
-                        cmd.ExecuteNonQuery();
-                    }
-                    InitializeAuthenticationSaveDirectory();
-                    MessageBox.Show("Profile picture updated successfully.");
-                }
-            }
-            catch
-            {
-
-            }
-        }
-
         //FileReceiver//
 
         private void NameGet()
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -2325,7 +2350,7 @@ namespace WinFormsApp1
 
         private async void StartActivityFileServer()
         {
-            activityFileListener = new TcpListener(IPAddress.Any, 5001);
+            activityFileListener = new TcpListener(IPAddress.Any, SettingsManager.Current.FileTransferPort);
             activityFileListener.Start();
 
             while (isRunning)
@@ -2380,8 +2405,7 @@ namespace WinFormsApp1
         }
         private void OnActivityFileReceived(string prof_ID, string user_ID, string savePath)
         {
-            MessageBox.Show(savePath);
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -2416,6 +2440,7 @@ namespace WinFormsApp1
             }
             return name;
         }
+
 
         /// <summary>
         /// //

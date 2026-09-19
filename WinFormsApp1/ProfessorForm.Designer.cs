@@ -220,25 +220,25 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges173 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges174 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges175 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges176 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges177 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges178 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges179 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges230 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges231 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges180 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges181 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges182 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges183 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges191 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges192 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges184 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges185 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges186 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges187 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges188 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges202 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges203 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges183 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges184 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges176 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges177 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges178 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges179 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges180 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges181 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges182 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges189 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges190 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges191 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges192 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges193 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges194 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges195 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -248,36 +248,30 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges199 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges200 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges201 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges202 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges203 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges204 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges205 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges206 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges207 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges218 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges219 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges208 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges209 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges210 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges211 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges212 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges213 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges214 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges215 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges226 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges227 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges216 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges217 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges228 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges229 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges218 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges219 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges220 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges221 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges222 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges223 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges224 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges225 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges226 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges227 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges232 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges233 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges214 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges215 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges206 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges207 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges208 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges209 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges210 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges211 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges212 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges213 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges204 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges205 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             guna2Panel1 = new Guna.UI2.WinForms.Guna2Panel();
             btnFile = new Guna.UI2.WinForms.Guna2Button();
             btnSubject = new Guna.UI2.WinForms.Guna2Button();
@@ -454,16 +448,12 @@
             btnSettingPanel = new Guna.UI2.WinForms.Guna2Button();
             label3 = new Label();
             pnlSettingProfile = new Guna.UI2.WinForms.Guna2Panel();
-            btnSaveAuthenticationPhoto = new Guna.UI2.WinForms.Guna2Button();
-            btnUploadAuthenticationPhoto = new Guna.UI2.WinForms.Guna2Button();
             pnlChangePhoto = new Guna.UI2.WinForms.Guna2Panel();
             btnUploadPhoto = new Guna.UI2.WinForms.Guna2Button();
             picboxNewPicture = new Guna.UI2.WinForms.Guna2CirclePictureBox();
             label55 = new Label();
             btnExitChangePhotoPanel = new Guna.UI2.WinForms.Guna2Button();
             btnSubmitChangePhoto = new Guna.UI2.WinForms.Guna2Button();
-            label30 = new Label();
-            tgSettingAuthentication = new Guna.UI2.WinForms.Guna2ToggleSwitch();
             btnSettingChangePhoto = new Guna.UI2.WinForms.Guna2Button();
             btnSettingChangeUsername = new Guna.UI2.WinForms.Guna2Button();
             btnSettingChangePassword = new Guna.UI2.WinForms.Guna2Button();
@@ -2164,7 +2154,6 @@
             cmbActivitySection.Size = new Size(463, 76);
             cmbActivitySection.TabIndex = 23;
             cmbActivitySection.TextAlign = HorizontalAlignment.Center;
-            cmbActivitySection.SelectedIndexChanged += cmbActivitySection_SelectedIndexChanged;
             // 
             // txtActivityPostDetails
             // 
@@ -2281,7 +2270,6 @@
             cmbActivitySubject.Size = new Size(463, 76);
             cmbActivitySubject.TabIndex = 16;
             cmbActivitySubject.TextAlign = HorizontalAlignment.Center;
-            cmbActivitySubject.SelectedIndexChanged += cmbActivitySubject_SelectedIndexChanged;
             // 
             // lblActivitytTitle
             // 
@@ -2316,7 +2304,6 @@
             cmbActivityTitle.Size = new Size(463, 76);
             cmbActivityTitle.TabIndex = 5;
             cmbActivityTitle.TextAlign = HorizontalAlignment.Center;
-            cmbActivityTitle.SelectedIndexChanged += cmbActivityTitle_SelectedIndexChanged;
             // 
             // guna2Panel28
             // 
@@ -3344,11 +3331,14 @@
             pnlSetting.BackgroundImageLayout = ImageLayout.Center;
             pnlSetting.Controls.Add(btnSignOut);
             pnlSetting.Controls.Add(guna2Button4);
+            pnlSetting.Controls.Add(pnlChangePhoto);
             pnlSetting.Controls.Add(guna2Button2);
             pnlSetting.Controls.Add(btnSettingPanel);
             pnlSetting.Controls.Add(label3);
             pnlSetting.Controls.Add(pnlSettingProfile);
             pnlSetting.Controls.Add(pnlSettingConfiguration);
+            pnlSetting.Controls.Add(pnlChangeUsername);
+            pnlSetting.Controls.Add(pnlChangePassword);
             pnlSetting.Location = new Point(84, 96);
             pnlSetting.Name = "pnlSetting";
             pnlSetting.Size = new Size(1328, 1000);
@@ -3413,7 +3403,7 @@
             guna2Button2.BorderRadius = 10;
             guna2Button2.CustomBorderColor = Color.Black;
             guna2Button2.CustomBorderThickness = new Padding(0, 0, 0, 1);
-            guna2Button2.CustomizableEdges = customizableEdges176;
+            guna2Button2.CustomizableEdges = customizableEdges185;
             guna2Button2.DisabledState.BorderColor = Color.DarkGray;
             guna2Button2.DisabledState.CustomBorderColor = Color.DarkGray;
             guna2Button2.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -3426,7 +3416,7 @@
             guna2Button2.ImageOffset = new Point(15, 0);
             guna2Button2.Location = new Point(57, 215);
             guna2Button2.Name = "guna2Button2";
-            guna2Button2.ShadowDecoration.CustomizableEdges = customizableEdges177;
+            guna2Button2.ShadowDecoration.CustomizableEdges = customizableEdges186;
             guna2Button2.Size = new Size(261, 45);
             guna2Button2.TabIndex = 19;
             guna2Button2.Text = "Configuration";
@@ -3439,7 +3429,7 @@
             btnSettingPanel.BorderRadius = 10;
             btnSettingPanel.CustomBorderColor = Color.Black;
             btnSettingPanel.CustomBorderThickness = new Padding(0, 0, 0, 1);
-            btnSettingPanel.CustomizableEdges = customizableEdges178;
+            btnSettingPanel.CustomizableEdges = customizableEdges187;
             btnSettingPanel.DisabledState.BorderColor = Color.DarkGray;
             btnSettingPanel.DisabledState.CustomBorderColor = Color.DarkGray;
             btnSettingPanel.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -3453,7 +3443,7 @@
             btnSettingPanel.ImageSize = new Size(15, 15);
             btnSettingPanel.Location = new Point(57, 153);
             btnSettingPanel.Name = "btnSettingPanel";
-            btnSettingPanel.ShadowDecoration.CustomizableEdges = customizableEdges179;
+            btnSettingPanel.ShadowDecoration.CustomizableEdges = customizableEdges188;
             btnSettingPanel.Size = new Size(261, 45);
             btnSettingPanel.TabIndex = 18;
             btnSettingPanel.Text = "Profile";
@@ -3473,11 +3463,6 @@
             // pnlSettingProfile
             // 
             pnlSettingProfile.BorderRadius = 20;
-            pnlSettingProfile.Controls.Add(btnSaveAuthenticationPhoto);
-            pnlSettingProfile.Controls.Add(btnUploadAuthenticationPhoto);
-            pnlSettingProfile.Controls.Add(pnlChangePhoto);
-            pnlSettingProfile.Controls.Add(label30);
-            pnlSettingProfile.Controls.Add(tgSettingAuthentication);
             pnlSettingProfile.Controls.Add(btnSettingChangePhoto);
             pnlSettingProfile.Controls.Add(btnSettingChangeUsername);
             pnlSettingProfile.Controls.Add(btnSettingChangePassword);
@@ -3487,74 +3472,17 @@
             pnlSettingProfile.Controls.Add(lblProfUsername);
             pnlSettingProfile.Controls.Add(label28);
             pnlSettingProfile.Controls.Add(picboxSettingProfilePicture);
-            pnlSettingProfile.Controls.Add(pnlChangePassword);
-            pnlSettingProfile.Controls.Add(pnlChangeUsername);
-            pnlSettingProfile.CustomizableEdges = customizableEdges230;
+            pnlSettingProfile.CustomizableEdges = customizableEdges202;
             pnlSettingProfile.FillColor = Color.White;
             pnlSettingProfile.Location = new Point(391, 151);
             pnlSettingProfile.Name = "pnlSettingProfile";
-            pnlSettingProfile.ShadowDecoration.CustomizableEdges = customizableEdges231;
-            pnlSettingProfile.Size = new Size(852, 733);
+            pnlSettingProfile.ShadowDecoration.CustomizableEdges = customizableEdges203;
+            pnlSettingProfile.Size = new Size(852, 347);
             pnlSettingProfile.TabIndex = 0;
-            // 
-            // btnSaveAuthenticationPhoto
-            // 
-            btnSaveAuthenticationPhoto.Animated = true;
-            btnSaveAuthenticationPhoto.BorderRadius = 10;
-            btnSaveAuthenticationPhoto.CustomBorderColor = Color.Black;
-            btnSaveAuthenticationPhoto.CustomBorderThickness = new Padding(0, 0, 0, 1);
-            btnSaveAuthenticationPhoto.CustomizableEdges = customizableEdges180;
-            btnSaveAuthenticationPhoto.DisabledState.BorderColor = Color.DarkGray;
-            btnSaveAuthenticationPhoto.DisabledState.CustomBorderColor = Color.DarkGray;
-            btnSaveAuthenticationPhoto.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
-            btnSaveAuthenticationPhoto.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnSaveAuthenticationPhoto.Enabled = false;
-            btnSaveAuthenticationPhoto.FillColor = Color.Transparent;
-            btnSaveAuthenticationPhoto.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnSaveAuthenticationPhoto.ForeColor = Color.Black;
-            btnSaveAuthenticationPhoto.ImageAlign = HorizontalAlignment.Left;
-            btnSaveAuthenticationPhoto.ImageOffset = new Point(15, 0);
-            btnSaveAuthenticationPhoto.ImageSize = new Size(15, 15);
-            btnSaveAuthenticationPhoto.Location = new Point(80, 665);
-            btnSaveAuthenticationPhoto.Name = "btnSaveAuthenticationPhoto";
-            btnSaveAuthenticationPhoto.ShadowDecoration.CustomizableEdges = customizableEdges181;
-            btnSaveAuthenticationPhoto.Size = new Size(261, 45);
-            btnSaveAuthenticationPhoto.TabIndex = 37;
-            btnSaveAuthenticationPhoto.Text = "Save";
-            btnSaveAuthenticationPhoto.TextAlign = HorizontalAlignment.Left;
-            btnSaveAuthenticationPhoto.TextOffset = new Point(25, 0);
-            btnSaveAuthenticationPhoto.Click += btnSaveAuthenticationPhoto_Click;
-            // 
-            // btnUploadAuthenticationPhoto
-            // 
-            btnUploadAuthenticationPhoto.Animated = true;
-            btnUploadAuthenticationPhoto.BorderRadius = 10;
-            btnUploadAuthenticationPhoto.CustomBorderColor = Color.Black;
-            btnUploadAuthenticationPhoto.CustomBorderThickness = new Padding(0, 0, 0, 1);
-            btnUploadAuthenticationPhoto.CustomizableEdges = customizableEdges182;
-            btnUploadAuthenticationPhoto.DisabledState.BorderColor = Color.DarkGray;
-            btnUploadAuthenticationPhoto.DisabledState.CustomBorderColor = Color.DarkGray;
-            btnUploadAuthenticationPhoto.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
-            btnUploadAuthenticationPhoto.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnUploadAuthenticationPhoto.Enabled = false;
-            btnUploadAuthenticationPhoto.FillColor = Color.Transparent;
-            btnUploadAuthenticationPhoto.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnUploadAuthenticationPhoto.ForeColor = Color.Black;
-            btnUploadAuthenticationPhoto.ImageAlign = HorizontalAlignment.Left;
-            btnUploadAuthenticationPhoto.ImageOffset = new Point(15, 0);
-            btnUploadAuthenticationPhoto.ImageSize = new Size(15, 15);
-            btnUploadAuthenticationPhoto.Location = new Point(80, 614);
-            btnUploadAuthenticationPhoto.Name = "btnUploadAuthenticationPhoto";
-            btnUploadAuthenticationPhoto.ShadowDecoration.CustomizableEdges = customizableEdges183;
-            btnUploadAuthenticationPhoto.Size = new Size(261, 45);
-            btnUploadAuthenticationPhoto.TabIndex = 36;
-            btnUploadAuthenticationPhoto.Text = "Upload Photo";
-            btnUploadAuthenticationPhoto.TextAlign = HorizontalAlignment.Left;
-            btnUploadAuthenticationPhoto.TextOffset = new Point(25, 0);
-            btnUploadAuthenticationPhoto.Click += btn_Click;
             // 
             // pnlChangePhoto
             // 
+            pnlChangePhoto.BackColor = Color.White;
             pnlChangePhoto.BorderColor = Color.Black;
             pnlChangePhoto.BorderRadius = 10;
             pnlChangePhoto.BorderThickness = 1;
@@ -3563,10 +3491,10 @@
             pnlChangePhoto.Controls.Add(label55);
             pnlChangePhoto.Controls.Add(btnExitChangePhotoPanel);
             pnlChangePhoto.Controls.Add(btnSubmitChangePhoto);
-            pnlChangePhoto.CustomizableEdges = customizableEdges191;
-            pnlChangePhoto.Location = new Point(116, 51);
+            pnlChangePhoto.CustomizableEdges = customizableEdges183;
+            pnlChangePhoto.Location = new Point(27, 407);
             pnlChangePhoto.Name = "pnlChangePhoto";
-            pnlChangePhoto.ShadowDecoration.CustomizableEdges = customizableEdges192;
+            pnlChangePhoto.ShadowDecoration.CustomizableEdges = customizableEdges184;
             pnlChangePhoto.Size = new Size(326, 325);
             pnlChangePhoto.TabIndex = 35;
             pnlChangePhoto.Visible = false;
@@ -3578,7 +3506,7 @@
             btnUploadPhoto.BorderRadius = 10;
             btnUploadPhoto.CustomBorderColor = Color.Black;
             btnUploadPhoto.CustomBorderThickness = new Padding(0, 0, 0, 1);
-            btnUploadPhoto.CustomizableEdges = customizableEdges184;
+            btnUploadPhoto.CustomizableEdges = customizableEdges176;
             btnUploadPhoto.DisabledState.BorderColor = Color.DarkGray;
             btnUploadPhoto.DisabledState.CustomBorderColor = Color.DarkGray;
             btnUploadPhoto.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -3589,7 +3517,7 @@
             btnUploadPhoto.Location = new Point(115, 210);
             btnUploadPhoto.Name = "btnUploadPhoto";
             btnUploadPhoto.ShadowDecoration.BorderRadius = 10;
-            btnUploadPhoto.ShadowDecoration.CustomizableEdges = customizableEdges185;
+            btnUploadPhoto.ShadowDecoration.CustomizableEdges = customizableEdges177;
             btnUploadPhoto.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
             btnUploadPhoto.Size = new Size(106, 38);
             btnUploadPhoto.TabIndex = 37;
@@ -3603,7 +3531,7 @@
             picboxNewPicture.ImageRotate = 0F;
             picboxNewPicture.Location = new Point(123, 77);
             picboxNewPicture.Name = "picboxNewPicture";
-            picboxNewPicture.ShadowDecoration.CustomizableEdges = customizableEdges186;
+            picboxNewPicture.ShadowDecoration.CustomizableEdges = customizableEdges178;
             picboxNewPicture.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle;
             picboxNewPicture.Size = new Size(100, 100);
             picboxNewPicture.SizeMode = PictureBoxSizeMode.StretchImage;
@@ -3625,7 +3553,7 @@
             btnExitChangePhotoPanel.Animated = true;
             btnExitChangePhotoPanel.BackColor = Color.Transparent;
             btnExitChangePhotoPanel.BorderRadius = 10;
-            btnExitChangePhotoPanel.CustomizableEdges = customizableEdges187;
+            btnExitChangePhotoPanel.CustomizableEdges = customizableEdges179;
             btnExitChangePhotoPanel.DisabledState.BorderColor = Color.DarkGray;
             btnExitChangePhotoPanel.DisabledState.CustomBorderColor = Color.DarkGray;
             btnExitChangePhotoPanel.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -3638,7 +3566,7 @@
             btnExitChangePhotoPanel.Location = new Point(290, 8);
             btnExitChangePhotoPanel.Name = "btnExitChangePhotoPanel";
             btnExitChangePhotoPanel.ShadowDecoration.BorderRadius = 10;
-            btnExitChangePhotoPanel.ShadowDecoration.CustomizableEdges = customizableEdges188;
+            btnExitChangePhotoPanel.ShadowDecoration.CustomizableEdges = customizableEdges180;
             btnExitChangePhotoPanel.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
             btnExitChangePhotoPanel.Size = new Size(31, 22);
             btnExitChangePhotoPanel.TabIndex = 32;
@@ -3649,7 +3577,7 @@
             btnSubmitChangePhoto.Animated = true;
             btnSubmitChangePhoto.BackColor = Color.Transparent;
             btnSubmitChangePhoto.BorderRadius = 10;
-            btnSubmitChangePhoto.CustomizableEdges = customizableEdges189;
+            btnSubmitChangePhoto.CustomizableEdges = customizableEdges181;
             btnSubmitChangePhoto.DisabledState.BorderColor = Color.DarkGray;
             btnSubmitChangePhoto.DisabledState.CustomBorderColor = Color.DarkGray;
             btnSubmitChangePhoto.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -3661,40 +3589,12 @@
             btnSubmitChangePhoto.Location = new Point(238, 270);
             btnSubmitChangePhoto.Name = "btnSubmitChangePhoto";
             btnSubmitChangePhoto.ShadowDecoration.BorderRadius = 10;
-            btnSubmitChangePhoto.ShadowDecoration.CustomizableEdges = customizableEdges190;
+            btnSubmitChangePhoto.ShadowDecoration.CustomizableEdges = customizableEdges182;
             btnSubmitChangePhoto.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
             btnSubmitChangePhoto.Size = new Size(73, 38);
             btnSubmitChangePhoto.TabIndex = 31;
             btnSubmitChangePhoto.Text = "Change";
             btnSubmitChangePhoto.Click += btnSubmitChangePhoto_Click;
-            // 
-            // label30
-            // 
-            label30.AutoSize = true;
-            label30.Font = new Font("Arial", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label30.Location = new Point(80, 533);
-            label30.Name = "label30";
-            label30.Size = new Size(226, 22);
-            label30.TabIndex = 29;
-            label30.Text = "Two Factor Authentication";
-            // 
-            // tgSettingAuthentication
-            // 
-            tgSettingAuthentication.CheckedState.BorderColor = Color.FromArgb(94, 148, 255);
-            tgSettingAuthentication.CheckedState.FillColor = Color.FromArgb(94, 148, 255);
-            tgSettingAuthentication.CheckedState.InnerBorderColor = Color.White;
-            tgSettingAuthentication.CheckedState.InnerColor = Color.White;
-            tgSettingAuthentication.CustomizableEdges = customizableEdges193;
-            tgSettingAuthentication.Location = new Point(80, 564);
-            tgSettingAuthentication.Name = "tgSettingAuthentication";
-            tgSettingAuthentication.ShadowDecoration.CustomizableEdges = customizableEdges194;
-            tgSettingAuthentication.Size = new Size(65, 34);
-            tgSettingAuthentication.TabIndex = 28;
-            tgSettingAuthentication.UncheckedState.BorderColor = Color.FromArgb(125, 137, 149);
-            tgSettingAuthentication.UncheckedState.FillColor = Color.FromArgb(125, 137, 149);
-            tgSettingAuthentication.UncheckedState.InnerBorderColor = Color.White;
-            tgSettingAuthentication.UncheckedState.InnerColor = Color.White;
-            tgSettingAuthentication.CheckedChanged += tgSettingAuthentication_CheckedChanged;
             // 
             // btnSettingChangePhoto
             // 
@@ -3702,7 +3602,7 @@
             btnSettingChangePhoto.BorderRadius = 10;
             btnSettingChangePhoto.CustomBorderColor = Color.Black;
             btnSettingChangePhoto.CustomBorderThickness = new Padding(0, 0, 0, 1);
-            btnSettingChangePhoto.CustomizableEdges = customizableEdges195;
+            btnSettingChangePhoto.CustomizableEdges = customizableEdges189;
             btnSettingChangePhoto.DisabledState.BorderColor = Color.DarkGray;
             btnSettingChangePhoto.DisabledState.CustomBorderColor = Color.DarkGray;
             btnSettingChangePhoto.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -3715,7 +3615,7 @@
             btnSettingChangePhoto.ImageSize = new Size(15, 15);
             btnSettingChangePhoto.Location = new Point(75, 473);
             btnSettingChangePhoto.Name = "btnSettingChangePhoto";
-            btnSettingChangePhoto.ShadowDecoration.CustomizableEdges = customizableEdges196;
+            btnSettingChangePhoto.ShadowDecoration.CustomizableEdges = customizableEdges190;
             btnSettingChangePhoto.Size = new Size(261, 45);
             btnSettingChangePhoto.TabIndex = 26;
             btnSettingChangePhoto.Text = "Change Photo";
@@ -3729,7 +3629,7 @@
             btnSettingChangeUsername.BorderRadius = 10;
             btnSettingChangeUsername.CustomBorderColor = Color.Black;
             btnSettingChangeUsername.CustomBorderThickness = new Padding(0, 0, 0, 1);
-            btnSettingChangeUsername.CustomizableEdges = customizableEdges197;
+            btnSettingChangeUsername.CustomizableEdges = customizableEdges191;
             btnSettingChangeUsername.DisabledState.BorderColor = Color.DarkGray;
             btnSettingChangeUsername.DisabledState.CustomBorderColor = Color.DarkGray;
             btnSettingChangeUsername.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -3742,7 +3642,7 @@
             btnSettingChangeUsername.ImageSize = new Size(15, 15);
             btnSettingChangeUsername.Location = new Point(75, 372);
             btnSettingChangeUsername.Name = "btnSettingChangeUsername";
-            btnSettingChangeUsername.ShadowDecoration.CustomizableEdges = customizableEdges198;
+            btnSettingChangeUsername.ShadowDecoration.CustomizableEdges = customizableEdges192;
             btnSettingChangeUsername.Size = new Size(261, 45);
             btnSettingChangeUsername.TabIndex = 25;
             btnSettingChangeUsername.Text = "Change Username";
@@ -3756,7 +3656,7 @@
             btnSettingChangePassword.BorderRadius = 10;
             btnSettingChangePassword.CustomBorderColor = Color.Black;
             btnSettingChangePassword.CustomBorderThickness = new Padding(0, 0, 0, 1);
-            btnSettingChangePassword.CustomizableEdges = customizableEdges199;
+            btnSettingChangePassword.CustomizableEdges = customizableEdges193;
             btnSettingChangePassword.DisabledState.BorderColor = Color.DarkGray;
             btnSettingChangePassword.DisabledState.CustomBorderColor = Color.DarkGray;
             btnSettingChangePassword.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -3769,7 +3669,7 @@
             btnSettingChangePassword.ImageSize = new Size(15, 15);
             btnSettingChangePassword.Location = new Point(75, 423);
             btnSettingChangePassword.Name = "btnSettingChangePassword";
-            btnSettingChangePassword.ShadowDecoration.CustomizableEdges = customizableEdges200;
+            btnSettingChangePassword.ShadowDecoration.CustomizableEdges = customizableEdges194;
             btnSettingChangePassword.Size = new Size(261, 45);
             btnSettingChangePassword.TabIndex = 22;
             btnSettingChangePassword.Text = "Change Password";
@@ -3781,7 +3681,7 @@
             // 
             btnSettingProfileExpand.Animated = true;
             btnSettingProfileExpand.BorderRadius = 10;
-            btnSettingProfileExpand.CustomizableEdges = customizableEdges201;
+            btnSettingProfileExpand.CustomizableEdges = customizableEdges195;
             btnSettingProfileExpand.DisabledState.BorderColor = Color.DarkGray;
             btnSettingProfileExpand.DisabledState.CustomBorderColor = Color.DarkGray;
             btnSettingProfileExpand.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -3793,7 +3693,7 @@
             btnSettingProfileExpand.ImageSize = new Size(20, 10);
             btnSettingProfileExpand.Location = new Point(708, 278);
             btnSettingProfileExpand.Name = "btnSettingProfileExpand";
-            btnSettingProfileExpand.ShadowDecoration.CustomizableEdges = customizableEdges202;
+            btnSettingProfileExpand.ShadowDecoration.CustomizableEdges = customizableEdges196;
             btnSettingProfileExpand.Size = new Size(54, 45);
             btnSettingProfileExpand.TabIndex = 24;
             btnSettingProfileExpand.Click += btnSettingProfileExpand_Click;
@@ -3802,7 +3702,7 @@
             // 
             btnSettingProfileExpand2.Animated = true;
             btnSettingProfileExpand2.BorderRadius = 10;
-            btnSettingProfileExpand2.CustomizableEdges = customizableEdges203;
+            btnSettingProfileExpand2.CustomizableEdges = customizableEdges197;
             btnSettingProfileExpand2.DisabledState.BorderColor = Color.DarkGray;
             btnSettingProfileExpand2.DisabledState.CustomBorderColor = Color.DarkGray;
             btnSettingProfileExpand2.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -3815,7 +3715,7 @@
             btnSettingProfileExpand2.ImageOffset = new Point(15, 0);
             btnSettingProfileExpand2.Location = new Point(70, 278);
             btnSettingProfileExpand2.Name = "btnSettingProfileExpand2";
-            btnSettingProfileExpand2.ShadowDecoration.CustomizableEdges = customizableEdges204;
+            btnSettingProfileExpand2.ShadowDecoration.CustomizableEdges = customizableEdges198;
             btnSettingProfileExpand2.Size = new Size(261, 45);
             btnSettingProfileExpand2.TabIndex = 22;
             btnSettingProfileExpand2.Text = "Manage Account";
@@ -3826,7 +3726,7 @@
             btnSignOut2.Animated = true;
             btnSignOut2.BackColor = Color.Transparent;
             btnSignOut2.BorderRadius = 10;
-            btnSignOut2.CustomizableEdges = customizableEdges205;
+            btnSignOut2.CustomizableEdges = customizableEdges199;
             btnSignOut2.DisabledState.BorderColor = Color.DarkGray;
             btnSignOut2.DisabledState.CustomBorderColor = Color.DarkGray;
             btnSignOut2.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -3837,7 +3737,7 @@
             btnSignOut2.Location = new Point(656, 87);
             btnSignOut2.Name = "btnSignOut2";
             btnSignOut2.ShadowDecoration.BorderRadius = 10;
-            btnSignOut2.ShadowDecoration.CustomizableEdges = customizableEdges206;
+            btnSignOut2.ShadowDecoration.CustomizableEdges = customizableEdges200;
             btnSignOut2.ShadowDecoration.Enabled = true;
             btnSignOut2.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
             btnSignOut2.Size = new Size(106, 38);
@@ -3872,7 +3772,7 @@
             picboxSettingProfilePicture.ImageRotate = 0F;
             picboxSettingProfilePicture.Location = new Point(70, 60);
             picboxSettingProfilePicture.Name = "picboxSettingProfilePicture";
-            picboxSettingProfilePicture.ShadowDecoration.CustomizableEdges = customizableEdges207;
+            picboxSettingProfilePicture.ShadowDecoration.CustomizableEdges = customizableEdges201;
             picboxSettingProfilePicture.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle;
             picboxSettingProfilePicture.Size = new Size(100, 100);
             picboxSettingProfilePicture.SizeMode = PictureBoxSizeMode.StretchImage;
@@ -3881,6 +3781,7 @@
             // 
             // pnlChangePassword
             // 
+            pnlChangePassword.BackColor = Color.White;
             pnlChangePassword.BorderColor = Color.Black;
             pnlChangePassword.BorderRadius = 10;
             pnlChangePassword.BorderThickness = 1;
@@ -3893,10 +3794,10 @@
             pnlChangePassword.Controls.Add(txtNewPassword);
             pnlChangePassword.Controls.Add(label53);
             pnlChangePassword.Controls.Add(txtCurrentPassword);
-            pnlChangePassword.CustomizableEdges = customizableEdges218;
-            pnlChangePassword.Location = new Point(116, 51);
+            pnlChangePassword.CustomizableEdges = customizableEdges226;
+            pnlChangePassword.Location = new Point(27, 407);
             pnlChangePassword.Name = "pnlChangePassword";
-            pnlChangePassword.ShadowDecoration.CustomizableEdges = customizableEdges219;
+            pnlChangePassword.ShadowDecoration.CustomizableEdges = customizableEdges227;
             pnlChangePassword.Size = new Size(326, 325);
             pnlChangePassword.TabIndex = 33;
             pnlChangePassword.Visible = false;
@@ -3913,7 +3814,7 @@
             // 
             // txtConfirmPassword
             // 
-            txtConfirmPassword.CustomizableEdges = customizableEdges208;
+            txtConfirmPassword.CustomizableEdges = customizableEdges216;
             txtConfirmPassword.DefaultText = "";
             txtConfirmPassword.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
             txtConfirmPassword.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
@@ -3926,7 +3827,7 @@
             txtConfirmPassword.Name = "txtConfirmPassword";
             txtConfirmPassword.PlaceholderText = "";
             txtConfirmPassword.SelectedText = "";
-            txtConfirmPassword.ShadowDecoration.CustomizableEdges = customizableEdges209;
+            txtConfirmPassword.ShadowDecoration.CustomizableEdges = customizableEdges217;
             txtConfirmPassword.Size = new Size(214, 28);
             txtConfirmPassword.TabIndex = 33;
             // 
@@ -3945,7 +3846,7 @@
             btnExitChangePasswordPanel.Animated = true;
             btnExitChangePasswordPanel.BackColor = Color.Transparent;
             btnExitChangePasswordPanel.BorderRadius = 10;
-            btnExitChangePasswordPanel.CustomizableEdges = customizableEdges210;
+            btnExitChangePasswordPanel.CustomizableEdges = customizableEdges218;
             btnExitChangePasswordPanel.DisabledState.BorderColor = Color.DarkGray;
             btnExitChangePasswordPanel.DisabledState.CustomBorderColor = Color.DarkGray;
             btnExitChangePasswordPanel.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -3958,7 +3859,7 @@
             btnExitChangePasswordPanel.Location = new Point(290, 8);
             btnExitChangePasswordPanel.Name = "btnExitChangePasswordPanel";
             btnExitChangePasswordPanel.ShadowDecoration.BorderRadius = 10;
-            btnExitChangePasswordPanel.ShadowDecoration.CustomizableEdges = customizableEdges211;
+            btnExitChangePasswordPanel.ShadowDecoration.CustomizableEdges = customizableEdges219;
             btnExitChangePasswordPanel.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
             btnExitChangePasswordPanel.Size = new Size(31, 22);
             btnExitChangePasswordPanel.TabIndex = 32;
@@ -3969,7 +3870,7 @@
             btnSubmitChangePassword.Animated = true;
             btnSubmitChangePassword.BackColor = Color.Transparent;
             btnSubmitChangePassword.BorderRadius = 10;
-            btnSubmitChangePassword.CustomizableEdges = customizableEdges212;
+            btnSubmitChangePassword.CustomizableEdges = customizableEdges220;
             btnSubmitChangePassword.DisabledState.BorderColor = Color.DarkGray;
             btnSubmitChangePassword.DisabledState.CustomBorderColor = Color.DarkGray;
             btnSubmitChangePassword.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -3980,7 +3881,7 @@
             btnSubmitChangePassword.Location = new Point(240, 270);
             btnSubmitChangePassword.Name = "btnSubmitChangePassword";
             btnSubmitChangePassword.ShadowDecoration.BorderRadius = 10;
-            btnSubmitChangePassword.ShadowDecoration.CustomizableEdges = customizableEdges213;
+            btnSubmitChangePassword.ShadowDecoration.CustomizableEdges = customizableEdges221;
             btnSubmitChangePassword.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
             btnSubmitChangePassword.Size = new Size(71, 38);
             btnSubmitChangePassword.TabIndex = 31;
@@ -3999,7 +3900,7 @@
             // 
             // txtNewPassword
             // 
-            txtNewPassword.CustomizableEdges = customizableEdges214;
+            txtNewPassword.CustomizableEdges = customizableEdges222;
             txtNewPassword.DefaultText = "";
             txtNewPassword.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
             txtNewPassword.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
@@ -4012,7 +3913,7 @@
             txtNewPassword.Name = "txtNewPassword";
             txtNewPassword.PlaceholderText = "";
             txtNewPassword.SelectedText = "";
-            txtNewPassword.ShadowDecoration.CustomizableEdges = customizableEdges215;
+            txtNewPassword.ShadowDecoration.CustomizableEdges = customizableEdges223;
             txtNewPassword.Size = new Size(214, 28);
             txtNewPassword.TabIndex = 2;
             // 
@@ -4028,7 +3929,7 @@
             // 
             // txtCurrentPassword
             // 
-            txtCurrentPassword.CustomizableEdges = customizableEdges216;
+            txtCurrentPassword.CustomizableEdges = customizableEdges224;
             txtCurrentPassword.DefaultText = "";
             txtCurrentPassword.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
             txtCurrentPassword.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
@@ -4041,12 +3942,13 @@
             txtCurrentPassword.Name = "txtCurrentPassword";
             txtCurrentPassword.PlaceholderText = "";
             txtCurrentPassword.SelectedText = "";
-            txtCurrentPassword.ShadowDecoration.CustomizableEdges = customizableEdges217;
+            txtCurrentPassword.ShadowDecoration.CustomizableEdges = customizableEdges225;
             txtCurrentPassword.Size = new Size(214, 28);
             txtCurrentPassword.TabIndex = 0;
             // 
             // pnlChangeUsername
             // 
+            pnlChangeUsername.BackColor = Color.White;
             pnlChangeUsername.BorderColor = Color.Black;
             pnlChangeUsername.BorderRadius = 10;
             pnlChangeUsername.BorderThickness = 1;
@@ -4057,10 +3959,10 @@
             pnlChangeUsername.Controls.Add(txtNewUsername);
             pnlChangeUsername.Controls.Add(label34);
             pnlChangeUsername.Controls.Add(txtCurrentUsername);
-            pnlChangeUsername.CustomizableEdges = customizableEdges228;
-            pnlChangeUsername.Location = new Point(116, 51);
+            pnlChangeUsername.CustomizableEdges = customizableEdges214;
+            pnlChangeUsername.Location = new Point(27, 407);
             pnlChangeUsername.Name = "pnlChangeUsername";
-            pnlChangeUsername.ShadowDecoration.CustomizableEdges = customizableEdges229;
+            pnlChangeUsername.ShadowDecoration.CustomizableEdges = customizableEdges215;
             pnlChangeUsername.Size = new Size(326, 325);
             pnlChangeUsername.TabIndex = 30;
             pnlChangeUsername.Visible = false;
@@ -4080,7 +3982,7 @@
             btnExitChangeUsernamePanel.Animated = true;
             btnExitChangeUsernamePanel.BackColor = Color.Transparent;
             btnExitChangeUsernamePanel.BorderRadius = 10;
-            btnExitChangeUsernamePanel.CustomizableEdges = customizableEdges220;
+            btnExitChangeUsernamePanel.CustomizableEdges = customizableEdges206;
             btnExitChangeUsernamePanel.DisabledState.BorderColor = Color.DarkGray;
             btnExitChangeUsernamePanel.DisabledState.CustomBorderColor = Color.DarkGray;
             btnExitChangeUsernamePanel.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -4093,7 +3995,7 @@
             btnExitChangeUsernamePanel.Location = new Point(290, 8);
             btnExitChangeUsernamePanel.Name = "btnExitChangeUsernamePanel";
             btnExitChangeUsernamePanel.ShadowDecoration.BorderRadius = 10;
-            btnExitChangeUsernamePanel.ShadowDecoration.CustomizableEdges = customizableEdges221;
+            btnExitChangeUsernamePanel.ShadowDecoration.CustomizableEdges = customizableEdges207;
             btnExitChangeUsernamePanel.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
             btnExitChangeUsernamePanel.Size = new Size(31, 22);
             btnExitChangeUsernamePanel.TabIndex = 32;
@@ -4104,7 +4006,7 @@
             btnSubmitChangeUsername.Animated = true;
             btnSubmitChangeUsername.BackColor = Color.Transparent;
             btnSubmitChangeUsername.BorderRadius = 10;
-            btnSubmitChangeUsername.CustomizableEdges = customizableEdges222;
+            btnSubmitChangeUsername.CustomizableEdges = customizableEdges208;
             btnSubmitChangeUsername.DisabledState.BorderColor = Color.DarkGray;
             btnSubmitChangeUsername.DisabledState.CustomBorderColor = Color.DarkGray;
             btnSubmitChangeUsername.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -4115,7 +4017,7 @@
             btnSubmitChangeUsername.Location = new Point(240, 270);
             btnSubmitChangeUsername.Name = "btnSubmitChangeUsername";
             btnSubmitChangeUsername.ShadowDecoration.BorderRadius = 10;
-            btnSubmitChangeUsername.ShadowDecoration.CustomizableEdges = customizableEdges223;
+            btnSubmitChangeUsername.ShadowDecoration.CustomizableEdges = customizableEdges209;
             btnSubmitChangeUsername.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
             btnSubmitChangeUsername.Size = new Size(71, 38);
             btnSubmitChangeUsername.TabIndex = 31;
@@ -4134,7 +4036,7 @@
             // 
             // txtNewUsername
             // 
-            txtNewUsername.CustomizableEdges = customizableEdges224;
+            txtNewUsername.CustomizableEdges = customizableEdges210;
             txtNewUsername.DefaultText = "";
             txtNewUsername.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
             txtNewUsername.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
@@ -4147,7 +4049,7 @@
             txtNewUsername.Name = "txtNewUsername";
             txtNewUsername.PlaceholderText = "";
             txtNewUsername.SelectedText = "";
-            txtNewUsername.ShadowDecoration.CustomizableEdges = customizableEdges225;
+            txtNewUsername.ShadowDecoration.CustomizableEdges = customizableEdges211;
             txtNewUsername.Size = new Size(214, 28);
             txtNewUsername.TabIndex = 2;
             // 
@@ -4163,7 +4065,7 @@
             // 
             // txtCurrentUsername
             // 
-            txtCurrentUsername.CustomizableEdges = customizableEdges226;
+            txtCurrentUsername.CustomizableEdges = customizableEdges212;
             txtCurrentUsername.DefaultText = "";
             txtCurrentUsername.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
             txtCurrentUsername.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
@@ -4176,7 +4078,7 @@
             txtCurrentUsername.Name = "txtCurrentUsername";
             txtCurrentUsername.PlaceholderText = "";
             txtCurrentUsername.SelectedText = "";
-            txtCurrentUsername.ShadowDecoration.CustomizableEdges = customizableEdges227;
+            txtCurrentUsername.ShadowDecoration.CustomizableEdges = customizableEdges213;
             txtCurrentUsername.Size = new Size(214, 28);
             txtCurrentUsername.TabIndex = 0;
             // 
@@ -4184,11 +4086,11 @@
             // 
             pnlSettingConfiguration.BorderRadius = 20;
             pnlSettingConfiguration.Controls.Add(label29);
-            pnlSettingConfiguration.CustomizableEdges = customizableEdges232;
+            pnlSettingConfiguration.CustomizableEdges = customizableEdges204;
             pnlSettingConfiguration.FillColor = Color.White;
             pnlSettingConfiguration.Location = new Point(391, 151);
             pnlSettingConfiguration.Name = "pnlSettingConfiguration";
-            pnlSettingConfiguration.ShadowDecoration.CustomizableEdges = customizableEdges233;
+            pnlSettingConfiguration.ShadowDecoration.CustomizableEdges = customizableEdges205;
             pnlSettingConfiguration.Size = new Size(852, 350);
             pnlSettingConfiguration.TabIndex = 36;
             // 
@@ -4515,7 +4417,6 @@
         private Guna.UI2.WinForms.Guna2Panel guna2Panel14;
         private Guna.UI2.WinForms.Guna2Panel guna2Panel16;
         public FlowLayoutPanel flowLayoutPanel1;
-        private Label label30;
         private Label label34;
         private Guna.UI2.WinForms.Guna2Panel guna2Panel17;
         private Label label35;
@@ -4525,7 +4426,6 @@
         private Guna.UI2.WinForms.Guna2Button btnSettingChangePhoto;
         private Guna.UI2.WinForms.Guna2Button btnSettingChangeUsername;
         private Guna.UI2.WinForms.Guna2Button btnSettingChangePassword;
-        private Guna.UI2.WinForms.Guna2ToggleSwitch tgSettingAuthentication;
         private Guna.UI2.WinForms.Guna2Panel pnlChangeUsername;
         private Guna.UI2.WinForms.Guna2TextBox txtCurrentUsername;
         private Guna.UI2.WinForms.Guna2Button btnExitChangeUsernamePanel;
@@ -4550,7 +4450,5 @@
         private Guna.UI2.WinForms.Guna2Button btnSubmitChangePhoto;
         private Guna.UI2.WinForms.Guna2Panel pnlSettingConfiguration;
         private Label label29;
-        private Guna.UI2.WinForms.Guna2Button btnSaveAuthenticationPhoto;
-        private Guna.UI2.WinForms.Guna2Button btnUploadAuthenticationPhoto;
     }
 }

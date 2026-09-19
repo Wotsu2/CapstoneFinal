@@ -25,8 +25,6 @@ namespace WinFormsApp1
         private System.Windows.Forms.Timer screenShareTimer;
         private TcpClient screenClient;
         private bool isSharingScreen = false;
-        private string serverIp = "192.168.100.4"; //Should be Empty and configure it to setting
-
         private TcpClient broadcastClient;
         private TcpListener Shutdownlistener;
         private BroadcastViewerForm broadcastViewer;
@@ -48,14 +46,13 @@ namespace WinFormsApp1
         private string AuthenticationPhoto;
         private string SaveAuthenticationPhoto;
         private string Isauthentication_photoEmpty;
-        private string DatabaseIP = "localhost";
 
         public StudentForm(int UserId, string Section, string Username)
         {
             InitializeComponent();
             StudentSection = Section;
             userId = UserId.ToString();
-            
+
             StudentUsername = Username;
             initializeShowReminderForm();
 
@@ -69,9 +66,9 @@ namespace WinFormsApp1
         {
             isSharingScreen = true;
             lblProfUsername.Text = StudentUsername;
-            ConnectToServer(serverIp);
-            StartScreenShare(serverIp);
-            ConnectBroadcastReceiver(serverIp);
+            ConnectToServer();
+            StartScreenShare();
+            ConnectBroadcastReceiver();
             StartListening();
 
             //Home Caller//
@@ -97,7 +94,7 @@ namespace WinFormsApp1
 
         private void initializeShowReminderForm()
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
@@ -126,7 +123,7 @@ namespace WinFormsApp1
             }
         }
 
-        
+
 
         private void SetActiveMenuButton(Guna2Button clickedBtn, Panel panelToShow)
         {
@@ -173,14 +170,14 @@ namespace WinFormsApp1
         }
 
         //Connect the Client to the Server//
-        private async void ConnectToServer(string serverIp)
+        private async void ConnectToServer()
         {
             try
             {
                 isSignedOut = false;
 
                 client = new TcpClient();
-                await client.ConnectAsync(serverIp, 5000); // use the SERVER's actual IP here And Should be Empty and configure it to setting
+                await client.ConnectAsync(SettingsManager.Current.ServerIp, SettingsManager.Current.WorkstationPort); // use the SERVER's actual IP here And Should be Empty and configure it to setting
 
                 MessageBox.Show("Connected to server!");
 
@@ -206,12 +203,12 @@ namespace WinFormsApp1
 
         //Share the Screen of the Client to the Server//
 
-        private void StartScreenShare(string serverIp)
+        private void StartScreenShare()
         {
             try
             {
                 screenClient = new TcpClient();
-                screenClient.Connect(serverIp, 5002); // dedicated screen-share port
+                screenClient.Connect(SettingsManager.Current.ServerIp, SettingsManager.Current.ScreenSharePort); // dedicated screen-share port
 
                 isSharingScreen = true;
 
@@ -268,12 +265,12 @@ namespace WinFormsApp1
         }
 
         //Professor can Lock the Input of the Client Computer When Sharing Screen//
-        private async Task ConnectBroadcastReceiver(string serverIp)
+        private async Task ConnectBroadcastReceiver()
         {
             try
             {
                 broadcastClient = new TcpClient();
-                await broadcastClient.ConnectAsync(serverIp, 5005);
+                await broadcastClient.ConnectAsync(SettingsManager.Current.ServerIp, SettingsManager.Current.BroadcastPort);
 
                 _ = ReceiveBroadcast();
             }
@@ -352,7 +349,7 @@ namespace WinFormsApp1
         //ShutDown//
         private async void StartListening()
         {
-            Shutdownlistener = new TcpListener(IPAddress.Any, 8888);
+            Shutdownlistener = new TcpListener(IPAddress.Any, SettingsManager.Current.CommandPort);
             Shutdownlistener.Start();
 
             System.Threading.Thread t = new System.Threading.Thread(ListenForCommands);
@@ -404,7 +401,7 @@ namespace WinFormsApp1
         //Home//
         private void InitializeCreateButtonActivity()
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
@@ -412,7 +409,7 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
-                    string query = @"SELECT activity_id, title, start_time, due_date, activity_subject activity_status 
+                    string query = @"SELECT activity_id, title, start_time, due_date, activity_subject, activity_status 
                          FROM professor_activity 
                          WHERE section = @section";
 
@@ -435,10 +432,11 @@ namespace WinFormsApp1
                                 ActivityButton.Height = 180;
                                 ActivityButton.Width = 180;
                                 ActivityButton.Margin = new Padding(5);
-                                ActivityButton.BorderColor = Color.Black;
                                 ActivityButton.FillColor = Color.Transparent;
                                 ActivityButton.BackColor = Color.Transparent;
                                 ActivityButton.BorderThickness = 1;
+                                ActivityButton.BorderColor = Color.Gray;
+                                ActivityButton.BorderRadius = 10;
 
                                 // ⭐ Capture the ID locally so each button uses its OWN id
                                 int capturedId = activityId;
@@ -452,6 +450,7 @@ namespace WinFormsApp1
                                 Title.ForeColor = Color.Black;
                                 Title.BackColor = Color.Transparent;
                                 Title.Location = new Point(20, 50);
+                                Title.Font = new Font(Title.Font, FontStyle.Bold);
                                 ActivityButton.Controls.Add(Title);
 
                                 Label DueDate = new Label();
@@ -496,7 +495,7 @@ namespace WinFormsApp1
         }
         private void InitializeHomeActivityButton(int ActivityId)
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -539,7 +538,7 @@ namespace WinFormsApp1
         //Activities//
         private void InitializeDataGridViewActivities()
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
@@ -618,8 +617,7 @@ namespace WinFormsApp1
         }
         private string FetchActivityPdf(int activityId, int profId, string title, string section, string className)
         {
-            MessageBox.Show($"Activity ID is: {activityId}");
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -687,7 +685,7 @@ namespace WinFormsApp1
         }
         private void NameGet()
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -770,7 +768,7 @@ namespace WinFormsApp1
 
         private void InitializeDataGridViewGrades()
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
@@ -846,7 +844,7 @@ namespace WinFormsApp1
         private void btnEnterClass_Click(object sender, EventArgs e)
         {
             string txtcode = txtEnterCode.Text;
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
@@ -886,7 +884,7 @@ namespace WinFormsApp1
         }
         private void InitializeJoinClass(int professorId, string className, string classSection, string classTime, string classDate)
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
@@ -1032,7 +1030,7 @@ namespace WinFormsApp1
 
         private void LoadJoinedClasses()
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
@@ -1074,7 +1072,7 @@ WHERE user_id = @user_id";
         }
         private void UnjoinClass(string classname, string classSection, string classTime, string classDate)
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
@@ -1233,7 +1231,7 @@ AND class_date = @class_date";
 
         private void btnSubmitChangeUsername_Click(object sender, EventArgs e)
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             if (string.IsNullOrEmpty(txtCurrentUsername.Text) || string.IsNullOrEmpty(txtNewUsername.Text))
             {
@@ -1285,7 +1283,7 @@ AND class_date = @class_date";
 
         private void btnSubmitChangePassword_Click(object sender, EventArgs e)
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             if (string.IsNullOrEmpty(txtCurrentPassword.Text) || string.IsNullOrEmpty(txtNewPassword.Text) || string.IsNullOrEmpty(txtConfirmPassword.Text))
             {
@@ -1366,7 +1364,7 @@ AND class_date = @class_date";
                 return;
             }
 
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
@@ -1397,7 +1395,7 @@ AND class_date = @class_date";
         }
         private void InitializeChangingPicture()
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -1474,7 +1472,7 @@ AND class_date = @class_date";
                 return;
             }
 
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {

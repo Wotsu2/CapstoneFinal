@@ -12,7 +12,6 @@ namespace WinFormsApp1
 {
     public partial class FacialRecognitionReminderForm : Form
     {
-        private string DatabaseIP = "localhost";
         private int StudentId;
         private string AuthenticationPhoto;
         private string SaveAuthenticationPhoto;
@@ -29,7 +28,7 @@ namespace WinFormsApp1
 
         private void InitializeGetRemainingLimit()
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -57,7 +56,7 @@ namespace WinFormsApp1
         }
         private void initializeCloseExitButton()
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -91,7 +90,7 @@ namespace WinFormsApp1
         //string query = $"UPDATE professor_attendance SET `{DateToday}` = @status, present = COALESCE(present, 0) + 1 WHERE student_id = @student_id ";
         private void btnCloseForm_Click(object sender, EventArgs e)
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -122,7 +121,7 @@ namespace WinFormsApp1
 
         private void btnSkipforNow_Click(object sender, EventArgs e)
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -175,7 +174,7 @@ namespace WinFormsApp1
                 return;
             }
 
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {

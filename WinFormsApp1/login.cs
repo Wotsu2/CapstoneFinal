@@ -16,23 +16,80 @@ namespace WinFormsApp1
     public partial class Login : Form
     {
         private string StudentSection;
-        private string DatabaseIP = "localhost";
         private int UserId;
         private string question;
         private string answer;
         // Temporary hardcoded accounts (for testing lang, wala pang database)
-        private readonly Dictionary<string, string> tempAccounts = new Dictionary<string, string>
-        {
-            { "admin", "admin123" },
-            { "student01", "pass123" },{ "student02", "pass123" },
-            { "prof01", "prof123" }
-        };
+
 
         public Login()
         {
             InitializeComponent();
+        }
+        private void Login_Load(object sender, EventArgs e)
+        {
+            LoadCurrentSettings();
             IsAnyCameraDetected();
         }
+
+        private void LoadCurrentSettings()
+        {
+            //Networks Setup
+            txtServerIP.Text = SettingsManager.Current.ServerIp;
+            txtWorkStationPort.Text = SettingsManager.Current.WorkstationPort.ToString();
+            txtScreenSharingPort.Text = SettingsManager.Current.ScreenSharePort.ToString();
+            txtBroadcastPort.Text = SettingsManager.Current.BroadcastPort.ToString();
+            txtFileTransferPort.Text = SettingsManager.Current.FileTransferPort.ToString();
+            txtCommandPort.Text = SettingsManager.Current.CommandPort.ToString();
+
+            //Database Setup
+            txtDatabaseHost.Text = SettingsManager.Current.DatabaseHost.ToString();
+            txtDatabasePort.Text = SettingsManager.Current.DatabasePort.ToString();
+            txtDatabaseName.Text = SettingsManager.Current.DatabaseName.ToString();
+            txtDatabaseUser.Text = SettingsManager.Current.DatabaseUser.ToString();
+            txtDatabasePassword.Text = SettingsManager.Current.DatabasePassword.ToString();
+        }
+        private void btnSaveSetting_Click_1(object sender, EventArgs e)
+        {
+            //Network Save Setting
+            SettingsManager.Current.ServerIp = txtServerIP.Text.Trim();
+            SettingsManager.Current.WorkstationPort = int.Parse(txtWorkStationPort.Text.Trim());
+            SettingsManager.Current.ScreenSharePort = int.Parse(txtScreenSharingPort.Text.Trim());
+            SettingsManager.Current.BroadcastPort = int.Parse(txtBroadcastPort.Text.Trim());
+            SettingsManager.Current.FileTransferPort = int.Parse(txtFileTransferPort.Text.Trim());
+            SettingsManager.Current.CommandPort = int.Parse(txtCommandPort.Text.Trim());
+
+            //Database Save Setting
+            SettingsManager.Current.DatabaseHost = txtDatabaseHost.Text.Trim();
+            SettingsManager.Current.DatabasePort = int.Parse(txtDatabasePort.Text.Trim());
+            SettingsManager.Current.DatabaseName = txtDatabaseName.Text.Trim();
+            SettingsManager.Current.DatabaseUser = txtDatabaseUser.Text.Trim();
+            SettingsManager.Current.DatabasePassword = txtDatabasePassword.Text;
+
+            SettingsManager.Save(); // ✅ writes to disk immediately — survives restart/crash
+
+            MessageBox.Show("Settings saved successfully!");
+
+        }
+        private void btnSelectFolder_Click(object sender, EventArgs e)
+        {
+            using (FolderBrowserDialog fbd = new FolderBrowserDialog())
+            {
+                if (fbd.ShowDialog() == DialogResult.OK)
+                {
+                    //txtSaveFolder.Text = fbd.SelectedPath;
+                }
+            }
+        }
+        private void btnConfigurationSetting_Click_1(object sender, EventArgs e)
+        {
+            pnlConfiguration.Visible = true;
+        }
+        private void btnPnlConfigurationClose_Click(object sender, EventArgs e)
+        {
+            pnlConfiguration.Visible = false;
+        }
+
         private bool IsAnyCameraDetected()
         {
             try
@@ -48,10 +105,10 @@ namespace WinFormsApp1
 
         private void SelectSection(int userid)
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
-                
+
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
@@ -70,7 +127,7 @@ namespace WinFormsApp1
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
@@ -82,7 +139,7 @@ namespace WinFormsApp1
         AppDomain.CurrentDomain.BaseDirectory,
         "StudentAuthenticationPhoto");
 
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
@@ -144,14 +201,14 @@ namespace WinFormsApp1
 
         private void InitializeGetQandA(string username)
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = "SELECT question, answer FROM question_and_answer WHERE username = @username";
+                    string query = "SELECT question, answer FROM question_answer_security WHERE username = @username";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -179,7 +236,8 @@ namespace WinFormsApp1
             string username = txtUsername.Text;
             string password = txtPassword.Text;
             InitializeGetQandA(username);
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -252,7 +310,7 @@ namespace WinFormsApp1
                             QandAForm QandAform = new QandAForm(UserId, StudentSection, username); // pass ID and username if the form needs them
                             QandAform.Show();
                         }
-                        
+
                     }
                     else if (!string.IsNullOrEmpty(authenticationPhoto))
                     {
@@ -272,7 +330,7 @@ namespace WinFormsApp1
                         QandAform.Show();
                     }
                 }
-                
+
             }
             else
             {

@@ -25,13 +25,10 @@ namespace WinFormsApp1
         private string studentname;
         private string activitySubject;
 
-        private string DatabaseIP = "localhost";
-        private string serverIp = "192.168.100.4";
-
         public ActivityForm(int prof_id, string UserId, string Studentname, string Title, string Due_Date, string Description, string StudentSection, string ActivitySubject, string Status, string PDF_Path)
         {
             InitializeComponent();
-            
+
             title = Title;
             dueDate = Due_Date;
             description = Description;
@@ -110,7 +107,7 @@ namespace WinFormsApp1
             {
                 using (TcpClient client = new TcpClient())
                 {
-                    await client.ConnectAsync(serverIp, 5001); // Same to other one it Should be Empty and configure it to setting
+                    await client.ConnectAsync(SettingsManager.Current.ServerIp, SettingsManager.Current.FileTransferPort); // Same to other one it Should be Empty and configure it to setting
                     using (NetworkStream stream = client.GetStream())
                     using (BinaryWriter writer = new BinaryWriter(stream))
                     {
@@ -137,7 +134,7 @@ namespace WinFormsApp1
 
         private void UpdateSubmittedFile()
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -148,7 +145,7 @@ namespace WinFormsApp1
 
 
                     using (var cmd = new MySqlCommand(query, conn))
-                    { 
+                    {
                         cmd.Parameters.AddWithValue("@prof_id", profId);
                         cmd.Parameters.AddWithValue("@user_id", userId);
                         cmd.Parameters.AddWithValue("@title", title);

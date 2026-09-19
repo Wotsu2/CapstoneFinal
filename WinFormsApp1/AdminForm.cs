@@ -78,7 +78,7 @@ namespace WinFormsApp1
 
         private void btnFileManagement_Click(object sender, EventArgs e)
         {
-            pnlFileManagement.BringToFront() ;
+            pnlFileManagement.BringToFront();
 
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnFileManagement);
@@ -149,12 +149,12 @@ namespace WinFormsApp1
         }
 
         //Client to Server Connection//
-        
+
 
         //User Management Total User//
         private static int TotalUsers()
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
@@ -180,7 +180,7 @@ namespace WinFormsApp1
         //User Management Load User//
         private void LoadUserData(string filter = "")
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             UserDataList.ReadOnly = true;
             try
             {
@@ -229,8 +229,8 @@ namespace WinFormsApp1
         string semester;
         private void CreateUser()
         {
-            string connStr = "Server=localhost;Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
-            if (ContextRoleText.Text ==  "Professor")
+            string connStr = SettingsManager.Current.GetConnectionString();
+            if (ContextRoleText.Text == "Professor")
             {
                 semester = "Null";
             }
@@ -348,7 +348,7 @@ namespace WinFormsApp1
 
         private async void StartServer()
         {
-            listener = new TcpListener(IPAddress.Any, 5000);
+            listener = new TcpListener(IPAddress.Any, SettingsManager.Current.WorkstationPort);
             listener.Start();
 
             lblTotalWorkstations.Text = "0";
@@ -465,7 +465,7 @@ namespace WinFormsApp1
         //WorkStation Screen Sharing//
         private async void StartScreenListener()
         {
-            screenListener = new TcpListener(IPAddress.Any, 5002);
+            screenListener = new TcpListener(IPAddress.Any, SettingsManager.Current.ScreenSharePort);
             screenListener.Start();
 
             while (true)

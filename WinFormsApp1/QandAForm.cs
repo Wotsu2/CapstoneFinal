@@ -14,8 +14,6 @@ namespace WinFormsApp1
 
     public partial class QandAForm : Form
     {
-        private string DatabaseIP = "localhost";
-
         private string StudentUsername;
         private int UserId;
         private string Section;
@@ -31,19 +29,19 @@ namespace WinFormsApp1
 
             StudentUsername = Username;
             UserId = Userid;
-            Section = section; 
+            Section = section;
             InitializeGetQuestioner();
         }
 
         private void InitializeGetQuestioner()
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = "SELECT question, answer FROM question_and_answer WHERE username = @username";
+                    string query = "SELECT question, answer FROM question_answer_security WHERE username = @username";
                     using (var cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@username", StudentUsername);
@@ -87,13 +85,13 @@ namespace WinFormsApp1
         }
         private void btnSubmitSecurityQuestion_Click(object sender, EventArgs e)
         {
-            string connStr = $"Server={DatabaseIP};Port=3306;Database=cdsga_hub;Uid=root;Pwd=;";
+            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = "SELECT question, answer FROM question_and_answer WHERE username = @username";
+                    string query = "SELECT question, answer FROM question_answer_security WHERE username = @username";
                     using (var cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@username", StudentUsername);
@@ -113,7 +111,7 @@ namespace WinFormsApp1
                                 {
                                     this.Close();
                                     StudentForm studentForm = new StudentForm(UserId, Section, StudentUsername);
-                                    studentForm.Show(); 
+                                    studentForm.Show();
                                 }
                                 else
                                 {
