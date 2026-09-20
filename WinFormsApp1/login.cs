@@ -241,7 +241,13 @@ namespace WinFormsApp1
             string password = txtPassword.Text;
 
             InitializeGetQandA(username);
-
+            if (username == "admin123" && password == "123admin")
+            {
+                AdminForm adminform = new AdminForm();
+                adminform.Show();
+                this.Hide();
+                return;
+            }
             string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
@@ -271,12 +277,7 @@ namespace WinFormsApp1
                                     OpenAppropriateForm(role, username, UserId, authentication_photo, question, answer);
                                     this.Hide();
                                 }
-                                else if (username == "admin123" && password == "123admin")
-                                {
-                                    AdminForm adminform = new AdminForm();
-                                    adminform.Show();
-                                    this.Close();
-                                }
+                                
                                 else
                                 {
                                     MessageBox.Show("Incorrect password.", "Login Error",

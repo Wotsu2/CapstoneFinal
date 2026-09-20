@@ -1843,8 +1843,8 @@
             cmbSelection.FillColor = Color.Maroon;
             cmbSelection.FocusedColor = Color.FromArgb(94, 148, 255);
             cmbSelection.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
-            cmbSelection.Font = new Font("Segoe UI", 10F);
-            cmbSelection.ForeColor = Color.FromArgb(68, 88, 112);
+            cmbSelection.Font = new Font("Segoe UI", 12F);
+            cmbSelection.ForeColor = Color.White;
             cmbSelection.ItemHeight = 30;
             cmbSelection.Items.AddRange(new object[] { "Users", "Create Account" });
             cmbSelection.Location = new Point(137, 297);
