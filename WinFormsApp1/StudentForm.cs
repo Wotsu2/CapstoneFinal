@@ -14,6 +14,7 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
@@ -76,13 +77,12 @@ namespace WinFormsApp1
             isSharingScreen = true;
             lblProfUsername.Text = StudentUsername;
 
-            // ✅ Kick off all networking on background threads so the UI never blocks
+            // ✅ Networking runs on background threads so the UI never freezes
             Task.Run(() => ConnectToServer());
             Task.Run(() => StartScreenShare());
             Task.Run(() => ConnectBroadcastReceiver());
             Task.Run(() => StartListening());
 
-            // DB + I/O calls (these are fast, keep them on the UI thread)
             InitializeCreateButtonActivity();
             InitializeDataGridViewActivities();
             NameGet();
@@ -108,18 +108,14 @@ namespace WinFormsApp1
         private void initializeShowReminderForm()
         {
             string connStr = SettingsManager.Current.GetConnectionString();
-
             try
             {
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = "SELECT authentication_photo FROM user_credential WHERE username = @username";
-
-                    using (var cmd = new MySqlCommand(query, conn))
+                    using (var cmd = new MySqlCommand("SELECT authentication_photo FROM user_credential WHERE username = @username", conn))
                     {
                         cmd.Parameters.AddWithValue("@username", StudentUsername);
-
                         using (var reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -153,29 +149,10 @@ namespace WinFormsApp1
             panelToShow.BringToFront();
         }
 
-        private void btnHome_Click(object sender, EventArgs e)
-        {
-            SetActiveMenuButton(btnHome, pnlHome);
-            lblhometitle.Text = "Home";
-        }
-
-        private void btnActivities_Click(object sender, EventArgs e)
-        {
-            SetActiveMenuButton(btnActivities, pnlActivity);
-            lblhometitle.Text = "Activity";
-        }
-
-        private void btnSubject_Click(object sender, EventArgs e)
-        {
-            SetActiveMenuButton(btnSubject, pnlSubject);
-            lblhometitle.Text = "Subject";
-        }
-
-        private void btnGrades_Click(object sender, EventArgs e)
-        {
-            SetActiveMenuButton(btnGrades, pnlGrades);
-            lblhometitle.Text = "Grade";
-        }
+        private void btnHome_Click(object sender, EventArgs e) { SetActiveMenuButton(btnHome, pnlHome); lblhometitle.Text = "Home"; }
+        private void btnActivities_Click(object sender, EventArgs e) { SetActiveMenuButton(btnActivities, pnlActivity); lblhometitle.Text = "Activity"; }
+        private void btnSubject_Click(object sender, EventArgs e) { SetActiveMenuButton(btnSubject, pnlSubject); lblhometitle.Text = "Subject"; }
+        private void btnGrades_Click(object sender, EventArgs e) { SetActiveMenuButton(btnGrades, pnlGrades); lblhometitle.Text = "Grade"; }
 
         private void btnAccount_Click(object sender, EventArgs e)
         {
@@ -199,7 +176,6 @@ namespace WinFormsApp1
                 try
                 {
                     c = connect();
-
                     if (c != null && c.Connected)
                     {
                         Console.WriteLine($"[{name}] connected");
@@ -234,10 +210,28 @@ namespace WinFormsApp1
                 },
                 async c =>
                 {
-                    while (!isSignedOut && c.Connected)
+                    NetworkStream stream = c.GetStream();
+
+                    while (!isSignedOut)
                     {
-                        try { await Task.Delay(2000); }
-                        catch { break; }
+                        try
+                        {
+                            await Task.Delay(2000);
+
+                            // ✅ detect server closed
+                            if (c.Client.Poll(0, SelectMode.SelectRead) && c.Client.Available == 0)
+                            {
+                                Console.WriteLine("[Workstation] server closed — reconnecting");
+                                break;
+                            }
+
+                            try { stream.Write(new byte[0], 0, 0); }
+                            catch { break; }
+                        }
+                        catch
+                        {
+                            break;
+                        }
                     }
                 });
         }
@@ -273,7 +267,6 @@ namespace WinFormsApp1
                             }
 
                             shot.Dispose();
-
                             await Task.Delay(500);
                         }
                         catch
@@ -290,9 +283,7 @@ namespace WinFormsApp1
             Bitmap bitmap = new Bitmap(bounds.Width, bounds.Height);
 
             using (Graphics g = Graphics.FromImage(bitmap))
-            {
                 g.CopyFromScreen(Point.Empty, Point.Empty, bounds.Size);
-            }
 
             return bitmap;
         }
@@ -327,15 +318,12 @@ namespace WinFormsApp1
                             using (MemoryStream ms = new MemoryStream(imageBuffer))
                             {
                                 Image frame = Image.FromStream(ms);
-
                                 if (this.IsHandleCreated)
                                     this.Invoke(new Action(() => ShowBroadcastFrame(frame)));
                             }
                         }
                     }
-                    catch
-                    {
-                    }
+                    catch { }
                     finally
                     {
                         try
@@ -380,7 +368,7 @@ namespace WinFormsApp1
             return totalRead;
         }
 
-        private async void StartListening()
+        private void StartListening()
         {
             try
             {
@@ -445,8 +433,7 @@ namespace WinFormsApp1
                     conn.Open();
 
                     string query = @"SELECT activity_id, title, start_time, due_date, activity_subject, activity_status 
-                         FROM professor_activity 
-                         WHERE section = @section";
+                         FROM professor_activity WHERE section = @section";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -474,10 +461,7 @@ namespace WinFormsApp1
                                 ActivityButton.BorderRadius = 10;
 
                                 int capturedId = activityId;
-                                ActivityButton.Click += (s, e) =>
-                                {
-                                    InitializeHomeActivityButton(capturedId);
-                                };
+                                ActivityButton.Click += (s, e) => InitializeHomeActivityButton(capturedId);
 
                                 Label Title = new Label();
                                 Title.Text = title;
@@ -583,18 +567,14 @@ namespace WinFormsApp1
                                    "FROM professor_activity WHERE section = @section";
 
                     if (!string.IsNullOrEmpty(selectedActivitiesCategory))
-                    {
                         query += " AND activity_status = @activity_status";
-                    }
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@section", StudentSection);
 
                         if (!string.IsNullOrEmpty(selectedActivitiesCategory))
-                        {
                             cmd.Parameters.AddWithValue("@activity_status", selectedActivitiesCategory);
-                        }
 
                         MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
                         DataTable dt = new DataTable();
@@ -609,9 +589,7 @@ namespace WinFormsApp1
                             dgvStudentActivities.Columns["professor_id"].Visible = false;
 
                         if (dt.Rows.Count > 0)
-                        {
                             activityId = dt.Rows[0]["activity_id"].ToString();
-                        }
                     }
                 }
             }
@@ -623,27 +601,24 @@ namespace WinFormsApp1
 
         private void dgvStudentActivities_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex >= 0)
-            {
-                if (e.RowIndex < 0) return;
+            if (e.RowIndex < 0) return;
 
-                DataGridViewRow row = dgvStudentActivities.Rows[e.RowIndex];
+            DataGridViewRow row = dgvStudentActivities.Rows[e.RowIndex];
 
-                string activityId = GetSafeValue(row, "activity_id");
-                string Title = GetSafeValue(row, "title");
-                string DueDate = GetSafeValue(row, "due_date");
-                string ActivityStatus = GetSafeValue(row, "activity_status");
-                string Description = GetSafeValue(row, "description");
-                string profId = GetSafeValue(row, "professor_id");
-                string className = GetSafeValue(row, "activity_subject");
+            string activityId = GetSafeValue(row, "activity_id");
+            string Title = GetSafeValue(row, "title");
+            string DueDate = GetSafeValue(row, "due_date");
+            string ActivityStatus = GetSafeValue(row, "activity_status");
+            string Description = GetSafeValue(row, "description");
+            string profId = GetSafeValue(row, "professor_id");
+            string className = GetSafeValue(row, "activity_subject");
 
-                string tempPdfPath = FetchActivityPdf(int.Parse(activityId), int.Parse(profId), Title, StudentSection, className);
-                ActivityForm activityForm = new ActivityForm(
-                    int.Parse(profId), userId, studentname, Title, DueDate, Description,
-                    StudentSection, activitySubject, ActivityStatus, tempPdfPath);
+            string tempPdfPath = FetchActivityPdf(int.Parse(activityId), int.Parse(profId), Title, StudentSection, className);
+            ActivityForm activityForm = new ActivityForm(
+                int.Parse(profId), userId, studentname, Title, DueDate, Description,
+                StudentSection, activitySubject, ActivityStatus, tempPdfPath);
 
-                activityForm.Show();
-            }
+            activityForm.Show();
         }
 
         private string FetchActivityPdf(int activityId, int profId, string title, string section, string className)
@@ -657,21 +632,11 @@ namespace WinFormsApp1
 
                     string query;
                     if (activityId > 0)
-                    {
-                        query = @"SELECT activity_file, activity_filename 
-                          FROM professor_activity 
-                          WHERE activity_id = @activity_id";
-                    }
+                        query = @"SELECT activity_file, activity_filename FROM professor_activity WHERE activity_id = @activity_id";
                     else
-                    {
-                        query = @"SELECT activity_file, activity_filename 
-                          FROM professor_activity 
-                          WHERE professor_id = @professor_id 
-                            AND title = @title 
-                            AND section = @section 
-                            AND activity_subject = @activity_subject
-                          LIMIT 1";
-                    }
+                        query = @"SELECT activity_file, activity_filename FROM professor_activity 
+                                  WHERE professor_id = @professor_id AND title = @title 
+                                    AND section = @section AND activity_subject = @activity_subject LIMIT 1";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -688,9 +653,7 @@ namespace WinFormsApp1
                         using (var reader = cmd.ExecuteReader())
                         {
                             if (!reader.Read()) return null;
-
-                            if (reader.IsDBNull(reader.GetOrdinal("activity_file")))
-                                return null;
+                            if (reader.IsDBNull(reader.GetOrdinal("activity_file"))) return null;
 
                             byte[] pdfBytes = (byte[])reader["activity_file"];
                             string pdfName = reader["activity_filename"] as string ?? "activity.pdf";
@@ -721,12 +684,9 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = "SELECT lastname, firstname, middlename FROM user_information WHERE user_id = @user_id";
-
-                    using (var cmd = new MySqlCommand(query, conn))
+                    using (var cmd = new MySqlCommand("SELECT lastname, firstname, middlename FROM user_information WHERE user_id = @user_id", conn))
                     {
                         cmd.Parameters.AddWithValue("@user_id", userId);
-
                         using (var reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -734,7 +694,6 @@ namespace WinFormsApp1
                                 string Lastname = reader.GetString("lastname");
                                 string Firstname = reader.GetString("firstname");
                                 string Middlename = reader.GetString("middlename");
-
                                 studentname = $"{Lastname}_{Firstname}_{Middlename}";
                             }
                         }
@@ -806,21 +765,17 @@ namespace WinFormsApp1
                     string query = "SELECT title, section, class_name, activity_status, score FROM submitted_activity WHERE user_id = @user_id";
 
                     if (!string.IsNullOrEmpty(selectedGradeCategory))
-                    {
                         query += " AND activity_status = @activity_status";
-                    }
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@user_id", userId);
-
                         if (!string.IsNullOrEmpty(selectedGradeCategory))
                             cmd.Parameters.AddWithValue("@activity_status", selectedGradeCategory);
 
                         MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
                         DataTable dt = new DataTable();
                         adapter.Fill(dt);
-
                         dgvStudentGrades.DataSource = dt;
                     }
                 }
@@ -859,15 +814,8 @@ namespace WinFormsApp1
         }
 
         //Subject//
-        private void btnJoinClass_Click(object sender, EventArgs e)
-        {
-            pnlCreateClass.Visible = true;
-        }
-
-        private void btnCloseJointClassPanel_Click(object sender, EventArgs e)
-        {
-            pnlCreateClass.Visible = false;
-        }
+        private void btnJoinClass_Click(object sender, EventArgs e) => pnlCreateClass.Visible = true;
+        private void btnCloseJointClassPanel_Click(object sender, EventArgs e) => pnlCreateClass.Visible = false;
 
         private void btnEnterClass_Click(object sender, EventArgs e)
         {
@@ -879,12 +827,9 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = "SELECT professor_id, class_name, class_section, class_time, class_date FROM professor_class WHERE class_code = @class_code";
-
-                    using (var cmd = new MySqlCommand(query, conn))
+                    using (var cmd = new MySqlCommand("SELECT professor_id, class_name, class_section, class_time, class_date FROM professor_class WHERE class_code = @class_code", conn))
                     {
                         cmd.Parameters.AddWithValue("@class_code", txtcode);
-
                         using (var reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -894,7 +839,6 @@ namespace WinFormsApp1
                                 string class_section = reader.GetString("class_section");
                                 string class_time = reader.GetString("class_time");
                                 string class_date = reader.GetString("class_date");
-
                                 InitializeJoinClass(professor_id, class_name, class_section, class_time, class_date);
                             }
                         }
@@ -918,17 +862,10 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
-                    string checkQuery = @"
-        SELECT COUNT(*)
-        FROM student_class
-        WHERE professor_id = @professor_id
-        AND user_id = @user_id
-        AND class_name = @class_name
-        AND section = @section
-        AND class_time = @class_time
-        AND class_date = @class_date";
-
-                    using (var checkCmd = new MySqlCommand(checkQuery, conn))
+                    using (var checkCmd = new MySqlCommand(@"SELECT COUNT(*) FROM student_class
+                        WHERE professor_id = @professor_id AND user_id = @user_id
+                        AND class_name = @class_name AND section = @section
+                        AND class_time = @class_time AND class_date = @class_date", conn))
                     {
                         checkCmd.Parameters.AddWithValue("@professor_id", professorId);
                         checkCmd.Parameters.AddWithValue("@user_id", userId);
@@ -938,7 +875,6 @@ namespace WinFormsApp1
                         checkCmd.Parameters.AddWithValue("@class_date", classDate);
 
                         int count = Convert.ToInt32(checkCmd.ExecuteScalar());
-
                         if (count > 0)
                         {
                             MessageBox.Show("This class information already exists.");
@@ -946,13 +882,9 @@ namespace WinFormsApp1
                         }
                     }
 
-                    string query = @"
-        INSERT INTO student_class
-        (professor_id, user_id, class_name, section, class_time, class_date)
-        VALUES
-        (@professor_id, @user_id, @class_name, @section, @class_time, @class_date)";
-
-                    using (var cmd = new MySqlCommand(query, conn))
+                    using (var cmd = new MySqlCommand(@"INSERT INTO student_class
+                        (professor_id, user_id, class_name, section, class_time, class_date)
+                        VALUES (@professor_id, @user_id, @class_name, @section, @class_time, @class_date)", conn))
                     {
                         cmd.Parameters.AddWithValue("@professor_id", professorId);
                         cmd.Parameters.AddWithValue("@user_id", userId);
@@ -960,12 +892,10 @@ namespace WinFormsApp1
                         cmd.Parameters.AddWithValue("@section", classSection);
                         cmd.Parameters.AddWithValue("@class_time", classTime);
                         cmd.Parameters.AddWithValue("@class_date", classDate);
-
                         cmd.ExecuteNonQuery();
                     }
 
                     InitializeCreadeClass(className, classSection, classTime, classDate);
-
                     MessageBox.Show("Successfully Joined Class!");
                 }
             }
@@ -1018,14 +948,11 @@ namespace WinFormsApp1
             {
                 DialogResult result = MessageBox.Show(
                     $"Are you sure you want to unjoin '{classname}'?",
-                    "Confirm Unjoin",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Warning);
+                    "Confirm Unjoin", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 
                 if (result != DialogResult.Yes) return;
 
                 UnjoinClass(classname, classSection, classTime, classDate);
-
                 flpSubjectClass.Controls.Remove(ClassButton);
                 ClassButton.Dispose();
             };
@@ -1038,9 +965,7 @@ namespace WinFormsApp1
             Status.ContextMenuStrip = menu;
 
             foreach (Control c in ClassButton.Controls)
-            {
                 c.ContextMenuStrip = menu;
-            }
 
             flpSubjectClass.Controls.Add(ClassButton);
         }
@@ -1056,16 +981,9 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-
-                    string query = @"
-SELECT class_name, section, class_time, class_date
-FROM student_class
-WHERE user_id = @user_id";
-
-                    using (var cmd = new MySqlCommand(query, conn))
+                    using (var cmd = new MySqlCommand(@"SELECT class_name, section, class_time, class_date FROM student_class WHERE user_id = @user_id", conn))
                     {
                         cmd.Parameters.AddWithValue("@user_id", userId);
-
                         using (var reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
@@ -1074,7 +992,6 @@ WHERE user_id = @user_id";
                                 string classSection = reader["section"].ToString();
                                 string classTime = reader["class_time"].ToString();
                                 string classDate = reader["class_date"].ToString();
-
                                 InitializeCreadeClass(className, classSection, classTime, classDate);
                             }
                         }
@@ -1096,16 +1013,9 @@ WHERE user_id = @user_id";
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-
-                    string query = @"
-DELETE FROM student_class
-WHERE user_id = @user_id
-AND class_name = @class_name
-AND section = @section
-AND class_time = @class_time
-AND class_date = @class_date";
-
-                    using (var cmd = new MySqlCommand(query, conn))
+                    using (var cmd = new MySqlCommand(@"DELETE FROM student_class
+                        WHERE user_id = @user_id AND class_name = @class_name
+                        AND section = @section AND class_time = @class_time AND class_date = @class_date", conn))
                     {
                         cmd.Parameters.AddWithValue("@user_id", userId);
                         cmd.Parameters.AddWithValue("@class_name", classname);
@@ -1114,7 +1024,6 @@ AND class_date = @class_date";
                         cmd.Parameters.AddWithValue("@class_date", classDate);
 
                         int rows = cmd.ExecuteNonQuery();
-
                         if (rows > 0)
                             MessageBox.Show("Successfully unjoined class.");
                         else
@@ -1132,27 +1041,19 @@ AND class_date = @class_date";
         private void btnSettingProfileExpand_Click(object sender, EventArgs e)
         {
             if (pnlSettingProfile.Height <= 350)
-            {
                 pnlSettingProfile.Height = 592;
-            }
             else if (pnlSettingProfile.Height >= 592)
-            {
                 pnlSettingProfile.Height = 350;
-            }
         }
 
         private void ClearAllFormData()
         {
             foreach (Control ctrl in this.Controls)
             {
-                if (ctrl is TextBox)
-                    ((TextBox)ctrl).Text = "";
-                else if (ctrl is ComboBox)
-                    ((ComboBox)ctrl).SelectedIndex = -1;
-                else if (ctrl is DataGridView)
-                    ((DataGridView)ctrl).DataSource = null;
-                else if (ctrl is ListBox)
-                    ((ListBox)ctrl).Items.Clear();
+                if (ctrl is TextBox) ((TextBox)ctrl).Text = "";
+                else if (ctrl is ComboBox) ((ComboBox)ctrl).SelectedIndex = -1;
+                else if (ctrl is DataGridView) ((DataGridView)ctrl).DataSource = null;
+                else if (ctrl is ListBox) ((ListBox)ctrl).Items.Clear();
             }
         }
 
@@ -1204,22 +1105,17 @@ AND class_date = @class_date";
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
 
-                this.Close();
-
+                // ✅ Show Login BEFORE closing this form so the app doesn't exit
                 Login login = new Login();
                 login.Show();
+
+                this.Hide();
+                this.Close();
             }
         }
 
-        private void btnSignOut_Click(object sender, EventArgs e)
-        {
-            Logout();
-        }
-
-        private void btnSignOut2_Click(object sender, EventArgs e)
-        {
-            Logout();
-        }
+        private void btnSignOut_Click(object sender, EventArgs e) => Logout();
+        private void btnSignOut2_Click(object sender, EventArgs e) => Logout();
 
         private void btnSettingChangeUsername_Click(object sender, EventArgs e)
         {
@@ -1228,10 +1124,7 @@ AND class_date = @class_date";
             pnlChangePhoto.Visible = false;
         }
 
-        private void btnExitChangeUsernamePanel_Click(object sender, EventArgs e)
-        {
-            pnlChangeUsername.Visible = false;
-        }
+        private void btnExitChangeUsernamePanel_Click(object sender, EventArgs e) => pnlChangeUsername.Visible = false;
 
         private void btnSubmitChangeUsername_Click(object sender, EventArgs e)
         {
@@ -1254,14 +1147,10 @@ AND class_date = @class_date";
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = @"UPDATE user_credential 
-                                         SET username = @new_username 
-                                         WHERE username = @current_username";
-                    using (var cmd = new MySqlCommand(query, conn))
+                    using (var cmd = new MySqlCommand("UPDATE user_credential SET username = @new_username WHERE username = @current_username", conn))
                     {
                         cmd.Parameters.AddWithValue("@new_username", txtNewUsername.Text.Trim());
                         cmd.Parameters.AddWithValue("@current_username", txtCurrentUsername.Text.Trim());
-
                         cmd.ExecuteNonQuery();
                     }
                     ClearTextSettings();
@@ -1281,10 +1170,7 @@ AND class_date = @class_date";
             pnlChangePhoto.Visible = false;
         }
 
-        private void btnExitChangePasswordPanel_Click(object sender, EventArgs e)
-        {
-            pnlChangePassword.Visible = false;
-        }
+        private void btnExitChangePasswordPanel_Click(object sender, EventArgs e) => pnlChangePassword.Visible = false;
 
         private void btnSubmitChangePassword_Click(object sender, EventArgs e)
         {
@@ -1306,14 +1192,10 @@ AND class_date = @class_date";
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = @"UPDATE user_credential 
-                                         SET p_word = @new_password 
-                                         WHERE username = @current_username";
-                    using (var cmd = new MySqlCommand(query, conn))
+                    using (var cmd = new MySqlCommand("UPDATE user_credential SET p_word = @new_password WHERE username = @current_username", conn))
                     {
                         cmd.Parameters.AddWithValue("@new_password", txtNewPassword.Text.Trim());
                         cmd.Parameters.AddWithValue("@current_username", StudentUsername);
-
                         cmd.ExecuteNonQuery();
                     }
                     ClearTextSettings();
@@ -1341,9 +1223,7 @@ AND class_date = @class_date";
             SaveCurrentProfilePath = Path.Combine(solutionDirectory, "StudentProfilePicture");
 
             if (!Directory.Exists(SaveCurrentProfilePath))
-            {
                 Directory.CreateDirectory(SaveCurrentProfilePath);
-            }
         }
 
         private void btnUploadPhoto_Click(object sender, EventArgs e)
@@ -1376,10 +1256,7 @@ AND class_date = @class_date";
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = @"UPDATE user_credential 
-                                     SET profile_picture = @profile_picture 
-                                     WHERE username = @username";
-                    using (var cmd = new MySqlCommand(query, conn))
+                    using (var cmd = new MySqlCommand("UPDATE user_credential SET profile_picture = @profile_picture WHERE username = @username", conn))
                     {
                         string fileName = Path.GetFileName(CurrentProfilePath);
                         string destinationPath = Path.Combine(SaveCurrentProfilePath, fileName);
@@ -1406,24 +1283,21 @@ AND class_date = @class_date";
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = @"SELECT profile_picture FROM user_credential WHERE username = @username";
-
-                    using (var cmd = new MySqlCommand(query, conn))
+                    using (var cmd = new MySqlCommand("SELECT profile_picture FROM user_credential WHERE username = @username", conn))
                     {
                         cmd.Parameters.AddWithValue("@username", StudentUsername);
                         using (var reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
                             {
-                                if (reader.IsDBNull(reader.GetOrdinal("profile_picture")))
-                                    return;
+                                if (reader.IsDBNull(reader.GetOrdinal("profile_picture"))) return;
 
-                                string profilePicturePath = reader.GetString("profile_picture");
-                                if (File.Exists(profilePicturePath))
+                                string path = reader.GetString("profile_picture");
+                                if (File.Exists(path))
                                 {
-                                    picboxSettingProfilePicture.Image = Image.FromFile(profilePicturePath);
+                                    picboxSettingProfilePicture.Image = Image.FromFile(path);
                                     picboxSettingProfilePicture.SizeMode = PictureBoxSizeMode.Zoom;
-                                    btnAccount.Image = Image.FromFile(profilePicturePath);
+                                    btnAccount.Image = Image.FromFile(path);
                                 }
                             }
                         }
@@ -1443,20 +1317,9 @@ AND class_date = @class_date";
             pnlChangePassword.Visible = false;
         }
 
-        private void btnExitChangePhotoPanel_Click(object sender, EventArgs e)
-        {
-            pnlChangePhoto.Visible = false;
-        }
-
-        private void btnOpenUploadAuthenticationPhoto_Click(object sender, EventArgs e)
-        {
-            pnlSettingAuthenticationPhoto.Visible = true;
-        }
-
-        private void btnCloseUploadAuthenticationPhoto_Click(object sender, EventArgs e)
-        {
-            pnlSettingAuthenticationPhoto.Visible = false;
-        }
+        private void btnExitChangePhotoPanel_Click(object sender, EventArgs e) => pnlChangePhoto.Visible = false;
+        private void btnOpenUploadAuthenticationPhoto_Click(object sender, EventArgs e) => pnlSettingAuthenticationPhoto.Visible = true;
+        private void btnCloseUploadAuthenticationPhoto_Click(object sender, EventArgs e) => pnlSettingAuthenticationPhoto.Visible = false;
 
         private void btnUploadAuthenticationPhoto_Click(object sender, EventArgs e)
         {
@@ -1488,10 +1351,7 @@ AND class_date = @class_date";
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = @"UPDATE user_credential 
-                                     SET authentication_photo = @authentication_photo 
-                                     WHERE username = @username";
-                    using (var cmd = new MySqlCommand(query, conn))
+                    using (var cmd = new MySqlCommand("UPDATE user_credential SET authentication_photo = @authentication_photo WHERE username = @username", conn))
                     {
                         string fileName = Path.GetFileName(AuthenticationPhoto);
                         string destinationPath = Path.Combine(SaveAuthenticationPhoto, fileName);
@@ -1516,9 +1376,7 @@ AND class_date = @class_date";
             SaveAuthenticationPhoto = Path.Combine(solutionDirectory, "StudentAuthenticationPhoto");
 
             if (!Directory.Exists(SaveAuthenticationPhoto))
-            {
                 Directory.CreateDirectory(SaveAuthenticationPhoto);
-            }
         }
 
         // =========================================================
@@ -1603,15 +1461,9 @@ AND class_date = @class_date";
                 {
                     conn.Open();
 
-                    string query = @"
-                SELECT q.quiz_id,
-                       q.quiz_title,
-                       q.subject,
-                       q.assessment_type,
-                       q.exam_period,
-                       q.created_at
-                FROM quizzes q
-                ORDER BY q.created_at DESC";
+                    string query = @"SELECT q.quiz_id, q.quiz_title, q.subject, q.assessment_type,
+                                            q.exam_period, q.created_at
+                                     FROM quizzes q ORDER BY q.created_at DESC";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -1622,7 +1474,6 @@ AND class_date = @class_date";
                             while (reader.Read())
                             {
                                 any = true;
-
                                 int quizId = reader.GetInt32("quiz_id");
                                 string title = reader["quiz_title"].ToString();
                                 string subject = reader["subject"]?.ToString() ?? "";
@@ -1630,7 +1481,6 @@ AND class_date = @class_date";
                                 string period = reader["exam_period"]?.ToString() ?? "";
 
                                 bool submitted = HasSubmitted(quizId);
-
                                 AddAssessmentRow(quizId, title, subject, type, period, submitted);
                             }
 
@@ -1722,13 +1572,6 @@ AND class_date = @class_date";
                 rowTitle.Cursor = Cursors.Hand;
                 badge.Cursor = Cursors.Hand;
             }
-            else
-            {
-                row.Cursor = Cursors.Default;
-                rowIcon.Cursor = Cursors.Default;
-                rowTitle.Cursor = Cursors.Default;
-                badge.Cursor = Cursors.Default;
-            }
 
             row.Controls.Add(rowIcon);
             row.Controls.Add(rowTitle);
@@ -1748,10 +1591,8 @@ AND class_date = @class_date";
             try
             {
                 Console.WriteLine($"[OpenAssessment] userId={userId}, quizId={quizId}");
-
                 StudentQuizForm QuizForm = new StudentQuizForm(int.Parse(userId), quizId);
                 QuizForm.ShowDialog();
-
                 LoadAssessments();
             }
             catch (Exception ex)
@@ -1768,17 +1609,14 @@ AND class_date = @class_date";
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string q = @"SELECT COUNT(*) FROM quiz_attempts
-                         WHERE quiz_id = @quiz_id AND user_id = @user_id";
-                    using (var cmd = new MySqlCommand(q, conn))
+                    using (var cmd = new MySqlCommand(@"SELECT COUNT(*) FROM quiz_attempts
+                         WHERE quiz_id = @quiz_id AND user_id = @user_id", conn))
                     {
                         cmd.Parameters.AddWithValue("@quiz_id", quizId);
                         cmd.Parameters.AddWithValue("@user_id", userId);
 
                         object result = cmd.ExecuteScalar();
-                        if (result == null || result == DBNull.Value)
-                            return false;
-
+                        if (result == null || result == DBNull.Value) return false;
                         return Convert.ToInt32(result) > 0;
                     }
                 }
