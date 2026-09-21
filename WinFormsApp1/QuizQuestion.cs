@@ -2,6 +2,7 @@
 {
     public class QuizQuestion
     {
+        public int QuestionId { get; set; }
         public string Question { get; set; }
         public string QuestionType { get; set; }
 

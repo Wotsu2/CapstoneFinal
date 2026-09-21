@@ -11,7 +11,6 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace WinFormsApp1
 {
-
     public partial class QandAForm : Form
     {
         private string StudentUsername;
@@ -23,6 +22,7 @@ namespace WinFormsApp1
         private string Afirst;
         private string Asecond;
         private string Athird;
+
         public QandAForm(int Userid, string section, string Username)
         {
             InitializeComponent();
@@ -65,7 +65,6 @@ namespace WinFormsApp1
                             Asecond = answer[1];
                             Athird = answer[2];
 
-                            // ⭐ Assign to the 3 comboboxes
                             cmbFirstQuestion.Items.Add(questions[0]);
                             cmbSecondQuestion.Items.Add(questions[1]);
                             cmbThirdQuestion.Items.Add(questions[2]);
@@ -83,6 +82,7 @@ namespace WinFormsApp1
                 MessageBox.Show("An error occurred while fetching the question and answer." + ex.Message);
             }
         }
+
         private void btnSubmitSecurityQuestion_Click(object sender, EventArgs e)
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -109,9 +109,15 @@ namespace WinFormsApp1
 
                                 if (Afirst == txtFirstAnswer.Text && Asecond == txtSecondAnswer.Text && Athird == txtThirdAnswer.Text)
                                 {
-                                    this.Close();
+                                    // ✅ Open StudentForm BEFORE closing QandA
                                     StudentForm studentForm = new StudentForm(UserId, Section, StudentUsername);
                                     studentForm.Show();
+                                    studentForm.Refresh();
+                                    Application.DoEvents();
+
+                                    // ✅ Now hide + close this form
+                                    this.Hide();
+                                    this.Close();
                                 }
                                 else
                                 {

@@ -12,7 +12,7 @@ using System.Text;
 using System.Windows.Forms;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
-using Path = System.IO.Path;   // <-- resolves the ambiguity
+using Path = System.IO.Path;
 
 namespace WinFormsApp1
 {
@@ -36,7 +36,6 @@ namespace WinFormsApp1
 
         private void LoadCurrentSettings()
         {
-            // Network Setup
             txtServerIP.Text = SettingsManager.Current.ServerIp;
             txtWorkStationPort.Text = SettingsManager.Current.WorkstationPort.ToString();
             txtScreenSharingPort.Text = SettingsManager.Current.ScreenSharePort.ToString();
@@ -44,7 +43,6 @@ namespace WinFormsApp1
             txtFileTransferPort.Text = SettingsManager.Current.FileTransferPort.ToString();
             txtCommandPort.Text = SettingsManager.Current.CommandPort.ToString();
 
-            // Database Setup
             txtDatabaseHost.Text = SettingsManager.Current.DatabaseHost.ToString();
             txtDatabasePort.Text = SettingsManager.Current.DatabasePort.ToString();
             txtDatabaseName.Text = SettingsManager.Current.DatabaseName.ToString();
@@ -54,7 +52,6 @@ namespace WinFormsApp1
 
         private void btnSaveSetting_Click_1(object sender, EventArgs e)
         {
-            // Network Save Setting
             SettingsManager.Current.ServerIp = txtServerIP.Text.Trim();
             SettingsManager.Current.WorkstationPort = int.Parse(txtWorkStationPort.Text.Trim());
             SettingsManager.Current.ScreenSharePort = int.Parse(txtScreenSharingPort.Text.Trim());
@@ -62,7 +59,6 @@ namespace WinFormsApp1
             SettingsManager.Current.FileTransferPort = int.Parse(txtFileTransferPort.Text.Trim());
             SettingsManager.Current.CommandPort = int.Parse(txtCommandPort.Text.Trim());
 
-            // Database Save Setting
             SettingsManager.Current.DatabaseHost = txtDatabaseHost.Text.Trim();
             SettingsManager.Current.DatabasePort = int.Parse(txtDatabasePort.Text.Trim());
             SettingsManager.Current.DatabaseName = txtDatabaseName.Text.Trim();
@@ -125,7 +121,10 @@ namespace WinFormsApp1
                         {
                             if (reader.Read())
                             {
-                                StudentSection = reader.GetString("school_section");
+                                if (!reader.IsDBNull(reader.GetOrdinal("school_section")))
+                                    StudentSection = reader.GetString("school_section");
+                                else
+                                    StudentSection = "";
                             }
                         }
                     }
@@ -133,7 +132,7 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                Console.WriteLine("SelectSection error: " + ex.Message);
             }
         }
 
@@ -175,7 +174,9 @@ namespace WinFormsApp1
 
                             string faceFileName = reader.GetString("authentication_photo");
 
-                            string faceFullPath = Path.Combine(saveAuthenticationPhoto, faceFileName);
+                            string faceFullPath = faceFileName;
+                            if (!File.Exists(faceFullPath))
+                                faceFullPath = Path.Combine(saveAuthenticationPhoto, Path.GetFileName(faceFileName));
 
                             if (!File.Exists(faceFullPath))
                             {
@@ -190,8 +191,32 @@ namespace WinFormsApp1
                                 studentreferencesPhoto = new Bitmap(fs);
                             }
 
+                            // Hide Login first
+                            this.Hide();
+
                             LivenessCheckForm livenessForm = new LivenessCheckForm(
                                 studentreferencesPhoto, UserId, StudentSection, username);
+
+                            // If liveness closes without opening StudentForm (user cancelled),
+                            // show Login back. Otherwise close Login.
+                            livenessForm.FormClosed += (s, args) =>
+                            {
+                                bool anyVisible = false;
+                                foreach (Form f in Application.OpenForms)
+                                {
+                                    if (f != this && f.Visible)
+                                    {
+                                        anyVisible = true;
+                                        break;
+                                    }
+                                }
+
+                                if (!anyVisible)
+                                    this.Show();
+                                else
+                                    this.Close();
+                            };
+
                             livenessForm.Show();
                         }
                     }
@@ -231,7 +256,7 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred: " + ex.Message);
+                Console.WriteLine("InitializeGetQandA error: " + ex.Message);
             }
         }
 
@@ -241,13 +266,18 @@ namespace WinFormsApp1
             string password = txtPassword.Text;
 
             InitializeGetQandA(username);
+
+            // Hardcoded admin
             if (username == "admin123" && password == "123admin")
             {
                 AdminForm adminform = new AdminForm();
-                adminform.Show();
+                adminform.FormClosed += (s, args) => Application.Exit();
+
                 this.Hide();
+                adminform.Show();
                 return;
             }
+
             string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
@@ -275,14 +305,17 @@ namespace WinFormsApp1
                                 {
                                     SelectSection(UserId);
                                     OpenAppropriateForm(role, username, UserId, authentication_photo, question, answer);
-                                    this.Hide();
                                 }
-                                
                                 else
                                 {
                                     MessageBox.Show("Incorrect password.", "Login Error",
                                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                                 }
+                            }
+                            else
+                            {
+                                MessageBox.Show("Username not found.", "Login Error",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
                             }
                         }
                     }
@@ -294,54 +327,50 @@ namespace WinFormsApp1
             }
         }
 
-        private void OpenAppropriateForm(string role, string username, int UserId, string authenticationPhoto, string question, string answer)
+        private void OpenAppropriateForm(string role, string username, int UserId,
+                                          string authenticationPhoto, string question, string answer)
         {
             if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
             {
                 AdminForm adminForm = new AdminForm();
+                adminForm.FormClosed += (s, args) => Application.Exit();
+
+                this.Hide();
                 adminForm.Show();
             }
             else if (role.Equals("Professor", StringComparison.OrdinalIgnoreCase))
             {
                 ProfessorForm profForm = new ProfessorForm(UserId, username);
+                profForm.FormClosed += (s, args) => Application.Exit();
+
+                this.Hide();
                 profForm.Show();
             }
             else if (role.Equals("Student", StringComparison.OrdinalIgnoreCase))
             {
                 bool cameraDetected = IsAnyCameraDetected();
 
-                if (cameraDetected)
+                if (cameraDetected && !string.IsNullOrEmpty(authenticationPhoto))
                 {
-                    if (string.IsNullOrEmpty(authenticationPhoto))
-                    {
-                        if (string.IsNullOrEmpty(question) && string.IsNullOrEmpty(answer))
-                        {
-                            StudentForm studentform = new StudentForm(UserId, StudentSection, username);
-                            studentform.Show();
-                        }
-                        else if (!string.IsNullOrEmpty(question) && !string.IsNullOrEmpty(answer))
-                        {
-                            QandAForm QandAform = new QandAForm(UserId, StudentSection, username);
-                            QandAform.Show();
-                        }
-                    }
-                    else if (!string.IsNullOrEmpty(authenticationPhoto))
-                    {
-                        FaceAuthentication(username);
-                    }
+                    FaceAuthentication(username);
+                    return;
                 }
-                else
+
+                if (string.IsNullOrEmpty(question) && string.IsNullOrEmpty(answer))
                 {
-                    if (string.IsNullOrEmpty(question) && string.IsNullOrEmpty(answer))
-                    {
-                        StudentForm studentform = new StudentForm(UserId, StudentSection, username);
-                        studentform.Show();
-                    }
-                    else if (!string.IsNullOrEmpty(question) && !string.IsNullOrEmpty(answer))
-                    {
-                        QandAForm QandAform = new QandAForm(UserId, StudentSection, username);
-                        QandAform.Show();
-                    }
+                    StudentForm studentform = new StudentForm(UserId, StudentSection, username);
+                    studentform.FormClosed += (s, args) => Application.Exit();
+
+                    this.Hide();
+                    studentform.Show();
+                }
+                else if (!string.IsNullOrEmpty(question) && !string.IsNullOrEmpty(answer))
+                {
+                    QandAForm QandAform = new QandAForm(UserId, StudentSection, username);
+                    QandAform.FormClosed += (s, args) => Application.Exit();
+
+                    this.Hide();
+                    QandAform.Show();
                 }
             }
             else

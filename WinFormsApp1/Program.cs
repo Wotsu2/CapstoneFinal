@@ -15,29 +15,11 @@ namespace WinFormsApp1
 
             Application.SetCompatibleTextRenderingDefault(false);
 
-            Application.Run(new Login());
+            var login = new Login();
 
-
-            //using (SplashForm splash =
-            //       new SplashForm())
-            //{
-            //    splash.ShowDialog();
-
-            //    if (splash.DialogResult !=
-            //        DialogResult.OK)
-            //    {
-            //        return;
-            //    }
-            //}
-
-
-            // Simulan sa Login form — ito ang tamang starting point ng app
-
-            
-
-
-
+            // Hold a reference so the app stays alive while Login is hidden
+            var context = new ApplicationContext(login);
+            Application.Run(context);
         }
     }
 }
-

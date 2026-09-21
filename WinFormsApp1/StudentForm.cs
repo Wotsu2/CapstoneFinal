@@ -22,7 +22,6 @@ namespace WinFormsApp1
     public partial class StudentForm : Form
     {
         private TcpClient client;
-        private System.Windows.Forms.Timer screenShareTimer;
         private TcpClient screenClient;
         private bool isSharingScreen = false;
         private TcpClient broadcastClient;
@@ -34,7 +33,6 @@ namespace WinFormsApp1
         private string StudentSection;
         private string userId;
         private string activityId;
-        //Grades//
         private string selectedGradeCategory = "";
         private string selectedActivitiesCategory = "";
         private string file_path;
@@ -47,49 +45,64 @@ namespace WinFormsApp1
         private string SaveAuthenticationPhoto;
         private string Isauthentication_photoEmpty;
 
+        private System.Windows.Forms.Timer assessmentsRefreshTimer;
+
+        private Guna.UI2.WinForms.Guna2Panel assessmentsPanel;
+        private FlowLayoutPanel assessmentsList;
+
         public StudentForm(int UserId, string Section, string Username)
         {
             InitializeComponent();
             StudentSection = Section;
             userId = UserId.ToString();
-
             StudentUsername = Username;
+
             initializeShowReminderForm();
+        }
+
+        private void StudentForm_Load(object sender, EventArgs e)
+        {
+            this.Show();
+            this.Refresh();
+            Application.DoEvents();
 
             if (string.IsNullOrEmpty(Isauthentication_photoEmpty))
             {
-                FacialRecognitionReminderForm reminderForm = new FacialRecognitionReminderForm(int.Parse(userId), StudentUsername);
+                FacialRecognitionReminderForm reminderForm =
+                    new FacialRecognitionReminderForm(int.Parse(userId), StudentUsername);
                 reminderForm.ShowDialog();
             }
-        }
-        private void StudentForm_Load(object sender, EventArgs e)
-        {
+
             isSharingScreen = true;
             lblProfUsername.Text = StudentUsername;
-            ConnectToServer();
-            StartScreenShare();
-            ConnectBroadcastReceiver();
-            StartListening();
 
-            //Home Caller//
+            // ✅ Kick off all networking on background threads so the UI never blocks
+            Task.Run(() => ConnectToServer());
+            Task.Run(() => StartScreenShare());
+            Task.Run(() => ConnectBroadcastReceiver());
+            Task.Run(() => StartListening());
+
+            // DB + I/O calls (these are fast, keep them on the UI thread)
             InitializeCreateButtonActivity();
-
-            //Activitiy Caller//
             InitializeDataGridViewActivities();
             NameGet();
-
-            //Grades Caller//
             InitializeDataGridViewGrades();
-
-            //Subject Caller//
             LoadJoinedClasses();
 
-            //Settings//
             InitializeSaveDirectory();
             InitializeChangingPicture();
             InitializeAuthenticationSaveDirectory();
 
+            InitializeAssessmentsCard();
+
             lblStudentName.Text = studentname;
+
+            pnlHome.BringToFront();
+            pnlHome.Visible = true;
+            pnlHome.Refresh();
+
+            this.Refresh();
+            Application.DoEvents();
         }
 
         private void initializeShowReminderForm()
@@ -111,7 +124,10 @@ namespace WinFormsApp1
                         {
                             if (reader.Read())
                             {
-                                Isauthentication_photoEmpty = reader.GetString("authentication_photo");
+                                if (!reader.IsDBNull(reader.GetOrdinal("authentication_photo")))
+                                    Isauthentication_photoEmpty = reader.GetString("authentication_photo");
+                                else
+                                    Isauthentication_photoEmpty = "";
                             }
                         }
                     }
@@ -119,11 +135,9 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred: " + ex.Message);
+                Console.WriteLine("initializeShowReminderForm error: " + ex.Message);
             }
         }
-
-
 
         private void SetActiveMenuButton(Guna2Button clickedBtn, Panel panelToShow)
         {
@@ -136,7 +150,6 @@ namespace WinFormsApp1
             clickedBtn.ForeColor = Color.FromArgb(80, 12, 24);
             activeMenuButton = clickedBtn;
 
-            // ipakita yung tamang panel
             panelToShow.BringToFront();
         }
 
@@ -163,92 +176,112 @@ namespace WinFormsApp1
             SetActiveMenuButton(btnGrades, pnlGrades);
             lblhometitle.Text = "Grade";
         }
+
         private void btnAccount_Click(object sender, EventArgs e)
         {
             pnlSetting.BringToFront();
             lblhometitle.Text = "Settings";
         }
 
-        //Connect the Client to the Server//
-        private async void ConnectToServer()
+        // =========================================================
+        // RECONNECTING TCP CLIENT HELPER
+        // =========================================================
+
+        private async Task RunClientForever(
+            string name,
+            Func<TcpClient> connect,
+            Func<TcpClient, Task> onConnected,
+            int retryDelayMs = 2000)
         {
-            try
+            while (!isSignedOut)
             {
-                isSignedOut = false;
-
-                client = new TcpClient();
-                await client.ConnectAsync(SettingsManager.Current.ServerIp, SettingsManager.Current.WorkstationPort); // use the SERVER's actual IP here And Should be Empty and configure it to setting
-
-                MessageBox.Show("Connected to server!");
-
-                // Keep the connection alive (so the server knows you're still online)
-                _ = KeepAlive();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Connection failed: " + ex.Message);
-            }
-        }
-        private async Task KeepAlive()
-        {
-            try
-            {
-                while (!isSignedOut && client != null && client.Connected)
+                TcpClient c = null;
+                try
                 {
-                    await Task.Delay(2000); // just idle — connection itself signals "online"
+                    c = connect();
+
+                    if (c != null && c.Connected)
+                    {
+                        Console.WriteLine($"[{name}] connected");
+                        await onConnected(c);
+                    }
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[{name}] error: {ex.Message}");
+                }
+                finally
+                {
+                    try { c?.Close(); } catch { }
+                    try { c?.Dispose(); } catch { }
+                }
+
+                if (isSignedOut) break;
+
+                try { await Task.Delay(retryDelayMs); } catch { }
             }
-            catch { }
         }
 
-        //Share the Screen of the Client to the Server//
+        private void ConnectToServer()
+        {
+            _ = RunClientForever(
+                "Workstation",
+                () =>
+                {
+                    var c = new TcpClient();
+                    c.Connect(SettingsManager.Current.ServerIp, SettingsManager.Current.WorkstationPort);
+                    return c;
+                },
+                async c =>
+                {
+                    while (!isSignedOut && c.Connected)
+                    {
+                        try { await Task.Delay(2000); }
+                        catch { break; }
+                    }
+                });
+        }
 
         private void StartScreenShare()
         {
-            try
-            {
-                screenClient = new TcpClient();
-                screenClient.Connect(SettingsManager.Current.ServerIp, SettingsManager.Current.ScreenSharePort); // dedicated screen-share port
-
-                isSharingScreen = true;
-
-                screenShareTimer = new System.Windows.Forms.Timer();
-                screenShareTimer.Interval = 500; // send a frame every 0.5s
-                screenShareTimer.Tick += ScreenShareTimer_Tick;
-                screenShareTimer.Start();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Could not start screen share: " + ex.Message);
-            }
-        }
-
-        private void ScreenShareTimer_Tick(object sender, EventArgs e)
-        {
-            try
-            {
-                Bitmap screenshot = CaptureScreen();
-
-                using (MemoryStream ms = new MemoryStream())
+            _ = RunClientForever(
+                "ScreenShare",
+                () =>
                 {
-                    screenshot.Save(ms, ImageFormat.Jpeg);
-                    byte[] imageBytes = ms.ToArray();
+                    var c = new TcpClient();
+                    c.Connect(SettingsManager.Current.ServerIp, SettingsManager.Current.ScreenSharePort);
+                    return c;
+                },
+                async c =>
+                {
+                    while (!isSignedOut && c.Connected)
+                    {
+                        try
+                        {
+                            Bitmap shot = CaptureScreen();
 
-                    NetworkStream stream = screenClient.GetStream();
-                    byte[] lengthPrefix = BitConverter.GetBytes(imageBytes.Length);
+                            using (MemoryStream ms = new MemoryStream())
+                            {
+                                shot.Save(ms, ImageFormat.Jpeg);
+                                byte[] imageBytes = ms.ToArray();
 
-                    stream.Write(lengthPrefix, 0, lengthPrefix.Length);
-                    stream.Write(imageBytes, 0, imageBytes.Length);
-                }
+                                NetworkStream stream = c.GetStream();
+                                byte[] lengthPrefix = BitConverter.GetBytes(imageBytes.Length);
 
-                screenshot.Dispose();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Screen share stopped: " + ex.Message);
-                screenShareTimer.Stop();
-                isSharingScreen = false;
-            }
+                                await stream.WriteAsync(lengthPrefix, 0, lengthPrefix.Length);
+                                await stream.WriteAsync(imageBytes, 0, imageBytes.Length);
+                            }
+
+                            shot.Dispose();
+
+                            await Task.Delay(500);
+                        }
+                        catch
+                        {
+                            break;
+                        }
+                    }
+                });
         }
 
         private Bitmap CaptureScreen()
@@ -264,62 +297,62 @@ namespace WinFormsApp1
             return bitmap;
         }
 
-        //Professor can Lock the Input of the Client Computer When Sharing Screen//
-        private async Task ConnectBroadcastReceiver()
+        private void ConnectBroadcastReceiver()
         {
-            try
-            {
-                broadcastClient = new TcpClient();
-                await broadcastClient.ConnectAsync(SettingsManager.Current.ServerIp, SettingsManager.Current.BroadcastPort);
-
-                _ = ReceiveBroadcast();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Could not connect to broadcast: " + ex.Message);
-            }
-        }
-
-        private async Task ReceiveBroadcast()
-        {
-            NetworkStream stream = broadcastClient.GetStream();
-
-            try
-            {
-                isSignedOut = false;
-                while (!isSignedOut)
+            _ = RunClientForever(
+                "Broadcast",
+                () =>
                 {
-                    byte[] lengthBuffer = new byte[4];
-                    int read = await ReadExactAsync(stream, lengthBuffer, 4);
-                    if (read == 0) break;
-
-                    int imageLength = BitConverter.ToInt32(lengthBuffer, 0);
-                    byte[] imageBuffer = new byte[imageLength];
-                    int totalRead = await ReadExactAsync(stream, imageBuffer, imageLength);
-                    if (totalRead == 0) break;
-
-                    using (MemoryStream ms = new MemoryStream(imageBuffer))
-                    {
-                        Image frame = Image.FromStream(ms);
-
-                        this.Invoke(new Action(() => ShowBroadcastFrame(frame)));
-                    }
-                }
-            }
-            catch
-            {
-            }
-            finally
-            {
-                this.Invoke(new Action(() =>
+                    var c = new TcpClient();
+                    c.Connect(SettingsManager.Current.ServerIp, SettingsManager.Current.BroadcastPort);
+                    return c;
+                },
+                async c =>
                 {
-                    if (broadcastViewer != null && !broadcastViewer.IsDisposed)
+                    NetworkStream stream = c.GetStream();
+
+                    try
                     {
-                        broadcastViewer.Close();
-                        broadcastViewer = null;
+                        while (!isSignedOut && c.Connected)
+                        {
+                            byte[] lengthBuffer = new byte[4];
+                            int read = await ReadExactAsync(stream, lengthBuffer, 4);
+                            if (read == 0) break;
+
+                            int imageLength = BitConverter.ToInt32(lengthBuffer, 0);
+                            byte[] imageBuffer = new byte[imageLength];
+                            int totalRead = await ReadExactAsync(stream, imageBuffer, imageLength);
+                            if (totalRead == 0) break;
+
+                            using (MemoryStream ms = new MemoryStream(imageBuffer))
+                            {
+                                Image frame = Image.FromStream(ms);
+
+                                if (this.IsHandleCreated)
+                                    this.Invoke(new Action(() => ShowBroadcastFrame(frame)));
+                            }
+                        }
                     }
-                }));
-            }
+                    catch
+                    {
+                    }
+                    finally
+                    {
+                        try
+                        {
+                            if (this.IsHandleCreated)
+                                this.Invoke(new Action(() =>
+                                {
+                                    if (broadcastViewer != null && !broadcastViewer.IsDisposed)
+                                    {
+                                        broadcastViewer.Close();
+                                        broadcastViewer = null;
+                                    }
+                                }));
+                        }
+                        catch { }
+                    }
+                });
         }
 
         private void ShowBroadcastFrame(Image frame)
@@ -334,6 +367,7 @@ namespace WinFormsApp1
             broadcastViewer.GetPictureBox().Image = frame;
             oldImage?.Dispose();
         }
+
         private async Task<int> ReadExactAsync(NetworkStream stream, byte[] buffer, int count)
         {
             int totalRead = 0;
@@ -346,15 +380,22 @@ namespace WinFormsApp1
             return totalRead;
         }
 
-        //ShutDown//
         private async void StartListening()
         {
-            Shutdownlistener = new TcpListener(IPAddress.Any, SettingsManager.Current.CommandPort);
-            Shutdownlistener.Start();
+            try
+            {
+                Shutdownlistener = new TcpListener(IPAddress.Any, SettingsManager.Current.CommandPort);
+                Shutdownlistener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                Shutdownlistener.Start();
 
-            System.Threading.Thread t = new System.Threading.Thread(ListenForCommands);
-            t.IsBackground = true;
-            t.Start();
+                System.Threading.Thread t = new System.Threading.Thread(ListenForCommands);
+                t.IsBackground = true;
+                t.Start();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("StartListening error: " + ex.Message);
+            }
         }
 
         private void ListenForCommands()
@@ -372,20 +413,12 @@ namespace WinFormsApp1
 
                     if (command == "SHUTDOWN")
                     {
-                        this.Invoke((MethodInvoker)delegate
-                        {
-                        });
-
                         client.Close();
                         System.Threading.Thread.Sleep(1000);
                         System.Diagnostics.Process.Start("shutdown", "/s /f /t 0");
                     }
                     else if (command == "RESTART")
                     {
-                        this.Invoke((MethodInvoker)delegate
-                        {
-                        });
-
                         client.Close();
                         System.Threading.Thread.Sleep(1000);
                         System.Diagnostics.Process.Start("shutdown", "/r /f /t 0");
@@ -393,10 +426,12 @@ namespace WinFormsApp1
 
                     client.Close();
                 }
-                catch { }
+                catch
+                {
+                    break;
+                }
             }
         }
-
 
         //Home//
         private void InitializeCreateButtonActivity()
@@ -419,7 +454,7 @@ namespace WinFormsApp1
 
                         using (var reader = cmd.ExecuteReader())
                         {
-                            while (reader.Read())   // ⭐ while, not if
+                            while (reader.Read())
                             {
                                 int activityId = reader.GetInt32("activity_id");
                                 string title = reader.GetString("title");
@@ -438,7 +473,6 @@ namespace WinFormsApp1
                                 ActivityButton.BorderColor = Color.Gray;
                                 ActivityButton.BorderRadius = 10;
 
-                                // ⭐ Capture the ID locally so each button uses its OWN id
                                 int capturedId = activityId;
                                 ActivityButton.Click += (s, e) =>
                                 {
@@ -476,7 +510,6 @@ namespace WinFormsApp1
                                 ViewActivity.Location = new Point(80, 150);
                                 ActivityButton.Controls.Add(ViewActivity);
 
-                                // ⭐ Labels swallow clicks — forward them to the button
                                 Title.Click += (s, e) => ActivityButton.PerformClick();
                                 DueDate.Click += (s, e) => ActivityButton.PerformClick();
                                 Status.Click += (s, e) => ActivityButton.PerformClick();
@@ -489,10 +522,10 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                Console.WriteLine("InitializeCreateButtonActivity error: " + ex.Message);
             }
-
         }
+
         private void InitializeHomeActivityButton(int ActivityId)
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -502,7 +535,6 @@ namespace WinFormsApp1
                 {
                     conn.Open();
                     string query = "SELECT activity_id, title, start_time, due_date, activity_subject, activity_status, description, professor_id FROM professor_activity WHERE activity_id = @activity_id";
-
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -521,8 +553,8 @@ namespace WinFormsApp1
 
                                 string tempPdfPath = FetchActivityPdf(ActivityId, profId, title, StudentSection, activity_subject);
                                 ActivityForm activityForm = new ActivityForm(
-                    profId, userId, studentname, title, due_date, description,
-                    StudentSection, activity_subject, activity_status, tempPdfPath);
+                                    profId, userId, studentname, title, due_date, description,
+                                    StudentSection, activity_subject, activity_status, tempPdfPath);
 
                                 activityForm.Show();
                             }
@@ -532,9 +564,10 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error loading activities: " + ex.Message);
+                Console.WriteLine("InitializeHomeActivityButton error: " + ex.Message);
             }
         }
+
         //Activities//
         private void InitializeDataGridViewActivities()
         {
@@ -575,7 +608,6 @@ namespace WinFormsApp1
                         if (dgvStudentActivities.Columns.Contains("professor_id"))
                             dgvStudentActivities.Columns["professor_id"].Visible = false;
 
-                        // If you still need activityId for something, grab it from the DataTable
                         if (dt.Rows.Count > 0)
                         {
                             activityId = dt.Rows[0]["activity_id"].ToString();
@@ -585,20 +617,19 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error loading activities: " + ex.Message);
+                Console.WriteLine("InitializeDataGridViewActivities error: " + ex.Message);
             }
         }
 
         private void dgvStudentActivities_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-
             if (e.RowIndex >= 0)
             {
                 if (e.RowIndex < 0) return;
 
                 DataGridViewRow row = dgvStudentActivities.Rows[e.RowIndex];
 
-                string activityId = GetSafeValue(row, "activity_id");            // if you added the id column
+                string activityId = GetSafeValue(row, "activity_id");
                 string Title = GetSafeValue(row, "title");
                 string DueDate = GetSafeValue(row, "due_date");
                 string ActivityStatus = GetSafeValue(row, "activity_status");
@@ -606,7 +637,6 @@ namespace WinFormsApp1
                 string profId = GetSafeValue(row, "professor_id");
                 string className = GetSafeValue(row, "activity_subject");
 
-                // Fetch the PDF bytes from DB and write to a temp file
                 string tempPdfPath = FetchActivityPdf(int.Parse(activityId), int.Parse(profId), Title, StudentSection, className);
                 ActivityForm activityForm = new ActivityForm(
                     int.Parse(profId), userId, studentname, Title, DueDate, Description,
@@ -615,6 +645,7 @@ namespace WinFormsApp1
                 activityForm.Show();
             }
         }
+
         private string FetchActivityPdf(int activityId, int profId, string title, string section, string className)
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -624,7 +655,6 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
-                    // Prefer id if available; otherwise fall back to composite key
                     string query;
                     if (activityId > 0)
                     {
@@ -665,7 +695,6 @@ namespace WinFormsApp1
                             byte[] pdfBytes = (byte[])reader["activity_file"];
                             string pdfName = reader["activity_filename"] as string ?? "activity.pdf";
 
-                            // Write to a per-user temp folder so parallel students don't collide
                             string tempFolder = Path.Combine(Path.GetTempPath(), "cdsga_activities", userId);
                             Directory.CreateDirectory(tempFolder);
 
@@ -679,10 +708,11 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error fetching activity PDF: " + ex.Message);
+                Console.WriteLine("FetchActivityPdf error: " + ex.Message);
                 return null;
             }
         }
+
         private void NameGet()
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -692,7 +722,6 @@ namespace WinFormsApp1
                 {
                     conn.Open();
                     string query = "SELECT lastname, firstname, middlename FROM user_information WHERE user_id = @user_id";
-
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -707,7 +736,6 @@ namespace WinFormsApp1
                                 string Middlename = reader.GetString("middlename");
 
                                 studentname = $"{Lastname}_{Firstname}_{Middlename}";
-
                             }
                         }
                     }
@@ -715,14 +743,16 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error loading activities: " + ex.Message);
+                Console.WriteLine("NameGet error: " + ex.Message);
             }
         }
+
         private string GetSafeValue(DataGridViewRow row, string columnName)
         {
             object raw = row.Cells[columnName].Value;
             return (raw == null || raw == DBNull.Value) ? "" : raw.ToString();
         }
+
         private void btnActivitiesAll_Click(object sender, EventArgs e)
         {
             selectedActivitiesCategory = "";
@@ -763,9 +793,7 @@ namespace WinFormsApp1
             InitializeDataGridViewActivities();
         }
 
-
         //Grades//
-
         private void InitializeDataGridViewGrades()
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -794,13 +822,12 @@ namespace WinFormsApp1
                         adapter.Fill(dt);
 
                         dgvStudentGrades.DataSource = dt;
-
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error loading activities: " + ex.Message);
+                Console.WriteLine("InitializeDataGridViewGrades error: " + ex.Message);
             }
         }
 
@@ -811,8 +838,8 @@ namespace WinFormsApp1
             btnGradesDue.FillColor = Color.White;
             btnGradesSubmitted.FillColor = Color.White;
             InitializeDataGridViewGrades();
-
         }
+
         private void btnGradesSubmitted_Click(object sender, EventArgs e)
         {
             selectedGradeCategory = "Submitted";
@@ -821,6 +848,7 @@ namespace WinFormsApp1
             btnGradesDue.FillColor = Color.White;
             btnGradesSubmitted.FillColor = Color.Maroon;
         }
+
         private void btnGradesDue_Click(object sender, EventArgs e)
         {
             selectedGradeCategory = "Incomplete";
@@ -867,9 +895,7 @@ namespace WinFormsApp1
                                 string class_time = reader.GetString("class_time");
                                 string class_date = reader.GetString("class_date");
 
-
                                 InitializeJoinClass(professor_id, class_name, class_section, class_time, class_date);
-
                             }
                         }
                     }
@@ -878,10 +904,10 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-
-                MessageBox.Show(ex.Message);
+                Console.WriteLine("btnEnterClass_Click error: " + ex.Message);
             }
         }
+
         private void InitializeJoinClass(int professorId, string className, string classSection, string classTime, string classDate)
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -892,7 +918,6 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
-                    // Check if the same information already exists
                     string checkQuery = @"
         SELECT COUNT(*)
         FROM student_class
@@ -921,7 +946,6 @@ namespace WinFormsApp1
                         }
                     }
 
-                    // Insert if it doesn't exist
                     string query = @"
         INSERT INTO student_class
         (professor_id, user_id, class_name, section, class_time, class_date)
@@ -940,20 +964,17 @@ namespace WinFormsApp1
                         cmd.ExecuteNonQuery();
                     }
 
-                    InitializeCreadeClass(
-                        className,
-                        classSection,
-                        classTime,
-                        classDate);
+                    InitializeCreadeClass(className, classSection, classTime, classDate);
 
                     MessageBox.Show("Successfully Joined Class!");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                Console.WriteLine("InitializeJoinClass error: " + ex.Message);
             }
         }
+
         private void InitializeCreadeClass(string classname, string classSection, string classTime, string classDate)
         {
             Guna.UI2.WinForms.Guna2Button ClassButton = new Guna.UI2.WinForms.Guna2Button();
@@ -991,7 +1012,6 @@ namespace WinFormsApp1
             Status.Location = new Point(0, 120);
             ClassButton.Controls.Add(Status);
 
-
             ContextMenuStrip menu = new ContextMenuStrip();
             ToolStripMenuItem unjoinItem = new ToolStripMenuItem("Unjoin");
             unjoinItem.Click += (s, e) =>
@@ -1004,17 +1024,14 @@ namespace WinFormsApp1
 
                 if (result != DialogResult.Yes) return;
 
-                // 1. Remove from database
                 UnjoinClass(classname, classSection, classTime, classDate);
 
-                // 2. Remove from the flow panel
                 flpSubjectClass.Controls.Remove(ClassButton);
                 ClassButton.Dispose();
             };
             menu.Items.Add(unjoinItem);
             ClassButton.ContextMenuStrip = menu;
 
-            // Also allow right-click on the child labels
             className.ContextMenuStrip = menu;
             ClassSection.ContextMenuStrip = menu;
             DueDate.ContextMenuStrip = menu;
@@ -1034,7 +1051,6 @@ namespace WinFormsApp1
 
             try
             {
-                // Clear existing buttons first
                 flpSubjectClass.Controls.Clear();
 
                 using (var conn = new MySqlConnection(connStr))
@@ -1067,9 +1083,10 @@ WHERE user_id = @user_id";
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                Console.WriteLine("LoadJoinedClasses error: " + ex.Message);
             }
         }
+
         private void UnjoinClass(string classname, string classSection, string classTime, string classDate)
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -1107,15 +1124,13 @@ AND class_date = @class_date";
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error unjoining class: " + ex.Message);
+                Console.WriteLine("UnjoinClass error: " + ex.Message);
             }
         }
-
 
         //Settings//
         private void btnSettingProfileExpand_Click(object sender, EventArgs e)
         {
-
             if (pnlSettingProfile.Height <= 350)
             {
                 pnlSettingProfile.Height = 592;
@@ -1125,9 +1140,9 @@ AND class_date = @class_date";
                 pnlSettingProfile.Height = 350;
             }
         }
+
         private void ClearAllFormData()
         {
-            // Clear all textboxes, combos, grids, etc.
             foreach (Control ctrl in this.Controls)
             {
                 if (ctrl is TextBox)
@@ -1144,19 +1159,6 @@ AND class_date = @class_date";
         private void StopServer()
         {
             isSignedOut = true;
-
-            try
-            {
-                if (screenShareTimer != null)
-                {
-                    screenShareTimer.Stop();
-                    screenShareTimer.Tick -= ScreenShareTimer_Tick;
-                    screenShareTimer.Dispose();
-                    screenShareTimer = null;
-                }
-            }
-            catch { }
-
             isSharingScreen = false;
 
             try { client?.Close(); } catch { }
@@ -1174,6 +1176,7 @@ AND class_date = @class_date";
             try { Shutdownlistener?.Stop(); } catch { }
             try { Shutdownlistener?.Server?.Dispose(); } catch { }
             Shutdownlistener = null;
+
             try
             {
                 if (broadcastViewer != null && !broadcastViewer.IsDisposed)
@@ -1185,8 +1188,8 @@ AND class_date = @class_date";
             catch { }
 
             MessageBox.Show("Signed out successfully.");
-
         }
+
         private void Logout()
         {
             DialogResult result = MessageBox.Show("Are you sure you want to logout?",
@@ -1205,7 +1208,6 @@ AND class_date = @class_date";
 
                 Login login = new Login();
                 login.Show();
-
             }
         }
 
@@ -1218,12 +1220,14 @@ AND class_date = @class_date";
         {
             Logout();
         }
+
         private void btnSettingChangeUsername_Click(object sender, EventArgs e)
         {
             pnlChangeUsername.Visible = true;
             pnlChangePassword.Visible = false;
             pnlChangePhoto.Visible = false;
         }
+
         private void btnExitChangeUsernamePanel_Click(object sender, EventArgs e)
         {
             pnlChangeUsername.Visible = false;
@@ -1264,11 +1268,12 @@ AND class_date = @class_date";
                     MessageBox.Show("Username updated successfully.");
                 }
             }
-            catch
+            catch (Exception ex)
             {
-
+                Console.WriteLine("btnSubmitChangeUsername_Click error: " + ex.Message);
             }
         }
+
         private void btnSettingChangePassword_Click(object sender, EventArgs e)
         {
             pnlChangePassword.Visible = true;
@@ -1306,7 +1311,6 @@ AND class_date = @class_date";
                                          WHERE username = @current_username";
                     using (var cmd = new MySqlCommand(query, conn))
                     {
-
                         cmd.Parameters.AddWithValue("@new_password", txtNewPassword.Text.Trim());
                         cmd.Parameters.AddWithValue("@current_username", StudentUsername);
 
@@ -1316,11 +1320,12 @@ AND class_date = @class_date";
                     MessageBox.Show("Password updated successfully.");
                 }
             }
-            catch
+            catch (Exception ex)
             {
-
+                Console.WriteLine("btnSubmitChangePassword_Click error: " + ex.Message);
             }
         }
+
         private void ClearTextSettings()
         {
             txtCurrentUsername.Text = "";
@@ -1329,9 +1334,9 @@ AND class_date = @class_date";
             txtNewPassword.Text = "";
             txtConfirmPassword.Text = "";
         }
+
         private void InitializeSaveDirectory()
         {
-            // Create a "Images" folder inside the solution directory
             string solutionDirectory = AppDomain.CurrentDomain.BaseDirectory;
             SaveCurrentProfilePath = Path.Combine(solutionDirectory, "StudentProfilePicture");
 
@@ -1376,7 +1381,6 @@ AND class_date = @class_date";
                                      WHERE username = @username";
                     using (var cmd = new MySqlCommand(query, conn))
                     {
-                        // Save the image to the designated folder
                         string fileName = Path.GetFileName(CurrentProfilePath);
                         string destinationPath = Path.Combine(SaveCurrentProfilePath, fileName);
                         File.Copy(CurrentProfilePath, destinationPath, true);
@@ -1388,11 +1392,12 @@ AND class_date = @class_date";
                     MessageBox.Show("Profile picture updated successfully.");
                 }
             }
-            catch
+            catch (Exception ex)
             {
-
+                Console.WriteLine("btnSubmitChangePhoto_Click error: " + ex.Message);
             }
         }
+
         private void InitializeChangingPicture()
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -1410,6 +1415,9 @@ AND class_date = @class_date";
                         {
                             if (reader.Read())
                             {
+                                if (reader.IsDBNull(reader.GetOrdinal("profile_picture")))
+                                    return;
+
                                 string profilePicturePath = reader.GetString("profile_picture");
                                 if (File.Exists(profilePicturePath))
                                 {
@@ -1424,9 +1432,10 @@ AND class_date = @class_date";
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error loading profile picture: " + ex.Message);
+                Console.WriteLine("InitializeChangingPicture error: " + ex.Message);
             }
         }
+
         private void btnSettingChangePhoto_Click(object sender, EventArgs e)
         {
             pnlChangePhoto.Visible = true;
@@ -1484,7 +1493,6 @@ AND class_date = @class_date";
                                      WHERE username = @username";
                     using (var cmd = new MySqlCommand(query, conn))
                     {
-                        // Save the image to the designated folder
                         string fileName = Path.GetFileName(AuthenticationPhoto);
                         string destinationPath = Path.Combine(SaveAuthenticationPhoto, fileName);
                         File.Copy(AuthenticationPhoto, destinationPath, true);
@@ -1498,12 +1506,12 @@ AND class_date = @class_date";
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error updating profile picture: " + ex.Message);
+                Console.WriteLine("btnSubmitAuthenticationPhoto_Click error: " + ex.Message);
             }
         }
+
         private void InitializeAuthenticationSaveDirectory()
         {
-            // Create a "Images" folder inside the solution directory
             string solutionDirectory = AppDomain.CurrentDomain.BaseDirectory;
             SaveAuthenticationPhoto = Path.Combine(solutionDirectory, "StudentAuthenticationPhoto");
 
@@ -1511,6 +1519,271 @@ AND class_date = @class_date";
             {
                 Directory.CreateDirectory(SaveAuthenticationPhoto);
             }
+        }
+
+        // =========================================================
+        // Assessment quiz exam
+        // =========================================================
+
+        private void InitializeAssessmentsCard()
+        {
+            assessmentsPanel = new Guna.UI2.WinForms.Guna2Panel
+            {
+                Size = new Size(242, 150),
+                Location = new Point(1109, 328),
+                FillColor = Color.White,
+                BackColor = Color.Transparent,
+                BorderRadius = 12,
+                BorderColor = Color.FromArgb(220, 220, 220),
+                BorderThickness = 1,
+                ShadowDecoration = { BorderRadius = 10, Enabled = true, Depth = 6, Color = Color.FromArgb(60, 0, 0, 0) },
+                AutoScroll = false
+            };
+
+            var headerPanel = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 42,
+                BackColor = Color.Transparent
+            };
+
+            var icon = new Label
+            {
+                Text = "📋",
+                Font = new Font("Segoe UI Emoji", 14F),
+                Location = new Point(12, 8),
+                AutoSize = true
+            };
+
+            var title = new Label
+            {
+                Text = "Assessments",
+                Font = new Font("Segoe UI", 13F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(30, 30, 30),
+                Location = new Point(42, 10),
+                AutoSize = true
+            };
+
+            headerPanel.Controls.Add(icon);
+            headerPanel.Controls.Add(title);
+
+            assessmentsList = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoScroll = true,
+                Padding = new Padding(12, 0, 12, 12),
+                BackColor = Color.Transparent
+            };
+
+            assessmentsPanel.Controls.Add(assessmentsList);
+            assessmentsPanel.Controls.Add(headerPanel);
+
+            pnlHome.Controls.Add(assessmentsPanel);
+            assessmentsPanel.BringToFront();
+
+            LoadAssessments();
+
+            assessmentsRefreshTimer = new System.Windows.Forms.Timer { Interval = 30000 };
+            assessmentsRefreshTimer.Tick += (s, e) => LoadAssessments();
+            assessmentsRefreshTimer.Start();
+        }
+
+        private void LoadAssessments()
+        {
+            assessmentsList.Controls.Clear();
+            assessmentsList.PerformLayout();
+
+            string connStr = SettingsManager.Current.GetConnectionString();
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    string query = @"
+                SELECT q.quiz_id,
+                       q.quiz_title,
+                       q.subject,
+                       q.assessment_type,
+                       q.exam_period,
+                       q.created_at
+                FROM quizzes q
+                ORDER BY q.created_at DESC";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            bool any = false;
+
+                            while (reader.Read())
+                            {
+                                any = true;
+
+                                int quizId = reader.GetInt32("quiz_id");
+                                string title = reader["quiz_title"].ToString();
+                                string subject = reader["subject"]?.ToString() ?? "";
+                                string type = reader["assessment_type"]?.ToString() ?? "quiz";
+                                string period = reader["exam_period"]?.ToString() ?? "";
+
+                                bool submitted = HasSubmitted(quizId);
+
+                                AddAssessmentRow(quizId, title, subject, type, period, submitted);
+                            }
+
+                            if (!any)
+                            {
+                                var empty = new Label
+                                {
+                                    Text = "No assessments yet.",
+                                    Font = new Font("Segoe UI", 9F, FontStyle.Italic),
+                                    ForeColor = Color.Gray,
+                                    AutoSize = true,
+                                    Margin = new Padding(8, 12, 0, 0)
+                                };
+                                assessmentsList.Controls.Add(empty);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("LoadAssessments error: " + ex.Message);
+            }
+        }
+
+        private void AddAssessmentRow(int quizId, string title, string subject,
+                              string type, string period, bool submitted)
+        {
+            int rowWidth = Math.Max(180, assessmentsList.ClientSize.Width - 30);
+
+            var row = new Panel
+            {
+                Width = rowWidth,
+                Height = 32,
+                Margin = new Padding(0, 4, 0, 4),
+                BackColor = Color.Transparent,
+                Cursor = Cursors.Default
+            };
+
+            var rowIcon = new Label
+            {
+                Text = type.Equals("exam", StringComparison.OrdinalIgnoreCase) ? "📝" : "📄",
+                Font = new Font("Segoe UI Emoji", 11F),
+                ForeColor = submitted ? Color.FromArgb(46, 204, 113) : Color.FromArgb(231, 76, 60),
+                Location = new Point(0, 4),
+                AutoSize = true
+            };
+
+            var rowTitle = new Label
+            {
+                Text = string.IsNullOrEmpty(subject) ? title : $"{subject} {title}",
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                ForeColor = submitted ? Color.FromArgb(46, 204, 113) : Color.FromArgb(231, 76, 60),
+                Location = new Point(28, 5),
+                AutoSize = true
+            };
+
+            var badge = new Label
+            {
+                Text = submitted ? "✔" : "✖",
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+                ForeColor = Color.White,
+                BackColor = submitted ? Color.FromArgb(46, 204, 113) : Color.FromArgb(231, 76, 60),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Size = new Size(24, 24),
+                Location = new Point(rowWidth - 30, 4)
+            };
+            badge.Paint += (s, e) =>
+            {
+                var g = e.Graphics;
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                using (var path = new System.Drawing.Drawing2D.GraphicsPath())
+                {
+                    path.AddEllipse(0, 0, badge.Width - 1, badge.Height - 1);
+                    badge.Region = new Region(path);
+                }
+            };
+
+            if (!submitted)
+            {
+                EventHandler onClick = (s, e) => OpenAssessment(quizId, title, type);
+                row.Click += onClick;
+                rowIcon.Click += onClick;
+                rowTitle.Click += onClick;
+                badge.Click += onClick;
+
+                row.Cursor = Cursors.Hand;
+                rowIcon.Cursor = Cursors.Hand;
+                rowTitle.Cursor = Cursors.Hand;
+                badge.Cursor = Cursors.Hand;
+            }
+            else
+            {
+                row.Cursor = Cursors.Default;
+                rowIcon.Cursor = Cursors.Default;
+                rowTitle.Cursor = Cursors.Default;
+                badge.Cursor = Cursors.Default;
+            }
+
+            row.Controls.Add(rowIcon);
+            row.Controls.Add(rowTitle);
+            row.Controls.Add(badge);
+
+            assessmentsList.Controls.Add(row);
+        }
+
+        private void OpenAssessment(int quizId, string title, string type)
+        {
+            if (HasSubmitted(quizId))
+            {
+                LoadAssessments();
+                return;
+            }
+
+            try
+            {
+                Console.WriteLine($"[OpenAssessment] userId={userId}, quizId={quizId}");
+
+                StudentQuizForm QuizForm = new StudentQuizForm(int.Parse(userId), quizId);
+                QuizForm.ShowDialog();
+
+                LoadAssessments();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("OpenAssessment error: " + ex.Message);
+            }
+        }
+
+        private bool HasSubmitted(int quizId)
+        {
+            string connStr = SettingsManager.Current.GetConnectionString();
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string q = @"SELECT COUNT(*) FROM quiz_attempts
+                         WHERE quiz_id = @quiz_id AND user_id = @user_id";
+                    using (var cmd = new MySqlCommand(q, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@quiz_id", quizId);
+                        cmd.Parameters.AddWithValue("@user_id", userId);
+
+                        object result = cmd.ExecuteScalar();
+                        if (result == null || result == DBNull.Value)
+                            return false;
+
+                        return Convert.ToInt32(result) > 0;
+                    }
+                }
+            }
+            catch { return false; }
         }
     }
 }

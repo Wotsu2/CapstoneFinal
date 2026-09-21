@@ -517,7 +517,9 @@ namespace WinFormsApp1
         {
             scannerView.StatusText = "ANALYZING BIOMETRIC DATA...";
 
-            Bitmap currentFrame = scannerView.CameraFrame != null ? (Bitmap)scannerView.CameraFrame.Clone() : null;
+            Bitmap currentFrame = scannerView.CameraFrame != null
+                ? (Bitmap)scannerView.CameraFrame.Clone()
+                : null;
 
             if (currentFrame == null || referencePhoto == null)
             {
@@ -555,11 +557,23 @@ namespace WinFormsApp1
                     closeTimer.Tick += (s, ev) =>
                     {
                         closeTimer.Stop();
+
                         StopCamera();
+
+                        // ✅ 1. Create StudentForm while Liveness is still alive
+                        var studentForm = new StudentForm(UserId, StudentSection, Username);
+
+                        // ✅ 2. Show it BEFORE this form hides — the message loop is still alive
+                        studentForm.Show();
+
+                        // ✅ 3. Force an immediate paint of the new form
+                        studentForm.Refresh();
+                        Application.DoEvents();
+
+                        // ✅ 4. Now hide + close this form
+                        this.Hide();
                         this.DialogResult = DialogResult.OK;
                         this.Close();
-                        StudentForm studentForm = new StudentForm(UserId, StudentSection, Username);
-                        studentForm.Show();
                     };
                     closeTimer.Start();
                 }
