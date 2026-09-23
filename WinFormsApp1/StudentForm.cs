@@ -1,4 +1,5 @@
 ﻿using Guna.UI2.WinForms;
+using Microsoft.VisualBasic;
 using MySql.Data.MySqlClient;
 using Org.BouncyCastle.Asn1.Cmp;
 using System;
@@ -77,7 +78,6 @@ namespace WinFormsApp1
             isSharingScreen = true;
             lblProfUsername.Text = StudentUsername;
 
-            // ✅ Networking runs on background threads so the UI never freezes
             Task.Run(() => ConnectToServer());
             Task.Run(() => StartScreenShare());
             Task.Run(() => ConnectBroadcastReceiver());
@@ -92,14 +92,20 @@ namespace WinFormsApp1
             InitializeSaveDirectory();
             InitializeChangingPicture();
             InitializeAuthenticationSaveDirectory();
+            InitializeQuizExam();
 
             InitializeAssessmentsCard();
 
             lblStudentName.Text = studentname;
 
-            pnlHome.BringToFront();
+            // ✅ Force the Home panel to be visible and layout correctly
             pnlHome.Visible = true;
-            pnlHome.Refresh();
+            pnlHome.BringToFront();
+
+            flpPendingActivities.AutoScroll = true;
+            flpPendingActivities.WrapContents = true;
+            flpPendingActivities.FlowDirection = FlowDirection.LeftToRight;
+            flpPendingActivities.PerformLayout();
 
             this.Refresh();
             Application.DoEvents();
@@ -135,31 +141,69 @@ namespace WinFormsApp1
             }
         }
 
-        private void SetActiveMenuButton(Guna2Button clickedBtn, Panel panelToShow)
+        private void btnHome_Click(object sender, EventArgs e)
         {
-            foreach (var b in new[] { btnHome, btnActivities, btnSubject, btnGrades })
-            {
-                b.FillColor = Color.Transparent;
-                b.ForeColor = Color.Firebrick;
-            }
-            clickedBtn.FillColor = Color.Firebrick;
-            clickedBtn.ForeColor = Color.FromArgb(80, 12, 24);
-            activeMenuButton = clickedBtn;
-
-            panelToShow.BringToFront();
+            pnlHome.Visible = true;
+            pnlActivity.Visible = false;
+            pnlSubject.Visible = false;
+            pnlGrades.Visible = false;
+            pnlSetting.Visible = false;
+            pnlQuizExam.Visible = false;
+            lblhometitle.Text = "Home";
         }
 
-        private void btnHome_Click(object sender, EventArgs e) { SetActiveMenuButton(btnHome, pnlHome); lblhometitle.Text = "Home"; }
-        private void btnActivities_Click(object sender, EventArgs e) { SetActiveMenuButton(btnActivities, pnlActivity); lblhometitle.Text = "Activity"; }
-        private void btnSubject_Click(object sender, EventArgs e) { SetActiveMenuButton(btnSubject, pnlSubject); lblhometitle.Text = "Subject"; }
-        private void btnGrades_Click(object sender, EventArgs e) { SetActiveMenuButton(btnGrades, pnlGrades); lblhometitle.Text = "Grade"; }
+        private void btnActivities_Click(object sender, EventArgs e)
+        {
+            pnlHome.Visible = false;
+            pnlActivity.Visible = true;
+            pnlSubject.Visible = false;
+            pnlGrades.Visible = false;
+            pnlSetting.Visible = false;
+            pnlQuizExam.Visible = false;
+            lblhometitle.Text = "Activity";
+        }
+
+        private void btnSubject_Click(object sender, EventArgs e)
+        {
+            pnlHome.Visible = false;
+            pnlActivity.Visible = false;
+            pnlSubject.Visible = true;
+            pnlGrades.Visible = false;
+            pnlSetting.Visible = false;
+            pnlQuizExam.Visible = false;
+            lblhometitle.Text = "Subject";
+        }
+
+        private void btnGrades_Click(object sender, EventArgs e)
+        {
+            pnlHome.Visible = false;
+            pnlActivity.Visible = false;
+            pnlSubject.Visible = false;
+            pnlGrades.Visible = true;
+            pnlSetting.Visible = false;
+            pnlQuizExam.Visible = false;
+            lblhometitle.Text = "Grade";
+        }
 
         private void btnAccount_Click(object sender, EventArgs e)
         {
-            pnlSetting.BringToFront();
+            pnlHome.Visible = false;
+            pnlActivity.Visible = false;
+            pnlSubject.Visible = false;
+            pnlGrades.Visible = false;
+            pnlSetting.Visible = true;
             lblhometitle.Text = "Settings";
+            pnlQuizExam.Visible = false;
         }
-
+        private void btnQuizExam_Click(object sender, EventArgs e)
+        {
+            pnlHome.Visible = false;
+            pnlActivity.Visible = false;
+            pnlSubject.Visible = false;
+            pnlGrades.Visible = false;
+            pnlQuizExam.Visible = true;
+            InitializeQuizExam();
+        }
         // =========================================================
         // RECONNECTING TCP CLIENT HELPER
         // =========================================================
@@ -218,7 +262,6 @@ namespace WinFormsApp1
                         {
                             await Task.Delay(2000);
 
-                            // ✅ detect server closed
                             if (c.Client.Poll(0, SelectMode.SelectRead) && c.Client.Available == 0)
                             {
                                 Console.WriteLine("[Workstation] server closed — reconnecting");
@@ -432,75 +475,139 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
-                    string query = @"SELECT activity_id, title, start_time, due_date, activity_subject, activity_status 
-                         FROM professor_activity WHERE section = @section";
+                    Console.WriteLine("[Activities] Loading for section = '" + StudentSection + "'");
+
+                    string query;
+                    if (string.IsNullOrEmpty(StudentSection))
+                    {
+                        query = @"SELECT activity_id, title, start_time, due_date, activity_subject, activity_status 
+                          FROM professor_activity";
+                    }
+                    else
+                    {
+                        query = @"SELECT activity_id, title, start_time, due_date, activity_subject, activity_status 
+                          FROM professor_activity WHERE section = @section";
+                    }
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@section", StudentSection);
+                        if (!string.IsNullOrEmpty(StudentSection))
+                            cmd.Parameters.AddWithValue("@section", StudentSection);
+
+                        int count = 0;
 
                         using (var reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
                             {
+                                count++;
+
                                 int activityId = reader.GetInt32("activity_id");
                                 string title = reader.GetString("title");
                                 string start_time = reader.GetString("start_time");
                                 string due_date = reader.GetString("due_date");
-                                string className = reader.GetString("activity_subject");
-                                string activity_status = reader.GetString("activity_status");
+                                string className = reader.IsDBNull(reader.GetOrdinal("activity_subject"))
+                                    ? "" : reader.GetString("activity_subject");
+                                string activity_status = reader.IsDBNull(reader.GetOrdinal("activity_status"))
+                                    ? "" : reader.GetString("activity_status");
 
-                                Guna.UI2.WinForms.Guna2Button ActivityButton = new Guna.UI2.WinForms.Guna2Button();
-                                ActivityButton.Height = 180;
-                                ActivityButton.Width = 180;
-                                ActivityButton.Margin = new Padding(5);
-                                ActivityButton.FillColor = Color.Transparent;
-                                ActivityButton.BackColor = Color.Transparent;
-                                ActivityButton.BorderThickness = 1;
-                                ActivityButton.BorderColor = Color.Gray;
-                                ActivityButton.BorderRadius = 10;
+                                // ---------- OUTER CARD ----------
+                                Guna.UI2.WinForms.Guna2Panel card = new Guna.UI2.WinForms.Guna2Panel();
+                                card.Width = 260;
+                                card.Height = 250;
+                                card.Margin = new Padding(10);
+                                card.FillColor = Color.White;
+                                card.BorderColor = Color.FromArgb(66, 133, 244);   // blue
+                                card.BorderThickness = 2;
+                                card.BorderRadius = 14;
+                                card.Cursor = Cursors.Hand;
 
                                 int capturedId = activityId;
-                                ActivityButton.Click += (s, e) => InitializeHomeActivityButton(capturedId);
+                                card.Click += (s, e) => InitializeHomeActivityButton(capturedId);
 
-                                Label Title = new Label();
-                                Title.Text = title;
-                                Title.ForeColor = Color.Black;
-                                Title.BackColor = Color.Transparent;
-                                Title.Location = new Point(20, 50);
-                                Title.Font = new Font(Title.Font, FontStyle.Bold);
-                                ActivityButton.Controls.Add(Title);
+                                // ---------- DUE BADGE (top-right) ----------
+                                Guna.UI2.WinForms.Guna2Panel badge = new Guna.UI2.WinForms.Guna2Panel();
+                                badge.Size = new Size(150, 34);
+                                badge.Location = new Point(card.Width - 150, 0);
+                                badge.FillColor = Color.FromArgb(199, 125, 226);   // light purple
+                                badge.BorderRadius = 0;
+                                badge.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+                                badge.Cursor = Cursors.Hand;
 
-                                Label DueDate = new Label();
-                                DueDate.Text = $"Due: {due_date}";
-                                DueDate.ForeColor = Color.Black;
-                                DueDate.BackColor = Color.DarkViolet;
-                                DueDate.Width = 150;
-                                DueDate.Location = new Point(55, 0);
-                                ActivityButton.Controls.Add(DueDate);
+                                Label lblDue = new Label();
+                                lblDue.Text = $"Due: {due_date}";
+                                lblDue.ForeColor = Color.Black;
+                                lblDue.BackColor = Color.Transparent;
+                                lblDue.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+                                lblDue.AutoSize = false;
+                                lblDue.TextAlign = ContentAlignment.MiddleCenter;
+                                lblDue.Dock = DockStyle.Fill;
+                                lblDue.Cursor = Cursors.Hand;
+                                badge.Controls.Add(lblDue);
+                                card.Controls.Add(badge);
 
-                                Label Status = new Label();
-                                Status.Text = activity_status;
-                                Status.ForeColor = Color.Black;
-                                Status.BackColor = Color.Transparent;
-                                Status.Width = 150;
-                                Status.Location = new Point(40, 90);
-                                ActivityButton.Controls.Add(Status);
+                                // ---------- SUBJECT (big, bold) ----------
+                                Label lblSubject = new Label();
+                                lblSubject.Text = className.ToUpper();
+                                lblSubject.ForeColor = Color.Black;
+                                lblSubject.BackColor = Color.Transparent;
+                                lblSubject.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+                                lblSubject.AutoSize = false;
+                                lblSubject.Size = new Size(card.Width - 30, 30);
+                                lblSubject.Location = new Point(20, 70);
+                                lblSubject.Cursor = Cursors.Hand;
+                                card.Controls.Add(lblSubject);
 
-                                Label ViewActivity = new Label();
-                                ViewActivity.Text = "View Activity >";
-                                ViewActivity.ForeColor = Color.Maroon;
-                                ViewActivity.BackColor = Color.Transparent;
-                                ViewActivity.Location = new Point(80, 150);
-                                ActivityButton.Controls.Add(ViewActivity);
+                                // ---------- ACTIVITY TITLE (medium, regular) ----------
+                                Label lblTitle = new Label();
+                                lblTitle.Text = title;
+                                lblTitle.ForeColor = Color.FromArgb(30, 30, 30);
+                                lblTitle.BackColor = Color.Transparent;
+                                lblTitle.Font = new Font("Segoe UI", 12F, FontStyle.Regular);
+                                lblTitle.AutoSize = false;
+                                lblTitle.Size = new Size(card.Width - 30, 30);
+                                lblTitle.Location = new Point(20, 115);
+                                lblTitle.Cursor = Cursors.Hand;
+                                card.Controls.Add(lblTitle);
 
-                                Title.Click += (s, e) => ActivityButton.PerformClick();
-                                DueDate.Click += (s, e) => ActivityButton.PerformClick();
-                                Status.Click += (s, e) => ActivityButton.PerformClick();
+                                // ---------- STATUS (small, gray) ----------
+                                Label lblStatus = new Label();
+                                lblStatus.Text = activity_status;
+                                lblStatus.ForeColor = Color.Gray;
+                                lblStatus.BackColor = Color.Transparent;
+                                lblStatus.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
+                                lblStatus.AutoSize = true;
+                                lblStatus.Location = new Point(20, 155);
+                                lblStatus.Cursor = Cursors.Hand;
+                                card.Controls.Add(lblStatus);
 
-                                flpPendingActivities.Controls.Add(ActivityButton);
+                                // ---------- VIEW ACTIVITY (bottom-right) ----------
+                                Label lblView = new Label();
+                                lblView.Text = "View Activity   ›";
+                                lblView.ForeColor = Color.FromArgb(139, 0, 0);   // dark red
+                                lblView.BackColor = Color.Transparent;
+                                lblView.Font = new Font("Segoe UI", 11F, FontStyle.Regular);
+                                lblView.AutoSize = true;
+                                lblView.Location = new Point(card.Width - 145, card.Height - 45);
+                                lblView.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+                                lblView.Cursor = Cursors.Hand;
+                                card.Controls.Add(lblView);
+
+                                // ---------- CLICK FORWARDING (labels swallow clicks) ----------
+                                EventHandler openActivity = (s, e) => InitializeHomeActivityButton(capturedId);
+
+                                badge.Click += openActivity;
+                                lblDue.Click += openActivity;
+                                lblSubject.Click += openActivity;
+                                lblTitle.Click += openActivity;
+                                lblStatus.Click += openActivity;
+                                lblView.Click += openActivity;
+
+                                flpPendingActivities.Controls.Add(card);
                             }
                         }
+
+                        Console.WriteLine($"[Activities] Loaded {count} activities.");
                     }
                 }
             }
@@ -905,70 +1012,167 @@ namespace WinFormsApp1
             }
         }
 
-        private void InitializeCreadeClass(string classname, string classSection, string classTime, string classDate)
+        private void InitializeCreadeClass(string classname = "", string classSection = "",
+                                   string classTime = "", string classDate = "")
         {
-            Guna.UI2.WinForms.Guna2Button ClassButton = new Guna.UI2.WinForms.Guna2Button();
-            ClassButton.Height = 180;
-            ClassButton.Width = 180;
-            ClassButton.Margin = new Padding(5);
-            ClassButton.BorderColor = Color.Black;
-            ClassButton.BorderThickness = 1;
+            string connStr = SettingsManager.Current.GetConnectionString();
 
-            Label className = new Label();
-            className.Text = classname;
-            className.ForeColor = Color.Black;
-            className.BackColor = Color.Green;
-            className.Location = new Point(60, 50);
-            ClassButton.Controls.Add(className);
-
-            Label ClassSection = new Label();
-            ClassSection.Text = classSection;
-            ClassSection.ForeColor = Color.Black;
-            ClassSection.BackColor = Color.Transparent;
-            ClassSection.Location = new Point(180, 0);
-            ClassButton.Controls.Add(ClassSection);
-
-            Label DueDate = new Label();
-            DueDate.Text = classTime;
-            DueDate.ForeColor = Color.Black;
-            DueDate.BackColor = Color.Violet;
-            DueDate.Location = new Point(60, 0);
-            ClassButton.Controls.Add(DueDate);
-
-            Label Status = new Label();
-            Status.Text = classDate;
-            Status.ForeColor = Color.Black;
-            Status.BackColor = Color.Transparent;
-            Status.Location = new Point(0, 120);
-            ClassButton.Controls.Add(Status);
-
-            ContextMenuStrip menu = new ContextMenuStrip();
-            ToolStripMenuItem unjoinItem = new ToolStripMenuItem("Unjoin");
-            unjoinItem.Click += (s, e) =>
+            try
             {
-                DialogResult result = MessageBox.Show(
-                    $"Are you sure you want to unjoin '{classname}'?",
-                    "Confirm Unjoin", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
 
-                if (result != DialogResult.Yes) return;
+                    string query = @"
+                SELECT sc.class_id, 
+                       sc.class_name, 
+                       sc.class_date, 
+                       sc.class_time, 
+                       sc.section,
+                       ui.lastname, 
+                       ui.firstname, 
+                       ui.middlename
+                FROM student_class sc
+                LEFT JOIN user_information ui ON ui.user_id = sc.professor_id
+                WHERE sc.user_id = @user_id";
 
-                UnjoinClass(classname, classSection, classTime, classDate);
-                flpSubjectClass.Controls.Remove(ClassButton);
-                ClassButton.Dispose();
-            };
-            menu.Items.Add(unjoinItem);
-            ClassButton.ContextMenuStrip = menu;
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@user_id", userId);
 
-            className.ContextMenuStrip = menu;
-            ClassSection.ContextMenuStrip = menu;
-            DueDate.ContextMenuStrip = menu;
-            Status.ContextMenuStrip = menu;
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                string classId = reader["class_id"] != DBNull.Value ? reader["class_id"].ToString() : "";
+                                string rClassName = reader["class_name"] != DBNull.Value ? reader["class_name"].ToString() : "";
+                                string rClassDate = reader["class_date"] != DBNull.Value ? reader["class_date"].ToString() : "";
+                                string rClassTime = reader["class_time"] != DBNull.Value ? reader["class_time"].ToString() : "";
+                                string rClassSection = reader["section"] != DBNull.Value ? reader["section"].ToString() : "";
 
-            foreach (Control c in ClassButton.Controls)
-                c.ContextMenuStrip = menu;
+                                string profLast = reader["lastname"] != DBNull.Value ? reader["lastname"].ToString() : "";
+                                string profFirst = reader["firstname"] != DBNull.Value ? reader["firstname"].ToString() : "";
+                                string profMiddle = reader["middlename"] != DBNull.Value ? reader["middlename"].ToString() : "";
 
-            flpSubjectClass.Controls.Add(ClassButton);
+                                // Build display name: "Lastname Firstname Middlename"
+                                string profFullName = string.Join(" ",
+                                    new[] { profLast, profFirst, profMiddle }
+                                        .Where(s => !string.IsNullOrWhiteSpace(s)))
+                                    .Trim();
+
+                                if (string.IsNullOrEmpty(profFullName))
+                                    profFullName = "Unknown Professor";
+
+                                // ---------------- CARD ----------------
+                                Panel cardPanel = new Panel
+                                {
+                                    Size = new Size(350, 250),
+                                    BackColor = Color.White,
+                                    BorderStyle = BorderStyle.FixedSingle,
+                                    Margin = new Padding(10),
+                                    Tag = classId
+                                };
+
+                                Label lblMenu = new Label
+                                {
+                                    Text = "•••",
+                                    Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+                                    Location = new Point(300, 10),
+                                    AutoSize = true,
+                                    Cursor = Cursors.Hand
+                                };
+                                cardPanel.Controls.Add(lblMenu);
+
+                                Label lblTitle = new Label
+                                {
+                                    Text = rClassName,
+                                    Font = new Font("Segoe UI", 20F, FontStyle.Bold),
+                                    Location = new Point(20, 50),
+                                    AutoSize = true
+                                };
+                                cardPanel.Controls.Add(lblTitle);
+
+                                // 🆕 Professor's name
+                                Label lblProfName = new Label
+                                {
+                                    Text = "Prof. " + profFullName,
+                                    Font = new Font("Segoe UI", 14F, FontStyle.Bold),
+                                    Location = new Point(20, 100),
+                                    AutoSize = true,
+                                    ForeColor = Color.FromArgb(123, 15, 23)
+                                };
+                                cardPanel.Controls.Add(lblProfName);
+
+                                Label lblDay = new Label
+                                {
+                                    Text = rClassDate,
+                                    Font = new Font("Segoe UI", 14F, FontStyle.Bold),
+                                    Location = new Point(50, 150),
+                                    AutoSize = true
+                                };
+                                cardPanel.Controls.Add(lblDay);
+
+                                Label lblTime = new Label
+                                {
+                                    Text = rClassTime,
+                                    Font = new Font("Segoe UI", 10F, FontStyle.Regular),
+                                    Location = new Point(50, 180),
+                                    AutoSize = true
+                                };
+                                cardPanel.Controls.Add(lblTime);
+
+                                Label lblSection = new Label
+                                {
+                                    Text = rClassSection,
+                                    Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+                                    Location = new Point(200, 210),
+                                    AutoSize = true,
+                                    TextAlign = ContentAlignment.MiddleRight
+                                };
+                                cardPanel.Controls.Add(lblSection);
+
+                                // ---------------- CONTEXT MENU ----------------
+                                ContextMenuStrip menu = new ContextMenuStrip();
+                                lblMenu.Click += (s, e) =>
+                                {
+                                    DialogResult result = MessageBox.Show(
+                                        $"Are you sure you want to unjoin '{rClassName}'?",
+                                        "Confirm Unjoin",
+                                        MessageBoxButtons.YesNo,
+                                        MessageBoxIcon.Warning);
+
+                                    if (result != DialogResult.Yes) return;
+
+                                    UnjoinClass(rClassName, rClassSection, rClassTime, rClassDate);
+
+                                    flpSubjectClass.Controls.Remove(cardPanel);
+                                    cardPanel.Dispose();
+                                };
+
+                                cardPanel.ContextMenuStrip = menu;
+                                lblMenu.ContextMenuStrip = menu;
+                                lblTitle.ContextMenuStrip = menu;
+                                lblProfName.ContextMenuStrip = menu;
+                                lblSection.ContextMenuStrip = menu;
+                                lblTime.ContextMenuStrip = menu;
+                                lblDay.ContextMenuStrip = menu;
+
+                                flpSubjectClass.Controls.Add(cardPanel);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Failed to load classes: " + ex.Message,
+                                "Load Error",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                Console.WriteLine("InitializeCreadeClass error: " + ex);
+            }
         }
+
 
         private void LoadJoinedClasses()
         {
@@ -1041,8 +1245,8 @@ namespace WinFormsApp1
         private void btnSettingProfileExpand_Click(object sender, EventArgs e)
         {
             if (pnlSettingProfile.Height <= 350)
-                pnlSettingProfile.Height = 592;
-            else if (pnlSettingProfile.Height >= 592)
+                pnlSettingProfile.Height = 668;
+            else if (pnlSettingProfile.Height >= 668)
                 pnlSettingProfile.Height = 350;
         }
 
@@ -1105,7 +1309,6 @@ namespace WinFormsApp1
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
 
-                // ✅ Show Login BEFORE closing this form so the app doesn't exit
                 Login login = new Login();
                 login.Show();
 
@@ -1622,6 +1825,137 @@ namespace WinFormsApp1
                 }
             }
             catch { return false; }
+        }
+
+        private void btnQandA_Click(object sender, EventArgs e)
+        {
+            pnlSettingQandA.Visible = true;
+        }
+
+        private void btnQandAClosePanel_Click(object sender, EventArgs e)
+        {
+            pnlSettingQandA.Visible = false;
+        }
+
+        private void btnSettingQandASave_Click(object sender, EventArgs e)
+        {
+            string firstAnswer = txtFirstAnswer.Text.Trim();
+            string secondAnswer = txtSecondAnswer.Text.Trim();
+            string thirdAnswer = txtThirdAnswer.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(cmbFirstQuestion.Text) ||
+                string.IsNullOrWhiteSpace(cmbSecondQuestion.Text) ||
+                string.IsNullOrWhiteSpace(cmbThirdQuestion.Text) ||
+                string.IsNullOrWhiteSpace(firstAnswer) ||
+                string.IsNullOrWhiteSpace(secondAnswer) ||
+                string.IsNullOrWhiteSpace(thirdAnswer))
+            {
+                MessageBox.Show("Please answer all three security questions.",
+                    "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (cmbFirstQuestion.Text == cmbSecondQuestion.Text ||
+                cmbFirstQuestion.Text == cmbThirdQuestion.Text ||
+                cmbSecondQuestion.Text == cmbThirdQuestion.Text)
+            {
+                MessageBox.Show("Please choose three different questions.",
+                    "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string connStr = SettingsManager.Current.GetConnectionString();
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    using (var tx = conn.BeginTransaction())
+                    {
+                        const string query =
+                            "INSERT INTO question_answer_security (username, question, answer) " +
+                            "VALUES (@username, @question, @answer)";
+
+                        using (var cmd = new MySqlCommand(query, conn, tx))
+                        {
+                            cmd.Parameters.Add("@username", MySqlDbType.VarChar);
+                            cmd.Parameters.Add("@question", MySqlDbType.VarChar);
+                            cmd.Parameters.Add("@answer", MySqlDbType.VarChar);
+
+                            cmd.Parameters["@username"].Value = StudentUsername;
+                            cmd.Parameters["@question"].Value = cmbFirstQuestion.Text;
+                            cmd.Parameters["@answer"].Value = firstAnswer;
+                            cmd.ExecuteNonQuery();
+
+                            cmd.Parameters["@question"].Value = cmbSecondQuestion.Text;
+                            cmd.Parameters["@answer"].Value = secondAnswer;
+                            cmd.ExecuteNonQuery();
+
+                            cmd.Parameters["@question"].Value = cmbThirdQuestion.Text;
+                            cmd.Parameters["@answer"].Value = thirdAnswer;
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        tx.Commit();
+                    }
+                }
+
+                MessageBox.Show("Security questions saved successfully.",
+                    "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (MySqlException ex)
+            {
+                if (ex.Number == 1062)
+                {
+                    MessageBox.Show("You already saved these security questions.",
+                        "Duplicate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+                else
+                {
+                    MessageBox.Show("Database error: " + ex.Message,
+                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Unexpected error: " + ex.Message,
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        
+        private void InitializeQuizExam()
+        {
+            string connStr = SettingsManager.Current.GetConnectionString();
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    string query = "SELECT score, total_questions, percentage, submitted_at " +
+                                   "FROM quiz_attempts WHERE user_id = @user_id";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@user_id", userId);
+
+                        MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        adapter.Fill(dt);
+
+                        QuizExamScore.DataSource = dt;
+                    }
+
+                }
+            }
+            catch
+            {
+
+            }
         }
     }
 }

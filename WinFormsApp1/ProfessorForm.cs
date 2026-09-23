@@ -12,11 +12,14 @@ using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using UMapx.Distribution;
@@ -37,6 +40,8 @@ namespace WinFormsApp1
         private Dictionary<string, TcpClient> broadcastClients = new Dictionary<string, TcpClient>();
         private Dictionary<string, DateTime> lastThumbnailUpdate = new Dictionary<string, DateTime>();
 
+        private readonly object screenViewersLock = new object();
+
         private readonly TimeSpan thumbnailInterval = TimeSpan.FromSeconds(5);
         private System.Windows.Forms.Timer broadcastTimer;
 
@@ -46,7 +51,7 @@ namespace WinFormsApp1
         private int WorkStationNum = 0;
         private string selectedWorkstationId = "";
         private string SelectedIP = "";
-        private bool isRunning = false;
+        private volatile bool isRunning = false;
         private string selectedFilePath = "";
         private string currentFolder;
         private string FolderName;
@@ -58,7 +63,9 @@ namespace WinFormsApp1
         private string AuthenticationPhoto;
         private string SaveAuthenticationPhoto;
         private string ProfessorName;
-        private string DatabaseIP = "localhost";
+
+        private Image cachedProfileImage;
+        private bool profileImageLoaded = false;
 
         int ProfessorID;
         string ProfessorUsername;
@@ -66,23 +73,24 @@ namespace WinFormsApp1
         public ProfessorForm(int UserId, string Username)
         {
             InitializeComponent();
-            InitializeSaveDirectory();
-            InitializeChangingPicture();
+
             ProfessorID = UserId;
             ProfessorUsername = Username;
+
+            InitializeSaveDirectory();
         }
 
-        private void ProfessorForm_Load(object sender, EventArgs e)
+        private async void ProfessorForm_Load(object sender, EventArgs e)
         {
             saveFolder = GetFolderPath(ProfessorID);
             isRunning = true;
 
-            StartServer();
-            StartBroadcastListener();
-            StartScreenListener();
+            _ = StartServer();
+            _ = StartBroadcastListener();
+            _ = StartScreenListener();
+            _ = StartActivityFileServer();
 
             LoadAllStudent();
-            dgvAttendance();
             AutoCreateClassBtn();
             ActivitySectionSubject();
             RecentActivity();
@@ -94,73 +102,97 @@ namespace WinFormsApp1
 
             lblProfUsername.Text = ProfessorUsername;
             InitializeChangingPicture();
+            lsServerFolderSetup();
 
-            StartActivityFileServer();
+            // Load file panel root
+            if (!string.IsNullOrEmpty(saveFolder) && saveFolder != "Null" && Directory.Exists(saveFolder))
+                LoadServerFolder(saveFolder);
+
             NameGet();
         }
 
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            StopServer();
+            base.OnFormClosing(e);
+        }
+
+        // =========================================================
+        // NAVIGATION
+        // =========================================================
         private void btnHome_Click(object sender, EventArgs e)
         {
             pnlHome.BringToFront();
             lblPanelName.Text = "Home";
-            InitializeChangingPicture();
         }
+
         private void btnWorkstation_Click(object sender, EventArgs e)
         {
             pnlWorkstation.BringToFront();
             lblPanelName.Text = "Workstations";
-            InitializeChangingPicture();
         }
+
         private void btnStudent_Click(object sender, EventArgs e)
         {
             pnlStudent.BringToFront();
             lblPanelName.Text = "My Students";
-            InitializeChangingPicture();
         }
+
         private void btnActivities_Click(object sender, EventArgs e)
         {
             pnlActivity.BringToFront();
             ActivitySectionSubject();
             RecentActivity();
             lblPanelName.Text = "Activities";
-            InitializeChangingPicture();
         }
+
         private void btnGrades_Click(object sender, EventArgs e)
         {
             pnlGrades.BringToFront();
             lblPanelName.Text = "Grades";
             ActivityStatus();
-            InitializeChangingPicture();
         }
+
         private void btnAttendance_Click(object sender, EventArgs e)
         {
             pnlAttendance.BringToFront();
             lblPanelName.Text = "Attendance";
-            dgvAttendance();
-            InitializeChangingPicture();
+
+            LoadAttendanceSections();
+
+            if (guna2ComboBox11.Items.Count > 0)
+                guna2ComboBox11.SelectedIndex = 0;
+            else
+                dgvAttendance();
         }
 
         private void btnSubject_Click(object sender, EventArgs e)
         {
             pnlSubject.BringToFront();
             lblPanelName.Text = "Subjects";
-            InitializeChangingPicture();
         }
 
         private void btnFile_Click(object sender, EventArgs e)
         {
             pnlFile.BringToFront();
             lblPanelName.Text = "Files";
-            InitializeChangingPicture();
+
+            // Load the professor's folder root
+            if (!string.IsNullOrEmpty(saveFolder) && saveFolder != "Null" && Directory.Exists(saveFolder))
+                LoadServerFolder(saveFolder);
+            else
+                MessageBox.Show("Save folder is not configured for this account.");
         }
+
         private void btnAccount_Click(object sender, EventArgs e)
         {
             pnlSetting.BringToFront();
-            lblPanelName.Text = "Settings ";
-            InitializeChangingPicture();
+            lblPanelName.Text = "Settings";
         }
 
-        //Home Page//
+        // =========================================================
+        // HOME PAGE
+        // =========================================================
         private void linkLblWorkstations_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             pnlWorkstation.BringToFront();
@@ -177,10 +209,9 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        // LISTENERS - with SO_REUSEADDR
+        // LISTENERS
         // =========================================================
-
-        private async void StartServer()
+        private async Task StartServer()
         {
             try
             {
@@ -195,8 +226,11 @@ namespace WinFormsApp1
                 return;
             }
 
-            lblComputerOnline.Text = "0";
-            lblComputerOffline.Text = "0";
+            SafeInvoke(() =>
+            {
+                lblComputerOnline.Text = "0";
+                lblComputerOffline.Text = "0";
+            });
 
             while (isRunning)
             {
@@ -208,19 +242,32 @@ namespace WinFormsApp1
 
                     Button wsButton = null;
 
-                    if (this.InvokeRequired)
-                        this.Invoke(new Action(() => wsButton = OnWorkStationConnected(clientIp)));
-                    else
-                        wsButton = OnWorkStationConnected(clientIp);
+                    SafeInvoke(() => wsButton = OnWorkStationConnected(clientIp));
 
                     _ = MonitorDisconnected(client, wsButton, clientIp);
                 }
-                catch (Exception ex)
+                catch (ObjectDisposedException)
                 {
-                    Console.WriteLine("[Professor] Workstation accept error: " + ex.Message);
                     break;
                 }
+                catch (Exception ex)
+                {
+                    if (!isRunning) break;
+                    Console.WriteLine("[Professor] Workstation accept error: " + ex.Message);
+                }
             }
+        }
+
+        private void SafeInvoke(Action action)
+        {
+            try
+            {
+                if (IsDisposed || !IsHandleCreated) return;
+                if (InvokeRequired) Invoke(action);
+                else action();
+            }
+            catch (ObjectDisposedException) { }
+            catch (InvalidOperationException) { }
         }
 
         private Button OnWorkStationConnected(string clientIp)
@@ -279,7 +326,7 @@ namespace WinFormsApp1
 
             try
             {
-                while (client.Connected)
+                while (client.Connected && isRunning)
                 {
                     int bytesRead = await stream.ReadAsync(buffer, 0, 1);
                     if (bytesRead == 0) break;
@@ -291,23 +338,7 @@ namespace WinFormsApp1
             }
             finally
             {
-                if (this.InvokeRequired)
-                {
-                    this.Invoke(new Action(() =>
-                    {
-                        if (workstationButtons.ContainsKey(clientIp))
-                        {
-                            ApplyNoSignal(clientIp);
-                            lastThumbnailUpdate.Remove(clientIp);
-                        }
-
-                        if (miniWorkstationButtons.ContainsKey(clientIp))
-                            miniWorkstationButtons[clientIp].BackColor = Color.Red;
-
-                        UpdateConnectedCount();
-                    }));
-                }
-                else
+                SafeInvoke(() =>
                 {
                     if (workstationButtons.ContainsKey(clientIp))
                     {
@@ -319,9 +350,10 @@ namespace WinFormsApp1
                         miniWorkstationButtons[clientIp].BackColor = Color.Red;
 
                     UpdateConnectedCount();
-                }
+                });
 
                 try { client.Close(); } catch { }
+                try { client.Dispose(); } catch { }
             }
         }
 
@@ -336,7 +368,9 @@ namespace WinFormsApp1
             lblComputerOffline.Text = disconnectedCount.ToString();
         }
 
-        //My Student Page//
+        // =========================================================
+        // MY STUDENTS
+        // =========================================================
         private void LoadAllStudent(string filter = "")
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -393,9 +427,11 @@ namespace WinFormsApp1
         }
 
         private void txtBoxSearch_TextChanged(object sender, EventArgs e) => LoadAllStudent(txtBoxSearch.Text);
-        private void cmbSemester_SelectedIndexChanged(object sender, EventArgs e) => LoadAllStudent();
-        private void cmbYear_SelectedIndexChanged(object sender, EventArgs e) => LoadAllStudent();
-        private void cmbSection_SelectedIndexChanged(object sender, EventArgs e) => LoadAllStudent();
+        private void cmbSemester_SelectedIndexChanged(object sender, EventArgs e) => LoadAllStudent(txtBoxSearch.Text);
+        private void cmbYear_SelectedIndexChanged(object sender, EventArgs e) => LoadAllStudent(txtBoxSearch.Text);
+        private void cmbSection_SelectedIndexChanged(object sender, EventArgs e) => LoadAllStudent(txtBoxSearch.Text);
+
+        private void btnSearch_Click(object sender, EventArgs e) => LoadAllStudent(txtBoxSearch.Text);
 
         private void btnCleanFilter_Click(object sender, EventArgs e)
         {
@@ -406,8 +442,63 @@ namespace WinFormsApp1
             LoadAllStudent();
         }
 
-        // Attendance //
-        private void dgvAttendance()
+        // =========================================================
+        // ATTENDANCE
+        // =========================================================
+        private void LoadAttendanceSections()
+        {
+            string connStr = SettingsManager.Current.GetConnectionString();
+
+            try
+            {
+                string previousSelection = guna2ComboBox11.Text;
+
+                guna2ComboBox11.Items.Clear();
+                guna2ComboBox11.SelectedIndex = -1;
+
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    string query = @"SELECT DISTINCT class_section 
+                                     FROM professor_class 
+                                     WHERE professor_id = @professor_id
+                                       AND class_section IS NOT NULL
+                                       AND class_section <> ''
+                                     ORDER BY class_section";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@professor_id", ProfessorID);
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                string section = reader["class_section"]?.ToString()?.Trim();
+                                if (!string.IsNullOrEmpty(section) && !guna2ComboBox11.Items.Contains(section))
+                                    guna2ComboBox11.Items.Add(section);
+                            }
+                        }
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(previousSelection) && guna2ComboBox11.Items.Contains(previousSelection))
+                    guna2ComboBox11.SelectedItem = previousSelection;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("LoadAttendanceSections error: " + ex.Message);
+            }
+        }
+
+        private void guna2ComboBox11_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            dgvAttendance(guna2ComboBox11.Text);
+            flpAttendance.Controls.Clear();
+        }
+
+        private void dgvAttendance(string sectionFilter = "")
         {
             string connStr = SettingsManager.Current.GetConnectionString();
 
@@ -416,18 +507,46 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = @"SELECT 
-                                uc.roles,
-                                pa.student_name, 
-                                pa.present, 
-                                pa.absent, 
-                                pa.late
-                            FROM user_credential uc 
-                            INNER JOIN professor_attendance pa ON uc.user_id = pa.student_id
-                            WHERE uc.roles = 'Student'";
+
+                    bool filterBySection = !string.IsNullOrEmpty(sectionFilter)
+                                           && sectionFilter != "Section";
+
+                    string query;
+
+                    if (filterBySection)
+                    {
+                        query = @"SELECT 
+                                    uc.roles,
+                                    pa.student_name, 
+                                    pa.present, 
+                                    pa.absent, 
+                                    pa.late
+                                  FROM user_credential uc 
+                                  INNER JOIN professor_attendance pa ON uc.user_id = pa.student_id
+                                  INNER JOIN user_information ui ON ui.user_id = uc.user_id
+                                  WHERE uc.roles = 'Student'
+                                    AND LOWER(TRIM(ui.school_section)) = LOWER(TRIM(@section))
+                                  ORDER BY pa.student_name";
+                    }
+                    else
+                    {
+                        query = @"SELECT 
+                                    uc.roles,
+                                    pa.student_name, 
+                                    pa.present, 
+                                    pa.absent, 
+                                    pa.late
+                                  FROM user_credential uc 
+                                  INNER JOIN professor_attendance pa ON uc.user_id = pa.student_id
+                                  WHERE uc.roles = 'Student'
+                                    AND 1 = 0";
+                    }
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
+                        if (filterBySection)
+                            cmd.Parameters.AddWithValue("@section", sectionFilter);
+
                         MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
                         DataTable dt = new DataTable();
                         adapter.Fill(dt);
@@ -458,50 +577,92 @@ namespace WinFormsApp1
 
         private void btnAddAttendance_Click(object sender, EventArgs e)
         {
-            List<(int StudentId, string StudentName)> students = GetAllStudents();
+            if (string.IsNullOrEmpty(guna2ComboBox11.Text) ||
+                guna2ComboBox11.Text == "Section" ||
+                guna2ComboBox11.SelectedIndex < 0)
+            {
+                MessageBox.Show("Please select a section first.");
+                return;
+            }
+
+            flpAttendance.Controls.Clear();
+
+            List<(int StudentId, string StudentName)> students = GetAllStudents(guna2ComboBox11.Text);
+
+            if (students.Count == 0)
+            {
+                MessageBox.Show($"No students found in section {guna2ComboBox11.Text}.");
+                return;
+            }
 
             FlowLayoutPanel column = new FlowLayoutPanel();
             column.FlowDirection = FlowDirection.TopDown;
             column.WrapContents = false;
             column.AutoSize = true;
             column.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            column.Width = 160;
+            column.Width = 320;
             column.Margin = new Padding(5);
 
-            Label DateToday = new Label();
-            DateToday.Text = DateTime.Today.ToString("MMM-dd");
-            DateToday.Font = new Font(DateToday.Font.FontFamily, 12);
-            DateToday.Margin = new Padding(4);
-            column.Controls.Add(DateToday);
+            Label dateHeader = new Label();
+            dateHeader.Text = DateTime.Today.ToString("MMM-dd");
+            dateHeader.Font = new Font("Segoe UI", 12, FontStyle.Bold);
+            dateHeader.AutoSize = true;
+            dateHeader.Margin = new Padding(4, 8, 4, 8);
+            column.Controls.Add(dateHeader);
+
+            FlowLayoutPanel headerRow = new FlowLayoutPanel();
+            headerRow.FlowDirection = FlowDirection.LeftToRight;
+            headerRow.WrapContents = false;
+            headerRow.AutoSize = true;
+            headerRow.Margin = new Padding(0, 0, 0, 4);
+
+            Label lblNameHead = new Label();
+            lblNameHead.Text = "Student Name";
+            lblNameHead.Width = 170;
+            lblNameHead.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+            headerRow.Controls.Add(lblNameHead);
+
+            Label lblStatusHead = new Label();
+            lblStatusHead.Text = "Status";
+            lblStatusHead.Width = 110;
+            lblStatusHead.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+            headerRow.Controls.Add(lblStatusHead);
+
+            column.Controls.Add(headerRow);
 
             foreach (var student in students)
             {
-                Guna.UI2.WinForms.Guna2ComboBox cmb = new Guna.UI2.WinForms.Guna2ComboBox();
-                cmb.Width = 150;
-                cmb.Margin = new Padding(5);
-                cmb.Tag = student.StudentId;
+                FlowLayoutPanel row = new FlowLayoutPanel();
+                row.FlowDirection = FlowDirection.LeftToRight;
+                row.WrapContents = false;
+                row.AutoSize = true;
+                row.Margin = new Padding(0, 2, 0, 2);
 
+                Label lblName = new Label();
+                lblName.Text = student.StudentName;
+                lblName.Width = 170;
+                lblName.Height = 30;
+                lblName.TextAlign = ContentAlignment.MiddleLeft;
+                lblName.AutoEllipsis = true;
+                row.Controls.Add(lblName);
+
+                Guna.UI2.WinForms.Guna2ComboBox cmb = new Guna.UI2.WinForms.Guna2ComboBox();
+                cmb.Width = 110;
+                cmb.Height = 30;
+                cmb.Tag = student.StudentId;
                 cmb.Items.Add("Present");
                 cmb.Items.Add("Absent");
                 cmb.Items.Add("Late");
-
                 cmb.DropDownStyle = ComboBoxStyle.DropDownList;
                 cmb.SelectedIndex = -1;
+                row.Controls.Add(cmb);
 
-                column.Controls.Add(cmb);
+                column.Controls.Add(row);
             }
 
             flpAttendance.Controls.Add(column);
-            flpAttendance.Controls.SetChildIndex(column, 0);
 
-            if (flpAttendance.Controls.Count > 4)
-            {
-                Control oldest = flpAttendance.Controls[flpAttendance.Controls.Count - 1];
-                flpAttendance.Controls.Remove(oldest);
-                oldest.Dispose();
-            }
-
-            string AttendanceDateNow = DateTime.Today.ToString("MMMdd");
+            string AttendanceDateNow = DateTime.Today.ToString("MMMdd", CultureInfo.InvariantCulture);
             string connStr = SettingsManager.Current.GetConnectionString();
 
             try
@@ -509,14 +670,19 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
+
+                    var builder = new MySqlConnectionStringBuilder(connStr);
+                    string dbName = builder.Database;
+
                     string checkQuery = @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
-                           WHERE TABLE_SCHEMA = 'cdsga_hub' 
-                           AND TABLE_NAME = 'professor_attendance' 
-                           AND COLUMN_NAME = @columnName";
+                                           WHERE TABLE_SCHEMA = @dbName 
+                                           AND TABLE_NAME = 'professor_attendance' 
+                                           AND COLUMN_NAME = @columnName";
 
                     bool columnExists = false;
                     using (var checkCmd = new MySqlCommand(checkQuery, conn))
                     {
+                        checkCmd.Parameters.AddWithValue("@dbName", dbName);
                         checkCmd.Parameters.AddWithValue("@columnName", AttendanceDateNow);
                         columnExists = Convert.ToInt32(checkCmd.ExecuteScalar()) > 0;
                     }
@@ -535,7 +701,7 @@ namespace WinFormsApp1
             }
         }
 
-        private List<(int StudentId, string StudentName)> GetAllStudents()
+        private List<(int StudentId, string StudentName)> GetAllStudents(string sectionFilter = "")
         {
             List<(int, string)> list = new List<(int, string)>();
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -543,11 +709,41 @@ namespace WinFormsApp1
             using (var conn = new MySqlConnection(connStr))
             {
                 conn.Open();
-                using (var cmd = new MySqlCommand("SELECT student_id, student_name FROM professor_attendance", conn))
-                using (var reader = cmd.ExecuteReader())
+
+                bool filterBySection = !string.IsNullOrEmpty(sectionFilter)
+                                       && sectionFilter != "Section";
+
+                string query;
+
+                if (filterBySection)
                 {
-                    while (reader.Read())
-                        list.Add((reader.GetInt32("student_id"), reader.GetString("student_name")));
+                    query = @"SELECT pa.student_id, pa.student_name
+                              FROM professor_attendance pa
+                              INNER JOIN user_information ui ON ui.user_id = pa.student_id
+                              WHERE pa.student_name IS NOT NULL 
+                                AND pa.student_name <> ''
+                                AND LOWER(TRIM(ui.school_section)) = LOWER(TRIM(@section))
+                              ORDER BY pa.student_name";
+                }
+                else
+                {
+                    query = @"SELECT student_id, student_name 
+                              FROM professor_attendance 
+                              WHERE student_name IS NOT NULL 
+                                AND student_name <> ''
+                              ORDER BY student_name";
+                }
+
+                using (var cmd = new MySqlCommand(query, conn))
+                {
+                    if (filterBySection)
+                        cmd.Parameters.AddWithValue("@section", sectionFilter);
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                            list.Add((reader.GetInt32("student_id"), reader.GetString("student_name")));
+                    }
                 }
             }
             return list;
@@ -555,7 +751,7 @@ namespace WinFormsApp1
 
         private void btnAttendanceUpdate_Click(object sender, EventArgs e)
         {
-            string DateToday = DateTime.Today.ToString("MMMdd");
+            string DateToday = DateTime.Today.ToString("MMMdd", CultureInfo.InvariantCulture);
             string connStr = SettingsManager.Current.GetConnectionString();
 
             if (flpAttendance.Controls.Count == 0)
@@ -564,34 +760,68 @@ namespace WinFormsApp1
                 return;
             }
 
+            FlowLayoutPanel currentColumn = (FlowLayoutPanel)flpAttendance.Controls[0];
+            List<string> missing = new List<string>();
+
+            foreach (Control ctrl in currentColumn.Controls)
+            {
+                if (ctrl is FlowLayoutPanel row)
+                {
+                    Label lbl = row.Controls.OfType<Label>().FirstOrDefault();
+                    var cmb = row.Controls.OfType<Guna.UI2.WinForms.Guna2ComboBox>().FirstOrDefault();
+
+                    if (cmb != null && lbl != null && string.IsNullOrEmpty(cmb.Text))
+                        missing.Add(lbl.Text);
+                }
+            }
+
+            if (missing.Count > 0)
+            {
+                DialogResult r = MessageBox.Show(
+                    $"{missing.Count} student(s) have no status selected. Continue anyway?",
+                    "Incomplete Attendance",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+
+                if (r == DialogResult.No) return;
+            }
+
             try
             {
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    FlowLayoutPanel currentColumn = (FlowLayoutPanel)flpAttendance.Controls[0];
+
                     foreach (Control ctrl in currentColumn.Controls)
                     {
-                        if (ctrl is Guna.UI2.WinForms.Guna2ComboBox cmb && cmb.Tag != null)
+                        if (ctrl is not FlowLayoutPanel row) continue;
+
+                        var cmb = row.Controls.OfType<Guna.UI2.WinForms.Guna2ComboBox>().FirstOrDefault();
+                        if (cmb == null || cmb.Tag == null) continue;
+
+                        int studentId = (int)cmb.Tag;
+                        string status = cmb.Text;
+                        if (string.IsNullOrEmpty(status)) continue;
+
+                        string col = status == "Present" ? "present"
+                                   : status == "Absent" ? "absent"
+                                   : "late";
+
+                        string query = $@"UPDATE professor_attendance 
+                                          SET `{DateToday}` = @status, 
+                                              {col} = COALESCE({col}, 0) + 1 
+                                          WHERE student_id = @student_id";
+
+                        using (var cmd = new MySqlCommand(query, conn))
                         {
-                            int studentId = (int)cmb.Tag;
-                            string status = cmb.Text;
-
-                            if (string.IsNullOrEmpty(status)) continue;
-
-                            string col = status == "Present" ? "present" : status == "Absent" ? "absent" : "late";
-
-                            string query = $"UPDATE professor_attendance SET `{DateToday}` = @status, {col} = COALESCE({col}, 0) + 1 WHERE student_id = @student_id ";
-                            using (var cmd = new MySqlCommand(query, conn))
-                            {
-                                cmd.Parameters.AddWithValue("@status", status);
-                                cmd.Parameters.AddWithValue("@student_id", studentId);
-                                cmd.ExecuteNonQuery();
-                            }
+                            cmd.Parameters.AddWithValue("@status", status);
+                            cmd.Parameters.AddWithValue("@student_id", studentId);
+                            cmd.ExecuteNonQuery();
                         }
                     }
-                    dgvAttendance();
-                    MessageBox.Show("Update");
+
+                    dgvAttendance(guna2ComboBox11.Text);
+                    MessageBox.Show("Attendance updated.");
                 }
             }
             catch (Exception ex)
@@ -644,7 +874,9 @@ namespace WinFormsApp1
             }
         }
 
-        //Class//
+        // =========================================================
+        // CLASS
+        // =========================================================
         private void btnShowPnlCreateClass_Click(object sender, EventArgs e)
         {
             pnlCreateClass.Visible = true;
@@ -694,7 +926,13 @@ namespace WinFormsApp1
 
         private void CreateFolderForSection(string folderName)
         {
-            string newFolderPath = Path.Combine(saveFolder, folderName);
+            if (string.IsNullOrWhiteSpace(folderName) || string.IsNullOrEmpty(saveFolder) || saveFolder == "Null")
+            {
+                MessageBox.Show("Save folder is not set up correctly.");
+                return;
+            }
+
+            string newFolderPath = Path.Combine(saveFolder, SanitizeFolderName(folderName));
             if (!Directory.Exists(newFolderPath))
             {
                 Directory.CreateDirectory(newFolderPath);
@@ -820,7 +1058,8 @@ namespace WinFormsApp1
             Panel clickedCard = menu.SourceControl as Panel;
             if (clickedCard == null) return;
 
-            string classId = clickedCard.Tag.ToString();
+            string classId = clickedCard.Tag?.ToString();
+            if (string.IsNullOrEmpty(classId)) return;
 
             DialogResult result = MessageBox.Show("Are you sure you want to delete this class?",
                                                   "Confirm Delete",
@@ -853,7 +1092,9 @@ namespace WinFormsApp1
             }
         }
 
-        //Activity//
+        // =========================================================
+        // ACTIVITY
+        // =========================================================
         private void btnActivityUploadFile_Click(object sender, EventArgs e)
         {
             using (OpenFileDialog ofd = new OpenFileDialog())
@@ -934,6 +1175,9 @@ namespace WinFormsApp1
 
         private void ActivitySectionSubject()
         {
+            cmbActivitySection.Items.Clear();
+            cmbActivitySubject.Items.Clear();
+
             string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
@@ -947,8 +1191,14 @@ namespace WinFormsApp1
                         {
                             while (reader.Read())
                             {
-                                cmbActivitySection.Items.Add(reader.GetString("class_section"));
-                                cmbActivitySubject.Items.Add(reader.GetString("class_name"));
+                                string section = reader.GetString("class_section");
+                                string className = reader.GetString("class_name");
+
+                                if (!cmbActivitySection.Items.Contains(section))
+                                    cmbActivitySection.Items.Add(section);
+
+                                if (!cmbActivitySubject.Items.Contains(className))
+                                    cmbActivitySubject.Items.Add(className);
                             }
                         }
                     }
@@ -988,7 +1238,9 @@ namespace WinFormsApp1
             }
         }
 
-        //FILE MANAGEMENT//
+        // =========================================================
+        // FILE MANAGEMENT
+        // =========================================================
         private void lsServerFolderSetup()
         {
             FolderListView.View = View.LargeIcon;
@@ -998,7 +1250,10 @@ namespace WinFormsApp1
 
         private void LoadServerFolder(string path, bool addToHistory = true)
         {
-            if (addToHistory && !string.IsNullOrEmpty(currentFolder))
+            if (string.IsNullOrEmpty(path) || !Directory.Exists(path))
+                return;
+
+            if (addToHistory && !string.IsNullOrEmpty(currentFolder) && currentFolder != path)
                 folderHistory.Push(currentFolder);
 
             currentFolder = path;
@@ -1006,7 +1261,8 @@ namespace WinFormsApp1
             imageList1.Images.Clear();
             int imageIndex = 0;
 
-            foreach (string dir in Directory.GetDirectories(path))
+            // Folders first
+            foreach (string dir in Directory.GetDirectories(path).OrderBy(d => d))
             {
                 imageList1.Images.Add(Properties.Resources.Folder);
                 ListViewItem item = new ListViewItem(Path.GetFileName(dir), imageIndex);
@@ -1015,9 +1271,9 @@ namespace WinFormsApp1
                 imageIndex++;
             }
 
-            foreach (string file in Directory.GetFiles(path))
+            // Then files
+            foreach (string file in Directory.GetFiles(path).OrderBy(f => f))
             {
-                Icon fileIcon = Icon.ExtractAssociatedIcon(file);
                 imageList1.Images.Add(Properties.Resources.Item);
 
                 ListViewItem item = new ListViewItem(Path.GetFileName(file), imageIndex);
@@ -1042,7 +1298,8 @@ namespace WinFormsApp1
         {
             if (FolderListView.SelectedItems.Count == 0) return;
 
-            string path = FolderListView.SelectedItems[0].Tag.ToString();
+            string path = FolderListView.SelectedItems[0].Tag?.ToString();
+            if (string.IsNullOrEmpty(path)) return;
 
             if (Directory.Exists(path))
                 LoadServerFolder(path);
@@ -1053,80 +1310,323 @@ namespace WinFormsApp1
         private void BtnBack_Click(object sender, EventArgs e) => btnBack();
         private void FolderListView_DoubleClick(object sender, EventArgs e) => doubleClick();
 
+        // =========================================================
+        // NEW FOLDER — MODAL PROMPT
+        // =========================================================
         private void btnAddFolder_Click(object sender, EventArgs e)
         {
+            // Prevent stacking
+            if (pnlFile.Controls.OfType<Guna.UI2.WinForms.Guna2Panel>()
+                              .Any(p => p.Name == "pnlNewFolderPrompt"))
+                return;
+
+            // --- Dim overlay covering the whole pnlFile ---
+            Guna.UI2.WinForms.Guna2Panel overlay = new Guna.UI2.WinForms.Guna2Panel();
+            overlay.Name = "pnlNewFolderPrompt";
+            overlay.Dock = DockStyle.Fill;
+            overlay.FillColor = Color.FromArgb(150, 0, 0, 0);
+            overlay.BorderRadius = 10;
+            pnlFile.Controls.Add(overlay);
+            overlay.BringToFront();
+
+            // --- Inner card ---
+            Guna.UI2.WinForms.Guna2Panel card = new Guna.UI2.WinForms.Guna2Panel();
+            card.Size = new Size(420, 210);
+            card.BorderRadius = 15;
+            card.FillColor = Color.White;
+            card.ShadowDecoration.Enabled = true;
+            card.ShadowDecoration.Depth = 20;
+            card.Location = new Point(
+                Math.Max(0, (overlay.Width - card.Width) / 2),
+                Math.Max(0, (overlay.Height - card.Height) / 2));
+            overlay.Controls.Add(card);
+
+            // Recenter on resize
+            overlay.Resize += (s, args) =>
+            {
+                card.Location = new Point(
+                    Math.Max(0, (overlay.Width - card.Width) / 2),
+                    Math.Max(0, (overlay.Height - card.Height) / 2));
+            };
+
+            // --- Title ---
+            Label lblTitle = new Label();
+            lblTitle.Text = "Create New Folder";
+            lblTitle.Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold);
+            lblTitle.ForeColor = Color.Maroon;
+            lblTitle.AutoSize = true;
+            lblTitle.Location = new Point(24, 20);
+            card.Controls.Add(lblTitle);
+
+            // --- Subtitle ---
+            Label lblSub = new Label();
+            lblSub.Text = "Enter a folder name:";
+            lblSub.Font = new Font("Segoe UI", 10F);
+            lblSub.ForeColor = Color.DimGray;
+            lblSub.AutoSize = true;
+            lblSub.Location = new Point(24, 60);
+            card.Controls.Add(lblSub);
+
+            // --- TextBox ---
             Guna.UI2.WinForms.Guna2TextBox txtFolderName = new Guna.UI2.WinForms.Guna2TextBox();
-            txtFolderName.Width = 150;
-            txtFolderName.Height = 20;
-            txtFolderName.Margin = new Padding(5);
-            txtFolderName.Location = new Point(230, 70);
+            txtFolderName.Width = 372;
+            txtFolderName.Height = 42;
+            txtFolderName.Location = new Point(24, 90);
+            txtFolderName.BorderRadius = 8;
+            txtFolderName.Font = new Font("Segoe UI", 10F);
+            txtFolderName.PlaceholderText = "Folder name";
+            card.Controls.Add(txtFolderName);
 
-            Guna.UI2.WinForms.Guna2CircleButton enterFolderName = new Guna.UI2.WinForms.Guna2CircleButton();
-            enterFolderName.Width = 20;
-            enterFolderName.Height = 20;
-            enterFolderName.Text = "✔";
-            enterFolderName.Margin = new Padding(5);
-            enterFolderName.Location = new Point(230, 150);
+            // --- Cancel ---
+            Guna.UI2.WinForms.Guna2Button btnCancel = new Guna.UI2.WinForms.Guna2Button();
+            btnCancel.Text = "Cancel";
+            btnCancel.Size = new Size(120, 42);
+            btnCancel.Location = new Point(24, 148);
+            btnCancel.BorderRadius = 8;
+            btnCancel.FillColor = Color.LightGray;
+            btnCancel.ForeColor = Color.Black;
+            btnCancel.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            btnCancel.Click += (s, args) =>
+            {
+                pnlFile.Controls.Remove(overlay);
+                overlay.Dispose();
+            };
+            card.Controls.Add(btnCancel);
 
-            enterFolderName.Click += (s, args) =>
+            // --- Create ---
+            Guna.UI2.WinForms.Guna2Button btnCreate = new Guna.UI2.WinForms.Guna2Button();
+            btnCreate.Text = "Create";
+            btnCreate.Size = new Size(120, 42);
+            btnCreate.Location = new Point(276, 148);
+            btnCreate.BorderRadius = 8;
+            btnCreate.FillColor = Color.Maroon;
+            btnCreate.ForeColor = Color.White;
+            btnCreate.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            btnCreate.Click += (s, args) =>
             {
                 string folderName = txtFolderName.Text.Trim();
 
-                if (string.IsNullOrEmpty(folderName))
+                if (string.IsNullOrWhiteSpace(folderName))
                 {
                     MessageBox.Show("Please enter a folder name.");
                     return;
                 }
 
-                NewCreateFolder(folderName);
+                if (folderName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                {
+                    MessageBox.Show("Folder name contains invalid characters.");
+                    return;
+                }
 
-                pnlFile.Controls.Remove(txtFolderName);
-                pnlFile.Controls.Remove(enterFolderName);
+                if (NewCreateFolder(folderName))
+                {
+                    pnlFile.Controls.Remove(overlay);
+                    overlay.Dispose();
+                }
+            };
+            card.Controls.Add(btnCreate);
+
+            // --- Keyboard shortcuts ---
+            txtFolderName.KeyDown += (s, args) =>
+            {
+                if (args.KeyCode == Keys.Enter)
+                {
+                    args.SuppressKeyPress = true;
+                    btnCreate.PerformClick();
+                }
+                else if (args.KeyCode == Keys.Escape)
+                {
+                    args.SuppressKeyPress = true;
+                    btnCancel.PerformClick();
+                }
             };
 
-            pnlFile.Controls.Add(enterFolderName);
-            pnlFile.Controls.Add(txtFolderName);
+            // --- Click outside card cancels ---
+            overlay.Click += (s, args) =>
+            {
+                pnlFile.Controls.Remove(overlay);
+                overlay.Dispose();
+            };
+            card.Click += (s, args) => { /* swallow */ };
+
+            txtFolderName.Focus();
         }
 
-        private void NewCreateFolder(string FolderName)
+        private bool NewCreateFolder(string folderName)
         {
-            string newFolderPath = Path.Combine(saveFolder, FolderName);
+            if (string.IsNullOrEmpty(saveFolder) || saveFolder == "Null")
+            {
+                MessageBox.Show("Save folder is not set up correctly.");
+                return false;
+            }
 
-            if (!Directory.Exists(newFolderPath))
+            string basePath = !string.IsNullOrEmpty(currentFolder) && Directory.Exists(currentFolder)
+                              ? currentFolder
+                              : saveFolder;
+
+            string newFolderPath = Path.Combine(basePath, SanitizeFolderName(folderName));
+
+            if (Directory.Exists(newFolderPath))
+            {
+                MessageBox.Show("Folder already exists.");
+                return false;
+            }
+
+            try
             {
                 Directory.CreateDirectory(newFolderPath);
                 MessageBox.Show("Folder created!");
-                LoadServerFolder(saveFolder);
+                LoadServerFolder(basePath, addToHistory: false);
+                return true;
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Folder already exists.");
+                MessageBox.Show("Error creating folder: " + ex.Message);
+                return false;
             }
         }
 
-        private static string GetFolderPath(int ProfessorID)
+        // =========================================================
+        // DELETE FILE / FOLDER
+        // =========================================================
+        private void btnDeleteFile_Click(object sender, EventArgs e)
+        {
+            if (FolderListView.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("Please select a file or folder first.");
+                return;
+            }
+
+            string path = FolderListView.SelectedItems[0].Tag?.ToString();
+
+            if (string.IsNullOrEmpty(path))
+            {
+                MessageBox.Show("Invalid selection.");
+                return;
+            }
+
+            bool isFolder = Directory.Exists(path);
+            bool isFile = File.Exists(path);
+
+            if (!isFolder && !isFile)
+            {
+                MessageBox.Show("The selected item no longer exists.");
+                return;
+            }
+
+            string itemName = Path.GetFileName(path);
+
+            string message = isFolder
+                ? $"Delete folder '{itemName}' and ALL its contents?\n\nThis cannot be undone."
+                : $"Delete file '{itemName}'?\n\nThis cannot be undone.";
+
+            DialogResult confirm = MessageBox.Show(
+                message,
+                "Confirm Delete",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (confirm != DialogResult.Yes) return;
+
+            try
+            {
+                if (isFolder)
+                    Directory.Delete(path, recursive: true);
+                else
+                    File.Delete(path);
+
+                MessageBox.Show("Deleted successfully.");
+
+                if (!string.IsNullOrEmpty(currentFolder) && Directory.Exists(currentFolder))
+                    LoadServerFolder(currentFolder, addToHistory: false);
+                else if (!string.IsNullOrEmpty(saveFolder) && Directory.Exists(saveFolder))
+                    LoadServerFolder(saveFolder);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error deleting: " + ex.Message);
+            }
+        }
+
+        private string GetFolderPath(int professorId)
         {
             string connStr = SettingsManager.Current.GetConnectionString();
+
             try
             {
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    using (var cmd = new MySqlCommand("SELECT FolderPath FROM mainfolderpath WHERE user_id = @user_id", conn))
+
+                    // 1. Try to load the professor's own row
+                    using (var cmd = new MySqlCommand(
+                        "SELECT FolderPath FROM mainfolderpath WHERE user_id = @id", conn))
                     {
-                        cmd.Parameters.AddWithValue("@user_id", ProfessorID);
+                        cmd.Parameters.AddWithValue("@id", professorId);
                         object result = cmd.ExecuteScalar();
 
                         if (result != null && result != DBNull.Value)
-                            return result.ToString();
+                        {
+                            string path = result.ToString();
+                            if (!Directory.Exists(path))
+                            {
+                                try { Directory.CreateDirectory(path); }
+                                catch { return "Null"; }
+                            }
+                            return path;
+                        }
+                    }
+
+                    // 2. Fallback — read the shared ROOT (user_id = 0)
+                    string rootPath = null;
+                    using (var cmd = new MySqlCommand(
+                        "SELECT FolderPath FROM mainfolderpath WHERE user_id = 0", conn))
+                    {
+                        object result = cmd.ExecuteScalar();
+                        if (result != null && result != DBNull.Value)
+                            rootPath = result.ToString();
+                    }
+
+                    if (string.IsNullOrEmpty(rootPath))
+                    {
+                        MessageBox.Show(
+                            "Root folder has not been configured.\n" +
+                            "Please ask your administrator to set it in Configuration → File Storage.",
+                            "Not Configured", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return "Null";
                     }
+
+                    // 3. Build folder from username
+                    string folderName = SanitizeFolderName(ProfessorUsername);
+                    string newPath = Path.Combine(rootPath, folderName);
+
+                    if (!Directory.Exists(newPath))
+                        Directory.CreateDirectory(newPath);
+
+                    // 4. Save it back so next launch loads it
+                    using (var cmd = new MySqlCommand(
+                        @"INSERT INTO mainfolderpath (user_id, FolderPath) 
+                  VALUES (@id, @path)
+                  ON DUPLICATE KEY UPDATE FolderPath = @path", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", professorId);
+                        cmd.Parameters.AddWithValue("@path", newPath);
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    return newPath;
                 }
             }
-            catch { return "Null"; }
+            catch (Exception ex)
+            {
+                Console.WriteLine("GetFolderPath error: " + ex.Message);
+                return "Null";
+            }
         }
 
-        //Panel Grades//
+        // =========================================================
+        // GRADES
+        // =========================================================
         private void ActivityStatus(string filter = "")
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -1322,11 +1822,10 @@ namespace WinFormsApp1
 
             try
             {
-                string file_path = @$"{filePath}";
-                file_path = file_path.Trim();
-                if (File.Exists(file_path))
+                string trimmedPath = filePath?.Trim() ?? "";
+                if (File.Exists(trimmedPath))
                 {
-                    pdfViewer.LoadDocument(file_path);
+                    pdfViewer.LoadDocument(trimmedPath);
                 }
                 else
                 {
@@ -1421,19 +1920,28 @@ namespace WinFormsApp1
         {
             DataGridView.HitTestInfo hit = dgvStudentActivitySubmitted.HitTest(e.X, e.Y);
 
-            if (hit.RowIndex >= 0)
-            {
-                DataGridViewRow selectedRow = dgvStudentActivitySubmitted.Rows[hit.RowIndex];
+            if (hit.RowIndex < 0) return;
 
-                string user_id = $" {selectedRow.Cells["user_id"].Value}";
-                string Title = $" {selectedRow.Cells["title"].Value}";
-                string Name = $" {selectedRow.Cells["student_name"].Value}";
-                string SectionGrades = $" {selectedRow.Cells["section"].Value}";
-                string ClassNameGrades = $" {selectedRow.Cells["class_name"].Value}";
-                string StatusGrades = $" {selectedRow.Cells["activity_status"].Value}";
-                int User_id = int.Parse(user_id);
-                string filePath = $" {selectedRow.Cells["file_path"].Value}";
-                CreatePanelForSubmittedFiles(User_id, Title, Name, SectionGrades, ClassNameGrades, StatusGrades, filePath);
+            DataGridViewRow selectedRow = dgvStudentActivitySubmitted.Rows[hit.RowIndex];
+
+            if (selectedRow.Cells["user_id"].Value == null || selectedRow.Cells["user_id"].Value == DBNull.Value)
+                return;
+
+            try
+            {
+                int user_id = Convert.ToInt32(selectedRow.Cells["user_id"].Value);
+                string title = selectedRow.Cells["title"].Value?.ToString()?.Trim() ?? "";
+                string name = selectedRow.Cells["student_name"].Value?.ToString()?.Trim() ?? "";
+                string sectionGrades = selectedRow.Cells["section"].Value?.ToString()?.Trim() ?? "";
+                string classNameGrades = selectedRow.Cells["class_name"].Value?.ToString()?.Trim() ?? "";
+                string statusGrades = selectedRow.Cells["activity_status"].Value?.ToString()?.Trim() ?? "";
+                string filePath = selectedRow.Cells["file_path"].Value?.ToString() ?? "";
+
+                CreatePanelForSubmittedFiles(user_id, title, name, sectionGrades, classNameGrades, statusGrades, filePath);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("dgvStudentActivitySubmitted_MouseDoubleClick error: " + ex.Message);
             }
         }
 
@@ -1476,8 +1984,10 @@ namespace WinFormsApp1
             pnlWorkStationMonitoring.BringToFront();
         }
 
-        //Broadcast listener//
-        private async void StartBroadcastListener()
+        // =========================================================
+        // BROADCAST LISTENER
+        // =========================================================
+        private async Task StartBroadcastListener()
         {
             try
             {
@@ -1501,15 +2011,22 @@ namespace WinFormsApp1
                     Console.WriteLine("[Professor] broadcast client connected " + clientIp);
                     broadcastClients[clientIp] = client;
                 }
-                catch
+                catch (ObjectDisposedException)
                 {
                     break;
+                }
+                catch
+                {
+                    if (!isRunning) break;
                 }
             }
         }
 
         private void btnShareScreen_Click(object sender, EventArgs e)
         {
+            if (broadcastTimer != null && broadcastTimer.Enabled)
+                return;
+
             broadcastTimer = new System.Windows.Forms.Timer();
             broadcastTimer.Interval = 300;
             broadcastTimer.Tick += BroadcastTimer_Tick;
@@ -1539,6 +2056,7 @@ namespace WinFormsApp1
                         catch
                         {
                             try { kvp.Value.Close(); } catch { }
+                            try { kvp.Value.Dispose(); } catch { }
                             broadcastClients.Remove(kvp.Key);
                         }
                     }
@@ -1570,7 +2088,9 @@ namespace WinFormsApp1
             broadcastTimer?.Stop();
         }
 
-        //Shutdown / Restart//
+        // =========================================================
+        // SHUTDOWN / RESTART
+        // =========================================================
         private void ShutdownStartListener(string clientIp)
         {
             try
@@ -1609,8 +2129,10 @@ namespace WinFormsApp1
 
         private void btnReboot_Click(object sender, EventArgs e) => RestartStartListener(SelectedIP);
 
-        //Screen listener//
-        private async void StartScreenListener()
+        // =========================================================
+        // SCREEN LISTENER
+        // =========================================================
+        private async Task StartScreenListener()
         {
             try
             {
@@ -1632,9 +2154,13 @@ namespace WinFormsApp1
                     TcpClient client = await screenListener.AcceptTcpClientAsync();
                     _ = ReceiveScreenStream(client);
                 }
-                catch
+                catch (ObjectDisposedException)
                 {
                     break;
+                }
+                catch
+                {
+                    if (!isRunning) break;
                 }
             }
         }
@@ -1646,13 +2172,15 @@ namespace WinFormsApp1
 
             try
             {
-                while (client.Connected)
+                while (client.Connected && isRunning)
                 {
                     byte[] lengthBuffer = new byte[4];
                     int read = await ReadExactAsync(stream, lengthBuffer, 4);
                     if (read == 0) break;
 
                     int imageLength = BitConverter.ToInt32(lengthBuffer, 0);
+                    if (imageLength <= 0 || imageLength > 50 * 1024 * 1024) break;
+
                     byte[] imageBuffer = new byte[imageLength];
 
                     int totalRead = await ReadExactAsync(stream, imageBuffer, imageLength);
@@ -1662,17 +2190,15 @@ namespace WinFormsApp1
                     {
                         Image frame = Image.FromStream(ms);
 
-                        if (this.InvokeRequired)
-                            this.Invoke(new Action(() => UpdateScreenViewer(clientIp, frame)));
-                        else
-                            UpdateScreenViewer(clientIp, frame);
+                        SafeInvoke(() => UpdateScreenViewer(clientIp, frame));
                     }
                 }
             }
             catch { }
             finally
             {
-                client.Close();
+                try { client.Close(); } catch { }
+                try { client.Dispose(); } catch { }
             }
         }
 
@@ -1690,14 +2216,25 @@ namespace WinFormsApp1
 
         private void UpdateScreenViewer(string clientIp, Image frame)
         {
-            bool viewerIsOpen = screenViewers.ContainsKey(clientIp) && screenViewers[clientIp] != null;
+            bool viewerIsOpen;
 
-            if (viewerIsOpen)
+            lock (screenViewersLock)
             {
-                PictureBox pb = screenViewers[clientIp];
-                Image oldImage = pb.Image;
-                pb.Image = (Image)frame.Clone();
-                oldImage?.Dispose();
+                viewerIsOpen = screenViewers.ContainsKey(clientIp) && screenViewers[clientIp] != null;
+                if (viewerIsOpen)
+                {
+                    PictureBox pb = screenViewers[clientIp];
+                    try
+                    {
+                        Image oldImage = pb.Image;
+                        pb.Image = (Image)frame.Clone();
+                        oldImage?.Dispose();
+                    }
+                    catch
+                    {
+                        viewerIsOpen = false;
+                    }
+                }
             }
 
             bool shouldUpdateThumbnail = !lastThumbnailUpdate.ContainsKey(clientIp)
@@ -1723,7 +2260,7 @@ namespace WinFormsApp1
 
         private Image ResizeImage(Image original, int width, int height)
         {
-            if (width <= 0 || height <= 0) return original;
+            if (width <= 0 || height <= 0) return (Image)original.Clone();
 
             Bitmap resized = new Bitmap(width, height);
             using (Graphics g = Graphics.FromImage(resized))
@@ -1785,14 +2322,25 @@ namespace WinFormsApp1
         private void AddScreenViewer(string workstationId)
         {
             ScreenViewerForm viewer = new ScreenViewerForm(workstationId);
-            screenViewers[workstationId] = viewer.GetPictureBox();
-            viewer.FormClosed += (s, args) => screenViewers.Remove(workstationId);
+            lock (screenViewersLock)
+            {
+                screenViewers[workstationId] = viewer.GetPictureBox();
+            }
+            viewer.FormClosed += (s, args) =>
+            {
+                lock (screenViewersLock)
+                {
+                    screenViewers.Remove(workstationId);
+                }
+            };
             viewer.Show();
         }
 
         private void btnRemoteView_Click(object sender, EventArgs e) => AddScreenViewer(SelectedIP);
 
-        //Settings//
+        // =========================================================
+        // SETTINGS
+        // =========================================================
         private void btnSettingProfileExpand_Click(object sender, EventArgs e)
         {
             if (pnlSettingProfile.Height <= 350)
@@ -1803,20 +2351,24 @@ namespace WinFormsApp1
 
         private void ClearAllFormData()
         {
-            foreach (Control ctrl in this.Controls)
+            ClearAllFormData(this);
+        }
+
+        private void ClearAllFormData(Control parent)
+        {
+            foreach (Control ctrl in parent.Controls)
             {
-                if (ctrl is TextBox) ((TextBox)ctrl).Text = "";
-                else if (ctrl is ComboBox) ((ComboBox)ctrl).SelectedIndex = -1;
-                else if (ctrl is DataGridView) ((DataGridView)ctrl).DataSource = null;
-                else if (ctrl is ListBox) ((ListBox)ctrl).Items.Clear();
+                if (ctrl is TextBox tb) tb.Text = "";
+                else if (ctrl is ComboBox cb) cb.SelectedIndex = -1;
+                else if (ctrl is DataGridView dgv) dgv.DataSource = null;
+                else if (ctrl is ListBox lb) lb.Items.Clear();
+                else if (ctrl.HasChildren) ClearAllFormData(ctrl);
             }
         }
 
-        // =========================================================
-        // StopServer - fully releases the ports
-        // =========================================================
         private void StopServer()
         {
+            if (!isRunning) return;
             isRunning = false;
 
             try { listener?.Stop(); } catch { }
@@ -1850,8 +2402,8 @@ namespace WinFormsApp1
             }
             broadcastClients.Clear();
 
-            // Give the OS a moment to free the ports
-            System.Threading.Thread.Sleep(300);
+            cachedProfileImage?.Dispose();
+            cachedProfileImage = null;
         }
 
         private void Logout()
@@ -1862,13 +2414,8 @@ namespace WinFormsApp1
             if (result == DialogResult.Yes)
             {
                 StopServer();
-
                 ClearAllFormData();
 
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-
-                // ✅ Show Login BEFORE closing this form so the app doesn't exit
                 Login login = new Login();
                 login.Show();
 
@@ -1917,6 +2464,7 @@ namespace WinFormsApp1
                         cmd.Parameters.AddWithValue("@current_username", txtCurrentUsername.Text.Trim());
                         cmd.ExecuteNonQuery();
                     }
+                    ProfessorUsername = txtNewUsername.Text.Trim();
                     ClearTextSettings();
                     MessageBox.Show("Username updated successfully.");
                 }
@@ -1999,7 +2547,11 @@ namespace WinFormsApp1
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
                     CurrentProfilePath = ofd.FileName;
-                    picboxNewPicture.Image = Image.FromFile(CurrentProfilePath);
+                    picboxNewPicture.Image?.Dispose();
+                    using (var fs = new FileStream(CurrentProfilePath, FileMode.Open, FileAccess.Read))
+                    {
+                        picboxNewPicture.Image = Image.FromStream(fs);
+                    }
                     picboxNewPicture.SizeMode = PictureBoxSizeMode.Zoom;
                     btnSubmitChangePhoto.Enabled = true;
                 }
@@ -2018,22 +2570,30 @@ namespace WinFormsApp1
 
             try
             {
+                string fileName = Path.GetFileName(CurrentProfilePath);
+                string destinationPath = Path.Combine(SaveCurrentProfilePath, fileName);
+
+                if (!string.Equals(CurrentProfilePath, destinationPath, StringComparison.OrdinalIgnoreCase))
+                    File.Copy(CurrentProfilePath, destinationPath, true);
+
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
                     string query = @"UPDATE user_credential SET profile_picture = @profile_picture WHERE username = @username";
                     using (var cmd = new MySqlCommand(query, conn))
                     {
-                        string fileName = Path.GetFileName(CurrentProfilePath);
-                        string destinationPath = Path.Combine(SaveCurrentProfilePath, fileName);
-                        File.Copy(CurrentProfilePath, destinationPath, true);
                         cmd.Parameters.AddWithValue("@profile_picture", destinationPath);
                         cmd.Parameters.AddWithValue("@username", ProfessorUsername);
                         cmd.ExecuteNonQuery();
                     }
-                    InitializeChangingPicture();
-                    MessageBox.Show("Profile picture updated successfully.");
                 }
+
+                profileImageLoaded = false;
+                cachedProfileImage?.Dispose();
+                cachedProfileImage = null;
+
+                InitializeChangingPicture();
+                MessageBox.Show("Profile picture updated successfully.");
             }
             catch (Exception ex)
             {
@@ -2043,6 +2603,8 @@ namespace WinFormsApp1
 
         private void InitializeChangingPicture()
         {
+            if (profileImageLoaded) return;
+
             string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
@@ -2061,9 +2623,18 @@ namespace WinFormsApp1
                                 string path = reader.GetString("profile_picture");
                                 if (File.Exists(path))
                                 {
-                                    picboxSettingProfilePicture.Image = Image.FromFile(path);
+                                    using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+                                    {
+                                        cachedProfileImage = Image.FromStream(fs);
+                                    }
+
+                                    picboxSettingProfilePicture.Image?.Dispose();
+                                    picboxSettingProfilePicture.Image = cachedProfileImage;
                                     picboxSettingProfilePicture.SizeMode = PictureBoxSizeMode.Zoom;
-                                    btnAccount.Image = Image.FromFile(path);
+
+                                    btnAccount.Image = cachedProfileImage;
+
+                                    profileImageLoaded = true;
                                 }
                             }
                         }
@@ -2085,7 +2656,9 @@ namespace WinFormsApp1
 
         private void btnExitChangePhotoPanel_Click(object sender, EventArgs e) => pnlChangePhoto.Visible = false;
 
-        //FileReceiver//
+        // =========================================================
+        // FILE RECEIVER
+        // =========================================================
         private void NameGet()
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -2116,8 +2689,10 @@ namespace WinFormsApp1
             }
         }
 
-        //File transfer listener//
-        private async void StartActivityFileServer()
+        // =========================================================
+        // FILE TRANSFER LISTENER
+        // =========================================================
+        private async Task StartActivityFileServer()
         {
             try
             {
@@ -2139,10 +2714,14 @@ namespace WinFormsApp1
                     TcpClient client = await activityFileListener.AcceptTcpClientAsync();
                     _ = HandleActivityFileReceive(client);
                 }
+                catch (ObjectDisposedException)
+                {
+                    break;
+                }
                 catch (Exception ex)
                 {
+                    if (!isRunning) break;
                     Console.WriteLine("[Professor] FileTransfer accept error: " + ex.Message);
-                    break;
                 }
             }
         }
@@ -2160,15 +2739,30 @@ namespace WinFormsApp1
                     string user_ID = reader.ReadString();
                     string fileName = reader.ReadString();
                     int fileLength = reader.ReadInt32();
+
+                    if (fileLength <= 0 || fileLength > 200 * 1024 * 1024)
+                    {
+                        Console.WriteLine("Invalid file length received.");
+                        return;
+                    }
+
                     byte[] fileBytes = reader.ReadBytes(fileLength);
+
+                    if (string.IsNullOrEmpty(saveFolder) || saveFolder == "Null")
+                    {
+                        Console.WriteLine("Save folder not configured.");
+                        return;
+                    }
 
                     string sectionFolder = Path.Combine(saveFolder, SanitizeFolderName(Section));
 
                     if (!Directory.Exists(sectionFolder))
                         Directory.CreateDirectory(sectionFolder);
 
-                    string savePath = Path.Combine(sectionFolder, fileName);
-                    File.WriteAllBytes(savePath, fileBytes);
+                    string safeFileName = SanitizeFolderName(fileName);
+                    string savePath = Path.Combine(sectionFolder, safeFileName);
+
+                    await File.WriteAllBytesAsync(savePath, fileBytes);
 
                     OnActivityFileReceived(prof_ID, user_ID, savePath);
                 }
@@ -2195,7 +2789,7 @@ namespace WinFormsApp1
                         cmd.Parameters.AddWithValue("@user_id", user_ID);
                         cmd.ExecuteNonQuery();
                     }
-                    ActivityStatus();
+                    SafeInvoke(() => ActivityStatus());
                 }
             }
             catch (Exception ex)
@@ -2206,8 +2800,15 @@ namespace WinFormsApp1
 
         private string SanitizeFolderName(string name)
         {
+            if (string.IsNullOrWhiteSpace(name)) return "Unknown";
+
             foreach (char c in Path.GetInvalidFileNameChars())
                 name = name.Replace(c, '_');
+
+            name = name.Trim().TrimEnd('.');
+
+            if (string.IsNullOrWhiteSpace(name)) return "Unknown";
+
             return name;
         }
 

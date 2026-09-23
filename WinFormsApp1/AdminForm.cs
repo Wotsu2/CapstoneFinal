@@ -12,6 +12,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 
@@ -19,7 +20,7 @@ namespace WinFormsApp1
 {
     public partial class AdminForm : Form
     {
-        // USER DETAILS //
+        // USER DETAILS
         private Panel overlayPanel;
         private Panel userDetailsPanel;
         private PictureBox detailsPhoto;
@@ -31,19 +32,19 @@ namespace WinFormsApp1
         private Button detailsInfoTab, detailsHistoryTab;
         private Panel detailsInfoPage, detailsHistoryPage;
 
-        // CONTEXT MENU //
+        // CONTEXT MENU
         private ContextMenuStrip userContextMenu;
         private int contextUserId = -1;
 
-        // DASHBOARD //
+        // DASHBOARD
         private Panel PanelIndicator;
 
-        // FILE MANAGEMENT //
+        // FILE MANAGEMENT
         private string currentFolder;
         private Stack<string> folderHistory = new Stack<string>();
         private string saveFolder = @"C:\ReceivedFileFolder";
 
-        // WORKSTATION //
+        // WORKSTATION
         private TcpListener listener;
         private TcpListener fileListener;
         private int fileSubmittedCount = 0;
@@ -53,7 +54,7 @@ namespace WinFormsApp1
         private TcpListener screenListener;
         private PictureBox pictureBoxScreen;
         private string selectedWorkstationId = "";
-        private bool isRunning;
+        private volatile bool isRunning = false;
 
         public AdminForm()
         {
@@ -70,6 +71,8 @@ namespace WinFormsApp1
 
         private void admindash_Load(object sender, EventArgs e)
         {
+            isRunning = true;
+
             lblTotalUsers.Text = TotalUsers().ToString();
 
             LoadUserData();
@@ -101,8 +104,24 @@ namespace WinFormsApp1
             pnlFileManagement.BringToFront();
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnFileManagement);
+
+            // Prefer the root from SettingsManager, fall back to the default
+            string root = SettingsManager.Current.SaveFolder;
+            if (string.IsNullOrEmpty(root))
+                root = saveFolder;
+
+            if (!Directory.Exists(root))
+            {
+                MessageBox.Show(
+                    "Root save folder is not configured or does not exist:\n" + root +
+                    "\n\nPlease set it in Login → Configuration → File Storage.",
+                    "Folder Missing",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             lsServerFolderSetup();
-            LoadServerFolder(saveFolder, addToHistory: false);
+            LoadServerFolder(root, addToHistory: false);
         }
 
         private void btnWorkstation_Click(object sender, EventArgs e)
@@ -138,12 +157,13 @@ namespace WinFormsApp1
                 ContextCourseText.Enabled = false;
             }
         }
+
         private void cmbSelection_SelectedIndexChanged(object sender, EventArgs e)
         {
             switch (cmbSelection.Text)
             {
                 case "Users":
-                    LoadUserData();          // refresh grid every time you switch back
+                    LoadUserData();
                     pnlUserList.BringToFront();
                     break;
 
@@ -152,7 +172,6 @@ namespace WinFormsApp1
                     break;
 
                 default:
-                    // ignore unknown selections
                     break;
             }
         }
@@ -513,7 +532,7 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        //  CONTEXT MENU (right-click)
+        //  CONTEXT MENU
         // =========================================================
         private void InitializeUserContextMenu()
         {
@@ -771,7 +790,7 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        //  BULK UPDATE (multi-row selection)
+        //  BULK UPDATE
         // =========================================================
         private void ContextBulkSection_Click(object sender, EventArgs e)
         {
@@ -978,26 +997,27 @@ namespace WinFormsApp1
         //  CREATE ACCOUNT
         // =========================================================
         string semester;
+
         private void CreateUser()
         {
             string connStr = SettingsManager.Current.GetConnectionString();
+
             if (ContextRoleText.Text == "Professor")
-            {
                 semester = "Null";
-            }
             else if (ContextRoleText.Text == "Student")
-            {
                 semester = "1st Semester";
-            }
+
             try
             {
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
 
+                    // ---- 1. Insert credential ----
                     string Insertquery2 = @"INSERT INTO user_credential (username, p_word, roles, user_status, authentication_condition)
                                             VALUES (@Uname, @Password, @UserRole, @Status, @authentication_condition); SELECT LAST_INSERT_ID();";
 
+                    long userId;
                     using (MySqlCommand cmd2 = new MySqlCommand(Insertquery2, conn))
                     {
                         cmd2.Parameters.AddWithValue("@Uname", IdNumberText.Text.Trim());
@@ -1005,51 +1025,90 @@ namespace WinFormsApp1
                         cmd2.Parameters.AddWithValue("@UserRole", ContextRoleText.Text.Trim());
                         cmd2.Parameters.AddWithValue("@Status", "Active");
                         cmd2.Parameters.AddWithValue("@authentication_condition", "Disabled");
-                        long userId = Convert.ToInt64(cmd2.ExecuteScalar());
+                        userId = Convert.ToInt64(cmd2.ExecuteScalar());
+                    }
 
-                        string Insertquery = @"
-                                    INSERT INTO user_information 
-                                        (user_id, lastname, firstname, middlename, email, school_year, school_section, school_semester, school_course) 
-                                    VALUES 
-                                        (@user_id, @lastname, @firstname, @middlename, @email, @school_year, @school_section, @school_semester, @school_course)";
+                    // ---- 2. Insert info ----
+                    string Insertquery = @"
+                                INSERT INTO user_information 
+                                    (user_id, lastname, firstname, middlename, email, school_year, school_section, school_semester, school_course) 
+                                VALUES 
+                                    (@user_id, @lastname, @firstname, @middlename, @email, @school_year, @school_section, @school_semester, @school_course)";
 
-                        using (MySqlCommand cmd = new MySqlCommand(Insertquery, conn))
+                    using (MySqlCommand cmd = new MySqlCommand(Insertquery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@user_id", userId);
+                        cmd.Parameters.AddWithValue("@lastname", LastnameText.Text.ToUpper());
+                        cmd.Parameters.AddWithValue("@firstname", FirstnameText.Text.ToUpper());
+                        cmd.Parameters.AddWithValue("@middlename", MiddlenameText.Text.ToUpper());
+                        cmd.Parameters.AddWithValue("@email", EmailText.Text.Trim());
+                        cmd.Parameters.AddWithValue("@school_year", ContextYearText.Text.ToUpper());
+                        cmd.Parameters.AddWithValue("@school_section", ContextSectionText.Text.ToUpper());
+                        cmd.Parameters.AddWithValue("@school_semester", semester);
+                        cmd.Parameters.AddWithValue("@school_course", ContextCourseText.Text.ToUpper());
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    // ---- 3. Attendance row ----
+                    string AttendanceQuery = "INSERT INTO professor_attendance (student_id, student_name) VALUES (@student_id, @student_name)";
+                    using (MySqlCommand cmd3 = new MySqlCommand(AttendanceQuery, conn))
+                    {
+                        cmd3.Parameters.AddWithValue("@student_id", userId);
+                        cmd3.Parameters.AddWithValue("@student_name", $"{LastnameText.Text.ToUpper()} {FirstnameText.Text.ToUpper()} {MiddlenameText.Text.ToUpper()}");
+                        cmd3.ExecuteNonQuery();
+                    }
+
+                    // ---- 4. Build folder path from ROOT (settings.json) ----
+                    string rootPath = SettingsManager.Current.SaveFolder;
+
+                    if (string.IsNullOrEmpty(rootPath))
+                    {
+                        MessageBox.Show(
+                            "Root folder is not configured.\n\n" +
+                            "Please log out and set it in Login → Configuration → File Storage first.",
+                            "Root Folder Missing",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    if (!Directory.Exists(rootPath))
+                    {
+                        try { Directory.CreateDirectory(rootPath); }
+                        catch (Exception ex)
                         {
-                            cmd.Parameters.AddWithValue("@user_id", userId);
-                            cmd.Parameters.AddWithValue("@lastname", LastnameText.Text.ToUpper());
-                            cmd.Parameters.AddWithValue("@firstname", FirstnameText.Text.ToUpper());
-                            cmd.Parameters.AddWithValue("@middlename", MiddlenameText.Text.ToUpper());
-                            cmd.Parameters.AddWithValue("@email", EmailText.Text.Trim());
-                            cmd.Parameters.AddWithValue("@school_year", ContextYearText.Text.ToUpper());
-                            cmd.Parameters.AddWithValue("@school_section", ContextSectionText.Text.ToUpper());
-                            cmd.Parameters.AddWithValue("@school_semester", semester);
-                            cmd.Parameters.AddWithValue("@school_course", ContextCourseText.Text.ToUpper());
-                            cmd.ExecuteNonQuery();
-                        }
-
-                        string AttendanceQuery = "INSERT INTO professor_attendance (student_id, student_name) VALUES (@student_id, @student_name)";
-                        using (MySqlCommand cmd3 = new MySqlCommand(AttendanceQuery, conn))
-                        {
-                            cmd3.Parameters.AddWithValue("@student_id", userId);
-                            cmd3.Parameters.AddWithValue("@student_name", $"{LastnameText.Text.ToUpper()} {FirstnameText.Text.ToUpper()} {MiddlenameText.Text.ToUpper()}");
-                            cmd3.ExecuteNonQuery();
-                        }
-
-                        string FolderPathQuery = "INSERT INTO mainfolderpath (user_id, FolderPath) VALUES (@user_id, @FolderPath)";
-                        using (var cmd3 = new MySqlCommand(FolderPathQuery, conn))
-                        {
-                            cmd3.Parameters.AddWithValue("@user_id", userId);
-                            cmd3.Parameters.AddWithValue("@FolderPath", $"C:\\ReceivedFileFolder\\{LastnameText.Text.ToUpper()}_{FirstnameText.Text.ToUpper()}_{MiddlenameText.Text.ToUpper()}");
-                            cmd3.ExecuteNonQuery();
+                            MessageBox.Show("Could not create root folder:\n" + rootPath + "\n\n" + ex.Message);
+                            return;
                         }
                     }
 
-                    string FolderName = $"{LastnameText.Text.ToUpper()}_{FirstnameText.Text.ToUpper()}_{MiddlenameText.Text.ToUpper()}";
+                    string folderName = SanitizeFolderName(
+                        $"{LastnameText.Text.ToUpper()}_{FirstnameText.Text.ToUpper()}_{MiddlenameText.Text.ToUpper()}");
 
-                    MessageBox.Show("Account Successfuly Created!");
+                    string userFolderPath = Path.Combine(rootPath, folderName);
+
+                    try
+                    {
+                        if (!Directory.Exists(userFolderPath))
+                            Directory.CreateDirectory(userFolderPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Could not create user folder:\n" + userFolderPath + "\n\n" + ex.Message);
+                        return;
+                    }
+
+                    // ---- 5. Save per-user folder path ----
+                    string FolderPathQuery = "INSERT INTO mainfolderpath (user_id, FolderPath) VALUES (@user_id, @FolderPath)";
+                    using (var cmd4 = new MySqlCommand(FolderPathQuery, conn))
+                    {
+                        cmd4.Parameters.AddWithValue("@user_id", userId);
+                        cmd4.Parameters.AddWithValue("@FolderPath", userFolderPath);
+                        cmd4.ExecuteNonQuery();
+                    }
+
+                    MessageBox.Show("Account Successfully Created!");
                     ClearText();
                     LoadUserData();
-                    CreateFolder(FolderName);
                 }
             }
             catch (Exception ex)
@@ -1058,19 +1117,17 @@ namespace WinFormsApp1
             }
         }
 
-        private void CreateFolder(string FolderName)
+        private string SanitizeFolderName(string name)
         {
-            string newFolderPath = Path.Combine(saveFolder, FolderName);
+            if (string.IsNullOrWhiteSpace(name)) return "Unknown";
 
-            if (!Directory.Exists(newFolderPath))
-            {
-                Directory.CreateDirectory(newFolderPath);
-                MessageBox.Show("Folder created!");
-            }
-            else
-            {
-                MessageBox.Show("Folder already exists.");
-            }
+            foreach (char c in Path.GetInvalidFileNameChars())
+                name = name.Replace(c, '_');
+
+            name = name.Trim().TrimEnd('.');
+            if (string.IsNullOrWhiteSpace(name)) return "Unknown";
+
+            return name;
         }
 
         private void ClearText()
@@ -1086,7 +1143,7 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        //  WORKSTATION
+        //  WORKSTATION (SAFE SHUTDOWN)
         // =========================================================
         public void WorkstationButton_Click(object sender, EventArgs e)
         {
@@ -1098,45 +1155,64 @@ namespace WinFormsApp1
 
         private async void StartServer()
         {
-            listener = new TcpListener(IPAddress.Any, SettingsManager.Current.WorkstationPort);
-            listener.Start();
+            try
+            {
+                listener = new TcpListener(IPAddress.Any, SettingsManager.Current.WorkstationPort);
+                listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                listener.Start();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Workstation bind failed: " + ex.Message);
+                return;
+            }
 
             lblTotalWorkstations.Text = "0";
 
-            while (true)
+            while (isRunning)
             {
-                TcpClient client = await listener.AcceptTcpClientAsync();
-                string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
+                try
+                {
+                    TcpClient client = await listener.AcceptTcpClientAsync();
+                    string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
 
-                Console.WriteLine("🟢 New TCP connection accepted from: " + clientIp);
+                    Console.WriteLine("🟢 New TCP connection accepted from: " + clientIp);
 
-                Button wsButton = null;
+                    Button wsButton = null;
 
-                if (this.InvokeRequired)
-                    this.Invoke(new Action(() => wsButton = OnWorkStationConnected(clientIp)));
-                else
-                    wsButton = OnWorkStationConnected(clientIp);
+                    if (this.InvokeRequired)
+                        this.Invoke(new Action(() => wsButton = OnWorkStationConnected(clientIp)));
+                    else
+                        wsButton = OnWorkStationConnected(clientIp);
 
-                _ = MonitorDisconnected(client, wsButton, clientIp);
+                    _ = MonitorDisconnected(client, wsButton, clientIp);
+                }
+                catch (ObjectDisposedException)
+                {
+                    break;
+                }
+                catch (SocketException)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    if (!isRunning) break;
+                    Console.WriteLine("Workstation accept error: " + ex.Message);
+                }
             }
         }
 
         private Button OnWorkStationConnected(string clientIp)
         {
-            Console.WriteLine("🔵 OnWorkStationConnected called for: " + clientIp);
-            Console.WriteLine("   Existing keys: [" + string.Join(", ", workstationButtons.Keys) + "]");
-            Console.WriteLine("   Contains this IP? " + workstationButtons.ContainsKey(clientIp));
-
             if (workstationButtons.ContainsKey(clientIp))
             {
-                Console.WriteLine("   ✅ Reusing existing button, setting to green");
                 Button existingBtn = workstationButtons[clientIp];
                 existingBtn.BackColor = Color.LightGreen;
                 UpdateConnectedCount();
                 return existingBtn;
             }
 
-            Console.WriteLine("   🆕 Creating new button");
             WorkStationNum++;
 
             Button MainPcButton = new Button();
@@ -1164,7 +1240,7 @@ namespace WinFormsApp1
 
             try
             {
-                while (client.Connected)
+                while (client.Connected && isRunning)
                 {
                     int bytesRead = await stream.ReadAsync(buffer, 0, 1);
                     if (bytesRead == 0) break;
@@ -1172,27 +1248,35 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                Console.WriteLine("⚠️ MonitorDisconnected exception for " + clientIp + ": " + ex.Message);
+                Console.WriteLine("MonitorDisconnected exception for " + clientIp + ": " + ex.Message);
             }
             finally
             {
-                Console.WriteLine("🔴 Marking as disconnected: " + clientIp);
-
-                if (this.InvokeRequired)
+                try
                 {
-                    this.Invoke(new Action(() =>
+                    if (!this.IsDisposed && this.IsHandleCreated)
                     {
-                        wsButton.BackColor = Color.Red;
-                        UpdateConnectedCount();
-                    }));
+                        if (this.InvokeRequired)
+                        {
+                            this.BeginInvoke(new Action(() =>
+                            {
+                                if (wsButton != null && !wsButton.IsDisposed)
+                                    wsButton.BackColor = Color.Red;
+                                UpdateConnectedCount();
+                            }));
+                        }
+                        else
+                        {
+                            if (wsButton != null && !wsButton.IsDisposed)
+                                wsButton.BackColor = Color.Red;
+                            UpdateConnectedCount();
+                        }
+                    }
                 }
-                else
-                {
-                    wsButton.BackColor = Color.Red;
-                    UpdateConnectedCount();
-                }
+                catch { }
 
-                client.Close();
+                try { client.Close(); } catch { }
+                try { client.Dispose(); } catch { }
             }
         }
 
@@ -1207,17 +1291,42 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        //  SCREEN SHARING
+        //  SCREEN SHARING (SAFE SHUTDOWN)
         // =========================================================
         private async void StartScreenListener()
         {
-            screenListener = new TcpListener(IPAddress.Any, SettingsManager.Current.ScreenSharePort);
-            screenListener.Start();
-
-            while (true)
+            try
             {
-                TcpClient client = await screenListener.AcceptTcpClientAsync();
-                _ = ReceiveScreenStream(client);
+                screenListener = new TcpListener(IPAddress.Any, SettingsManager.Current.ScreenSharePort);
+                screenListener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                screenListener.Start();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Screen listener bind failed: " + ex.Message);
+                return;
+            }
+
+            while (isRunning)
+            {
+                try
+                {
+                    TcpClient client = await screenListener.AcceptTcpClientAsync();
+                    _ = ReceiveScreenStream(client);
+                }
+                catch (ObjectDisposedException)
+                {
+                    break;
+                }
+                catch (SocketException)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    if (!isRunning) break;
+                    Console.WriteLine("Screen accept error: " + ex.Message);
+                }
             }
         }
 
@@ -1228,13 +1337,15 @@ namespace WinFormsApp1
 
             try
             {
-                while (client.Connected)
+                while (client.Connected && isRunning)
                 {
                     byte[] lengthBuffer = new byte[4];
                     int read = await ReadExactAsync(stream, lengthBuffer, 4);
                     if (read == 0) break;
 
                     int imageLength = BitConverter.ToInt32(lengthBuffer, 0);
+                    if (imageLength <= 0 || imageLength > 50 * 1024 * 1024) break;
+
                     Console.WriteLine("Receiving frame: " + imageLength + " bytes from " + clientIp);
                     byte[] imageBuffer = new byte[imageLength];
 
@@ -1245,17 +1356,21 @@ namespace WinFormsApp1
                     {
                         Image frame = Image.FromStream(ms);
 
-                        if (this.InvokeRequired)
-                            this.Invoke(new Action(() => UpdateScreenViewer(clientIp, frame)));
-                        else
-                            UpdateScreenViewer(clientIp, frame);
+                        if (!this.IsDisposed && this.IsHandleCreated)
+                        {
+                            if (this.InvokeRequired)
+                                this.BeginInvoke(new Action(() => UpdateScreenViewer(clientIp, frame)));
+                            else
+                                UpdateScreenViewer(clientIp, frame);
+                        }
                     }
                 }
             }
             catch { }
             finally
             {
-                client.Close();
+                try { client.Close(); } catch { }
+                try { client.Dispose(); } catch { }
             }
         }
 
@@ -1292,7 +1407,11 @@ namespace WinFormsApp1
 
             screenViewers[workstationId] = viewer.GetPictureBox();
 
-            viewer.FormClosed += (s, args) => screenViewers.Remove(workstationId);
+            viewer.FormClosed += (s, args) =>
+            {
+                if (screenViewers.ContainsKey(workstationId))
+                    screenViewers.Remove(workstationId);
+            };
 
             viewer.Show();
         }
@@ -1309,7 +1428,10 @@ namespace WinFormsApp1
 
         private void LoadServerFolder(string path, bool addToHistory = true)
         {
-            if (addToHistory && !string.IsNullOrEmpty(currentFolder))
+            if (string.IsNullOrEmpty(path) || !Directory.Exists(path))
+                return;
+
+            if (addToHistory && !string.IsNullOrEmpty(currentFolder) && currentFolder != path)
                 folderHistory.Push(currentFolder);
 
             currentFolder = path;
@@ -1361,9 +1483,42 @@ namespace WinFormsApp1
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
         }
 
+        // =========================================================
+        //  LOGOUT — CLEAN SHUTDOWN
+        // =========================================================
         private void btnLogout_Click(object sender, EventArgs e)
         {
+            var result = MessageBox.Show(
+                "Are you sure you want to log out?",
+                "Logout Confirmation",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
 
+            if (result != DialogResult.Yes) return;
+
+            // 1. Signal loops to stop
+            isRunning = false;
+
+            // 2. Stop listeners — their pending accepts will throw and get caught
+            try { listener?.Stop(); } catch { }
+            try { screenListener?.Stop(); } catch { }
+
+            // 3. Small delay so pending accepts exit before we dispose handles
+            System.Threading.Thread.Sleep(150);
+
+            // 4. Dispose any open screen viewers
+            foreach (var kvp in screenViewers)
+            {
+                try { kvp.Value?.Image?.Dispose(); } catch { }
+            }
+            screenViewers.Clear();
+
+            // 5. Show Login BEFORE closing this form so Application doesn't exit
+            Login loginForm = new Login();
+            loginForm.Show();
+
+            this.Hide();
+            this.Close();
         }
     }
 }

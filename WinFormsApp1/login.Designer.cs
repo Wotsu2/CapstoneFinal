@@ -766,6 +766,7 @@
             btnSelectFolder.Size = new Size(127, 40);
             btnSelectFolder.TabIndex = 21;
             btnSelectFolder.Text = "Select Folder";
+            btnSelectFolder.Click += btnSelectFolder_Click;
             // 
             // label6
             // 

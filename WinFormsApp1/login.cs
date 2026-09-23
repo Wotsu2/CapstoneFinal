@@ -23,6 +23,9 @@ namespace WinFormsApp1
         private string question;
         private string answer;
 
+        // Root folder picked in Configuration → File Storage
+        private string selectedRootFolder = "";
+
         public Login()
         {
             InitializeComponent();
@@ -48,35 +51,68 @@ namespace WinFormsApp1
             txtDatabaseName.Text = SettingsManager.Current.DatabaseName.ToString();
             txtDatabaseUser.Text = SettingsManager.Current.DatabaseUser.ToString();
             txtDatabasePassword.Text = SettingsManager.Current.DatabasePassword.ToString();
+
+            if (!string.IsNullOrEmpty(SettingsManager.Current.SaveFolder))
+                selectedRootFolder = SettingsManager.Current.SaveFolder;
         }
 
+        // =========================================================
+        // CONFIGURATION — SAVE
+        // =========================================================
         private void btnSaveSetting_Click_1(object sender, EventArgs e)
         {
-            SettingsManager.Current.ServerIp = txtServerIP.Text.Trim();
-            SettingsManager.Current.WorkstationPort = int.Parse(txtWorkStationPort.Text.Trim());
-            SettingsManager.Current.ScreenSharePort = int.Parse(txtScreenSharingPort.Text.Trim());
-            SettingsManager.Current.BroadcastPort = int.Parse(txtBroadcastPort.Text.Trim());
-            SettingsManager.Current.FileTransferPort = int.Parse(txtFileTransferPort.Text.Trim());
-            SettingsManager.Current.CommandPort = int.Parse(txtCommandPort.Text.Trim());
+            try
+            {
+                SettingsManager.Current.ServerIp = txtServerIP.Text.Trim();
+                SettingsManager.Current.WorkstationPort = int.Parse(txtWorkStationPort.Text.Trim());
+                SettingsManager.Current.ScreenSharePort = int.Parse(txtScreenSharingPort.Text.Trim());
+                SettingsManager.Current.BroadcastPort = int.Parse(txtBroadcastPort.Text.Trim());
+                SettingsManager.Current.FileTransferPort = int.Parse(txtFileTransferPort.Text.Trim());
+                SettingsManager.Current.CommandPort = int.Parse(txtCommandPort.Text.Trim());
 
-            SettingsManager.Current.DatabaseHost = txtDatabaseHost.Text.Trim();
-            SettingsManager.Current.DatabasePort = int.Parse(txtDatabasePort.Text.Trim());
-            SettingsManager.Current.DatabaseName = txtDatabaseName.Text.Trim();
-            SettingsManager.Current.DatabaseUser = txtDatabaseUser.Text.Trim();
-            SettingsManager.Current.DatabasePassword = txtDatabasePassword.Text;
+                SettingsManager.Current.DatabaseHost = txtDatabaseHost.Text.Trim();
+                SettingsManager.Current.DatabasePort = int.Parse(txtDatabasePort.Text.Trim());
+                SettingsManager.Current.DatabaseName = txtDatabaseName.Text.Trim();
+                SettingsManager.Current.DatabaseUser = txtDatabaseUser.Text.Trim();
+                SettingsManager.Current.DatabasePassword = txtDatabasePassword.Text;
 
-            SettingsManager.Save();
+                if (!string.IsNullOrEmpty(selectedRootFolder))
+                    SettingsManager.Current.SaveFolder = selectedRootFolder;
 
-            MessageBox.Show("Settings saved successfully!");
+                SettingsManager.Save();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Invalid settings: " + ex.Message);
+                return;
+            }
+
+            MessageBox.Show("Settings saved successfully!\n\nRoot folder: " + SettingsManager.Current.SaveFolder);
         }
 
+        // =========================================================
+        // CONFIGURATION — SELECT FOLDER
+        // =========================================================
         private void btnSelectFolder_Click(object sender, EventArgs e)
         {
             using (FolderBrowserDialog fbd = new FolderBrowserDialog())
             {
+                fbd.Description = "Choose the ROOT folder where all user folders will be created";
+                fbd.ShowNewFolderButton = true;
+
+                if (!string.IsNullOrEmpty(SettingsManager.Current.SaveFolder) &&
+                    Directory.Exists(SettingsManager.Current.SaveFolder))
+                    fbd.SelectedPath = SettingsManager.Current.SaveFolder;
+
                 if (fbd.ShowDialog() == DialogResult.OK)
                 {
-                    //txtSaveFolder.Text = fbd.SelectedPath;
+                    selectedRootFolder = fbd.SelectedPath;
+                    SettingsManager.Current.SaveFolder = selectedRootFolder;
+
+                    MessageBox.Show(
+                        "Root folder selected:\n" + selectedRootFolder + "\n\nClick Save to apply.",
+                        "Root Folder",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
         }
@@ -91,6 +127,9 @@ namespace WinFormsApp1
             pnlConfiguration.Visible = false;
         }
 
+        // =========================================================
+        // CAMERA CHECK
+        // =========================================================
         private bool IsAnyCameraDetected()
         {
             try
@@ -191,14 +230,11 @@ namespace WinFormsApp1
                                 studentreferencesPhoto = new Bitmap(fs);
                             }
 
-                            // Hide Login first
                             this.Hide();
 
                             LivenessCheckForm livenessForm = new LivenessCheckForm(
                                 studentreferencesPhoto, UserId, StudentSection, username);
 
-                            // If liveness closes without opening StudentForm (user cancelled),
-                            // show Login back. Otherwise close Login.
                             livenessForm.FormClosed += (s, args) =>
                             {
                                 bool anyVisible = false;
@@ -260,6 +296,9 @@ namespace WinFormsApp1
             }
         }
 
+        // =========================================================
+        // LOGIN
+        // =========================================================
         private void btnLogin_Click(object sender, EventArgs e)
         {
             string username = txtUsername.Text;
@@ -267,7 +306,6 @@ namespace WinFormsApp1
 
             InitializeGetQandA(username);
 
-            // Hardcoded admin
             if (username == "admin123" && password == "123admin")
             {
                 AdminForm adminform = new AdminForm();

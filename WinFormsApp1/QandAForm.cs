@@ -71,8 +71,6 @@ namespace WinFormsApp1
                             cmbFirstQuestion.SelectedIndex = 0;
                             cmbSecondQuestion.SelectedIndex = 0;
                             cmbThirdQuestion.SelectedIndex = 0;
-
-                            MessageBox.Show($"{questions[0]}");
                         }
                     }
                 }
@@ -109,15 +107,14 @@ namespace WinFormsApp1
 
                                 if (Afirst == txtFirstAnswer.Text && Asecond == txtSecondAnswer.Text && Athird == txtThirdAnswer.Text)
                                 {
+                                    this.Hide();
+
                                     // ✅ Open StudentForm BEFORE closing QandA
                                     StudentForm studentForm = new StudentForm(UserId, Section, StudentUsername);
                                     studentForm.Show();
                                     studentForm.Refresh();
                                     Application.DoEvents();
 
-                                    // ✅ Now hide + close this form
-                                    this.Hide();
-                                    this.Close();
                                 }
                                 else
                                 {
