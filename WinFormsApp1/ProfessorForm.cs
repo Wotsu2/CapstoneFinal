@@ -2817,5 +2817,11 @@ namespace WinFormsApp1
             ProfessorQuizForm profQuiz = new ProfessorQuizForm(ProfessorID);
             profQuiz.ShowDialog();
         }
+
+        private void btnQuizExam_Click(object sender, EventArgs e)
+        {
+            ProfessorGradesForm QuizGradeform = new ProfessorGradesForm();
+            QuizGradeform.ShowDialog();
+        }
     }
 }
