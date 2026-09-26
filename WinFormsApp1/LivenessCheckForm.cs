@@ -485,6 +485,11 @@ namespace WinFormsApp1
             try
             {
                 Bitmap frame = (Bitmap)eventArgs.Frame.Clone();
+
+                // IMPORTANT:
+                // Remove horizontal mirror effect
+                frame.RotateFlip(RotateFlipType.RotateNoneFlipX);
+
                 if (scannerView.InvokeRequired)
                 {
                     scannerView.Invoke(new Action(() =>
@@ -494,8 +499,16 @@ namespace WinFormsApp1
                         old?.Dispose();
                     }));
                 }
+                else
+                {
+                    var old = scannerView.CameraFrame;
+                    scannerView.CameraFrame = frame;
+                    old?.Dispose();
+                }
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         private void CountdownTimer_Tick(object sender, EventArgs e)
@@ -998,8 +1011,8 @@ namespace WinFormsApp1
 
             int cx = Width / 2;
             int cy = Height / 2 - 6;
-            int faceW = (int)(Width * 0.58);
-            int faceH = (int)(Height * 0.62);
+            int faceW = (int)(Width * 0.46);
+            int faceH = (int)(Height * 0.68);
             var faceRect = new Rectangle(cx - faceW / 2, cy - faceH / 2, faceW, faceH);
 
             // Face-shaped guide: mas natural kaysa sa perfect oval/circle.
@@ -1129,44 +1142,8 @@ namespace WinFormsApp1
         {
             var path = new GraphicsPath();
 
-            float x = r.X;
-            float y = r.Y;
-            float w = r.Width;
-            float h = r.Height;
-            float cx = x + w / 2f;
-
-            // Forehead -> temples -> cheeks -> jaw -> chin.
-            path.AddBezier(
-                cx, y,
-                x + w * 0.73f, y,
-                x + w * 0.94f, y + h * 0.17f,
-                x + w * 0.92f, y + h * 0.36f);
-            path.AddBezier(
-                x + w * 0.92f, y + h * 0.36f,
-                x + w * 0.91f, y + h * 0.58f,
-                x + w * 0.80f, y + h * 0.76f,
-                x + w * 0.65f, y + h * 0.86f);
-            path.AddBezier(
-                x + w * 0.65f, y + h * 0.86f,
-                x + w * 0.59f, y + h * 0.91f,
-                x + w * 0.56f, y + h * 0.98f,
-                cx, y + h);
-            path.AddBezier(
-                cx, y + h,
-                x + w * 0.44f, y + h * 0.98f,
-                x + w * 0.41f, y + h * 0.91f,
-                x + w * 0.35f, y + h * 0.86f);
-            path.AddBezier(
-                x + w * 0.35f, y + h * 0.86f,
-                x + w * 0.20f, y + h * 0.76f,
-                x + w * 0.09f, y + h * 0.58f,
-                x + w * 0.08f, y + h * 0.36f);
-            path.AddBezier(
-                x + w * 0.08f, y + h * 0.36f,
-                x + w * 0.06f, y + h * 0.17f,
-                x + w * 0.27f, y,
-                cx, y);
-            path.CloseFigure();
+            // Vertical oval — mas mataas kaysa malapad
+            path.AddEllipse(r);
 
             return path;
         }
@@ -1186,20 +1163,40 @@ namespace WinFormsApp1
         {
             float srcRatio = (float)img.Width / img.Height;
             float destRatio = (float)dest.Width / dest.Height;
+
             Rectangle srcRect;
+
             if (srcRatio > destRatio)
             {
                 int newWidth = (int)(img.Height * destRatio);
                 int x = (img.Width - newWidth) / 2;
-                srcRect = new Rectangle(x, 0, newWidth, img.Height);
+
+                srcRect = new Rectangle(
+                    x,
+                    0,
+                    newWidth,
+                    img.Height);
             }
             else
             {
                 int newHeight = (int)(img.Width / destRatio);
                 int yOff = (img.Height - newHeight) / 2;
-                srcRect = new Rectangle(0, yOff, img.Width, newHeight);
+
+                srcRect = new Rectangle(
+                    0,
+                    yOff,
+                    img.Width,
+                    newHeight);
             }
-            g.DrawImage(img, dest, srcRect, GraphicsUnit.Pixel);
+
+            // IMPORTANT:
+            // Huwag i-FlipX ang camera frame.
+            // Natural/unmirrored orientation.
+            g.DrawImage(
+                img,
+                dest,
+                srcRect,
+                GraphicsUnit.Pixel);
         }
 
         private GraphicsPath RoundedRectPath(RectangleF r, int rad)

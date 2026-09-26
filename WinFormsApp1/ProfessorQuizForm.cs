@@ -25,6 +25,7 @@ namespace WinFormsApp1
         private NumericUpDown numDurationMinutes;
 
         private RoundedButton btnImportDocx;
+        private RoundedButton btnViewExample;
         private RoundedButton btnSaveQuiz;
         private RoundedButton btnClear;
         private RoundedButton btnMonitor;
@@ -501,6 +502,53 @@ namespace WinFormsApp1
 
             Controls.Add(btnImportDocx);
 
+            // =====================================================
+            // VIEW EXAMPLE DOCX (small button beside Import Docx)
+            // =====================================================
+
+            btnViewExample =
+                new RoundedButton();
+
+            btnViewExample.Text =
+                "?";
+
+            btnViewExample.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    10,
+                    FontStyle.Bold);
+
+            btnViewExample.Size =
+                new Size(
+                    40,
+                    40);
+
+            btnViewExample.Location =
+                new Point(
+                    pad + 190 + 8,
+                    298);
+
+            btnViewExample.BackColor =
+                Color.FromArgb(100, 116, 139);
+
+            btnViewExample.HoverColor =
+                Color.FromArgb(71, 85, 105);
+
+            btnViewExample.ForeColor =
+                Color.White;
+
+            ToolTip tipViewExample =
+                new ToolTip();
+
+            tipViewExample.SetToolTip(
+                btnViewExample,
+                "See an example DOCX showing how to format your quiz");
+
+            btnViewExample.Click +=
+                BtnViewExample_Click;
+
+            Controls.Add(btnViewExample);
+
             lblFileName =
                 new Label();
 
@@ -523,7 +571,7 @@ namespace WinFormsApp1
 
             lblFileName.Location =
                 new Point(
-                    pad + 210,
+                    pad + 250,
                     312);
 
             Controls.Add(lblFileName);
@@ -1151,6 +1199,68 @@ namespace WinFormsApp1
                         "Error importing DOCX:\n\n" +
                         ex.Message,
                         "Import Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        // =========================================================
+        // VIEW EXAMPLE DOCX
+        // =========================================================
+
+        private void BtnViewExample_Click(
+            object sender,
+            EventArgs e)
+        {
+            using (SaveFileDialog dialog =
+                   new SaveFileDialog())
+            {
+                dialog.Title =
+                    "Save Example Quiz Template";
+
+                dialog.Filter =
+                    "Word Document (*.docx)|*.docx";
+
+                dialog.FileName =
+                    "Exam_Import_Template_Example.docx";
+
+                if (dialog.ShowDialog() !=
+                    DialogResult.OK)
+                {
+                    return;
+                }
+
+                try
+                {
+                    ExampleTemplateGenerator.Generate(
+                        dialog.FileName);
+
+                    DialogResult open =
+                        MessageBox.Show(
+                            "Example template saved!\n\n" +
+                            "Open it now?",
+                            "Saved",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Information);
+
+                    if (open ==
+                        DialogResult.Yes)
+                    {
+                        System.Diagnostics.Process.Start(
+                            new System.Diagnostics.ProcessStartInfo
+                            {
+                                FileName = dialog.FileName,
+                                UseShellExecute = true
+                            });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(
+                        "Could not create the example file:\n\n" +
+                        ex.Message,
+                        "Error",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
                 }

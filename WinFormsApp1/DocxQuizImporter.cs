@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using DocumentFormat.OpenXml.Packaging;
 using Word = DocumentFormat.OpenXml.Wordprocessing;
@@ -8,1881 +10,359 @@ namespace WinFormsApp1
 {
     public class QuizImportResult
     {
-        public string Title { get; set; }
-        public string Subject { get; set; }
-
-        public List<QuizQuestion> Questions { get; set; }
-
-        public QuizImportResult()
-        {
-            Questions = new List<QuizQuestion>();
-        }
+        public string Title { get; set; } = "";
+        public string Subject { get; set; } = "";
+        public List<QuizQuestion> Questions { get; set; } = new List<QuizQuestion>();
     }
-
 
     public static class DocxQuizImporter
     {
-        // =============================================================
-        // MAIN IMPORT
-        // =============================================================
+        // Section headers found in the QUESTION area, e.g.:
+        //   "PART I – MULTIPLE CHOICE (15 points)"
+        //   "PART II – TRUE OR FALSE (10 points)"
+        //   "PART III – IDENTIFICATION (10 points)"
+        //   "PART IV – ESSAY (15 points)"
+        private static readonly Regex PartHeaderRegex = new Regex(
+            @"^\s*(PART\s+[IVXLC]+|[IVXLC]+)\s*[\.\-–—:]?\s*(MULTIPLE\s*CHOICE|TRUE\s*(?:OR|/)?\s*FALSE|IDENTIFICATION|ESSAY)",
+            RegexOptions.IgnoreCase);
 
+        // Bare sub-headers found inside the ANSWER KEY area, e.g. "TRUE OR FALSE", "IDENTIFICATION", "ESSAY"
+        private static readonly Regex KeySubHeaderRegex = new Regex(
+            @"^\s*(MULTIPLE\s*CHOICE|TRUE\s*(?:OR|/)?\s*FALSE|IDENTIFICATION|ESSAY)\s*$",
+            RegexOptions.IgnoreCase);
+
+        // Lines that are just blank fill-in space: "Answer: ______" or plain "______________"
+        private static readonly Regex BlankAnswerLineRegex = new Regex(
+            @"^\s*(Answer\s*:\s*)?_{3,}\s*$", RegexOptions.IgnoreCase);
+
+        // ============================================================
+        // MAIN IMPORT
+        // ============================================================
         public static QuizImportResult Import(string filePath)
         {
-            QuizImportResult result =
-                new QuizImportResult();
+            if (string.IsNullOrWhiteSpace(filePath))
+                throw new ArgumentException("DOCX file path is empty.");
 
-            List<string> paragraphs =
-                new List<string>();
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException("DOCX file was not found.", filePath);
 
-            // =========================================================
-            // READ ALL DOCX PARAGRAPHS
-            // =========================================================
+            List<string> lines = ReadAllLines(filePath);
 
-            using (WordprocessingDocument document =
-                   WordprocessingDocument.Open(filePath, false))
+            if (lines.Count == 0)
+                throw new Exception("The DOCX file does not contain readable text.");
+
+            var result = new QuizImportResult { Title = ExtractTitle(lines, filePath) };
+
+            // --------------------------------------------------------
+            // Split into question area vs answer-key area.
+            // --------------------------------------------------------
+            int answerKeyStart = lines.FindIndex(l => Regex.IsMatch(l, @"^ANSWER\s*KEY\b", RegexOptions.IgnoreCase));
+            int contentEnd = answerKeyStart >= 0 ? answerKeyStart : lines.Count;
+
+            // --------------------------------------------------------
+            // Parse the answer key area into per-section dictionaries.
+            // Numbering starts over inside each section, so we key
+            // answers by (section, number) instead of number alone.
+            // --------------------------------------------------------
+            var mcAnswers = new Dictionary<int, string>();
+            var tfAnswers = new Dictionary<int, string>();
+            var idAnswers = new Dictionary<int, string>();
+
+            if (answerKeyStart >= 0)
             {
-                Word.Body body =
-                    document.MainDocumentPart.Document.Body;
-
-                foreach (Word.Paragraph paragraph
-                         in body.Elements<Word.Paragraph>())
+                string keySection = "mc"; // answers right after "ANSWER KEY" belong to Multiple Choice by default
+                for (int i = answerKeyStart + 1; i < lines.Count; i++)
                 {
-                    string text =
-                        paragraph.InnerText.Trim();
+                    string line = lines[i];
 
-                    if (!string.IsNullOrWhiteSpace(text))
+                    Match subHeader = KeySubHeaderRegex.Match(line);
+                    if (subHeader.Success)
                     {
-                        paragraphs.Add(text);
-                    }
-                }
-            }
-
-
-            // =========================================================
-            // QUESTION NUMBER -> QUESTION
-            // =========================================================
-
-            Dictionary<int, QuizQuestion> questionMap =
-                new Dictionary<int, QuizQuestion>();
-
-
-            QuizQuestion currentQuestion = null;
-
-            string currentSectionType = "";
-
-            bool answerKeyReached = false;
-
-
-            // =========================================================
-            // FIRST PASS
-            // READ QUESTIONS
-            // =========================================================
-
-            foreach (string text in paragraphs)
-            {
-                // -----------------------------------------------------
-                // ANSWER KEY
-                //
-                // Once detected, stop reading questions.
-                // -----------------------------------------------------
-
-                if (IsAnswerKeyHeading(text))
-                {
-                    answerKeyReached = true;
-                    break;
-                }
-
-
-                // -----------------------------------------------------
-                // QUIZ TITLE
-                // -----------------------------------------------------
-
-                if (text.StartsWith(
-                    "QUIZ:",
-                    StringComparison.OrdinalIgnoreCase))
-                {
-                    result.Title =
-                        text.Substring(5).Trim();
-
-                    continue;
-                }
-
-
-                // -----------------------------------------------------
-                // SUBJECT
-                // -----------------------------------------------------
-
-                if (text.StartsWith(
-                    "SUBJECT:",
-                    StringComparison.OrdinalIgnoreCase))
-                {
-                    result.Subject =
-                        text.Substring(8).Trim();
-
-                    continue;
-                }
-
-
-                // -----------------------------------------------------
-                // TYPE:
-                //
-                // TYPE: MULTIPLE CHOICE
-                // TYPE: TRUE/FALSE
-                // -----------------------------------------------------
-
-                if (text.StartsWith(
-                    "TYPE:",
-                    StringComparison.OrdinalIgnoreCase))
-                {
-                    string type =
-                        text.Substring(5).Trim();
-
-                    currentSectionType =
-                        ConvertQuestionType(type);
-
-                    if (currentQuestion != null)
-                    {
-                        currentQuestion.QuestionType =
-                            currentSectionType;
-
-                        SetDefaultChoicesForType(
-                            currentQuestion,
-                            currentSectionType);
-                    }
-
-                    continue;
-                }
-
-
-                // -----------------------------------------------------
-                // SECTION HEADING
-                // -----------------------------------------------------
-
-                string sectionType =
-                    DetectSectionHeading(text);
-
-                if (!string.IsNullOrEmpty(sectionType))
-                {
-                    currentSectionType =
-                        sectionType;
-
-                    continue;
-                }
-
-
-                // -----------------------------------------------------
-                // NEW QUESTION
-                //
-                // 1. What is information security?
-                // 2. What is confidentiality?
-                // -----------------------------------------------------
-
-                int questionNumber;
-
-                if (TryGetQuestionNumber(
-                    text,
-                    out questionNumber))
-                {
-                    // -------------------------------------------------
-                    // If current line looks like an answer-key line,
-                    // do not create a question.
-                    // -------------------------------------------------
-
-                    if (LooksLikeAnswerOnly(text))
-                    {
+                        string kw = subHeader.Groups[1].Value.ToUpperInvariant().Replace(" ", "");
+                        if (kw.Contains("MULTIPLECHOICE")) keySection = "mc";
+                        else if (kw.Contains("TRUE")) keySection = "tf";
+                        else if (kw.Contains("IDENTIFICATION")) keySection = "id";
+                        else if (kw.Contains("ESSAY")) keySection = "essay";
                         continue;
                     }
 
+                    if (!TryParseNumberedLine(line, out int num, out string val))
+                        continue;
 
-                    // -------------------------------------------------
-                    // SAVE PREVIOUS QUESTION
-                    // -------------------------------------------------
-
-                    if (currentQuestion != null)
-                    {
-                        FinalizeQuestion(
-                            currentQuestion);
-
-                        if (!result.Questions.Contains(
-                            currentQuestion))
-                        {
-                            result.Questions.Add(
-                                currentQuestion);
-                        }
-                    }
-
-
-                    // -------------------------------------------------
-                    // CREATE NEW QUESTION
-                    // -------------------------------------------------
-
-                    currentQuestion =
-                        new QuizQuestion();
-
-
-                    currentQuestion.Question =
-                        RemoveQuestionNumber(text);
-
-
-                    // -------------------------------------------------
-                    // DETECT TYPE
-                    // -------------------------------------------------
-
-                    string detectedType =
-                        DetectQuestionTypeFromText(
-                            currentQuestion.Question,
-                            currentSectionType);
-
-
-                    currentQuestion.QuestionType =
-                        detectedType;
-
-
-                    SetDefaultChoicesForType(
-                        currentQuestion,
-                        detectedType);
-
-
-                    // -------------------------------------------------
-                    // STORE QUESTION NUMBER
-                    // -------------------------------------------------
-
-                    if (!questionMap.ContainsKey(
-                        questionNumber))
-                    {
-                        questionMap.Add(
-                            questionNumber,
-                            currentQuestion);
-                    }
-
-
-                    continue;
-                }
-
-
-                // =====================================================
-                // MULTIPLE CHOICE A
-                // =====================================================
-
-                if (StartsWithChoice(text, "A"))
-                {
-                    if (currentQuestion != null)
-                    {
-                        currentQuestion.QuestionType =
-                            "multiple_choice";
-
-                        currentQuestion.ChoiceA =
-                            RemoveChoiceLetter(
-                                text,
-                                "A");
-                    }
-
-                    continue;
-                }
-
-
-                // =====================================================
-                // MULTIPLE CHOICE B
-                // =====================================================
-
-                if (StartsWithChoice(text, "B"))
-                {
-                    if (currentQuestion != null)
-                    {
-                        currentQuestion.QuestionType =
-                            "multiple_choice";
-
-                        currentQuestion.ChoiceB =
-                            RemoveChoiceLetter(
-                                text,
-                                "B");
-                    }
-
-                    continue;
-                }
-
-
-                // =====================================================
-                // MULTIPLE CHOICE C
-                // =====================================================
-
-                if (StartsWithChoice(text, "C"))
-                {
-                    if (currentQuestion != null)
-                    {
-                        currentQuestion.QuestionType =
-                            "multiple_choice";
-
-                        currentQuestion.ChoiceC =
-                            RemoveChoiceLetter(
-                                text,
-                                "C");
-                    }
-
-                    continue;
-                }
-
-
-                // =====================================================
-                // MULTIPLE CHOICE D
-                // =====================================================
-
-                if (StartsWithChoice(text, "D"))
-                {
-                    if (currentQuestion != null)
-                    {
-                        currentQuestion.QuestionType =
-                            "multiple_choice";
-
-                        currentQuestion.ChoiceD =
-                            RemoveChoiceLetter(
-                                text,
-                                "D");
-                    }
-
-                    continue;
-                }
-
-
-                // =====================================================
-                // TRUE / FALSE
-                // =====================================================
-
-                if (IsTrueFalseChoice(text))
-                {
-                    if (currentQuestion != null)
-                    {
-                        currentQuestion.QuestionType =
-                            "true_false";
-
-                        currentQuestion.ChoiceA =
-                            "TRUE";
-
-                        currentQuestion.ChoiceB =
-                            "FALSE";
-
-                        currentQuestion.ChoiceC =
-                            "";
-
-                        currentQuestion.ChoiceD =
-                            "";
-                    }
-
-                    continue;
-                }
-
-
-                // =====================================================
-                // INLINE ANSWER
-                //
-                // ANSWER: B
-                // ANSWER: Authentication
-                // =====================================================
-
-                if (text.StartsWith(
-                    "ANSWER:",
-                    StringComparison.OrdinalIgnoreCase))
-                {
-                    if (currentQuestion != null)
-                    {
-                        string answer =
-                            text.Substring(7).Trim();
-
-                        currentQuestion.CorrectAnswer =
-                            ConvertAnswerForQuestion(
-                                currentQuestion,
-                                answer);
-                    }
-
-                    continue;
-                }
-
-
-                // =====================================================
-                // INLINE CORRECT ANSWER
-                // =====================================================
-
-                if (text.StartsWith(
-                    "CORRECT ANSWER:",
-                    StringComparison.OrdinalIgnoreCase))
-                {
-                    if (currentQuestion != null)
-                    {
-                        string answer =
-                            text.Substring(15).Trim();
-
-                        currentQuestion.CorrectAnswer =
-                            ConvertAnswerForQuestion(
-                                currentQuestion,
-                                answer);
-                    }
-
-                    continue;
-                }
-
-
-                // =====================================================
-                // TYPE CLUE
-                // =====================================================
-
-                if (currentQuestion != null)
-                {
-                    string detectedFromLine =
-                        DetectTypeFromClue(text);
-
-                    if (!string.IsNullOrEmpty(
-                        detectedFromLine))
-                    {
-                        currentQuestion.QuestionType =
-                            detectedFromLine;
-
-                        SetDefaultChoicesForType(
-                            currentQuestion,
-                            detectedFromLine);
-                    }
+                    if (keySection == "mc") mcAnswers[num] = val;
+                    else if (keySection == "tf") tfAnswers[num] = val;
+                    else if (keySection == "id") idAnswers[num] = val;
+                    // essay answers are a rubric note, not per-question -> ignored
                 }
             }
 
+            // --------------------------------------------------------
+            // Parse the question area into blocks, tracking which
+            // PART/section each question belongs to.
+            // --------------------------------------------------------
+            var blocks = new List<(int Number, string Section, string Question, string A, string B, string C, string D)>();
 
-            // =========================================================
-            // SAVE LAST QUESTION
-            // =========================================================
+            string currentSection = null; // "mc" | "tf" | "id" | "essay" | null
+            int? curNum = null;
+            string curSection = null;
+            string curQ = "", curA = "", curB = "", curC = "", curD = "";
 
-            if (currentQuestion != null)
+            void FlushCurrent()
             {
-                FinalizeQuestion(
-                    currentQuestion);
-
-                if (!result.Questions.Contains(
-                    currentQuestion))
+                if (curNum.HasValue && !string.IsNullOrWhiteSpace(curQ))
                 {
-                    result.Questions.Add(
-                        currentQuestion);
+                    string cleanQ = Regex.Replace(curQ.Trim(), @"_{2,}\s*$", "").Trim();
+                    blocks.Add((curNum.Value, curSection, cleanQ, curA, curB, curC, curD));
                 }
+                curNum = null;
+                curSection = null;
+                curQ = curA = curB = curC = curD = "";
             }
 
-
-            // =========================================================
-            // SECOND PASS
-            // READ ANSWER KEY
-            //
-            // It doesn't matter which page it is on.
-            // =========================================================
-
-            ReadAnswerKey(
-                paragraphs,
-                questionMap);
-
-
-            // =========================================================
-            // FINAL VALIDATION/CLEANUP
-            // =========================================================
-
-            foreach (QuizQuestion question
-                     in result.Questions)
+            for (int i = 0; i < contentEnd; i++)
             {
-                FinalizeQuestion(question);
-            }
+                string line = lines[i];
 
+                // Section header ("PART I - MULTIPLE CHOICE ...") -> remember section, skip line entirely.
+                if (PartHeaderRegex.IsMatch(line))
+                {
+                    FlushCurrent();
+                    Match m = PartHeaderRegex.Match(line);
+                    string kw = m.Groups[2].Value.ToUpperInvariant().Replace(" ", "");
+                    if (kw.Contains("MULTIPLECHOICE")) currentSection = "mc";
+                    else if (kw.Contains("TRUE")) currentSection = "tf";
+                    else if (kw.Contains("IDENTIFICATION")) currentSection = "id";
+                    else if (kw.Contains("ESSAY")) currentSection = "essay";
+                    continue;
+                }
+
+                // Skip header/instruction/blank-fill lines outright.
+                if (Regex.IsMatch(line, @"^(NAME|SECTION|DATE|SCORE|TEACHER|PROFESSOR|SUBJECT|COURSE)\s*:", RegexOptions.IgnoreCase))
+                    continue;
+                if (Regex.IsMatch(line, @"^(GENERAL\s+)?INSTRUCTIONS\s*$", RegexOptions.IgnoreCase))
+                    continue;
+                if (Regex.IsMatch(line, @"^(Read each|For (Multiple|True|Identification|Essay))", RegexOptions.IgnoreCase))
+                    continue;
+                if (BlankAnswerLineRegex.IsMatch(line))
+                    continue;
+
+                // New numbered question, e.g. "1. What is..." / "1) What is..."
+                Match qMatch = Regex.Match(line, @"^\s*(\d+)\s*[\.\)]\s*(.+)$");
+                if (qMatch.Success)
+                {
+                    FlushCurrent();
+                    curNum = int.Parse(qMatch.Groups[1].Value);
+                    curQ = qMatch.Groups[2].Value.Trim();
+                    curSection = currentSection;
+                    continue;
+                }
+
+                // Choice line, e.g. "A. Something" / "a) Something"
+                Match cMatch = Regex.Match(line, @"^\s*([A-Da-d])[\.\)]\s*(.+)$");
+                if (curNum.HasValue && cMatch.Success)
+                {
+                    string text = cMatch.Groups[2].Value.Trim();
+                    switch (char.ToUpperInvariant(cMatch.Groups[1].Value[0]))
+                    {
+                        case 'A': curA = text; break;
+                        case 'B': curB = text; break;
+                        case 'C': curC = text; break;
+                        case 'D': curD = text; break;
+                    }
+                    continue;
+                }
+
+                // Standalone TRUE / FALSE choice lines (no letter prefix), used by some templates.
+                if (curNum.HasValue && Regex.IsMatch(line, @"^(TRUE|FALSE)$", RegexOptions.IgnoreCase))
+                {
+                    if (line.Trim().ToUpperInvariant() == "TRUE" && string.IsNullOrWhiteSpace(curA))
+                        curA = "True";
+                    else if (line.Trim().ToUpperInvariant() == "FALSE" && string.IsNullOrWhiteSpace(curB))
+                        curB = "False";
+                    continue;
+                }
+
+                // Otherwise, treat as continuation of the current question text.
+                if (curNum.HasValue)
+                    curQ += " " + line;
+            }
+            FlushCurrent();
+
+            if (blocks.Count == 0)
+                throw new Exception(
+                    "No questions were detected in the DOCX file.\n\n" +
+                    "Make sure questions are numbered like \"1. ...\" and choices like \"A. ...\".");
+
+            // --------------------------------------------------------
+            // Build the final QuizQuestion list.
+            // --------------------------------------------------------
+            foreach (var b in blocks)
+            {
+                int choiceCount = new[] { b.A, b.B, b.C, b.D }.Count(c => !string.IsNullOrWhiteSpace(c));
+
+                string type;
+                string answer;
+
+                if (b.Section == "mc")
+                {
+                    type = "multiple_choice";
+                    answer = mcAnswers.TryGetValue(b.Number, out string a1) ? a1.Trim() : "";
+                }
+                else if (b.Section == "tf")
+                {
+                    type = "true_false";
+                    answer = tfAnswers.TryGetValue(b.Number, out string a2) ? a2.Trim() : "";
+                }
+                else if (b.Section == "id")
+                {
+                    type = "identification";
+                    answer = idAnswers.TryGetValue(b.Number, out string a3) ? a3.Trim() : "";
+                }
+                else if (b.Section == "essay")
+                {
+                    type = "essay";
+                    answer = "";
+                }
+                else
+                {
+                    // No PART header was found for this question (e.g. a simpler docx) -> auto-detect.
+                    if (choiceCount >= 2)
+                    {
+                        type = "multiple_choice";
+                    }
+                    else if (Regex.IsMatch(b.Question, @"true\s*or\s*false|true/false", RegexOptions.IgnoreCase))
+                    {
+                        type = "true_false";
+                    }
+                    else
+                    {
+                        type = "identification";
+                    }
+                    answer = mcAnswers.TryGetValue(b.Number, out string a4) ? a4.Trim() : "";
+                }
+
+                string correctAnswer = answer;
+
+                if (type == "multiple_choice")
+                {
+                    Match letterMatch = Regex.Match(answer, @"^\s*([A-Da-d])\b");
+                    if (letterMatch.Success)
+                    {
+                        correctAnswer = letterMatch.Groups[1].Value.ToUpperInvariant();
+                    }
+                    else if (!string.IsNullOrWhiteSpace(answer))
+                    {
+                        // Answer key may spell out the choice text instead of a letter.
+                        if (SameText(answer, b.A)) correctAnswer = "A";
+                        else if (SameText(answer, b.B)) correctAnswer = "B";
+                        else if (SameText(answer, b.C)) correctAnswer = "C";
+                        else if (SameText(answer, b.D)) correctAnswer = "D";
+                    }
+                }
+                else if (type == "true_false")
+                {
+                    if (Regex.IsMatch(answer, @"^(true|t)$", RegexOptions.IgnoreCase))
+                        correctAnswer = "True";
+                    else if (Regex.IsMatch(answer, @"^(false|f)$", RegexOptions.IgnoreCase))
+                        correctAnswer = "False";
+                }
+
+                result.Questions.Add(new QuizQuestion
+                {
+                    Question = b.Question,
+                    QuestionType = type,
+                    ChoiceA = b.A,
+                    ChoiceB = b.B,
+                    ChoiceC = b.C,
+                    ChoiceD = b.D,
+                    CorrectAnswer = correctAnswer
+                });
+            }
 
             return result;
         }
 
-
-        // =============================================================
-        // READ ANSWER KEY
-        // =============================================================
-
-        private static void ReadAnswerKey(
-            List<string> paragraphs,
-            Dictionary<int, QuizQuestion> questionMap)
+        // ============================================================
+        // READ ALL TEXT LINES FROM THE DOCX (paragraphs + table cells)
+        // ============================================================
+        private static List<string> ReadAllLines(string filePath)
         {
-            bool answerKeyMode = false;
+            var lines = new List<string>();
 
-
-            foreach (string text in paragraphs)
+            using (var document = WordprocessingDocument.Open(filePath, false))
             {
-                // -----------------------------------------------------
-                // START ANSWER KEY
-                // -----------------------------------------------------
+                Word.Body body = document.MainDocumentPart.Document.Body;
 
-                if (IsAnswerKeyHeading(text))
+                foreach (var element in body.Elements())
                 {
-                    answerKeyMode = true;
-                    continue;
+                    if (element is Word.Paragraph paragraph)
+                    {
+                        string text = Clean(paragraph.InnerText);
+                        if (!string.IsNullOrWhiteSpace(text))
+                            lines.Add(text);
+                    }
+                    else if (element is Word.Table table)
+                    {
+                        foreach (var row in table.Elements<Word.TableRow>())
+                        {
+                            foreach (var cell in row.Elements<Word.TableCell>())
+                            {
+                                string text = Clean(cell.InnerText);
+                                if (!string.IsNullOrWhiteSpace(text))
+                                    lines.Add(text);
+                            }
+                        }
+                    }
                 }
-
-
-                if (!answerKeyMode)
-                    continue;
-
-
-                // -----------------------------------------------------
-                // Ignore empty
-                // -----------------------------------------------------
-
-                if (string.IsNullOrWhiteSpace(text))
-                    continue;
-
-
-                // -----------------------------------------------------
-                // PARSE:
-                //
-                // 1. B
-                // 2. C
-                // 3. Authentication
-                //
-                // 1) B
-                // 2) C
-                //
-                // 1 - B
-                // 2: C
-                //
-                // 1. Answer: B
-                // -----------------------------------------------------
-
-                int number;
-                string answer;
-
-
-                if (!TryParseAnswerKeyLine(
-                    text,
-                    out number,
-                    out answer))
-                {
-                    continue;
-                }
-
-
-                QuizQuestion question;
-
-
-                if (!questionMap.TryGetValue(
-                    number,
-                    out question))
-                {
-                    continue;
-                }
-
-
-                // -----------------------------------------------------
-                // IMPORTANT:
-                //
-                // Multiple Choice:
-                // Convert full answer to A/B/C/D.
-                //
-                // Identification:
-                // Keep actual answer.
-                //
-                // True/False:
-                // Convert to TRUE/FALSE.
-                //
-                // Essay:
-                // Keep answer text.
-                // -----------------------------------------------------
-
-                question.CorrectAnswer =
-                    ConvertAnswerForQuestion(
-                        question,
-                        answer);
             }
+
+            return lines;
         }
 
-
-        // =============================================================
-        // CONVERT ANSWER FOR QUESTION
-        // =============================================================
-
-        private static string ConvertAnswerForQuestion(
-            QuizQuestion question,
-            string answer)
+        // ============================================================
+        // TITLE
+        // ============================================================
+        private static string ExtractTitle(List<string> lines, string filePath)
         {
-            if (question == null)
-                return "";
+            string title = "";
 
+            if (lines.Count >= 1 && lines[0].Length < 80 && !Regex.IsMatch(lines[0], @"^\d+\s*[\.\)]"))
+                title = lines[0];
 
-            if (string.IsNullOrWhiteSpace(
-                answer))
+            if (lines.Count >= 2 && lines[1].Length < 60 &&
+                Regex.IsMatch(lines[1], @"QUIZ|EXAM|TEST", RegexOptions.IgnoreCase))
             {
-                return "";
+                title = string.IsNullOrWhiteSpace(title) ? lines[1] : title + " - " + lines[1];
             }
 
-
-            answer =
-                RemoveAnswerPrefix(answer);
-
-
-            // =========================================================
-            // MULTIPLE CHOICE
-            // =========================================================
-
-            if (question.QuestionType ==
-                "multiple_choice")
-            {
-                return MatchAnswerToMultipleChoice(
-                    question,
-                    answer);
-            }
-
-
-            // =========================================================
-            // TRUE / FALSE
-            // =========================================================
-
-            if (question.QuestionType ==
-                "true_false")
-            {
-                return CleanTrueFalseAnswer(
-                    answer);
-            }
-
-
-            // =========================================================
-            // IDENTIFICATION
-            // =========================================================
-
-            if (question.QuestionType ==
-                "identification")
-            {
-                return answer.Trim();
-            }
-
-
-            // =========================================================
-            // ESSAY
-            // =========================================================
-
-            if (question.QuestionType ==
-                "essay")
-            {
-                return answer.Trim();
-            }
-
-
-            return answer.Trim();
+            return string.IsNullOrWhiteSpace(title) ? Path.GetFileNameWithoutExtension(filePath) : title;
         }
 
-
-        // =============================================================
-        // MATCH MULTIPLE CHOICE ANSWER
-        //
-        // Supports:
-        //
-        // B
-        // B.
-        // B)
-        // B - answer
-        // B. answer
-        // Full answer:
-        // Confidentiality
-        // =============================================================
-
-        private static string MatchAnswerToMultipleChoice(
-            QuizQuestion question,
-            string answer)
+        // ============================================================
+        // HELPERS
+        // ============================================================
+        private static string Clean(string text)
         {
-            if (question == null)
-                return "";
-
-
-            if (string.IsNullOrWhiteSpace(
-                answer))
-            {
-                return "";
-            }
-
-
-            string value =
-                answer.Trim();
-
-
-            // ---------------------------------------------------------
-            // Remove common punctuation
-            // ---------------------------------------------------------
-
-            string simple =
-                value.Trim(
-                    '.',
-                    ')',
-                    ':',
-                    '-')
-                .Trim();
-
-
-            // ---------------------------------------------------------
-            // Exact letter
-            // ---------------------------------------------------------
-
-            if (simple.Equals(
-                "A",
-                StringComparison.OrdinalIgnoreCase))
-            {
-                return "A";
-            }
-
-
-            if (simple.Equals(
-                "B",
-                StringComparison.OrdinalIgnoreCase))
-            {
-                return "B";
-            }
-
-
-            if (simple.Equals(
-                "C",
-                StringComparison.OrdinalIgnoreCase))
-            {
-                return "C";
-            }
-
-
-            if (simple.Equals(
-                "D",
-                StringComparison.OrdinalIgnoreCase))
-            {
-                return "D";
-            }
-
-
-            // ---------------------------------------------------------
-            // "C. Confidentiality"
-            // "C) Confidentiality"
-            // "C - Confidentiality"
-            // ---------------------------------------------------------
-
-            Match choiceMatch =
-                Regex.Match(
-                    value,
-                    @"^([ABCDabcd])\s*[\.\)\:\-]\s*(.+)$");
-
-
-            if (choiceMatch.Success)
-            {
-                return choiceMatch
-                    .Groups[1]
-                    .Value
-                    .ToUpper();
-            }
-
-
-            // ---------------------------------------------------------
-            // "C Confidentiality"
-            // ---------------------------------------------------------
-
-            choiceMatch =
-                Regex.Match(
-                    value,
-                    @"^([ABCDabcd])\s+(.+)$");
-
-
-            if (choiceMatch.Success)
-            {
-                return choiceMatch
-                    .Groups[1]
-                    .Value
-                    .ToUpper();
-            }
-
-
-            // ---------------------------------------------------------
-            // FULL ANSWER MATCHING
-            //
-            // Example:
-            //
-            // A. Confidentiality
-            // B. Authentication
-            // C. Authorization
-            // D. Accounting
-            //
-            // Answer Key:
-            //
-            // 2. Confidentiality
-            //
-            // Result:
-            //
-            // A
-            // ---------------------------------------------------------
-
-            if (SameAnswer(
-                value,
-                question.ChoiceA))
-            {
-                return "A";
-            }
-
-
-            if (SameAnswer(
-                value,
-                question.ChoiceB))
-            {
-                return "B";
-            }
-
-
-            if (SameAnswer(
-                value,
-                question.ChoiceC))
-            {
-                return "C";
-            }
-
-
-            if (SameAnswer(
-                value,
-                question.ChoiceD))
-            {
-                return "D";
-            }
-
-
-            // ---------------------------------------------------------
-            // No matching choice found.
-            //
-            // Return original value instead of incorrectly assuming
-            // its first letter is the answer.
-            // ---------------------------------------------------------
-
-            return value.Trim();
-        }
-
-
-        // =============================================================
-        // COMPARE ANSWERS
-        // =============================================================
-
-        private static bool SameAnswer(
-            string answer1,
-            string answer2)
-        {
-            if (string.IsNullOrWhiteSpace(
-                answer1) ||
-                string.IsNullOrWhiteSpace(
-                answer2))
-            {
-                return false;
-            }
-
-
-            string a =
-                NormalizeAnswerText(answer1);
-
-
-            string b =
-                NormalizeAnswerText(answer2);
-
-
-            return a.Equals(
-                b,
-                StringComparison.OrdinalIgnoreCase);
-        }
-
-
-        // =============================================================
-        // NORMALIZE ANSWER TEXT
-        // =============================================================
-
-        private static string NormalizeAnswerText(
-            string text)
-        {
-            if (string.IsNullOrWhiteSpace(
-                text))
-            {
-                return "";
-            }
-
-
-            string value =
-                text.Trim();
-
-
-            // Remove A. / A) / A: / A -
-            value =
-                Regex.Replace(
-                    value,
-                    @"^[ABCDabcd]\s*[\.\)\:\-]\s*",
-                    "");
-
-
-            // Remove extra spaces
-            value =
-                Regex.Replace(
-                    value,
-                    @"\s+",
-                    " ");
-
-
-            // Remove ending punctuation
-            value =
-                value.Trim(
-                    '.',
-                    ')',
-                    ':',
-                    '-')
-                .Trim();
-
-
-            return value.ToLower();
-        }
-
-
-        // =============================================================
-        // REMOVE ANSWER PREFIX
-        // =============================================================
-
-        private static string RemoveAnswerPrefix(
-            string answer)
-        {
-            if (string.IsNullOrWhiteSpace(
-                answer))
-            {
-                return "";
-            }
-
-
-            string value =
-                answer.Trim();
-
-
-            if (value.StartsWith(
-                "ANSWER:",
-                StringComparison.OrdinalIgnoreCase))
-            {
-                value =
-                    value.Substring(7).Trim();
-            }
-
-
-            if (value.StartsWith(
-                "CORRECT ANSWER:",
-                StringComparison.OrdinalIgnoreCase))
-            {
-                value =
-                    value.Substring(15).Trim();
-            }
-
-
-            return value;
-        }
-
-
-        // =============================================================
-        // TRUE/FALSE ANSWER
-        // =============================================================
-
-        private static string CleanTrueFalseAnswer(
-            string answer)
-        {
-            if (string.IsNullOrWhiteSpace(
-                answer))
-            {
-                return "";
-            }
-
-
-            string value =
-                answer.Trim()
-                .ToUpper();
-
-
-            value =
-                value.Trim(
-                    '.',
-                    ')',
-                    ':',
-                    '-')
-                .Trim();
-
-
-            if (value == "TRUE" ||
-                value == "T")
-            {
-                return "TRUE";
-            }
-
-
-            if (value == "FALSE" ||
-                value == "F")
-            {
-                return "FALSE";
-            }
-
-
-            return value;
-        }
-
-
-        // =============================================================
-        // ANSWER KEY HEADING
-        // =============================================================
-
-        private static bool IsAnswerKeyHeading(
-            string text)
-        {
-            if (string.IsNullOrWhiteSpace(
-                text))
-            {
-                return false;
-            }
-
-
-            string value =
-                text.Trim()
-                .ToUpper();
-
-
-            value =
-                value.Trim(
-                    ':',
-                    '-',
-                    ' ');
-
-
-            if (value == "ANSWER KEY")
-                return true;
-
-
-            if (value == "ANSWERKEY")
-                return true;
-
-
-            if (value == "ANSWER KEYS")
-                return true;
-
-
-            if (value == "ANSWER SHEET")
-                return true;
-
-
-            if (value == "ANSWERS")
-                return true;
-
-
-            return false;
-        }
-
-
-        // =============================================================
-        // PARSE ANSWER KEY LINE
-        // =============================================================
-
-        private static bool TryParseAnswerKeyLine(
-            string text,
-            out int number,
-            out string answer)
-        {
-            number = 0;
-            answer = "";
-
-
-            if (string.IsNullOrWhiteSpace(
-                text))
-            {
-                return false;
-            }
-
-
-            string value =
-                text.Trim();
-
-
-            // ---------------------------------------------------------
-            // Supported:
-            //
-            // 1. B
-            // 1) B
-            // 1: B
-            // 1 - B
-            // ---------------------------------------------------------
-
-            Match match =
-                Regex.Match(
-                    value,
-                    @"^(\d+)\s*[\.\)\:\-]\s*(.+)$");
-
-
-            if (!match.Success)
-                return false;
-
-
-            if (!int.TryParse(
-                match.Groups[1].Value,
-                out number))
-            {
-                return false;
-            }
-
-
-            answer =
-                match.Groups[2]
-                .Value
-                .Trim();
-
-
-            if (string.IsNullOrWhiteSpace(
-                answer))
-            {
-                return false;
-            }
-
-
-            return true;
-        }
-
-
-        // =============================================================
-        // CHECK ANSWER-ONLY LINE
-        // =============================================================
-
-        private static bool LooksLikeAnswerOnly(
-            string text)
-        {
-            if (string.IsNullOrWhiteSpace(
-                text))
-            {
-                return false;
-            }
-
-
-            Match match =
-                Regex.Match(
-                    text.Trim(),
-                    @"^(\d+)\s*[\.\)\:\-]\s*(.+)$");
-
-
-            if (!match.Success)
-                return false;
-
-
-            string value =
-                match.Groups[2]
-                .Value
-                .Trim();
-
-
-            // Short answer
-            if (value.Length <= 3)
-                return true;
-
-
-            // Explicit answer
-            if (value.StartsWith(
-                "ANSWER:",
-                StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-
-            if (value.StartsWith(
-                "CORRECT ANSWER:",
-                StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-
-            return false;
-        }
-
-
-        // =============================================================
-        // FINALIZE QUESTION
-        // =============================================================
-
-        private static void FinalizeQuestion(
-            QuizQuestion question)
-        {
-            if (question == null)
-                return;
-
-
-            // ---------------------------------------------------------
-            // If A-D exist, definitely Multiple Choice.
-            // ---------------------------------------------------------
-
-            if (!string.IsNullOrWhiteSpace(
-                    question.ChoiceA) &&
-                !string.IsNullOrWhiteSpace(
-                    question.ChoiceB) &&
-                !string.IsNullOrWhiteSpace(
-                    question.ChoiceC) &&
-                !string.IsNullOrWhiteSpace(
-                    question.ChoiceD))
-            {
-                question.QuestionType =
-                    "multiple_choice";
-            }
-
-
-            // ---------------------------------------------------------
-            // TRUE / FALSE
-            // ---------------------------------------------------------
-
-            if (question.QuestionType ==
-                "true_false")
-            {
-                question.ChoiceA =
-                    "TRUE";
-
-                question.ChoiceB =
-                    "FALSE";
-
-                question.ChoiceC =
-                    "";
-
-                question.ChoiceD =
-                    "";
-            }
-
-
-            // ---------------------------------------------------------
-            // CLEAN FINAL ANSWER
-            // ---------------------------------------------------------
-
-            if (!string.IsNullOrWhiteSpace(
-                question.CorrectAnswer))
-            {
-                question.CorrectAnswer =
-                    ConvertAnswerForQuestion(
-                        question,
-                        question.CorrectAnswer);
-            }
-        }
-
-
-        // =============================================================
-        // DETECT SECTION HEADING
-        // =============================================================
-
-        private static string DetectSectionHeading(
-            string text)
-        {
-            if (string.IsNullOrWhiteSpace(
-                text))
-            {
-                return "";
-            }
-
-
-            string value =
-                text.Trim()
-                .ToUpper();
-
-
-            value =
-                RemoveHeadingNumber(value);
-
-
-            // ---------------------------------------------------------
-            // MULTIPLE CHOICE
-            // ---------------------------------------------------------
-
-            if (value == "MULTIPLE CHOICE" ||
-                value == "MULTIPLE CHOICE QUESTIONS" ||
-                value == "MULTIPLE CHOICE QUESTION" ||
-                value == "MC")
-            {
-                return "multiple_choice";
-            }
-
-
-            // ---------------------------------------------------------
-            // TRUE / FALSE
-            // ---------------------------------------------------------
-
-            if (value == "TRUE OR FALSE" ||
-                value == "TRUE/FALSE" ||
-                value == "TRUE - FALSE" ||
-                value == "TRUE-FALSE" ||
-                value == "TRUE FALSE" ||
-                value == "TRUE OR FALSE QUESTIONS" ||
-                value == "TRUE/FALSE QUESTIONS" ||
-                value == "TF")
-            {
-                return "true_false";
-            }
-
-
-            // ---------------------------------------------------------
-            // IDENTIFICATION
-            // ---------------------------------------------------------
-
-            if (value == "IDENTIFICATION" ||
-                value == "IDENTIFICATION QUESTIONS" ||
-                value == "IDENTIFICATION QUESTION" ||
-                value == "IDENTIFY" ||
-                value == "ID" ||
-                value == "FILL IN THE BLANK" ||
-                value == "FILL-IN-THE-BLANK" ||
-                value == "FILL IN THE BLANKS" ||
-                value == "FILL-IN-THE-BLANKS")
-            {
-                return "identification";
-            }
-
-
-            // ---------------------------------------------------------
-            // ESSAY
-            // ---------------------------------------------------------
-
-            if (value == "ESSAY" ||
-                value == "ESSAY QUESTIONS" ||
-                value == "ESSAY QUESTION")
-            {
-                return "essay";
-            }
-
-
-            return "";
-        }
-
-
-        // =============================================================
-        // DETECT TYPE FROM QUESTION TEXT
-        // =============================================================
-
-        private static string DetectQuestionTypeFromText(
-            string question,
-            string sectionType)
-        {
-            // Section heading has priority.
-            if (!string.IsNullOrWhiteSpace(
-                sectionType))
-            {
-                return sectionType;
-            }
-
-
-            if (string.IsNullOrWhiteSpace(
-                question))
-            {
-                return "identification";
-            }
-
-
-            string value =
-                question.Trim()
-                .ToUpper();
-
-
-            // ---------------------------------------------------------
-            // IDENTIFICATION
-            // ---------------------------------------------------------
-
-            if (value.Contains(
-                    "IDENTIFY THE") ||
-                value.Contains(
-                    "IDENTIFY THIS") ||
-                value.Contains(
-                    "IDENTIFY THE FOLLOWING") ||
-                value.Contains(
-                    "WHAT TERM") ||
-                value.Contains(
-                    "NAME THE") ||
-                value.Contains(
-                    "FILL IN THE BLANK") ||
-                value.Contains(
-                    "FILL IN THE BLANKS"))
-            {
-                return "identification";
-            }
-
-
-            // ---------------------------------------------------------
-            // ESSAY
-            // ---------------------------------------------------------
-
-            if (value.StartsWith("EXPLAIN ") ||
-                value.StartsWith("DISCUSS ") ||
-                value.StartsWith("DESCRIBE ") ||
-                value.StartsWith("ANALYZE ") ||
-                value.StartsWith("ELABORATE ") ||
-                value.StartsWith("WHY ") ||
-                value.StartsWith("HOW ") ||
-                value.Contains("IN YOUR OWN WORDS") ||
-                value.Contains("ESSAY"))
-            {
-                return "essay";
-            }
-
-
-            // ---------------------------------------------------------
-            // TRUE / FALSE
-            // ---------------------------------------------------------
-
-            if (value.Contains(
-                    "TRUE OR FALSE") ||
-                value.Contains(
-                    "TRUE/FALSE"))
-            {
-                return "true_false";
-            }
-
-
-            // ---------------------------------------------------------
-            // UNKNOWN
-            //
-            // If A-D are later found, FinalizeQuestion changes
-            // it automatically to multiple_choice.
-            // ---------------------------------------------------------
-
-            return "identification";
-        }
-
-
-        // =============================================================
-        // DETECT TYPE FROM CLUE
-        // =============================================================
-
-        private static string DetectTypeFromClue(
-            string text)
-        {
-            if (string.IsNullOrWhiteSpace(
-                text))
-            {
-                return "";
-            }
-
-
-            string value =
-                text.Trim()
-                .ToUpper();
-
-
-            if (value == "IDENTIFICATION")
-                return "identification";
-
-
-            if (value == "ESSAY")
-                return "essay";
-
-
-            if (value == "MULTIPLE CHOICE")
-                return "multiple_choice";
-
-
-            if (value == "TRUE OR FALSE" ||
-                value == "TRUE/FALSE")
-            {
-                return "true_false";
-            }
-
-
-            return "";
-        }
-
-
-        // =============================================================
-        // SET DEFAULT CHOICES
-        // =============================================================
-
-        private static void SetDefaultChoicesForType(
-            QuizQuestion question,
-            string type)
-        {
-            if (question == null)
-                return;
-
-
-            if (type == "true_false")
-            {
-                question.ChoiceA =
-                    "TRUE";
-
-                question.ChoiceB =
-                    "FALSE";
-
-                question.ChoiceC =
-                    "";
-
-                question.ChoiceD =
-                    "";
-            }
-
-
-            if (type == "identification")
-            {
-                question.ChoiceA = "";
-                question.ChoiceB = "";
-                question.ChoiceC = "";
-                question.ChoiceD = "";
-            }
-
-
-            if (type == "essay")
-            {
-                question.ChoiceA = "";
-                question.ChoiceB = "";
-                question.ChoiceC = "";
-                question.ChoiceD = "";
-            }
-        }
-
-
-        // =============================================================
-        // CONVERT QUESTION TYPE
-        // =============================================================
-
-        private static string ConvertQuestionType(
-            string type)
-        {
-            if (string.IsNullOrWhiteSpace(
-                type))
-            {
-                return "identification";
-            }
-
-
-            type =
-                type.Trim()
-                .ToUpper();
-
-
-            // ---------------------------------------------------------
-            // MULTIPLE CHOICE
-            // ---------------------------------------------------------
-
-            if (type == "MULTIPLE CHOICE" ||
-                type == "MULTIPLE_CHOICE" ||
-                type == "MULTIPLECHOICE" ||
-                type == "MC")
-            {
-                return "multiple_choice";
-            }
-
-
-            // ---------------------------------------------------------
-            // TRUE / FALSE
-            // ---------------------------------------------------------
-
-            if (type == "TRUE OR FALSE" ||
-                type == "TRUE/FALSE" ||
-                type == "TRUE_FALSE" ||
-                type == "TRUE-FALSE" ||
-                type == "TRUEFALSE" ||
-                type == "TRUE OR FALSE QUESTION" ||
-                type == "TF")
-            {
-                return "true_false";
-            }
-
-
-            // ---------------------------------------------------------
-            // IDENTIFICATION
-            // ---------------------------------------------------------
-
-            if (type == "IDENTIFICATION" ||
-                type == "IDENTIFICATION QUESTION" ||
-                type == "IDENTIFICATION_QUESTION" ||
-                type == "IDENTIFY" ||
-                type == "ID" ||
-                type == "FILL IN THE BLANK" ||
-                type == "FILL_IN_THE_BLANK" ||
-                type == "FILL-IN-THE-BLANK" ||
-                type == "FILLINTHEBLANK")
-            {
-                return "identification";
-            }
-
-
-            // ---------------------------------------------------------
-            // ESSAY
-            // ---------------------------------------------------------
-
-            if (type == "ESSAY" ||
-                type == "ESSAY QUESTION" ||
-                type == "ESSAY_QUESTION")
-            {
-                return "essay";
-            }
-
-
-            return "identification";
-        }
-
-
-        // =============================================================
-        // QUESTION NUMBER
-        // =============================================================
-
-        private static bool TryGetQuestionNumber(
-            string text,
-            out int number)
-        {
-            number = 0;
-
-
-            if (string.IsNullOrWhiteSpace(
-                text))
-            {
-                return false;
-            }
-
-
-            Match match =
-                Regex.Match(
-                    text.Trim(),
-                    @"^(\d+)\s*[\.\)]\s+(.+)$");
-
-
-            if (!match.Success)
-                return false;
-
-
-            return int.TryParse(
-                match.Groups[1].Value,
-                out number);
-        }
-
-
-        // =============================================================
-        // REMOVE QUESTION NUMBER
-        // =============================================================
-
-        private static string RemoveQuestionNumber(
-            string text)
-        {
-            if (string.IsNullOrWhiteSpace(
-                text))
-            {
-                return "";
-            }
-
-
-            Match match =
-                Regex.Match(
-                    text.Trim(),
-                    @"^\d+\s*[\.\)]\s*(.+)$");
-
-
-            if (match.Success)
-            {
-                return match.Groups[1]
-                    .Value
-                    .Trim();
-            }
-
-
+            if (string.IsNullOrWhiteSpace(text)) return "";
+            text = Regex.Replace(text.Replace("\r", " ").Replace("\n", " ").Replace("\t", " "), @"\s+", " ");
             return text.Trim();
         }
 
-
-        // =============================================================
-        // CHECK CHOICE
-        // =============================================================
-
-        private static bool StartsWithChoice(
-            string text,
-            string letter)
+        private static bool TryParseNumberedLine(string line, out int number, out string value)
         {
-            if (string.IsNullOrWhiteSpace(
-                text))
-            {
-                return false;
-            }
-
-
-            string upper =
-                text.Trim()
-                .ToUpper();
-
-
-            string l =
-                letter.ToUpper();
-
-
-            if (upper == l)
-                return true;
-
-
-            if (upper.StartsWith(
-                l + "."))
-                return true;
-
-
-            if (upper.StartsWith(
-                l + ")"))
-                return true;
-
-
-            if (upper.StartsWith(
-                l + " -"))
-                return true;
-
-
-            if (upper.StartsWith(
-                l + " "))
-                return true;
-
-
-            return false;
+            number = 0;
+            value = "";
+            Match m = Regex.Match(line, @"^\s*(\d+)\s*[\.\)\:\-]\s*(.+?)\s*$");
+            if (!m.Success) return false;
+            if (!int.TryParse(m.Groups[1].Value, out number)) return false;
+            value = m.Groups[2].Value.Trim();
+            return !string.IsNullOrWhiteSpace(value);
         }
 
-
-        // =============================================================
-        // REMOVE CHOICE LETTER
-        // =============================================================
-
-        private static string RemoveChoiceLetter(
-            string text,
-            string letter)
+        private static bool SameText(string a, string b)
         {
-            string value =
-                text.Trim();
-
-
-            if (value.Length == 1)
-                return "";
-
-
-            value =
-                value.Substring(1)
-                .Trim();
-
-
-            if (value.StartsWith("."))
-            {
-                value =
-                    value.Substring(1)
-                    .Trim();
-            }
-
-
-            if (value.StartsWith(")"))
-            {
-                value =
-                    value.Substring(1)
-                    .Trim();
-            }
-
-
-            if (value.StartsWith("-"))
-            {
-                value =
-                    value.Substring(1)
-                    .Trim();
-            }
-
-
-            return value.Trim();
-        }
-
-
-        // =============================================================
-        // TRUE / FALSE CHOICE
-        // =============================================================
-
-        private static bool IsTrueFalseChoice(
-            string text)
-        {
-            if (string.IsNullOrWhiteSpace(
-                text))
-            {
-                return false;
-            }
-
-
-            string value =
-                text.Trim()
-                .ToUpper();
-
-
-            if (value == "TRUE" ||
-                value == "T" ||
-                value == "TRUE." ||
-                value == "TRUE)")
-            {
-                return true;
-            }
-
-
-            if (value == "FALSE" ||
-                value == "F" ||
-                value == "FALSE." ||
-                value == "FALSE)")
-            {
-                return true;
-            }
-
-
-            return false;
-        }
-
-
-        // =============================================================
-        // REMOVE HEADING NUMBER
-        // =============================================================
-
-        private static string RemoveHeadingNumber(
-            string text)
-        {
-            if (string.IsNullOrWhiteSpace(
-                text))
-            {
-                return "";
-            }
-
-
-            string value =
-                text.Trim();
-
-
-            // ---------------------------------------------------------
-            // 1 MULTIPLE CHOICE
-            // ---------------------------------------------------------
-
-            Match numberMatch =
-                Regex.Match(
-                    value,
-                    @"^\d+\s+(.+)$");
-
-
-            if (numberMatch.Success)
-            {
-                return numberMatch.Groups[1]
-                    .Value
-                    .Trim();
-            }
-
-
-            // ---------------------------------------------------------
-            // PART I – MULTIPLE CHOICE
-            // ---------------------------------------------------------
-
-            int dashIndex =
-                value.IndexOf('–');
-
-
-            if (dashIndex >= 0 &&
-                dashIndex < value.Length - 1)
-            {
-                return value
-                    .Substring(
-                        dashIndex + 1)
-                    .Trim();
-            }
-
-
-            // ---------------------------------------------------------
-            // PART I - MULTIPLE CHOICE
-            // ---------------------------------------------------------
-
-            dashIndex =
-                value.IndexOf('-');
-
-
-            if (dashIndex >= 0 &&
-                dashIndex < value.Length - 1)
-            {
-                return value
-                    .Substring(
-                        dashIndex + 1)
-                    .Trim();
-            }
-
-
-            return value;
+            if (string.IsNullOrWhiteSpace(a) || string.IsNullOrWhiteSpace(b)) return false;
+            return string.Equals(a.Trim(), b.Trim(), StringComparison.OrdinalIgnoreCase);
         }
     }
 }
