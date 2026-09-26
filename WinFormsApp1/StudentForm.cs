@@ -88,7 +88,6 @@ namespace WinFormsApp1
 
                 NameGet();
                 InitializeSaveDirectory();
-                InitializeAuthenticationSaveDirectory();
                 InitializeChangingPicture();
 
                 try { InitializeCreateButtonActivity(); }
@@ -1712,6 +1711,58 @@ namespace WinFormsApp1
         // =========================================================
         // AUTH PHOTO — SEND TO ADMIN SHARED FOLDER
         // =========================================================
+        private async Task<bool> SendAuthenticationPhotoToAdmin(byte[] imageBytes, string fileName)
+        {
+            try
+            {
+                // Use the SAME ServerIp and FileTransferPort
+                string adminIp = SettingsManager.Current.ServerIp;
+                int adminPort = SettingsManager.Current.FileTransferPort;
+
+                using (TcpClient client = new TcpClient())
+                {
+                    var connectTask = client.ConnectAsync(adminIp, adminPort);
+                    var timeoutTask = Task.Delay(5000);
+                    var completed = await Task.WhenAny(connectTask, timeoutTask);
+
+                    if (completed == timeoutTask)
+                    {
+                        MessageBox.Show($"Admin ({adminIp}:{adminPort}) not reachable (timeout).");
+                        return false;
+                    }
+
+                    await connectTask;
+
+                    if (!client.Connected)
+                    {
+                        MessageBox.Show($"Admin ({adminIp}:{adminPort}) refused the connection.");
+                        return false;
+                    }
+
+                    using (NetworkStream stream = client.GetStream())
+                    using (BinaryWriter writer = new BinaryWriter(stream))
+                    {
+                        writer.Write(fileName);
+                        writer.Write(imageBytes.Length);
+                        writer.Write(imageBytes);
+                        writer.Flush();
+                    }
+                }
+                return true;
+            }
+            catch (SocketException sex)
+            {
+                MessageBox.Show($"Network error: {sex.SocketErrorCode}\n{sex.Message}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("SendAuthenticationPhotoToAdmin error: " + ex.Message);
+                MessageBox.Show("Failed to send photo to admin: " + ex.Message);
+                return false;
+            }
+        }
+
         private async void btnSubmitAuthenticationPhoto_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(AuthenticationPhoto))
@@ -1730,9 +1781,12 @@ namespace WinFormsApp1
                 bool sent = await SendAuthenticationPhotoToAdmin(imageBytes, fileName);
                 if (!sent) return;
 
-                string adminUnc = SettingsManager.Current.AdminSharedUnc;
-                string subfolder = SettingsManager.Current.AdminPhotoSubfolder;
-                string fullUncPath = Path.Combine(adminUnc, subfolder, fileName);
+                // Store the network path in DB using ServerIp + FileTransferPort isn't needed — 
+                // just build the UNC/network path from ServerIp + SaveFolder + AuthPhotoSubfolder.
+                // Since we only have the shared root name (SaveFolder's last segment), store the
+                // logical path: \\ServerIp\<SharedFolderName>\AuthenticationPhotos\fileName
+                string sharedFolderName = new DirectoryInfo(SettingsManager.Current.SaveFolder).Name;
+                string uncPath = $@"\\{SettingsManager.Current.ServerIp}\{sharedFolderName}\{SettingsManager.Current.AuthPhotoSubfolder}\{fileName}";
 
                 string connStr = SettingsManager.Current.GetConnectionString();
                 using (var conn = new MySqlConnection(connStr))
@@ -1741,13 +1795,13 @@ namespace WinFormsApp1
                     using (var cmd = new MySqlCommand(
                         "UPDATE user_credential SET authentication_photo = @path WHERE username = @u", conn))
                     {
-                        cmd.Parameters.AddWithValue("@path", fullUncPath);
+                        cmd.Parameters.AddWithValue("@path", uncPath);
                         cmd.Parameters.AddWithValue("@u", StudentUsername);
                         cmd.ExecuteNonQuery();
                     }
                 }
 
-                Isauthentication_photoEmpty = fullUncPath;
+                Isauthentication_photoEmpty = uncPath;
 
                 MessageBox.Show("Authentication photo sent to admin successfully.");
                 pnlSettingAuthenticationPhoto.Visible = false;
@@ -1757,53 +1811,6 @@ namespace WinFormsApp1
                 Console.WriteLine("btnSubmitAuthenticationPhoto_Click error: " + ex.Message);
                 MessageBox.Show("Error: " + ex.Message);
             }
-        }
-
-        private async Task<bool> SendAuthenticationPhotoToAdmin(byte[] imageBytes, string fileName)
-        {
-            try
-            {
-                string adminIp = SettingsManager.Current.AdminIp;
-                int adminPort = SettingsManager.Current.AdminPhotoPort;
-                string subfolder = SettingsManager.Current.AdminPhotoSubfolder;
-
-                using (TcpClient client = new TcpClient())
-                {
-                    var connectTask = client.ConnectAsync(adminIp, adminPort);
-                    var timeout = Task.Delay(5000);
-                    if (await Task.WhenAny(connectTask, timeout) == timeout)
-                    {
-                        MessageBox.Show($"Admin ({adminIp}:{adminPort}) not reachable (timeout).");
-                        return false;
-                    }
-
-                    using (NetworkStream stream = client.GetStream())
-                    using (BinaryWriter writer = new BinaryWriter(stream))
-                    {
-                        writer.Write(subfolder);
-                        writer.Write(fileName);
-                        writer.Write(imageBytes.Length);
-                        writer.Write(imageBytes);
-                        writer.Flush();
-                    }
-                }
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("SendAuthenticationPhotoToAdmin error: " + ex.Message);
-                MessageBox.Show("Failed to send photo to admin: " + ex.Message);
-                return false;
-            }
-        }
-
-        private void InitializeAuthenticationSaveDirectory()
-        {
-            string solutionDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            SaveAuthenticationPhoto = Path.Combine(solutionDirectory, "StudentAuthenticationPhoto");
-
-            if (!Directory.Exists(SaveAuthenticationPhoto))
-                Directory.CreateDirectory(SaveAuthenticationPhoto);
         }
 
         // =========================================================

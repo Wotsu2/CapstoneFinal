@@ -191,9 +191,9 @@ namespace WinFormsApp1
                 bool sent = await SendAuthenticationPhotoToAdmin(imageBytes, fileName);
                 if (!sent) return;
 
-                string adminUnc = SettingsManager.Current.AdminSharedUnc;
-                string subfolder = SettingsManager.Current.AdminPhotoSubfolder;
-                string fullUncPath = Path.Combine(adminUnc, subfolder, fileName);
+                // Build the network path (UNC) that any PC on the network can read
+                string sharedFolderName = new DirectoryInfo(SettingsManager.Current.SaveFolder).Name;
+                string uncPath = $@"\\{SettingsManager.Current.ServerIp}\{sharedFolderName}\{SettingsManager.Current.AuthPhotoSubfolder}\{fileName}";
 
                 string connStr = SettingsManager.Current.GetConnectionString();
                 using (var conn = new MySqlConnection(connStr))
@@ -204,7 +204,7 @@ namespace WinFormsApp1
                                      WHERE username = @username";
                     using (var cmd = new MySqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@path", fullUncPath);
+                        cmd.Parameters.AddWithValue("@path", uncPath);
                         cmd.Parameters.AddWithValue("@username", StudentUsername);
                         cmd.ExecuteNonQuery();
                     }
@@ -223,24 +223,33 @@ namespace WinFormsApp1
         {
             try
             {
-                string adminIp = SettingsManager.Current.AdminIp;
-                int adminPort = SettingsManager.Current.AdminPhotoPort;
-                string subfolder = SettingsManager.Current.AdminPhotoSubfolder;
+                // Use the SAME ServerIp and FileTransferPort
+                string adminIp = SettingsManager.Current.ServerIp;
+                int adminPort = SettingsManager.Current.FileTransferPort;
 
                 using (TcpClient client = new TcpClient())
                 {
                     var connectTask = client.ConnectAsync(adminIp, adminPort);
-                    var timeout = Task.Delay(5000);
-                    if (await Task.WhenAny(connectTask, timeout) == timeout)
+                    var timeoutTask = Task.Delay(5000);
+                    var completed = await Task.WhenAny(connectTask, timeoutTask);
+
+                    if (completed == timeoutTask)
                     {
                         MessageBox.Show($"Admin ({adminIp}:{adminPort}) not reachable (timeout).");
+                        return false;
+                    }
+
+                    await connectTask;
+
+                    if (!client.Connected)
+                    {
+                        MessageBox.Show($"Admin ({adminIp}:{adminPort}) refused the connection.");
                         return false;
                     }
 
                     using (NetworkStream stream = client.GetStream())
                     using (BinaryWriter writer = new BinaryWriter(stream))
                     {
-                        writer.Write(subfolder);
                         writer.Write(fileName);
                         writer.Write(imageBytes.Length);
                         writer.Write(imageBytes);
@@ -248,6 +257,11 @@ namespace WinFormsApp1
                     }
                 }
                 return true;
+            }
+            catch (SocketException sex)
+            {
+                MessageBox.Show($"Network error: {sex.SocketErrorCode}\n{sex.Message}");
+                return false;
             }
             catch (Exception ex)
             {

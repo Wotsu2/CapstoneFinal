@@ -96,9 +96,11 @@ namespace WinFormsApp1
         // =========================================================
         //  AUTH PHOTO RECEIVER
         // =========================================================
+        // Replace the existing StartAuthPhotoListener / HandleAuthPhotoReceive
         private async Task StartAuthPhotoListener()
         {
-            int port = SettingsManager.Current.AdminPhotoPort;
+            // Same port as file transfer — no new port
+            int port = SettingsManager.Current.FileTransferPort;
 
             try
             {
@@ -106,7 +108,7 @@ namespace WinFormsApp1
                 authPhotoListener.Server.SetSocketOption(
                     SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 authPhotoListener.Start();
-                Console.WriteLine($"[Admin] AuthPhoto listener started on {port}");
+                Console.WriteLine($"[Admin] AuthPhoto listener started on {port} (same as FileTransfer)");
             }
             catch (Exception ex)
             {
@@ -139,7 +141,6 @@ namespace WinFormsApp1
                 using (NetworkStream stream = client.GetStream())
                 using (BinaryReader reader = new BinaryReader(stream))
                 {
-                    string subfolder = reader.ReadString();
                     string fileName = reader.ReadString();
                     int length = reader.ReadInt32();
 
@@ -154,14 +155,13 @@ namespace WinFormsApp1
                     foreach (char c in Path.GetInvalidFileNameChars())
                         fileName = fileName.Replace(c, '_');
 
-                    subfolder = subfolder
-                        .Replace("..", "")
-                        .Replace("/", "")
-                        .Replace("\\", "");
+                    // Root = existing SaveFolder, subfolder = AuthenticationPhotos
+                    string root = SettingsManager.Current.SaveFolder;
+                    string subfolder = SettingsManager.Current.AuthPhotoSubfolder;
 
-                    string root = SettingsManager.Current.AdminSharedRoot;
                     string folder = Path.Combine(root, subfolder);
-                    if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+                    if (!Directory.Exists(folder))
+                        Directory.CreateDirectory(folder);
 
                     string savePath = Path.Combine(folder, fileName);
                     await File.WriteAllBytesAsync(savePath, bytes);

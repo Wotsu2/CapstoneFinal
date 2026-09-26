@@ -31,14 +31,8 @@ namespace WinFormsApp1
         // Server presets
         public List<ServerPreset> ServerPresets { get; set; } = new List<ServerPreset>();
 
-        // =========================================================
-        // ADMIN AUTHENTICATION PHOTO SETTINGS
-        // =========================================================
-        public string AdminIp { get; set; } = "192.168.100.4";
-        public int AdminPhotoPort { get; set; } = 5004;
-        public string AdminSharedRoot { get; set; } = @"C:\SharedPhotos";
-        public string AdminSharedUnc { get; set; } = @"\\192.168.100.4\SharedPhotos";
-        public string AdminPhotoSubfolder { get; set; } = "AuthenticationPhotos";
+        // Subfolder name for authentication photos (inside SaveFolder)
+        public string AuthPhotoSubfolder { get; set; } = "AuthenticationPhotos";
 
         public string GetConnectionString()
         {
@@ -64,12 +58,5 @@ namespace WinFormsApp1
         public string DatabaseName { get; set; } = "cdsga_hub";
         public string DatabaseUser { get; set; } = "root";
         public string DatabasePassword { get; set; } = "";
-
-        // Admin photo
-        public string AdminIp { get; set; } = "192.168.100.4";
-        public int AdminPhotoPort { get; set; } = 5004;
-        public string AdminSharedRoot { get; set; } = @"C:\SharedPhotos";
-        public string AdminSharedUnc { get; set; } = @"\\192.168.100.4\SharedPhotos";
-        public string AdminPhotoSubfolder { get; set; } = "AuthenticationPhotos";
     }
 }
