@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
@@ -17,7 +18,6 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace WinFormsApp1
 {
@@ -52,6 +52,9 @@ namespace WinFormsApp1
         private Guna.UI2.WinForms.Guna2Panel assessmentsPanel;
         private FlowLayoutPanel assessmentsList;
 
+        private bool _assessmentsInitialized = false;
+        private bool _reminderShown = false;
+
         public StudentForm(int UserId, string Section, string Username)
         {
             InitializeComponent();
@@ -60,55 +63,96 @@ namespace WinFormsApp1
             StudentUsername = Username;
 
             initializeShowReminderForm();
+
+            // ✅ Runs once after the form is fully visible
+            this.Shown += StudentForm_Shown;
         }
 
         private void StudentForm_Load(object sender, EventArgs e)
         {
-            this.Show();
-            this.Refresh();
-            Application.DoEvents();
-
-            if (string.IsNullOrEmpty(Isauthentication_photoEmpty))
+            try
             {
-                FacialRecognitionReminderForm reminderForm =
-                    new FacialRecognitionReminderForm(int.Parse(userId), StudentUsername);
-                reminderForm.ShowDialog();
+                this.Show();
+                this.Refresh();
+                Application.DoEvents();
+                isSharingScreen = true;
+                lblProfUsername.Text = StudentUsername;
+
+                // Background network tasks — safe to start immediately
+                Task.Run(() => ConnectToServer());
+                Task.Run(() => StartScreenShare());
+                Task.Run(() => ConnectBroadcastReceiver());
+                Task.Run(() => StartListening());
+
+                // Data loads
+                NameGet();
+                InitializeSaveDirectory();
+                InitializeAuthenticationSaveDirectory();
+                InitializeChangingPicture();
+
+                try { InitializeCreateButtonActivity(); }
+                catch (Exception ex) { Console.WriteLine("InitCreateButton: " + ex.Message); }
+
+                try { InitializeDataGridViewActivities(); }
+                catch (Exception ex) { Console.WriteLine("InitDgvActivities: " + ex.Message); }
+
+                try { InitializeDataGridViewGrades(); }
+                catch (Exception ex) { Console.WriteLine("InitDgvGrades: " + ex.Message); }
+
+                try { LoadJoinedClasses(); }
+                catch (Exception ex) { Console.WriteLine("LoadJoinedClasses: " + ex.Message); }
+
+                try { InitializeQuizExam(); }
+                catch (Exception ex) { Console.WriteLine("InitQuizExam: " + ex.Message); }
+
+                lblStudentName.Text = studentname;
+
+                pnlHome.Visible = true;
+                pnlHome.BringToFront();
+
+                flpPendingActivities.AutoScroll = true;
+                flpPendingActivities.WrapContents = true;
+                flpPendingActivities.FlowDirection = FlowDirection.LeftToRight;
+                flpPendingActivities.PerformLayout();
+
+                this.Refresh();
+                Application.DoEvents();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "StudentForm failed to load:\n\n" + ex.Message + "\n\n" + ex.StackTrace,
+                    "Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void StudentForm_Shown(object sender, EventArgs e)
+        {
+            // Deferred: reminder dialog (only if no auth photo)
+            if (!_reminderShown)
+            {
+                _reminderShown = true;
+                if (string.IsNullOrEmpty(Isauthentication_photoEmpty))
+                {
+                    try
+                    {
+                        var reminder = new FacialRecognitionReminderForm(int.Parse(userId), StudentUsername);
+                        reminder.ShowDialog(this);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Reminder form error: " + ex.Message);
+                    }
+                }
             }
 
-            isSharingScreen = true;
-            lblProfUsername.Text = StudentUsername;
-
-            Task.Run(() => ConnectToServer());
-            Task.Run(() => StartScreenShare());
-            Task.Run(() => ConnectBroadcastReceiver());
-            Task.Run(() => StartListening());
-
-            InitializeCreateButtonActivity();
-            InitializeDataGridViewActivities();
-            NameGet();
-            InitializeDataGridViewGrades();
-            LoadJoinedClasses();
-
-            InitializeSaveDirectory();
-            InitializeChangingPicture();
-            InitializeAuthenticationSaveDirectory();
-            InitializeQuizExam();
-
-            InitializeAssessmentsCard();
-
-            lblStudentName.Text = studentname;
-
-            // ✅ Force the Home panel to be visible and layout correctly
-            pnlHome.Visible = true;
-            pnlHome.BringToFront();
-
-            flpPendingActivities.AutoScroll = true;
-            flpPendingActivities.WrapContents = true;
-            flpPendingActivities.FlowDirection = FlowDirection.LeftToRight;
-            flpPendingActivities.PerformLayout();
-
-            this.Refresh();
-            Application.DoEvents();
+            // Deferred: assessments card (only once)
+            if (!_assessmentsInitialized)
+            {
+                _assessmentsInitialized = true;
+                try { InitializeAssessmentsCard(); }
+                catch (Exception ex) { Console.WriteLine("InitializeAssessmentsCard error: " + ex.Message); }
+            }
         }
 
         private void initializeShowReminderForm()
@@ -195,6 +239,7 @@ namespace WinFormsApp1
             lblhometitle.Text = "Settings";
             pnlQuizExam.Visible = false;
         }
+
         private void btnQuizExam_Click(object sender, EventArgs e)
         {
             pnlHome.Visible = false;
@@ -204,10 +249,10 @@ namespace WinFormsApp1
             pnlQuizExam.Visible = true;
             InitializeQuizExam();
         }
+
         // =========================================================
         // RECONNECTING TCP CLIENT HELPER
         // =========================================================
-
         private async Task RunClientForever(
             string name,
             Func<TcpClient> connect,
@@ -431,7 +476,7 @@ namespace WinFormsApp1
 
         private void ListenForCommands()
         {
-            while (isSharingScreen)
+            while (isSharingScreen && !isSignedOut)
             {
                 try
                 {
@@ -511,13 +556,12 @@ namespace WinFormsApp1
                                 string activity_status = reader.IsDBNull(reader.GetOrdinal("activity_status"))
                                     ? "" : reader.GetString("activity_status");
 
-                                // ---------- OUTER CARD ----------
                                 Guna.UI2.WinForms.Guna2Panel card = new Guna.UI2.WinForms.Guna2Panel();
                                 card.Width = 260;
                                 card.Height = 250;
                                 card.Margin = new Padding(10);
                                 card.FillColor = Color.White;
-                                card.BorderColor = Color.FromArgb(66, 133, 244);   // blue
+                                card.BorderColor = Color.FromArgb(66, 133, 244);
                                 card.BorderThickness = 2;
                                 card.BorderRadius = 14;
                                 card.Cursor = Cursors.Hand;
@@ -525,11 +569,10 @@ namespace WinFormsApp1
                                 int capturedId = activityId;
                                 card.Click += (s, e) => InitializeHomeActivityButton(capturedId);
 
-                                // ---------- DUE BADGE (top-right) ----------
                                 Guna.UI2.WinForms.Guna2Panel badge = new Guna.UI2.WinForms.Guna2Panel();
                                 badge.Size = new Size(150, 34);
                                 badge.Location = new Point(card.Width - 150, 0);
-                                badge.FillColor = Color.FromArgb(199, 125, 226);   // light purple
+                                badge.FillColor = Color.FromArgb(199, 125, 226);
                                 badge.BorderRadius = 0;
                                 badge.Anchor = AnchorStyles.Top | AnchorStyles.Right;
                                 badge.Cursor = Cursors.Hand;
@@ -546,7 +589,6 @@ namespace WinFormsApp1
                                 badge.Controls.Add(lblDue);
                                 card.Controls.Add(badge);
 
-                                // ---------- SUBJECT (big, bold) ----------
                                 Label lblSubject = new Label();
                                 lblSubject.Text = className.ToUpper();
                                 lblSubject.ForeColor = Color.Black;
@@ -558,7 +600,6 @@ namespace WinFormsApp1
                                 lblSubject.Cursor = Cursors.Hand;
                                 card.Controls.Add(lblSubject);
 
-                                // ---------- ACTIVITY TITLE (medium, regular) ----------
                                 Label lblTitle = new Label();
                                 lblTitle.Text = title;
                                 lblTitle.ForeColor = Color.FromArgb(30, 30, 30);
@@ -570,7 +611,6 @@ namespace WinFormsApp1
                                 lblTitle.Cursor = Cursors.Hand;
                                 card.Controls.Add(lblTitle);
 
-                                // ---------- STATUS (small, gray) ----------
                                 Label lblStatus = new Label();
                                 lblStatus.Text = activity_status;
                                 lblStatus.ForeColor = Color.Gray;
@@ -581,10 +621,9 @@ namespace WinFormsApp1
                                 lblStatus.Cursor = Cursors.Hand;
                                 card.Controls.Add(lblStatus);
 
-                                // ---------- VIEW ACTIVITY (bottom-right) ----------
                                 Label lblView = new Label();
                                 lblView.Text = "View Activity   ›";
-                                lblView.ForeColor = Color.FromArgb(139, 0, 0);   // dark red
+                                lblView.ForeColor = Color.FromArgb(139, 0, 0);
                                 lblView.BackColor = Color.Transparent;
                                 lblView.Font = new Font("Segoe UI", 11F, FontStyle.Regular);
                                 lblView.AutoSize = true;
@@ -593,9 +632,7 @@ namespace WinFormsApp1
                                 lblView.Cursor = Cursors.Hand;
                                 card.Controls.Add(lblView);
 
-                                // ---------- CLICK FORWARDING (labels swallow clicks) ----------
                                 EventHandler openActivity = (s, e) => InitializeHomeActivityButton(capturedId);
-
                                 badge.Click += openActivity;
                                 lblDue.Click += openActivity;
                                 lblSubject.Click += openActivity;
@@ -1054,7 +1091,6 @@ namespace WinFormsApp1
                                 string profFirst = reader["firstname"] != DBNull.Value ? reader["firstname"].ToString() : "";
                                 string profMiddle = reader["middlename"] != DBNull.Value ? reader["middlename"].ToString() : "";
 
-                                // Build display name: "Lastname Firstname Middlename"
                                 string profFullName = string.Join(" ",
                                     new[] { profLast, profFirst, profMiddle }
                                         .Where(s => !string.IsNullOrWhiteSpace(s)))
@@ -1063,7 +1099,6 @@ namespace WinFormsApp1
                                 if (string.IsNullOrEmpty(profFullName))
                                     profFullName = "Unknown Professor";
 
-                                // ---------------- CARD ----------------
                                 Panel cardPanel = new Panel
                                 {
                                     Size = new Size(350, 250),
@@ -1092,7 +1127,6 @@ namespace WinFormsApp1
                                 };
                                 cardPanel.Controls.Add(lblTitle);
 
-                                // 🆕 Professor's name
                                 Label lblProfName = new Label
                                 {
                                     Text = "Prof. " + profFullName,
@@ -1131,7 +1165,6 @@ namespace WinFormsApp1
                                 };
                                 cardPanel.Controls.Add(lblSection);
 
-                                // ---------------- CONTEXT MENU ----------------
                                 ContextMenuStrip menu = new ContextMenuStrip();
                                 lblMenu.Click += (s, e) =>
                                 {
@@ -1172,7 +1205,6 @@ namespace WinFormsApp1
                 Console.WriteLine("InitializeCreadeClass error: " + ex);
             }
         }
-
 
         private void LoadJoinedClasses()
         {
@@ -1292,6 +1324,10 @@ namespace WinFormsApp1
             }
             catch { }
 
+            try { assessmentsRefreshTimer?.Stop(); } catch { }
+            try { assessmentsRefreshTimer?.Dispose(); } catch { }
+            assessmentsRefreshTimer = null;
+
             MessageBox.Show("Signed out successfully.");
         }
 
@@ -1305,9 +1341,6 @@ namespace WinFormsApp1
                 StopServer();
 
                 ClearAllFormData();
-
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
 
                 Login login = new Login();
                 login.Show();
@@ -1585,9 +1618,10 @@ namespace WinFormsApp1
         // =========================================================
         // Assessment quiz exam
         // =========================================================
-
         private void InitializeAssessmentsCard()
         {
+            if (assessmentsPanel != null) return;
+
             assessmentsPanel = new Guna.UI2.WinForms.Guna2Panel
             {
                 Size = new Size(242, 150),
@@ -1925,7 +1959,6 @@ namespace WinFormsApp1
             }
         }
 
-        
         private void InitializeQuizExam()
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -1949,13 +1982,25 @@ namespace WinFormsApp1
 
                         QuizExamScore.DataSource = dt;
                     }
-
                 }
             }
-            catch
+            catch (Exception ex)
             {
-
+                Console.WriteLine("InitializeQuizExam error: " + ex.Message);
             }
         }
+
+        // =========================================================
+        // DEBUG: Trace why the form is closing (remove after testing)
+        // =========================================================
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            Console.WriteLine($"[StudentForm] OnFormClosing — Reason={e.CloseReason}, Cancel={e.Cancel}");
+
+            // Stop the assessments timer to avoid firing after close
+            try { assessmentsRefreshTimer?.Stop(); } catch { }
+
+            base.OnFormClosing(e);
+        }
     }
-}
+}                                                                                                                                                                                                      

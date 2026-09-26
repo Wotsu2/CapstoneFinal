@@ -553,25 +553,30 @@ namespace WinFormsApp1
                     scannerView.StatusText = "IDENTITY CONFIRMED ✔";
                     VerificationPassed = true;
 
+                    int capturedUserId = UserId;
+                    string capturedSection = StudentSection;
+                    string capturedUsername = Username;
+
                     var closeTimer = new System.Windows.Forms.Timer { Interval = 1200 };
                     closeTimer.Tick += (s, ev) =>
                     {
                         closeTimer.Stop();
-
                         StopCamera();
 
-                        // ✅ 1. Create StudentForm while Liveness is still alive
-                        var studentForm = new StudentForm(UserId, StudentSection, Username);
+                        // ✅ Open StudentForm FIRST
+                        try
+                        {
+                            var studentForm = new StudentForm(capturedUserId, capturedSection, capturedUsername);
+                            studentForm.Show();
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show(
+                                "Could not open StudentForm:\n\n" + ex.Message + "\n\n" + ex.StackTrace,
+                                "Launch Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
 
-                        // ✅ 2. Show it BEFORE this form hides — the message loop is still alive
-                        studentForm.Show();
-
-                        // ✅ 3. Force an immediate paint of the new form
-                        studentForm.Refresh();
-                        Application.DoEvents();
-
-                        // ✅ 4. Now hide + close this form
-                        this.Hide();
+                        // ✅ THEN close this form
                         this.DialogResult = DialogResult.OK;
                         this.Close();
                     };

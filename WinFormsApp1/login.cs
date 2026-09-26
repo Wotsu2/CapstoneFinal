@@ -237,20 +237,31 @@ namespace WinFormsApp1
 
                             livenessForm.FormClosed += (s, args) =>
                             {
-                                bool anyVisible = false;
+                                // Count only OTHER visible forms (skip Login and Liveness)
+                                bool anyOtherVisible = false;
                                 foreach (Form f in Application.OpenForms)
                                 {
-                                    if (f != this && f.Visible)
+                                    if (f == this) continue;
+                                    if (f is LivenessCheckForm) continue;
+                                    if (f.Visible && !f.IsDisposed)
                                     {
-                                        anyVisible = true;
+                                        anyOtherVisible = true;
                                         break;
                                     }
                                 }
 
-                                if (!anyVisible)
-                                    this.Show();
+                                if (anyOtherVisible)
+                                {
+                                    // StudentForm (or other) took over — just hide Login.
+                                    // DO NOT close — closing the main form triggers Application.Exit()
+                                    // which kills StudentForm too.
+                                    this.Hide();
+                                }
                                 else
-                                    this.Close();
+                                {
+                                    // Nobody opened — bring Login back
+                                    this.Show();
+                                }
                             };
 
                             livenessForm.Show();
@@ -366,21 +377,17 @@ namespace WinFormsApp1
         }
 
         private void OpenAppropriateForm(string role, string username, int UserId,
-                                          string authenticationPhoto, string question, string answer)
+                                  string authenticationPhoto, string question, string answer)
         {
             if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
             {
                 AdminForm adminForm = new AdminForm();
-                adminForm.FormClosed += (s, args) => Application.Exit();
-
                 this.Hide();
                 adminForm.Show();
             }
             else if (role.Equals("Professor", StringComparison.OrdinalIgnoreCase))
             {
                 ProfessorForm profForm = new ProfessorForm(UserId, username);
-                profForm.FormClosed += (s, args) => Application.Exit();
-
                 this.Hide();
                 profForm.Show();
             }
@@ -397,16 +404,12 @@ namespace WinFormsApp1
                 if (string.IsNullOrEmpty(question) && string.IsNullOrEmpty(answer))
                 {
                     StudentForm studentform = new StudentForm(UserId, StudentSection, username);
-                    studentform.FormClosed += (s, args) => Application.Exit();
-
                     this.Hide();
                     studentform.Show();
                 }
                 else if (!string.IsNullOrEmpty(question) && !string.IsNullOrEmpty(answer))
                 {
                     QandAForm QandAform = new QandAForm(UserId, StudentSection, username);
-                    QandAform.FormClosed += (s, args) => Application.Exit();
-
                     this.Hide();
                     QandAform.Show();
                 }
