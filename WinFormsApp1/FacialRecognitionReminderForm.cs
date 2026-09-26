@@ -6,7 +6,9 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.IO;
+using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace WinFormsApp1
@@ -15,7 +17,6 @@ namespace WinFormsApp1
     {
         private int StudentId;
         private string AuthenticationPhoto;
-        private string SaveAuthenticationPhoto;
         private string StudentUsername;
 
         public FacialRecognitionReminderForm(int StudentID, string Username)
@@ -25,7 +26,6 @@ namespace WinFormsApp1
             StudentUsername = Username;
             InitializeGetRemainingLimit();
             initializeCloseExitButton();
-            InitializeAuthenticationSaveDirectory();
         }
 
         private void InitializeGetRemainingLimit()
@@ -173,7 +173,7 @@ namespace WinFormsApp1
             }
         }
 
-        private void btnSubmitAuthenticationPhoto_Click(object sender, EventArgs e)
+        private async void btnSubmitAuthenticationPhoto_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(AuthenticationPhoto))
             {
@@ -181,44 +181,79 @@ namespace WinFormsApp1
                 return;
             }
 
-            string connStr = SettingsManager.Current.GetConnectionString();
-
             try
             {
+                byte[] imageBytes = await File.ReadAllBytesAsync(AuthenticationPhoto);
+
+                string ext = Path.GetExtension(AuthenticationPhoto);
+                string fileName = $"{StudentId}_{StudentUsername}_{DateTime.Now:yyyyMMddHHmmss}{ext}";
+
+                bool sent = await SendAuthenticationPhotoToAdmin(imageBytes, fileName);
+                if (!sent) return;
+
+                string adminUnc = SettingsManager.Current.AdminSharedUnc;
+                string subfolder = SettingsManager.Current.AdminPhotoSubfolder;
+                string fullUncPath = Path.Combine(adminUnc, subfolder, fileName);
+
+                string connStr = SettingsManager.Current.GetConnectionString();
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
                     string query = @"UPDATE user_credential 
-                                     SET authentication_photo = @authentication_photo 
+                                     SET authentication_photo = @path 
                                      WHERE username = @username";
                     using (var cmd = new MySqlCommand(query, conn))
                     {
-                        string fileName = Path.GetFileName(AuthenticationPhoto);
-                        string destinationPath = Path.Combine(SaveAuthenticationPhoto, fileName);
-                        File.Copy(AuthenticationPhoto, destinationPath, true);
-                        cmd.Parameters.AddWithValue("@authentication_photo", destinationPath);
+                        cmd.Parameters.AddWithValue("@path", fullUncPath);
                         cmd.Parameters.AddWithValue("@username", StudentUsername);
                         cmd.ExecuteNonQuery();
                     }
-                    InitializeAuthenticationSaveDirectory();
-                    MessageBox.Show("Profile picture updated successfully.");
-                    this.Close();
                 }
+
+                MessageBox.Show("Authentication photo sent to admin successfully.");
+                this.Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error updating profile picture: " + ex.Message);
+                MessageBox.Show("Error sending authentication photo: " + ex.Message);
             }
         }
 
-        private void InitializeAuthenticationSaveDirectory()
+        private async Task<bool> SendAuthenticationPhotoToAdmin(byte[] imageBytes, string fileName)
         {
-            string solutionDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            SaveAuthenticationPhoto = Path.Combine(solutionDirectory, "StudentAuthenticationPhoto");
-
-            if (!Directory.Exists(SaveAuthenticationPhoto))
+            try
             {
-                Directory.CreateDirectory(SaveAuthenticationPhoto);
+                string adminIp = SettingsManager.Current.AdminIp;
+                int adminPort = SettingsManager.Current.AdminPhotoPort;
+                string subfolder = SettingsManager.Current.AdminPhotoSubfolder;
+
+                using (TcpClient client = new TcpClient())
+                {
+                    var connectTask = client.ConnectAsync(adminIp, adminPort);
+                    var timeout = Task.Delay(5000);
+                    if (await Task.WhenAny(connectTask, timeout) == timeout)
+                    {
+                        MessageBox.Show($"Admin ({adminIp}:{adminPort}) not reachable (timeout).");
+                        return false;
+                    }
+
+                    using (NetworkStream stream = client.GetStream())
+                    using (BinaryWriter writer = new BinaryWriter(stream))
+                    {
+                        writer.Write(subfolder);
+                        writer.Write(fileName);
+                        writer.Write(imageBytes.Length);
+                        writer.Write(imageBytes);
+                        writer.Flush();
+                    }
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("SendAuthenticationPhotoToAdmin error: " + ex.Message);
+                MessageBox.Show("Failed to send photo to admin: " + ex.Message);
+                return false;
             }
         }
     }

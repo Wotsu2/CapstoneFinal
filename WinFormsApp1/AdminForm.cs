@@ -56,6 +56,14 @@ namespace WinFormsApp1
         private string selectedWorkstationId = "";
         private volatile bool isRunning = false;
 
+        // AUTH PHOTO LISTENER
+        private TcpListener authPhotoListener;
+        private volatile bool adminIsRunning = true;
+
+        // BANNER MANAGEMENT
+        private Guna.UI2.WinForms.Guna2Button btnUploadBanner;
+        private Guna.UI2.WinForms.Guna2Button btnOpenBannersFolder;
+
         public AdminForm()
         {
             InitializeComponent();
@@ -72,6 +80,7 @@ namespace WinFormsApp1
         private void admindash_Load(object sender, EventArgs e)
         {
             isRunning = true;
+            adminIsRunning = true;
 
             lblTotalUsers.Text = TotalUsers().ToString();
 
@@ -79,6 +88,226 @@ namespace WinFormsApp1
 
             StartServer();
             StartScreenListener();
+            _ = StartAuthPhotoListener();
+
+            InitializeBannerButtons();
+        }
+
+        // =========================================================
+        //  AUTH PHOTO RECEIVER
+        // =========================================================
+        private async Task StartAuthPhotoListener()
+        {
+            int port = SettingsManager.Current.AdminPhotoPort;
+
+            try
+            {
+                authPhotoListener = new TcpListener(IPAddress.Any, port);
+                authPhotoListener.Server.SetSocketOption(
+                    SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                authPhotoListener.Start();
+                Console.WriteLine($"[Admin] AuthPhoto listener started on {port}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[Admin] AuthPhoto bind FAILED: " + ex.Message);
+                MessageBox.Show("Failed to start auth photo listener: " + ex.Message);
+                return;
+            }
+
+            while (adminIsRunning)
+            {
+                try
+                {
+                    TcpClient client = await authPhotoListener.AcceptTcpClientAsync();
+                    _ = HandleAuthPhotoReceive(client);
+                }
+                catch (ObjectDisposedException) { break; }
+                catch (Exception ex)
+                {
+                    if (!adminIsRunning) break;
+                    Console.WriteLine("[Admin] AuthPhoto accept error: " + ex.Message);
+                }
+            }
+        }
+
+        private async Task HandleAuthPhotoReceive(TcpClient client)
+        {
+            try
+            {
+                using (client)
+                using (NetworkStream stream = client.GetStream())
+                using (BinaryReader reader = new BinaryReader(stream))
+                {
+                    string subfolder = reader.ReadString();
+                    string fileName = reader.ReadString();
+                    int length = reader.ReadInt32();
+
+                    if (length <= 0 || length > 20 * 1024 * 1024)
+                    {
+                        Console.WriteLine("[Admin] Invalid auth photo length: " + length);
+                        return;
+                    }
+
+                    byte[] bytes = reader.ReadBytes(length);
+
+                    foreach (char c in Path.GetInvalidFileNameChars())
+                        fileName = fileName.Replace(c, '_');
+
+                    subfolder = subfolder
+                        .Replace("..", "")
+                        .Replace("/", "")
+                        .Replace("\\", "");
+
+                    string root = SettingsManager.Current.AdminSharedRoot;
+                    string folder = Path.Combine(root, subfolder);
+                    if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+
+                    string savePath = Path.Combine(folder, fileName);
+                    await File.WriteAllBytesAsync(savePath, bytes);
+
+                    Console.WriteLine("[Admin] Auth photo saved → " + savePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("HandleAuthPhotoReceive error: " + ex.Message);
+            }
+        }
+
+        // =========================================================
+        //  BANNER MANAGEMENT
+        // =========================================================
+        private void InitializeBannerButtons()
+        {
+            int btnHeight = 45;
+            int btnWidth = 180;
+
+            btnUploadBanner = new Guna.UI2.WinForms.Guna2Button();
+            btnUploadBanner.Text = "Upload Banner";
+            btnUploadBanner.Size = new Size(btnWidth, btnHeight);
+            btnUploadBanner.BorderRadius = 10;
+            btnUploadBanner.FillColor = Color.Maroon;
+            btnUploadBanner.ForeColor = Color.White;
+            btnUploadBanner.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            btnUploadBanner.Cursor = Cursors.Hand;
+            btnUploadBanner.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+
+            btnUploadBanner.Location = new Point(this.ClientSize.Width, 150);
+
+            btnUploadBanner.Click += BtnUploadBanner_Click;
+            this.Controls.Add(btnUploadBanner);
+            btnUploadBanner.BringToFront();
+
+            btnOpenBannersFolder = new Guna.UI2.WinForms.Guna2Button();
+            btnOpenBannersFolder.Text = "Open Folder";
+            btnOpenBannersFolder.Size = new Size(140, btnHeight);
+            btnOpenBannersFolder.BorderRadius = 10;
+            btnOpenBannersFolder.FillColor = Color.Gray;
+            btnOpenBannersFolder.ForeColor = Color.White;
+            btnOpenBannersFolder.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            btnOpenBannersFolder.Cursor = Cursors.Hand;
+            btnOpenBannersFolder.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+
+            btnOpenBannersFolder.Location = new Point(
+                btnUploadBanner.Left - btnOpenBannersFolder.Width - 10,
+                btnUploadBanner.Top);
+
+            btnOpenBannersFolder.Click += BtnOpenBannersFolder_Click;
+            this.Controls.Add(btnOpenBannersFolder);
+            btnOpenBannersFolder.BringToFront();
+        }
+
+        private void BtnUploadBanner_Click(object sender, EventArgs e)
+        {
+            string folder = BannerHelper.GetBannersFolder();
+
+            if (string.IsNullOrEmpty(folder))
+            {
+                MessageBox.Show(
+                    "The Banners folder could not be located.\n\n" +
+                    "Please set a Root Folder in Login → Configuration → File Storage first.",
+                    "Root Folder Not Set",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
+            using (OpenFileDialog ofd = new OpenFileDialog())
+            {
+                ofd.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif";
+                ofd.Multiselect = true;
+                ofd.Title = "Select banner image(s) to upload";
+
+                if (ofd.ShowDialog() != DialogResult.OK) return;
+
+                int copied = 0;
+
+                foreach (string source in ofd.FileNames)
+                {
+                    try
+                    {
+                        string fileName = Path.GetFileName(source);
+                        string dest = Path.Combine(folder, fileName);
+
+                        if (File.Exists(dest))
+                        {
+                            string ext = Path.GetExtension(source);
+                            string baseName = Path.GetFileNameWithoutExtension(source);
+                            string stamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                            dest = Path.Combine(folder, $"{baseName}_{stamp}{ext}");
+                        }
+
+                        File.Copy(source, dest);
+                        copied++;
+
+                        Console.WriteLine("[Admin] Uploaded: " + dest);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(
+                            $"Failed to upload {Path.GetFileName(source)}:\n\n{ex.Message}",
+                            "Upload Error",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+                    }
+                }
+
+                if (copied > 0)
+                {
+                    MessageBox.Show(
+                        $"{copied} banner(s) uploaded successfully.\n\n" +
+                        $"Location:\n{folder}",
+                        "Upload Complete",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+            }
+        }
+
+        private void BtnOpenBannersFolder_Click(object sender, EventArgs e)
+        {
+            string folder = BannerHelper.GetBannersFolder();
+
+            if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
+            {
+                MessageBox.Show(
+                    "The Banners folder does not exist yet.\n\n" +
+                    "Please set a Root Folder in Login → Configuration → File Storage first.",
+                    "Folder Not Found",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                System.Diagnostics.Process.Start("explorer.exe", "\"" + folder + "\"");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Could not open folder:\n" + ex.Message);
+            }
         }
 
         // =========================================================
@@ -105,7 +334,6 @@ namespace WinFormsApp1
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnFileManagement);
 
-            // Prefer the root from SettingsManager, fall back to the default
             string root = SettingsManager.Current.SaveFolder;
             if (string.IsNullOrEmpty(root))
                 root = saveFolder;
@@ -1002,6 +1230,13 @@ namespace WinFormsApp1
         {
             string connStr = SettingsManager.Current.GetConnectionString();
 
+            if (string.IsNullOrEmpty(IdNumberText.Text) && string.IsNullOrEmpty(ContextRoleText.Text) && string.IsNullOrEmpty(LastnameText.Text) && string.IsNullOrEmpty(FirstnameText.Text) && string.IsNullOrEmpty(MiddlenameText.Text)
+                && string.IsNullOrEmpty(EmailText.Text) && string.IsNullOrEmpty(ContextYearText.Text) && string.IsNullOrEmpty(ContextSectionText.Text) && string.IsNullOrEmpty(ContextCourseText.Text))
+            {
+                MessageBox.Show("Please Fill up the Blank");
+                return;
+            }
+
             if (ContextRoleText.Text == "Professor")
                 semester = "Null";
             else if (ContextRoleText.Text == "Student")
@@ -1013,7 +1248,6 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
-                    // ---- 1. Insert credential ----
                     string Insertquery2 = @"INSERT INTO user_credential (username, p_word, roles, user_status, authentication_condition)
                                             VALUES (@Uname, @Password, @UserRole, @Status, @authentication_condition); SELECT LAST_INSERT_ID();";
 
@@ -1028,7 +1262,6 @@ namespace WinFormsApp1
                         userId = Convert.ToInt64(cmd2.ExecuteScalar());
                     }
 
-                    // ---- 2. Insert info ----
                     string Insertquery = @"
                                 INSERT INTO user_information 
                                     (user_id, lastname, firstname, middlename, email, school_year, school_section, school_semester, school_course) 
@@ -1049,7 +1282,6 @@ namespace WinFormsApp1
                         cmd.ExecuteNonQuery();
                     }
 
-                    // ---- 3. Attendance row ----
                     string AttendanceQuery = "INSERT INTO professor_attendance (student_id, student_name) VALUES (@student_id, @student_name)";
                     using (MySqlCommand cmd3 = new MySqlCommand(AttendanceQuery, conn))
                     {
@@ -1058,7 +1290,6 @@ namespace WinFormsApp1
                         cmd3.ExecuteNonQuery();
                     }
 
-                    // ---- 4. Build folder path from ROOT (settings.json) ----
                     string rootPath = SettingsManager.Current.SaveFolder;
 
                     if (string.IsNullOrEmpty(rootPath))
@@ -1097,7 +1328,6 @@ namespace WinFormsApp1
                         return;
                     }
 
-                    // ---- 5. Save per-user folder path ----
                     string FolderPathQuery = "INSERT INTO mainfolderpath (user_id, FolderPath) VALUES (@user_id, @FolderPath)";
                     using (var cmd4 = new MySqlCommand(FolderPathQuery, conn))
                     {
@@ -1143,7 +1373,7 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        //  WORKSTATION (SAFE SHUTDOWN)
+        //  WORKSTATION
         // =========================================================
         public void WorkstationButton_Click(object sender, EventArgs e)
         {
@@ -1291,7 +1521,7 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        //  SCREEN SHARING (SAFE SHUTDOWN)
+        //  SCREEN SHARING
         // =========================================================
         private async void StartScreenListener()
         {
@@ -1496,29 +1726,39 @@ namespace WinFormsApp1
 
             if (result != DialogResult.Yes) return;
 
-            // 1. Signal loops to stop
             isRunning = false;
+            adminIsRunning = false;
 
-            // 2. Stop listeners — their pending accepts will throw and get caught
             try { listener?.Stop(); } catch { }
             try { screenListener?.Stop(); } catch { }
+            try { authPhotoListener?.Stop(); } catch { }
+            try { authPhotoListener?.Server?.Dispose(); } catch { }
+            authPhotoListener = null;
 
-            // 3. Small delay so pending accepts exit before we dispose handles
             System.Threading.Thread.Sleep(150);
 
-            // 4. Dispose any open screen viewers
             foreach (var kvp in screenViewers)
             {
                 try { kvp.Value?.Image?.Dispose(); } catch { }
             }
             screenViewers.Clear();
 
-            // 5. Show Login BEFORE closing this form so Application doesn't exit
             Login loginForm = new Login();
             loginForm.Show();
 
             this.Hide();
             this.Close();
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            adminIsRunning = false;
+
+            try { authPhotoListener?.Stop(); } catch { }
+            try { authPhotoListener?.Server?.Dispose(); } catch { }
+            authPhotoListener = null;
+
+            base.OnFormClosing(e);
         }
     }
 }

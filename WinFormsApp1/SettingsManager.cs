@@ -20,11 +20,14 @@ namespace WinFormsApp1
                 {
                     string json = File.ReadAllText(settingsPath);
                     Current = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+
+                    if (Current.ServerPresets == null)
+                        Current.ServerPresets = new System.Collections.Generic.List<ServerPreset>();
                 }
                 else
                 {
                     Current = new AppSettings();
-                    Save(); // create the file with defaults on first run
+                    Save();
                 }
             }
             catch (Exception ex)

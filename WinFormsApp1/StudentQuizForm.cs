@@ -30,22 +30,15 @@ namespace WinFormsApp1
         // EXAM COUNTDOWN
         // =========================================================
 
-        // Total duration in minutes.
         private const int ExamDurationMinutes = 60;
-
-        // Total duration in seconds.
         private const int ExamDurationSeconds = ExamDurationMinutes * 60;
 
-        // Seconds left in the exam. Countdown uses this field.
-        // Persisted to quiz_attempts.remaining_seconds so it
-        // survives a restart.
         private int remainingSeconds = ExamDurationSeconds;
 
         private Label lblTimer;
         private System.Windows.Forms.Timer examTimer;
         private bool isSubmitting = false;
 
-        // Persist remaining time to DB every N seconds (not every tick).
         private const int PersistEveryNSeconds = 10;
 
         // =========================================================
@@ -165,7 +158,6 @@ namespace WinFormsApp1
             this.FormBorderStyle = FormBorderStyle.Sizable;
             this.KeyPreview = true;
 
-            // ---- Header ----
             headerPanel = new SmoothPanel();
             headerPanel.Dock = DockStyle.Top;
             headerPanel.Height = 145;
@@ -210,7 +202,6 @@ namespace WinFormsApp1
             lblInstruction.Location = new Point(38, 101);
             headerPanel.Controls.Add(lblInstruction);
 
-            // ---- Countdown label ----
             lblTimer = new Label();
             lblTimer.Text = $"TIME: {ExamDurationMinutes:00}:00";
             lblTimer.Font = new Font("Segoe UI", 18, FontStyle.Bold);
@@ -224,7 +215,6 @@ namespace WinFormsApp1
             headerPanel.Controls.Add(lblTimer);
             lblTimer.BringToFront();
 
-            // ---- Scroll Panel ----
             scrollPanel = new SmoothPanel();
             scrollPanel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom |
                                   AnchorStyles.Left | AnchorStyles.Right;
@@ -237,7 +227,6 @@ namespace WinFormsApp1
             this.Controls.Add(scrollPanel);
             headerPanel.BringToFront();
 
-            // ---- Content Panel ----
             contentPanel = new SmoothPanel();
             contentPanel.BackColor = BackgroundColor;
             contentPanel.Size = new Size(900, 500);
@@ -283,6 +272,7 @@ namespace WinFormsApp1
         }
 
         // =========================================================
+<<<<<<< Updated upstream
         // TIMER BADGE - GOLD OUTLINE
         // =========================================================
 
@@ -304,17 +294,68 @@ namespace WinFormsApp1
 
         // =========================================================
         // FORM CLOSED
+=======
+        // FORM CLOSED — final save + mark DISCONNECTED
+>>>>>>> Stashed changes
         // =========================================================
 
         private void StudentQuizForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            StopExamTimer();
-            StopAutoSave();
-            StopHeartbeat();
+            try { StopExamTimer(); } catch { }
+            try { StopAutoSave(); } catch { }
+            try { StopHeartbeat(); } catch { }
 
-            // Persist remaining time one last time so restart resumes correctly.
-            if (currentAttemptId > 0 && !isSubmitting)
-                SaveRemainingSecondsToDb(remainingSeconds);
+            if (currentAttemptId <= 0) return;
+
+            if (!isSubmitting)
+            {
+                try
+                {
+                    SaveAllAnswers();
+                    SaveAnswersToDatabase();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("FormClosed save error: " + ex.Message);
+                }
+
+                try
+                {
+                    SaveRemainingSecondsToDb(remainingSeconds);
+                    MarkAttemptAsDisconnected();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("FormClosed disconnect error: " + ex.Message);
+                }
+            }
+        }
+
+        private void MarkAttemptAsDisconnected()
+        {
+            if (currentAttemptId <= 0) return;
+
+            try
+            {
+                string connStr = SettingsManager.Current.GetConnectionString();
+
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    using (var cmd = new MySqlCommand(
+                        @"UPDATE quiz_attempts
+                          SET status = 'DISCONNECTED',
+                              last_seen = NOW()
+                          WHERE attempt_id = @id
+                            AND status = 'TAKING'", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", currentAttemptId);
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch { }
         }
 
         // =========================================================
@@ -339,7 +380,6 @@ namespace WinFormsApp1
             }
 
             int availableWidth = scrollPanel.ClientSize.Width;
-
             int contentWidth = Math.Max(780, Math.Min(900, availableWidth - 70));
 
             contentPanel.Width = contentWidth;
@@ -530,12 +570,14 @@ namespace WinFormsApp1
                 btnSubmit.Visible = true;
                 StudentQuizForm_Resize(null, EventArgs.Empty);
 
-                if (!CreateQuizAttempt())
+                // Build UI first, then resume/create the attempt
+                if (!CreateOrResumeAttempt())
                 {
                     DisableQuiz();
                     return;
                 }
 
+                // Restore answers from previous session (if any)
                 LoadSavedAnswers();
 
                 if (!StartExamTimer())
@@ -558,8 +600,12 @@ namespace WinFormsApp1
         // =========================================================
         // CREATE OR RESUME QUIZ ATTEMPT
         // =========================================================
+        // If there's an existing TAKING or DISCONNECTED attempt for
+        // this user+quiz, REUSE it so saved answers are preserved.
+        // Otherwise create a fresh one.
+        // =========================================================
 
-        private bool CreateQuizAttempt()
+        private bool CreateOrResumeAttempt()
         {
             string connStr = SettingsManager.Current.GetConnectionString();
 
@@ -569,22 +615,20 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
-                    // 1. Look for an existing TAKING attempt
-                    string findAttemptQuery = @"
-                        SELECT attempt_id,
-                               COALESCE(remaining_seconds, @default_seconds) AS remaining_seconds
+                    // 1. Look for a resumable attempt — newest first
+                    string findQuery = @"
+                        SELECT attempt_id, remaining_seconds
                         FROM quiz_attempts
                         WHERE quiz_id = @quiz_id
                           AND user_id = @user_id
-                          AND status = 'TAKING'
+                          AND status IN ('TAKING', 'DISCONNECTED')
                         ORDER BY attempt_id DESC
                         LIMIT 1";
 
-                    using (var findCmd = new MySqlCommand(findAttemptQuery, conn))
+                    using (var findCmd = new MySqlCommand(findQuery, conn))
                     {
                         findCmd.Parameters.AddWithValue("@quiz_id", selectedQuizId);
                         findCmd.Parameters.AddWithValue("@user_id", studentUserId);
-                        findCmd.Parameters.AddWithValue("@default_seconds", ExamDurationSeconds);
 
                         using (var reader = findCmd.ExecuteReader())
                         {
@@ -595,25 +639,37 @@ namespace WinFormsApp1
                                 int savedSeconds = ExamDurationSeconds;
 
                                 if (reader["remaining_seconds"] != DBNull.Value)
+                                {
                                     savedSeconds = Convert.ToInt32(reader["remaining_seconds"]);
+                                    if (savedSeconds <= 0) savedSeconds = ExamDurationSeconds;
+                                }
 
-                                // Sanity: clamp between 0 and full duration
-                                if (savedSeconds < 0) savedSeconds = 0;
-                                if (savedSeconds > ExamDurationSeconds) savedSeconds = ExamDurationSeconds;
+                                if (savedSeconds > ExamDurationSeconds)
+                                    savedSeconds = ExamDurationSeconds;
 
                                 remainingSeconds = savedSeconds;
-                            }
-                        }
 
-                        // Resume existing attempt
-                        if (currentAttemptId > 0)
-                        {
-                            UpdateAttemptOnResume(conn);
-                            return true;
+                                Console.WriteLine($"[QuizAttempt] RESUMING attempt {currentAttemptId} with {remainingSeconds} sec remaining");
+                            }
                         }
                     }
 
-                    // 2. No existing attempt — create a new one
+                    // 2. Reactivate if found
+                    if (currentAttemptId > 0)
+                    {
+                        using (var reactivateCmd = new MySqlCommand(
+                            @"UPDATE quiz_attempts
+                              SET status = 'TAKING', last_seen = NOW()
+                              WHERE attempt_id = @id", conn))
+                        {
+                            reactivateCmd.Parameters.AddWithValue("@id", currentAttemptId);
+                            reactivateCmd.ExecuteNonQuery();
+                        }
+
+                        return true;
+                    }
+
+                    // 3. Otherwise create a fresh attempt
                     string insertQuery = @"
                         INSERT INTO quiz_attempts
                         (quiz_id, user_id, score, total_questions, percentage,
@@ -634,43 +690,21 @@ namespace WinFormsApp1
                     }
 
                     remainingSeconds = ExamDurationSeconds;
-                }
 
-                return currentAttemptId > 0;
+                    Console.WriteLine($"[QuizAttempt] CREATED new attempt {currentAttemptId}");
+
+                    return true;
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    "Unable to start or resume the examination.\n\n" +
-                    "Please check your database connection and try again.\n\n" +
-                    "Error:\n" + ex.Message,
+                    "Unable to start or resume the examination.\n\n" + ex.Message,
                     "Unable to Start Examination",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                 currentAttemptId = 0;
                 return false;
-            }
-        }
-
-        // =========================================================
-        // UPDATE ATTEMPT ON RESUME
-        // =========================================================
-
-        private void UpdateAttemptOnResume(MySqlConnection conn)
-        {
-            if (currentAttemptId <= 0) return;
-
-            string query = @"
-                UPDATE quiz_attempts
-                SET last_seen = NOW(),
-                    status = 'TAKING'
-                WHERE attempt_id = @attempt_id
-                  AND status = 'TAKING'";
-
-            using (var cmd = new MySqlCommand(query, conn))
-            {
-                cmd.Parameters.AddWithValue("@attempt_id", currentAttemptId);
-                cmd.ExecuteNonQuery();
             }
         }
 
@@ -686,6 +720,8 @@ namespace WinFormsApp1
 
             try
             {
+                int restored = 0;
+
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
@@ -703,6 +739,8 @@ namespace WinFormsApp1
                         {
                             while (reader.Read())
                             {
+                                restored++;
+
                                 int questionId = Convert.ToInt32(reader["question_id"]);
                                 string answer = reader["student_answer"] == DBNull.Value
                                     ? ""
@@ -714,7 +752,9 @@ namespace WinFormsApp1
                     }
                 }
 
-                // Restore answers to UI
+                Console.WriteLine($"[LoadSavedAnswers] attempt {currentAttemptId} → {restored} answers");
+
+                // Apply restored answers to UI
                 for (int i = 0; i < questions.Count; i++)
                 {
                     QuizQuestion question = questions[i];
@@ -778,8 +818,7 @@ namespace WinFormsApp1
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    "The previous examination attempt was found, " +
-                    "but some saved answers could not be restored.\n\n" + ex.Message,
+                    "Saved answers could not be restored.\n\n" + ex.Message,
                     "Resume Examination",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
@@ -797,11 +836,13 @@ namespace WinFormsApp1
 
             if (remainingSeconds <= 0)
             {
-                AutoSubmitWhenTimeExpires();
-                return true;
+                remainingSeconds = ExamDurationSeconds;
+                SaveRemainingSecondsToDb(remainingSeconds);
             }
 
-            // Immediately show the correct starting value
+            if (remainingSeconds > ExamDurationSeconds)
+                remainingSeconds = ExamDurationSeconds;
+
             UpdateTimerLabel();
 
             examTimer = new System.Windows.Forms.Timer();
@@ -821,7 +862,6 @@ namespace WinFormsApp1
 
             UpdateTimerLabel();
 
-            // Persist periodically
             if (remainingSeconds % PersistEveryNSeconds == 0)
                 SaveRemainingSecondsToDb(remainingSeconds);
 
@@ -843,8 +883,13 @@ namespace WinFormsApp1
             lblTimer.Text = $"TIME: {minutes:00}:{seconds:00}";
 
             lblTimer.BackColor = remainingSeconds <= 300
+<<<<<<< Updated upstream
                 ? Color.FromArgb(185, 28, 28)   // red warning in last 5 minutes
                 : DarkColor;
+=======
+                ? Color.FromArgb(185, 28, 28)
+                : MaroonColor;
+>>>>>>> Stashed changes
         }
 
         private void SaveRemainingSecondsToDb(int seconds)
@@ -870,10 +915,7 @@ namespace WinFormsApp1
                     }
                 }
             }
-            catch
-            {
-                // Silent — will retry on next tick.
-            }
+            catch { }
         }
 
         private void StopExamTimer()
@@ -988,9 +1030,13 @@ namespace WinFormsApp1
             try
             {
                 isAutoSaving = true;
+                SaveAllAnswers();
                 SaveAnswersToDatabase();
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Console.WriteLine("AutoSave error: " + ex.Message);
+            }
             finally
             {
                 isAutoSaving = false;
@@ -1323,7 +1369,6 @@ namespace WinFormsApp1
             questionLabel.AutoEllipsis = false;
             card.Controls.Add(questionLabel);
 
-            // Multiple choice
             if (questionType == "multiple_choice")
             {
                 RadioButton[] radios = new RadioButton[4];
@@ -1340,7 +1385,6 @@ namespace WinFormsApp1
                 foreach (RadioButton rb in radios) card.Controls.Add(rb);
                 multipleChoiceControls[originalIndex] = radios;
             }
-            // True / False
             else if (questionType == "true_false")
             {
                 RadioButton[] radios = new RadioButton[2];
@@ -1354,7 +1398,6 @@ namespace WinFormsApp1
                 card.Controls.Add(radios[1]);
                 trueFalseControls[originalIndex] = radios;
             }
-            // Identification
             else if (questionType == "identification")
             {
                 Label answerLabel = new Label();
@@ -1381,7 +1424,6 @@ namespace WinFormsApp1
                 BlockTextEditingShortcuts(identification);
                 identification.TextChanged += Identification_TextChanged;
             }
-            // Essay
             else if (questionType == "essay")
             {
                 TextBox essay = new TextBox();
@@ -1404,10 +1446,6 @@ namespace WinFormsApp1
 
             return card;
         }
-
-        // =========================================================
-        // CREATE OPTION
-        // =========================================================
 
         private RadioButton CreateOption(string text, int x, int y)
         {
@@ -1573,7 +1611,7 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        // AUTO-SAVE ANSWERS TO DATABASE
+        // SAVE ANSWERS TO DATABASE
         // =========================================================
 
         private bool SaveAnswersToDatabase()
@@ -1612,29 +1650,23 @@ namespace WinFormsApp1
 
                         if (string.IsNullOrWhiteSpace(answer))
                         {
-                            string deleteQuery = @"
-                                DELETE FROM student_answers
-                                WHERE attempt_id = @attempt_id
-                                  AND question_id = @question_id";
-
-                            using (var deleteCmd = new MySqlCommand(deleteQuery, conn, tx))
+                            using (var deleteCmd = new MySqlCommand(
+                                @"DELETE FROM student_answers
+                                  WHERE attempt_id = @attempt_id AND question_id = @question_id",
+                                conn, tx))
                             {
                                 deleteCmd.Parameters.AddWithValue("@attempt_id", currentAttemptId);
                                 deleteCmd.Parameters.AddWithValue("@question_id", questionId);
                                 deleteCmd.ExecuteNonQuery();
                             }
-
                             continue;
                         }
 
                         bool exists = false;
-                        string checkQuery = @"
-                            SELECT COUNT(*)
-                            FROM student_answers
-                            WHERE attempt_id = @attempt_id
-                              AND question_id = @question_id";
-
-                        using (var checkCmd = new MySqlCommand(checkQuery, conn, tx))
+                        using (var checkCmd = new MySqlCommand(
+                            @"SELECT COUNT(*) FROM student_answers
+                              WHERE attempt_id = @attempt_id AND question_id = @question_id",
+                            conn, tx))
                         {
                             checkCmd.Parameters.AddWithValue("@attempt_id", currentAttemptId);
                             checkCmd.Parameters.AddWithValue("@question_id", questionId);
@@ -1643,17 +1675,14 @@ namespace WinFormsApp1
 
                         if (exists)
                         {
-                            string updateQuery = @"
-                                UPDATE student_answers
-                                SET student_answer = @student_answer,
-                                    is_correct = @is_correct
-                                WHERE attempt_id = @attempt_id
-                                  AND question_id = @question_id";
-
-                            using (var updateCmd = new MySqlCommand(updateQuery, conn, tx))
+                            using (var updateCmd = new MySqlCommand(
+                                @"UPDATE student_answers
+                                  SET student_answer = @student_answer, is_correct = @is_correct
+                                  WHERE attempt_id = @attempt_id AND question_id = @question_id",
+                                conn, tx))
                             {
                                 updateCmd.Parameters.AddWithValue("@student_answer", answer);
-                                updateCmd.Parameters.AddWithValue("@is_correct", isCorrect);
+                                updateCmd.Parameters.AddWithValue("@is_correct", isCorrect ? 1 : 0);
                                 updateCmd.Parameters.AddWithValue("@attempt_id", currentAttemptId);
                                 updateCmd.Parameters.AddWithValue("@question_id", questionId);
                                 updateCmd.ExecuteNonQuery();
@@ -1661,18 +1690,16 @@ namespace WinFormsApp1
                         }
                         else
                         {
-                            string insertQuery = @"
-                                INSERT INTO student_answers
-                                (attempt_id, question_id, student_answer, is_correct)
-                                VALUES
-                                (@attempt_id, @question_id, @student_answer, @is_correct)";
-
-                            using (var insertCmd = new MySqlCommand(insertQuery, conn, tx))
+                            using (var insertCmd = new MySqlCommand(
+                                @"INSERT INTO student_answers
+                                  (attempt_id, question_id, student_answer, is_correct)
+                                  VALUES (@attempt_id, @question_id, @student_answer, @is_correct)",
+                                conn, tx))
                             {
                                 insertCmd.Parameters.AddWithValue("@attempt_id", currentAttemptId);
                                 insertCmd.Parameters.AddWithValue("@question_id", questionId);
                                 insertCmd.Parameters.AddWithValue("@student_answer", answer);
-                                insertCmd.Parameters.AddWithValue("@is_correct", isCorrect);
+                                insertCmd.Parameters.AddWithValue("@is_correct", isCorrect ? 1 : 0);
                                 insertCmd.ExecuteNonQuery();
                             }
                         }
@@ -1681,9 +1708,10 @@ namespace WinFormsApp1
                     tx.Commit();
                     return true;
                 }
-                catch
+                catch (Exception ex)
                 {
                     try { tx?.Rollback(); } catch { }
+                    Console.WriteLine("SaveAnswersToDatabase error: " + ex.Message);
                     return false;
                 }
             }
@@ -1757,9 +1785,10 @@ namespace WinFormsApp1
             if (!SaveAnswersToDatabase())
             {
                 MessageBox.Show(
-                    "Your latest answers could not be saved.\n\n" +
-                    "Please check the database/network connection and try submitting again.",
-                    "Unable to Save Answers", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    "Your answers could not be saved.\n\n" +
+                    "Please check the database connection and try submitting again.",
+                    "Unable to Save Answers",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -1843,9 +1872,10 @@ namespace WinFormsApp1
 
                     MessageBox.Show(
                         "Your examination could not be submitted.\n\n" +
-                        "Please check the database/network connection and try submitting again.\n\n" +
-                        "Error:\n" + ex.Message,
-                        "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        "Error:\n" + ex.Message +
+                        "\n\nAttempt ID: " + currentAttemptId,
+                        "Database Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }

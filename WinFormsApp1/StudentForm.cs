@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -55,6 +56,12 @@ namespace WinFormsApp1
         private bool _assessmentsInitialized = false;
         private bool _reminderShown = false;
 
+        // Banner slideshow
+        private System.Windows.Forms.Timer slideshowTimer;
+        private List<Image> slideshowImages = new List<Image>();
+        private int slideshowIndex = 0;
+        private FileSystemWatcher bannersWatcher;
+
         public StudentForm(int UserId, string Section, string Username)
         {
             InitializeComponent();
@@ -64,7 +71,6 @@ namespace WinFormsApp1
 
             initializeShowReminderForm();
 
-            // ✅ Runs once after the form is fully visible
             this.Shown += StudentForm_Shown;
         }
 
@@ -72,19 +78,14 @@ namespace WinFormsApp1
         {
             try
             {
-                this.Show();
-                this.Refresh();
-                Application.DoEvents();
                 isSharingScreen = true;
                 lblProfUsername.Text = StudentUsername;
 
-                // Background network tasks — safe to start immediately
                 Task.Run(() => ConnectToServer());
                 Task.Run(() => StartScreenShare());
                 Task.Run(() => ConnectBroadcastReceiver());
                 Task.Run(() => StartListening());
 
-                // Data loads
                 NameGet();
                 InitializeSaveDirectory();
                 InitializeAuthenticationSaveDirectory();
@@ -115,8 +116,8 @@ namespace WinFormsApp1
                 flpPendingActivities.FlowDirection = FlowDirection.LeftToRight;
                 flpPendingActivities.PerformLayout();
 
-                this.Refresh();
-                Application.DoEvents();
+                // ✅ Start the banner slideshow
+                StartSlideshow();
             }
             catch (Exception ex)
             {
@@ -128,7 +129,6 @@ namespace WinFormsApp1
 
         private void StudentForm_Shown(object sender, EventArgs e)
         {
-            // Deferred: reminder dialog (only if no auth photo)
             if (!_reminderShown)
             {
                 _reminderShown = true;
@@ -146,7 +146,6 @@ namespace WinFormsApp1
                 }
             }
 
-            // Deferred: assessments card (only once)
             if (!_assessmentsInitialized)
             {
                 _assessmentsInitialized = true;
@@ -185,6 +184,109 @@ namespace WinFormsApp1
             }
         }
 
+        // =========================================================
+        // BANNER SLIDESHOW
+        // =========================================================
+
+        private void StartSlideshow()
+        {
+            try
+            {
+                slideshowImages = BannerHelper.LoadBannerImages();
+
+                if (slideshowImages.Count == 0)
+                {
+                    Console.WriteLine("[Slideshow] No banners found yet.");
+                    return;
+                }
+
+                slideshowIndex = 0;
+                pictureboxBanner.Image = slideshowImages[0];
+                pictureboxBanner.SizeMode = PictureBoxSizeMode.StretchImage;
+
+                slideshowTimer = new System.Windows.Forms.Timer();
+                slideshowTimer.Interval = 3000;
+                slideshowTimer.Tick += SlideshowTimer_Tick;
+                slideshowTimer.Start();
+
+                StartBannersWatcher();
+
+                Console.WriteLine($"[Slideshow] Started with {slideshowImages.Count} image(s).");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("StartSlideshow error: " + ex.Message);
+            }
+        }
+
+        private void SlideshowTimer_Tick(object sender, EventArgs e)
+        {
+            if (slideshowImages.Count == 0) return;
+
+            slideshowIndex++;
+            if (slideshowIndex >= slideshowImages.Count)
+                slideshowIndex = 0;
+
+            pictureboxBanner.Image = slideshowImages[slideshowIndex];
+        }
+
+        private void StartBannersWatcher()
+        {
+            try
+            {
+                string folder = BannerHelper.GetBannersFolder(false);
+                if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder)) return;
+
+                bannersWatcher = new FileSystemWatcher(folder);
+                bannersWatcher.Filter = "*.*";
+                bannersWatcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite;
+                bannersWatcher.EnableRaisingEvents = true;
+
+                FileSystemEventHandler reload = (s, e) =>
+                {
+                    System.Threading.Thread.Sleep(500);
+                    if (this.IsHandleCreated && !this.IsDisposed)
+                        this.BeginInvoke(new Action(ReloadBanners));
+                };
+
+                bannersWatcher.Created += reload;
+                bannersWatcher.Deleted += reload;
+                bannersWatcher.Renamed += (s, e) => reload(s, e);
+                bannersWatcher.Changed += reload;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("StartBannersWatcher error: " + ex.Message);
+            }
+        }
+
+        private void ReloadBanners()
+        {
+            try
+            {
+                foreach (var img in slideshowImages) try { img.Dispose(); } catch { }
+                slideshowImages = BannerHelper.LoadBannerImages();
+
+                if (slideshowImages.Count == 0)
+                {
+                    pictureboxBanner.Image = null;
+                    return;
+                }
+
+                if (slideshowIndex >= slideshowImages.Count) slideshowIndex = 0;
+
+                pictureboxBanner.Image = slideshowImages[slideshowIndex];
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("ReloadBanners error: " + ex.Message);
+            }
+        }
+
+        // =========================================================
+        // NAVIGATION
+        // =========================================================
+
         private void btnHome_Click(object sender, EventArgs e)
         {
             pnlHome.Visible = true;
@@ -194,6 +296,8 @@ namespace WinFormsApp1
             pnlSetting.Visible = false;
             pnlQuizExam.Visible = false;
             lblhometitle.Text = "Home";
+
+            try { LoadAssessments(); } catch { }
         }
 
         private void btnActivities_Click(object sender, EventArgs e)
@@ -251,8 +355,9 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        // RECONNECTING TCP CLIENT HELPER
+        // TCP CLIENT HELPERS
         // =========================================================
+
         private async Task RunClientForever(
             string name,
             Func<TcpClient> connect,
@@ -509,7 +614,10 @@ namespace WinFormsApp1
             }
         }
 
-        //Home//
+        // =========================================================
+        // HOME — Activities
+        // =========================================================
+
         private void InitializeCreateButtonActivity()
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -696,7 +804,10 @@ namespace WinFormsApp1
             }
         }
 
-        //Activities//
+        // =========================================================
+        // Activities
+        // =========================================================
+
         private void InitializeDataGridViewActivities()
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -896,7 +1007,10 @@ namespace WinFormsApp1
             InitializeDataGridViewActivities();
         }
 
-        //Grades//
+        // =========================================================
+        // Grades
+        // =========================================================
+
         private void InitializeDataGridViewGrades()
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -957,7 +1071,10 @@ namespace WinFormsApp1
             btnGradesSubmitted.FillColor = Color.White;
         }
 
-        //Subject//
+        // =========================================================
+        // Subject
+        // =========================================================
+
         private void btnJoinClass_Click(object sender, EventArgs e) => pnlCreateClass.Visible = true;
         private void btnCloseJointClassPanel_Click(object sender, EventArgs e) => pnlCreateClass.Visible = false;
 
@@ -1273,7 +1390,10 @@ namespace WinFormsApp1
             }
         }
 
-        //Settings//
+        // =========================================================
+        // Settings
+        // =========================================================
+
         private void btnSettingProfileExpand_Click(object sender, EventArgs e)
         {
             if (pnlSettingProfile.Height <= 350)
@@ -1336,18 +1456,35 @@ namespace WinFormsApp1
             DialogResult result = MessageBox.Show("Are you sure you want to logout?",
                 "Logout Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-            if (result == DialogResult.Yes)
+            if (result != DialogResult.Yes) return;
+
+            try { StopServer(); } catch { }
+            try { ClearAllFormData(); } catch { }
+
+            Login loginForm = null;
+            foreach (Form f in Application.OpenForms)
             {
-                StopServer();
-
-                ClearAllFormData();
-
-                Login login = new Login();
-                login.Show();
-
-                this.Hide();
-                this.Close();
+                if (f is Login && !f.IsDisposed)
+                {
+                    loginForm = (Login)f;
+                    break;
+                }
             }
+
+            if (loginForm != null)
+            {
+                loginForm.Show();
+                loginForm.BringToFront();
+                loginForm.Activate();
+                loginForm.WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                loginForm = new Login();
+                loginForm.Show();
+            }
+
+            this.Hide();
         }
 
         private void btnSignOut_Click(object sender, EventArgs e) => Logout();
@@ -1572,7 +1709,10 @@ namespace WinFormsApp1
             }
         }
 
-        private void btnSubmitAuthenticationPhoto_Click(object sender, EventArgs e)
+        // =========================================================
+        // AUTH PHOTO — SEND TO ADMIN SHARED FOLDER
+        // =========================================================
+        private async void btnSubmitAuthenticationPhoto_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(AuthenticationPhoto))
             {
@@ -1580,29 +1720,80 @@ namespace WinFormsApp1
                 return;
             }
 
-            string connStr = SettingsManager.Current.GetConnectionString();
-
             try
             {
+                byte[] imageBytes = await File.ReadAllBytesAsync(AuthenticationPhoto);
+
+                string ext = Path.GetExtension(AuthenticationPhoto);
+                string fileName = $"{userId}_{StudentUsername}_{DateTime.Now:yyyyMMddHHmmss}{ext}";
+
+                bool sent = await SendAuthenticationPhotoToAdmin(imageBytes, fileName);
+                if (!sent) return;
+
+                string adminUnc = SettingsManager.Current.AdminSharedUnc;
+                string subfolder = SettingsManager.Current.AdminPhotoSubfolder;
+                string fullUncPath = Path.Combine(adminUnc, subfolder, fileName);
+
+                string connStr = SettingsManager.Current.GetConnectionString();
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    using (var cmd = new MySqlCommand("UPDATE user_credential SET authentication_photo = @authentication_photo WHERE username = @username", conn))
+                    using (var cmd = new MySqlCommand(
+                        "UPDATE user_credential SET authentication_photo = @path WHERE username = @u", conn))
                     {
-                        string fileName = Path.GetFileName(AuthenticationPhoto);
-                        string destinationPath = Path.Combine(SaveAuthenticationPhoto, fileName);
-                        File.Copy(AuthenticationPhoto, destinationPath, true);
-                        cmd.Parameters.AddWithValue("@authentication_photo", destinationPath);
-                        cmd.Parameters.AddWithValue("@username", StudentUsername);
+                        cmd.Parameters.AddWithValue("@path", fullUncPath);
+                        cmd.Parameters.AddWithValue("@u", StudentUsername);
                         cmd.ExecuteNonQuery();
                     }
-                    InitializeAuthenticationSaveDirectory();
-                    MessageBox.Show("Profile picture updated successfully.");
                 }
+
+                Isauthentication_photoEmpty = fullUncPath;
+
+                MessageBox.Show("Authentication photo sent to admin successfully.");
+                pnlSettingAuthenticationPhoto.Visible = false;
             }
             catch (Exception ex)
             {
                 Console.WriteLine("btnSubmitAuthenticationPhoto_Click error: " + ex.Message);
+                MessageBox.Show("Error: " + ex.Message);
+            }
+        }
+
+        private async Task<bool> SendAuthenticationPhotoToAdmin(byte[] imageBytes, string fileName)
+        {
+            try
+            {
+                string adminIp = SettingsManager.Current.AdminIp;
+                int adminPort = SettingsManager.Current.AdminPhotoPort;
+                string subfolder = SettingsManager.Current.AdminPhotoSubfolder;
+
+                using (TcpClient client = new TcpClient())
+                {
+                    var connectTask = client.ConnectAsync(adminIp, adminPort);
+                    var timeout = Task.Delay(5000);
+                    if (await Task.WhenAny(connectTask, timeout) == timeout)
+                    {
+                        MessageBox.Show($"Admin ({adminIp}:{adminPort}) not reachable (timeout).");
+                        return false;
+                    }
+
+                    using (NetworkStream stream = client.GetStream())
+                    using (BinaryWriter writer = new BinaryWriter(stream))
+                    {
+                        writer.Write(subfolder);
+                        writer.Write(fileName);
+                        writer.Write(imageBytes.Length);
+                        writer.Write(imageBytes);
+                        writer.Flush();
+                    }
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("SendAuthenticationPhotoToAdmin error: " + ex.Message);
+                MessageBox.Show("Failed to send photo to admin: " + ex.Message);
+                return false;
             }
         }
 
@@ -1616,16 +1807,17 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        // Assessment quiz exam
+        // Assessment quiz exam — THREE STATES
         // =========================================================
+
         private void InitializeAssessmentsCard()
         {
             if (assessmentsPanel != null) return;
 
             assessmentsPanel = new Guna.UI2.WinForms.Guna2Panel
             {
-                Size = new Size(242, 150),
-                Location = new Point(1109, 328),
+                Size = new Size(234, 150),
+                Location = new Point(954, 315),
                 FillColor = Color.White,
                 BackColor = Color.Transparent,
                 BorderRadius = 12,
@@ -1687,6 +1879,8 @@ namespace WinFormsApp1
 
         private void LoadAssessments()
         {
+            if (assessmentsList == null) return;
+
             assessmentsList.Controls.Clear();
             assessmentsList.PerformLayout();
 
@@ -1744,9 +1938,42 @@ namespace WinFormsApp1
         }
 
         private void AddAssessmentRow(int quizId, string title, string subject,
-                              string type, string period, bool submitted)
+                                      string type, string period, bool submitted)
         {
             int rowWidth = Math.Max(180, assessmentsList.ClientSize.Width - 30);
+
+            string state = GetAssessmentState(quizId, submitted);
+
+            Color iconColor;
+            Color titleColor;
+            Color badgeColor;
+            string badgeText;
+            bool clickable;
+
+            if (state == "SUBMITTED")
+            {
+                iconColor = Color.FromArgb(46, 204, 113);
+                titleColor = Color.FromArgb(46, 204, 113);
+                badgeColor = Color.FromArgb(46, 204, 113);
+                badgeText = "✔";
+                clickable = false;
+            }
+            else if (state == "IN_PROGRESS")
+            {
+                iconColor = Color.FromArgb(243, 156, 18);
+                titleColor = Color.FromArgb(243, 156, 18);
+                badgeColor = Color.FromArgb(243, 156, 18);
+                badgeText = "▶";
+                clickable = true;
+            }
+            else
+            {
+                iconColor = Color.FromArgb(231, 76, 60);
+                titleColor = Color.FromArgb(231, 76, 60);
+                badgeColor = Color.FromArgb(231, 76, 60);
+                badgeText = "✖";
+                clickable = true;
+            }
 
             var row = new Panel
             {
@@ -1754,37 +1981,41 @@ namespace WinFormsApp1
                 Height = 32,
                 Margin = new Padding(0, 4, 0, 4),
                 BackColor = Color.Transparent,
-                Cursor = Cursors.Default
+                Cursor = clickable ? Cursors.Hand : Cursors.Default
             };
 
             var rowIcon = new Label
             {
                 Text = type.Equals("exam", StringComparison.OrdinalIgnoreCase) ? "📝" : "📄",
                 Font = new Font("Segoe UI Emoji", 11F),
-                ForeColor = submitted ? Color.FromArgb(46, 204, 113) : Color.FromArgb(231, 76, 60),
+                ForeColor = iconColor,
                 Location = new Point(0, 4),
-                AutoSize = true
+                AutoSize = true,
+                Cursor = row.Cursor
             };
 
             var rowTitle = new Label
             {
                 Text = string.IsNullOrEmpty(subject) ? title : $"{subject} {title}",
                 Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                ForeColor = submitted ? Color.FromArgb(46, 204, 113) : Color.FromArgb(231, 76, 60),
+                ForeColor = titleColor,
                 Location = new Point(28, 5),
-                AutoSize = true
+                AutoSize = true,
+                Cursor = row.Cursor
             };
 
             var badge = new Label
             {
-                Text = submitted ? "✔" : "✖",
+                Text = badgeText,
                 Font = new Font("Segoe UI", 12F, FontStyle.Bold),
                 ForeColor = Color.White,
-                BackColor = submitted ? Color.FromArgb(46, 204, 113) : Color.FromArgb(231, 76, 60),
+                BackColor = badgeColor,
                 TextAlign = ContentAlignment.MiddleCenter,
                 Size = new Size(24, 24),
-                Location = new Point(rowWidth - 30, 4)
+                Location = new Point(rowWidth - 30, 4),
+                Cursor = row.Cursor
             };
+
             badge.Paint += (s, e) =>
             {
                 var g = e.Graphics;
@@ -1796,18 +2027,14 @@ namespace WinFormsApp1
                 }
             };
 
-            if (!submitted)
+            if (clickable)
             {
                 EventHandler onClick = (s, e) => OpenAssessment(quizId, title, type);
+
                 row.Click += onClick;
                 rowIcon.Click += onClick;
                 rowTitle.Click += onClick;
                 badge.Click += onClick;
-
-                row.Cursor = Cursors.Hand;
-                rowIcon.Cursor = Cursors.Hand;
-                rowTitle.Cursor = Cursors.Hand;
-                badge.Cursor = Cursors.Hand;
             }
 
             row.Controls.Add(rowIcon);
@@ -1817,24 +2044,65 @@ namespace WinFormsApp1
             assessmentsList.Controls.Add(row);
         }
 
-        private void OpenAssessment(int quizId, string title, string type)
+        private string GetAssessmentState(int quizId, bool submitted)
         {
-            if (HasSubmitted(quizId))
-            {
-                LoadAssessments();
-                return;
-            }
+            if (submitted) return "SUBMITTED";
+
+            string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    using (var cmd = new MySqlCommand(
+                        @"SELECT status
+                          FROM quiz_attempts
+                          WHERE quiz_id = @quiz_id
+                            AND user_id = @user_id
+                          ORDER BY attempt_id DESC
+                          LIMIT 1",
+                        conn))
+                    {
+                        cmd.Parameters.AddWithValue("@quiz_id", quizId);
+                        cmd.Parameters.AddWithValue("@user_id", userId);
+
+                        object result = cmd.ExecuteScalar();
+
+                        if (result == null || result == DBNull.Value)
+                            return "NOT_STARTED";
+
+                        string status = result.ToString().ToUpper();
+
+                        if (status == "SUBMITTED") return "SUBMITTED";
+                        if (status == "TAKING") return "IN_PROGRESS";
+
+                        return "NOT_STARTED";
+                    }
+                }
+            }
+            catch
+            {
+                return submitted ? "SUBMITTED" : "NOT_STARTED";
+            }
+        }
+
+        private void OpenAssessment(int quizId, string title, string type)
+        {
+            try
+            {
                 Console.WriteLine($"[OpenAssessment] userId={userId}, quizId={quizId}");
-                StudentQuizForm QuizForm = new StudentQuizForm(int.Parse(userId), quizId);
-                QuizForm.ShowDialog();
+                StudentQuizForm quizForm = new StudentQuizForm(int.Parse(userId), quizId);
+                quizForm.ShowDialog();
+
                 LoadAssessments();
             }
             catch (Exception ex)
             {
                 Console.WriteLine("OpenAssessment error: " + ex.Message);
+                MessageBox.Show("Unable to open the assessment:\n\n" + ex.Message,
+                    "Open Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -1846,8 +2114,12 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    using (var cmd = new MySqlCommand(@"SELECT COUNT(*) FROM quiz_attempts
-                         WHERE quiz_id = @quiz_id AND user_id = @user_id", conn))
+                    using (var cmd = new MySqlCommand(
+                        @"SELECT COUNT(*) FROM quiz_attempts
+                          WHERE quiz_id = @quiz_id
+                            AND user_id = @user_id
+                            AND status = 'SUBMITTED'",
+                        conn))
                     {
                         cmd.Parameters.AddWithValue("@quiz_id", quizId);
                         cmd.Parameters.AddWithValue("@user_id", userId);
@@ -1860,6 +2132,10 @@ namespace WinFormsApp1
             }
             catch { return false; }
         }
+
+        // =========================================================
+        // Q&A Security
+        // =========================================================
 
         private void btnQandA_Click(object sender, EventArgs e)
         {
@@ -1970,7 +2246,7 @@ namespace WinFormsApp1
                     conn.Open();
 
                     string query = "SELECT score, total_questions, percentage, submitted_at " +
-                                   "FROM quiz_attempts WHERE user_id = @user_id";
+                                   "FROM quiz_attempts WHERE user_id = @user_id AND status = 'SUBMITTED'";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -1991,16 +2267,24 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        // DEBUG: Trace why the form is closing (remove after testing)
+        // FORM CLOSING
         // =========================================================
+
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            Console.WriteLine($"[StudentForm] OnFormClosing — Reason={e.CloseReason}, Cancel={e.Cancel}");
-
-            // Stop the assessments timer to avoid firing after close
             try { assessmentsRefreshTimer?.Stop(); } catch { }
+
+            try { slideshowTimer?.Stop(); } catch { }
+            try { slideshowTimer?.Dispose(); } catch { }
+            slideshowTimer = null;
+
+            try { bannersWatcher?.Dispose(); } catch { }
+            bannersWatcher = null;
+
+            foreach (var img in slideshowImages) try { img.Dispose(); } catch { }
+            slideshowImages.Clear();
 
             base.OnFormClosing(e);
         }
     }
-}                                                                                                                                                                                                      
+}
