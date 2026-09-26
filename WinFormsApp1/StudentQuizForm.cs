@@ -62,19 +62,21 @@ namespace WinFormsApp1
         private bool isAutoSaving = false;
 
         // =========================================================
-        // COLORS
+        // COLORS (CDSGA maroon + gold theme)
         // =========================================================
 
-        private readonly Color BackgroundColor = Color.FromArgb(241, 245, 249);
+        private readonly Color BackgroundColor = Color.FromArgb(250, 247, 239);
         private readonly Color CardColor = Color.White;
         private readonly Color DarkColor = Color.FromArgb(15, 23, 42);
         private readonly Color TextColor = Color.FromArgb(51, 65, 85);
         private readonly Color MutedColor = Color.FromArgb(100, 116, 139);
         private readonly Color GreenColor = Color.FromArgb(22, 163, 74);
-        private readonly Color BorderColor = Color.FromArgb(226, 232, 240);
+        private readonly Color BorderColor = Color.FromArgb(198, 156, 53);
         private readonly Color MaroonColor = Color.FromArgb(128, 45, 58);
-        private readonly Color MaroonSoft = Color.FromArgb(250, 235, 238);
+        private readonly Color MaroonSoft = Color.FromArgb(250, 242, 216);
         private readonly Color OptionBackColor = Color.FromArgb(248, 250, 252);
+        private readonly Color GoldColor = Color.FromArgb(198, 156, 53);
+        private readonly Color GoldDark = Color.FromArgb(163, 126, 36);
 
         // =========================================================
         // DOUBLE BUFFERED PANELS
@@ -167,19 +169,19 @@ namespace WinFormsApp1
             headerPanel = new SmoothPanel();
             headerPanel.Dock = DockStyle.Top;
             headerPanel.Height = 145;
-            headerPanel.BackColor = DarkColor;
+            headerPanel.BackColor = MaroonColor;
             this.Controls.Add(headerPanel);
 
             Panel headerAccent = new Panel();
             headerAccent.Dock = DockStyle.Bottom;
             headerAccent.Height = 4;
-            headerAccent.BackColor = MaroonColor;
+            headerAccent.BackColor = GoldColor;
             headerPanel.Controls.Add(headerAccent);
 
             lblExamPeriod = new Label();
-            lblExamPeriod.Text = "EXAMINATION";
+            lblExamPeriod.Text = "CDSGA  •  EXAMINATION";
             lblExamPeriod.Font = new Font("Segoe UI", 11, FontStyle.Bold);
-            lblExamPeriod.ForeColor = Color.FromArgb(248, 113, 113);
+            lblExamPeriod.ForeColor = GoldColor;
             lblExamPeriod.AutoSize = true;
             lblExamPeriod.Location = new Point(38, 10);
             headerPanel.Controls.Add(lblExamPeriod);
@@ -195,7 +197,7 @@ namespace WinFormsApp1
             lblSubject = new Label();
             lblSubject.Text = "Preparing examination...";
             lblSubject.Font = new Font("Segoe UI", 12);
-            lblSubject.ForeColor = Color.FromArgb(203, 213, 225);
+            lblSubject.ForeColor = Color.FromArgb(230, 210, 180);
             lblSubject.AutoSize = true;
             lblSubject.Location = new Point(38, 72);
             headerPanel.Controls.Add(lblSubject);
@@ -203,7 +205,7 @@ namespace WinFormsApp1
             lblInstruction = new Label();
             lblInstruction.Text = "Answer all questions carefully. Scroll down to continue.";
             lblInstruction.Font = new Font("Segoe UI", 10);
-            lblInstruction.ForeColor = Color.FromArgb(148, 163, 184);
+            lblInstruction.ForeColor = Color.FromArgb(210, 190, 165);
             lblInstruction.AutoSize = true;
             lblInstruction.Location = new Point(38, 101);
             headerPanel.Controls.Add(lblInstruction);
@@ -213,11 +215,12 @@ namespace WinFormsApp1
             lblTimer.Text = $"TIME: {ExamDurationMinutes:00}:00";
             lblTimer.Font = new Font("Segoe UI", 18, FontStyle.Bold);
             lblTimer.ForeColor = Color.White;
-            lblTimer.BackColor = MaroonColor;
+            lblTimer.BackColor = DarkColor;
             lblTimer.TextAlign = ContentAlignment.MiddleCenter;
             lblTimer.Size = new Size(180, 48);
             lblTimer.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             lblTimer.Location = new Point(this.ClientSize.Width - 215, 38);
+            lblTimer.Paint += LblTimer_Paint;
             headerPanel.Controls.Add(lblTimer);
             lblTimer.BringToFront();
 
@@ -264,7 +267,8 @@ namespace WinFormsApp1
             btnSubmit.BackColor = GreenColor;
             btnSubmit.ForeColor = Color.White;
             btnSubmit.FlatStyle = FlatStyle.Flat;
-            btnSubmit.FlatAppearance.BorderSize = 0;
+            btnSubmit.FlatAppearance.BorderSize = 2;
+            btnSubmit.FlatAppearance.BorderColor = GoldColor;
             btnSubmit.Cursor = Cursors.Hand;
             btnSubmit.Visible = false;
             btnSubmit.Click += BtnSubmit_Click;
@@ -276,6 +280,26 @@ namespace WinFormsApp1
             StudentQuizForm_Resize(null, EventArgs.Empty);
 
             EnableAntiCheat();
+        }
+
+        // =========================================================
+        // TIMER BADGE - GOLD OUTLINE
+        // =========================================================
+
+        private void LblTimer_Paint(object sender, PaintEventArgs e)
+        {
+            Label label = sender as Label;
+            if (label == null) return;
+
+            using (Pen goldPen = new Pen(GoldColor, 2f))
+            {
+                e.Graphics.DrawRectangle(
+                    goldPen,
+                    1,
+                    1,
+                    label.Width - 3,
+                    label.Height - 3);
+            }
         }
 
         // =========================================================
@@ -407,13 +431,13 @@ namespace WinFormsApp1
         {
             switch (examPeriod)
             {
-                case "PRELIM": return "PRELIM EXAMINATION";
-                case "MIDTERM": return "MIDTERM EXAMINATION";
-                case "SEMIFINALS": return "SEMIFINALS EXAMINATION";
-                case "FINALS": return "FINAL EXAMINATION";
+                case "PRELIM": return "CDSGA  •  PRELIM EXAMINATION";
+                case "MIDTERM": return "CDSGA  •  MIDTERM EXAMINATION";
+                case "SEMIFINALS": return "CDSGA  •  SEMIFINALS EXAMINATION";
+                case "FINALS": return "CDSGA  •  FINAL EXAMINATION";
                 default:
-                    if (string.IsNullOrWhiteSpace(examPeriod)) return "EXAMINATION";
-                    return examPeriod.ToUpper() + " EXAMINATION";
+                    if (string.IsNullOrWhiteSpace(examPeriod)) return "CDSGA  •  EXAMINATION";
+                    return "CDSGA  •  " + examPeriod.ToUpper() + " EXAMINATION";
             }
         }
 
@@ -820,7 +844,7 @@ namespace WinFormsApp1
 
             lblTimer.BackColor = remainingSeconds <= 300
                 ? Color.FromArgb(185, 28, 28)   // red warning in last 5 minutes
-                : MaroonColor;
+                : DarkColor;
         }
 
         private void SaveRemainingSecondsToDb(int seconds)
@@ -1188,7 +1212,7 @@ namespace WinFormsApp1
                         g.FillPath(backBrush, path);
                     }
 
-                    using (Pen borderPen = new Pen(BorderColor, 1))
+                    using (Pen borderPen = new Pen(BorderColor, 1.4f))
                     {
                         g.DrawPath(borderPen, path);
                     }

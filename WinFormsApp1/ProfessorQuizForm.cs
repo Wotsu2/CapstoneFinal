@@ -22,7 +22,8 @@ namespace WinFormsApp1
         // TIME LIMIT
         // =========================================================
 
-        private NumericUpDown numDurationMinutes;
+        private NumericUpDown numHours;
+        private NumericUpDown numMinutes;
 
         private RoundedButton btnImportDocx;
         private RoundedButton btnViewExample;
@@ -75,6 +76,18 @@ namespace WinFormsApp1
         private static readonly Color ClrRed =
             Color.FromArgb(220, 38, 38);
 
+        private static readonly Color ClrGold =
+            Color.FromArgb(198, 156, 53);
+
+        private static readonly Color ClrGoldDark =
+            Color.FromArgb(163, 126, 36);
+
+        private static readonly Color ClrGoldLight =
+            Color.FromArgb(240, 224, 180);
+
+        private static readonly Color ClrPageBg =
+            Color.FromArgb(250, 247, 239);
+
         public ProfessorQuizForm(int professorID)
         {
             professorUserId = professorID;
@@ -92,9 +105,9 @@ namespace WinFormsApp1
         {
             Text = "Professor - Create Quiz / Exam";
             StartPosition = FormStartPosition.CenterScreen;
-            Size = new Size(1200, 760);
-            MinimumSize = new Size(1100, 700);
-            BackColor = Color.White;
+            Size = new Size(1200, 800);
+            MinimumSize = new Size(1100, 740);
+            BackColor = ClrPageBg;
             FormBorderStyle = FormBorderStyle.None;
             Font = new Font("Segoe UI", 9.5F);
 
@@ -102,7 +115,7 @@ namespace WinFormsApp1
             {
                 using (var pen =
                        new Pen(
-                           Color.FromArgb(120, 170, 230),
+                           ClrGold,
                            1.5f))
                 {
                     e.Graphics.DrawRectangle(
@@ -128,9 +141,54 @@ namespace WinFormsApp1
                 leftWidth +
                 25;
 
+            int bannerHeight = 100;
+
+            int yShift = 40;
+
             // =====================================================
-            // HEADER
+            // HEADER BANNER (maroon + gold, CDSGA)
             // =====================================================
+
+            Panel bannerPanel = new Panel();
+
+            bannerPanel.Location = new Point(0, 0);
+
+            bannerPanel.Size = new Size(this.Width, bannerHeight);
+
+            bannerPanel.BackColor = ClrMaroon;
+
+            bannerPanel.Paint += (s, e) =>
+            {
+                using (var goldLine = new Pen(ClrGold, 4f))
+                {
+                    e.Graphics.DrawLine(
+                        goldLine,
+                        0,
+                        bannerPanel.Height - 2,
+                        bannerPanel.Width,
+                        bannerPanel.Height - 2);
+                }
+            };
+
+            Controls.Add(bannerPanel);
+
+            Label lblBrand = new Label();
+
+            lblBrand.Text = "CDSGA";
+
+            lblBrand.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    13,
+                    FontStyle.Bold);
+
+            lblBrand.ForeColor = ClrGold;
+
+            lblBrand.AutoSize = true;
+
+            lblBrand.Location = new Point(pad, 16);
+
+            bannerPanel.Controls.Add(lblBrand);
 
             Label lblHeader = new Label();
 
@@ -144,16 +202,16 @@ namespace WinFormsApp1
                     FontStyle.Bold);
 
             lblHeader.ForeColor =
-                ClrBlack;
+                Color.White;
 
             lblHeader.AutoSize = true;
 
             lblHeader.Location =
                 new Point(
                     pad,
-                    25);
+                    40);
 
-            Controls.Add(lblHeader);
+            bannerPanel.Controls.Add(lblHeader);
 
             Label lblClose = new Label();
 
@@ -165,7 +223,7 @@ namespace WinFormsApp1
                     14);
 
             lblClose.ForeColor =
-                ClrBlack;
+                Color.White;
 
             lblClose.AutoSize = true;
 
@@ -175,12 +233,33 @@ namespace WinFormsApp1
             lblClose.Location =
                 new Point(
                     this.ClientSize.Width - pad - 16,
-                    28);
+                    36);
+
+            lblClose.Anchor =
+                AnchorStyles.Top | AnchorStyles.Right;
 
             lblClose.Click +=
                 (s, e) => this.Close();
 
-            Controls.Add(lblClose);
+            bannerPanel.Controls.Add(lblClose);
+
+            // =====================================================
+            // LEFT CARD BACKDROP
+            // =====================================================
+
+            Panel leftCard =
+                CreateCardPanel(
+                    pad - 15,
+                    bannerHeight + 15,
+                    leftWidth + 30,
+                    660);
+
+            Controls.Add(leftCard);
+
+            // Card is decorative only (siblings sit on top of it,
+            // not inside it) — push it behind everything else so
+            // it doesn't paint over the title/inputs/list/buttons.
+            leftCard.SendToBack();
 
             // =====================================================
             // LEFT SIDE - QUIZ CREATION
@@ -204,7 +283,7 @@ namespace WinFormsApp1
             lblTitle.Location =
                 new Point(
                     pad,
-                    85);
+                    85 + yShift);
 
             Controls.Add(lblTitle);
 
@@ -221,7 +300,7 @@ namespace WinFormsApp1
             txtQuizTitle.Location =
                 new Point(
                     pad,
-                    108);
+                    108 + yShift);
 
             txtQuizTitle.Size =
                 new Size(
@@ -256,7 +335,7 @@ namespace WinFormsApp1
             lblType.Location =
                 new Point(
                     pad,
-                    155);
+                    155 + yShift);
 
             Controls.Add(lblType);
 
@@ -281,7 +360,7 @@ namespace WinFormsApp1
                     pad +
                     halfWidth +
                     24,
-                    155);
+                    155 + yShift);
 
             Controls.Add(lblExamPeriod);
 
@@ -305,7 +384,7 @@ namespace WinFormsApp1
             cmbAssessmentType.Location =
                 new Point(
                     pad,
-                    178);
+                    178 + yShift);
 
             cmbAssessmentType.Size =
                 new Size(
@@ -338,7 +417,7 @@ namespace WinFormsApp1
                     pad +
                     halfWidth +
                     24,
-                    178);
+                    178 + yShift);
 
             cmbExamPeriod.Size =
                 new Size(
@@ -370,14 +449,14 @@ namespace WinFormsApp1
             lblSubject.Location =
                 new Point(
                     pad,
-                    225);
+                    225 + yShift);
 
             Controls.Add(lblSubject);
 
             Label lblDuration = new Label();
 
             lblDuration.Text =
-                "Time Limit (minutes)";
+                "Time Limit";
 
             lblDuration.Font =
                 new Font(
@@ -395,7 +474,7 @@ namespace WinFormsApp1
                     pad +
                     halfWidth +
                     24,
-                    225);
+                    225 + yShift);
 
             Controls.Add(lblDuration);
 
@@ -413,7 +492,7 @@ namespace WinFormsApp1
             txtSubject.Location =
                 new Point(
                     pad,
-                    248);
+                    248 + yShift);
 
             txtSubject.Size =
                 new Size(
@@ -423,44 +502,98 @@ namespace WinFormsApp1
             Controls.Add(txtSubject);
 
             // =====================================================
-            // TIME LIMIT INPUT
+            // TIME LIMIT INPUT (HOURS + MINUTES)
             // =====================================================
 
-            numDurationMinutes =
-                new NumericUpDown();
+            int durationInputX =
+                pad +
+                halfWidth +
+                24;
 
-            numDurationMinutes.Font =
-                new Font(
-                    "Segoe UI",
-                    10);
+            int durationInputY =
+                248 + yShift;
 
-            numDurationMinutes.Location =
+            numHours = new NumericUpDown();
+
+            numHours.Font = new Font("Segoe UI", 10);
+
+            numHours.BorderStyle = BorderStyle.FixedSingle;
+
+            numHours.Location =
+                new Point(durationInputX, durationInputY);
+
+            numHours.Size = new Size(70, 30);
+
+            numHours.Minimum = 0;
+
+            numHours.Maximum = 24;
+
+            numHours.Value = 1;
+
+            numHours.TextAlign = HorizontalAlignment.Center;
+
+            Controls.Add(numHours);
+
+            Label lblHoursUnit = new Label();
+
+            lblHoursUnit.Text = "hr";
+
+            lblHoursUnit.Font =
+                new Font("Segoe UI", 9.5F);
+
+            lblHoursUnit.ForeColor = ClrLabelGray;
+
+            lblHoursUnit.AutoSize = true;
+
+            lblHoursUnit.Location =
                 new Point(
-                    pad +
-                    halfWidth +
-                    24,
-                    248);
+                    durationInputX + 74,
+                    durationInputY + 7);
 
-            numDurationMinutes.Size =
-                new Size(
-                    halfWidth,
-                    30);
+            Controls.Add(lblHoursUnit);
 
-            // Minimum: 1 minute
-            numDurationMinutes.Minimum = 1;
+            numMinutes = new NumericUpDown();
 
-            // Maximum: 24 hours
-            numDurationMinutes.Maximum = 1440;
+            numMinutes.Font = new Font("Segoe UI", 10);
 
-            // Default: 60 minutes
-            numDurationMinutes.Value = 60;
+            numMinutes.BorderStyle = BorderStyle.FixedSingle;
 
-            numDurationMinutes.Increment = 5;
+            numMinutes.Location =
+                new Point(
+                    durationInputX + 104,
+                    durationInputY);
 
-            numDurationMinutes.TextAlign =
-                HorizontalAlignment.Left;
+            numMinutes.Size = new Size(70, 30);
 
-            Controls.Add(numDurationMinutes);
+            numMinutes.Minimum = 0;
+
+            numMinutes.Maximum = 59;
+
+            numMinutes.Increment = 5;
+
+            numMinutes.Value = 0;
+
+            numMinutes.TextAlign = HorizontalAlignment.Center;
+
+            Controls.Add(numMinutes);
+
+            Label lblMinutesUnit = new Label();
+
+            lblMinutesUnit.Text = "min";
+
+            lblMinutesUnit.Font =
+                new Font("Segoe UI", 9.5F);
+
+            lblMinutesUnit.ForeColor = ClrLabelGray;
+
+            lblMinutesUnit.AutoSize = true;
+
+            lblMinutesUnit.Location =
+                new Point(
+                    durationInputX + 178,
+                    durationInputY + 7);
+
+            Controls.Add(lblMinutesUnit);
 
             // =====================================================
             // IMPORT DOCX
@@ -486,7 +619,7 @@ namespace WinFormsApp1
             btnImportDocx.Location =
                 new Point(
                     pad,
-                    300);
+                    300 + yShift);
 
             btnImportDocx.BackColor =
                 ClrMaroon;
@@ -526,16 +659,16 @@ namespace WinFormsApp1
             btnViewExample.Location =
                 new Point(
                     pad + 190 + 8,
-                    298);
+                    298 + yShift);
 
             btnViewExample.BackColor =
-                Color.FromArgb(100, 116, 139);
+                ClrGold;
 
             btnViewExample.HoverColor =
-                Color.FromArgb(71, 85, 105);
+                ClrGoldDark;
 
             btnViewExample.ForeColor =
-                Color.White;
+                ClrMaroonDark;
 
             ToolTip tipViewExample =
                 new ToolTip();
@@ -572,7 +705,7 @@ namespace WinFormsApp1
             lblFileName.Location =
                 new Point(
                     pad + 250,
-                    312);
+                    312 + yShift);
 
             Controls.Add(lblFileName);
 
@@ -598,7 +731,7 @@ namespace WinFormsApp1
                     pad +
                     leftWidth -
                     110,
-                    312);
+                    312 + yShift);
 
             Controls.Add(lblQuestionCount);
 
@@ -626,7 +759,7 @@ namespace WinFormsApp1
             lblPreview.Location =
                 new Point(
                     pad,
-                    358);
+                    358 + yShift);
 
             Controls.Add(lblPreview);
 
@@ -651,12 +784,12 @@ namespace WinFormsApp1
             lstQuestions.Location =
                 new Point(
                     pad,
-                    385);
+                    385 + yShift);
 
             lstQuestions.Size =
                 new Size(
                     leftWidth,
-                    270);
+                    230);
 
             Controls.Add(lstQuestions);
 
@@ -686,7 +819,7 @@ namespace WinFormsApp1
                     pad +
                     leftWidth -
                     480,
-                    675);
+                    675 + yShift);
 
             btnSaveQuiz.BackColor =
                 ClrMaroon;
@@ -724,22 +857,16 @@ namespace WinFormsApp1
                     pad +
                     leftWidth -
                     315,
-                    675);
+                    675 + yShift);
 
             btnMonitor.BackColor =
-                Color.FromArgb(
-                    37,
-                    99,
-                    235);
+                ClrGold;
 
             btnMonitor.HoverColor =
-                Color.FromArgb(
-                    29,
-                    78,
-                    216);
+                ClrGoldDark;
 
             btnMonitor.ForeColor =
-                Color.White;
+                ClrMaroonDark;
 
             btnMonitor.Enabled =
                 false;
@@ -771,7 +898,7 @@ namespace WinFormsApp1
                     pad +
                     leftWidth -
                     150,
-                    675);
+                    675 + yShift);
 
             btnClear.BackColor =
                 ClrBlack;
@@ -788,27 +915,15 @@ namespace WinFormsApp1
             Controls.Add(btnClear);
 
             // =====================================================
-            // RIGHT SIDE - MONITORING DASHBOARD
+            // RIGHT SIDE - MONITORING DASHBOARD (CARD)
             // =====================================================
 
             Panel monitoringPanel =
-                new Panel();
-
-            monitoringPanel.Location =
-                new Point(
+                CreateCardPanel(
                     rightX,
-                    85);
-
-            monitoringPanel.Size =
-                new Size(
+                    bannerHeight + 15,
                     rightWidth,
                     632);
-
-            monitoringPanel.BorderStyle =
-                BorderStyle.FixedSingle;
-
-            monitoringPanel.BackColor =
-                Color.White;
 
             Controls.Add(monitoringPanel);
 
@@ -825,7 +940,7 @@ namespace WinFormsApp1
                     FontStyle.Bold);
 
             lblMonitoringTitle.ForeColor =
-                ClrBlack;
+                ClrMaroon;
 
             lblMonitoringTitle.AutoSize = true;
 
@@ -874,35 +989,27 @@ namespace WinFormsApp1
             // STATUS LEGEND
             // =====================================================
 
-            Label lblLegend =
-                new Label();
+            Panel legendPanel =
+                new Panel();
 
-            lblLegend.Text =
-                "🟢 Taking Quiz    🟡 Disconnected    ✓ Submitted";
-
-            lblLegend.Font =
-                new Font(
-                    "Segoe UI",
-                    8.5F);
-
-            lblLegend.ForeColor =
-                ClrLabelGray;
-
-            lblLegend.AutoSize =
-                false;
-
-            lblLegend.Size =
+            legendPanel.Size =
                 new Size(
                     rightWidth - 40,
                     30);
 
-            lblLegend.Location =
+            legendPanel.Location =
                 new Point(
                     20,
                     94);
 
+            legendPanel.BackColor =
+                Color.White;
+
+            legendPanel.Paint +=
+                LegendPanel_Paint;
+
             monitoringPanel.Controls.Add(
-                lblLegend);
+                legendPanel);
 
             // =====================================================
             // DATAGRIDVIEW
@@ -973,13 +1080,10 @@ namespace WinFormsApp1
                             FontStyle.Bold),
 
                     BackColor =
-                        Color.FromArgb(
-                            248,
-                            250,
-                            252),
+                        ClrGoldLight,
 
                     ForeColor =
-                        ClrBlack,
+                        ClrMaroonDark,
 
                     Alignment =
                         DataGridViewContentAlignment.MiddleLeft
@@ -1054,6 +1158,9 @@ namespace WinFormsApp1
             dgvAttempts.Columns.Add(
                 colStatus);
 
+            dgvAttempts.CellPainting +=
+                DgvAttempts_CellPainting;
+
             monitoringPanel.Controls.Add(
                 dgvAttempts);
 
@@ -1097,6 +1204,302 @@ namespace WinFormsApp1
 
             monitoringTimer.Tick +=
                 MonitoringTimer_Tick;
+
+            // Re-assert z-order once every control has been added,
+            // so the decorative card always stays behind its content.
+            leftCard.SendToBack();
+        }
+
+        // =========================================================
+        // CARD PANEL HELPER (maroon + gold theme)
+        // =========================================================
+
+        private Panel CreateCardPanel(
+            int x,
+            int y,
+            int width,
+            int height,
+            int radius = 14)
+        {
+            Panel panel = new Panel();
+
+            panel.Location = new Point(x, y);
+
+            panel.Size = new Size(width, height);
+
+            panel.BackColor = Color.White;
+
+            panel.Paint += (s, e) =>
+            {
+                e.Graphics.SmoothingMode =
+                    SmoothingMode.AntiAlias;
+
+                Rectangle bounds =
+                    new Rectangle(
+                        0,
+                        0,
+                        panel.Width - 1,
+                        panel.Height - 1);
+
+                using (GraphicsPath path =
+                       BuildRoundedRectPath(
+                           bounds,
+                           radius))
+                {
+                    using (var borderPen =
+                           new Pen(ClrGold, 1.6f))
+                    {
+                        e.Graphics.DrawPath(
+                            borderPen,
+                            path);
+                    }
+                }
+            };
+
+            return panel;
+        }
+
+        private GraphicsPath BuildRoundedRectPath(
+            Rectangle bounds,
+            int radius)
+        {
+            int d = radius * 2;
+
+            GraphicsPath path = new GraphicsPath();
+
+            path.AddArc(
+                bounds.X,
+                bounds.Y,
+                d,
+                d,
+                180,
+                90);
+
+            path.AddArc(
+                bounds.Right - d,
+                bounds.Y,
+                d,
+                d,
+                270,
+                90);
+
+            path.AddArc(
+                bounds.Right - d,
+                bounds.Bottom - d,
+                d,
+                d,
+                0,
+                90);
+
+            path.AddArc(
+                bounds.X,
+                bounds.Bottom - d,
+                d,
+                d,
+                90,
+                90);
+
+            path.CloseFigure();
+
+            return path;
+        }
+
+        // =========================================================
+        // LEGEND (colored dots instead of emoji)
+        // =========================================================
+
+        private void LegendPanel_Paint(
+            object sender,
+            PaintEventArgs e)
+        {
+            e.Graphics.SmoothingMode =
+                SmoothingMode.AntiAlias;
+
+            int dotSize = 10;
+
+            int y =
+                (((Panel)sender).Height - dotSize) / 2;
+
+            int x = 0;
+
+            using (var font =
+                   new Font("Segoe UI", 8.5F))
+            {
+                DrawLegendItem(
+                    e.Graphics,
+                    ref x,
+                    y,
+                    dotSize,
+                    ClrGreen,
+                    "Taking Quiz",
+                    font);
+
+                x += 22;
+
+                DrawLegendItem(
+                    e.Graphics,
+                    ref x,
+                    y,
+                    dotSize,
+                    ClrYellow,
+                    "Disconnected",
+                    font);
+
+                x += 22;
+
+                DrawLegendItem(
+                    e.Graphics,
+                    ref x,
+                    y,
+                    dotSize,
+                    ClrGreen,
+                    "Submitted",
+                    font);
+            }
+        }
+
+        private void DrawLegendItem(
+            Graphics g,
+            ref int x,
+            int y,
+            int dotSize,
+            Color dotColor,
+            string text,
+            Font font)
+        {
+            using (var dotBrush =
+                   new SolidBrush(dotColor))
+            {
+                g.FillEllipse(
+                    dotBrush,
+                    x,
+                    y,
+                    dotSize,
+                    dotSize);
+            }
+
+            x += dotSize + 6;
+
+            SizeF textSize =
+                g.MeasureString(text, font);
+
+            using (var textBrush =
+                   new SolidBrush(ClrLabelGray))
+            {
+                g.DrawString(
+                    text,
+                    font,
+                    textBrush,
+                    x,
+                    y - 3);
+            }
+
+            x += (int)textSize.Width;
+        }
+
+        // =========================================================
+        // STATUS COLUMN - CUSTOM COLORED DOT PAINTING
+        // =========================================================
+
+        private void DgvAttempts_CellPainting(
+            object sender,
+            DataGridViewCellPaintingEventArgs e)
+        {
+            if (e.RowIndex < 0 ||
+                dgvAttempts.Columns[e.ColumnIndex].Name !=
+                "Status")
+            {
+                return;
+            }
+
+            e.PaintBackground(
+                e.ClipBounds,
+                true);
+
+            string status =
+                e.Value == null
+                    ? ""
+                    : e.Value.ToString();
+
+            Color dotColor = ClrRed;
+
+            if (status == "Taking Quiz")
+            {
+                dotColor = ClrGreen;
+            }
+            else if (status == "Disconnected")
+            {
+                dotColor = ClrYellow;
+            }
+            else if (status == "Submitted")
+            {
+                dotColor = ClrGreen;
+            }
+
+            e.Graphics.SmoothingMode =
+                SmoothingMode.AntiAlias;
+
+            int dotSize = 10;
+
+            int dotX =
+                e.CellBounds.Left + 10;
+
+            int dotY =
+                e.CellBounds.Top +
+                ((e.CellBounds.Height - dotSize) / 2);
+
+            using (var dotBrush =
+                   new SolidBrush(dotColor))
+            {
+                e.Graphics.FillEllipse(
+                    dotBrush,
+                    dotX,
+                    dotY,
+                    dotSize,
+                    dotSize);
+            }
+
+            using (var font =
+                   new Font(
+                       "Segoe UI Semibold",
+                       9,
+                       FontStyle.Bold))
+            using (var textBrush =
+                   new SolidBrush(ClrBlack))
+            {
+                e.Graphics.DrawString(
+                    status,
+                    font,
+                    textBrush,
+                    dotX + dotSize + 8,
+                    e.CellBounds.Top +
+                    ((e.CellBounds.Height - font.Height) / 2));
+            }
+
+            e.Handled = true;
+        }
+
+        // =========================================================
+        // FORMAT DURATION (hours + minutes -> readable text)
+        // =========================================================
+
+        private string FormatDuration(int totalMinutes)
+        {
+            int hours = totalMinutes / 60;
+
+            int minutes = totalMinutes % 60;
+
+            if (hours > 0 && minutes > 0)
+            {
+                return hours + "h " + minutes + "m";
+            }
+
+            if (hours > 0)
+            {
+                return hours + "h";
+            }
+
+            return minutes + " minute" + (minutes == 1 ? "" : "s");
         }
 
         // =========================================================
@@ -1488,12 +1891,12 @@ namespace WinFormsApp1
             }
 
             // =====================================================
-            // VALIDATE TIME LIMIT
+            // VALIDATE TIME LIMIT (HOURS + MINUTES)
             // =====================================================
 
             int durationMinutes =
-                Convert.ToInt32(
-                    numDurationMinutes.Value);
+                (Convert.ToInt32(numHours.Value) * 60) +
+                Convert.ToInt32(numMinutes.Value);
 
             if (durationMinutes < 1)
             {
@@ -1503,7 +1906,7 @@ namespace WinFormsApp1
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
 
-                numDurationMinutes.Focus();
+                numHours.Focus();
 
                 return;
             }
@@ -1511,12 +1914,12 @@ namespace WinFormsApp1
             if (durationMinutes > 1440)
             {
                 MessageBox.Show(
-                    "Time limit cannot exceed 1440 minutes (24 hours).",
+                    "Time limit cannot exceed 24 hours (1440 minutes).",
                     "Invalid Time Limit",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
 
-                numDurationMinutes.Focus();
+                numHours.Focus();
 
                 return;
             }
@@ -1593,9 +1996,7 @@ namespace WinFormsApp1
                     subject +
                     "\n" +
                     "Time Limit: " +
-                    durationMinutes +
-                    " minute" +
-                    (durationMinutes == 1 ? "" : "s") +
+                    FormatDuration(durationMinutes) +
                     "\n\n" +
                     "QUESTION STRUCTURE\n" +
                     "Multiple Choice: " +
@@ -1952,9 +2353,7 @@ namespace WinFormsApp1
                         examPeriod +
                         "\n" +
                         "Time Limit: " +
-                        durationMinutes +
-                        " minute" +
-                        (durationMinutes == 1 ? "" : "s") +
+                        FormatDuration(durationMinutes) +
                         "\n\n" +
                         "Question Structure:\n" +
                         "Multiple Choice: " +
@@ -2151,17 +2550,8 @@ namespace WinFormsApp1
                                         dbStatus,
                                         lastSeen);
 
-                                int rowIndex =
-                                    dgvAttempts.Rows.Add(
-                                        fullName,
-                                        displayStatus);
-
-                                DataGridViewRow row =
-                                    dgvAttempts.Rows[
-                                        rowIndex];
-
-                                ApplyStatusStyle(
-                                    row,
+                                dgvAttempts.Rows.Add(
+                                    fullName,
                                     displayStatus);
                             }
                         }
@@ -2194,7 +2584,7 @@ namespace WinFormsApp1
             if (status ==
                 "SUBMITTED")
             {
-                return "✓ Submitted";
+                return "Submitted";
             }
 
             // Taking + recent heartbeat.
@@ -2209,10 +2599,10 @@ namespace WinFormsApp1
                 if (elapsed.TotalSeconds <=
                     15)
                 {
-                    return "🟢 Taking Quiz";
+                    return "Taking Quiz";
                 }
 
-                return "🟡 Disconnected";
+                return "Disconnected";
             }
 
             // If TAKING but last_seen is missing,
@@ -2221,73 +2611,10 @@ namespace WinFormsApp1
             if (status ==
                 "TAKING")
             {
-                return "🟡 Disconnected";
+                return "Disconnected";
             }
 
             return status;
-        }
-
-        // =========================================================
-        // APPLY STATUS STYLE
-        // =========================================================
-
-        private void ApplyStatusStyle(
-            DataGridViewRow row,
-            string displayStatus)
-        {
-            if (row == null)
-            {
-                return;
-            }
-
-            if (displayStatus ==
-                "🟢 Taking Quiz")
-            {
-                row.Cells["Status"]
-                    .Style.ForeColor =
-                    ClrGreen;
-
-                row.Cells["Status"]
-                    .Style.Font =
-                    new Font(
-                        "Segoe UI Semibold",
-                        9,
-                        FontStyle.Bold);
-            }
-            else if (displayStatus ==
-                     "🟡 Disconnected")
-            {
-                row.Cells["Status"]
-                    .Style.ForeColor =
-                    ClrYellow;
-
-                row.Cells["Status"]
-                    .Style.Font =
-                    new Font(
-                        "Segoe UI Semibold",
-                        9,
-                        FontStyle.Bold);
-            }
-            else if (displayStatus ==
-                     "✓ Submitted")
-            {
-                row.Cells["Status"]
-                    .Style.ForeColor =
-                    ClrGreen;
-
-                row.Cells["Status"]
-                    .Style.Font =
-                    new Font(
-                        "Segoe UI Semibold",
-                        9,
-                        FontStyle.Bold);
-            }
-            else
-            {
-                row.Cells["Status"]
-                    .Style.ForeColor =
-                    ClrRed;
-            }
         }
 
         // =========================================================
@@ -2743,10 +3070,15 @@ namespace WinFormsApp1
             cmbExamPeriod.SelectedIndex =
                 0;
 
-            // Reset time limit to default 60 minutes.
-            if (numDurationMinutes != null)
+            // Reset time limit to default (1 hour 0 minutes).
+            if (numHours != null)
             {
-                numDurationMinutes.Value = 60;
+                numHours.Value = 1;
+            }
+
+            if (numMinutes != null)
+            {
+                numMinutes.Value = 0;
             }
 
             importedQuestions =
