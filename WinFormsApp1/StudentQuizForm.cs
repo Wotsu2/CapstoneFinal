@@ -21,25 +21,88 @@ namespace WinFormsApp1
 
         private int selectedQuizId = 0;
 
-        // Student user_id (overwritten by ctor)
+        // Student user_id
         private int studentUserId = 0;
 
         private int score = 0;
 
         // =========================================================
+        // QUIZ ATTEMPT
+        // =========================================================
+
+        // Current quiz_attempts.attempt_id
+        private int currentAttemptId = 0;
+
+        // Server/database start time of the current attempt
+        private DateTime attemptStartedAt = DateTime.MinValue;
+
+        // =========================================================
+        // EXAM COUNTDOWN TIMER
+        // =========================================================
+
+        // Default examination duration.
+        // Change this value if you want another duration.
+        private const int ExamDurationMinutes = 60;
+
+        // Displays the remaining examination time.
+        private Label lblTimer;
+
+        // Countdown timer - ticks every second.
+        private System.Windows.Forms.Timer examTimer;
+
+        // Prevents automatic/manual submission from running twice.
+        private bool isSubmitting = false;
+
+        // =========================================================
+        // HEARTBEAT
+        // =========================================================
+
+        // Sends heartbeat every 5 seconds
+        private System.Windows.Forms.Timer heartbeatTimer;
+
+        // =========================================================
+        // AUTO-SAVE
+        // =========================================================
+
+        // Saves student answers every 5 seconds
+        private System.Windows.Forms.Timer autoSaveTimer;
+
+        // Prevents overlapping auto-save operations
+        private bool isAutoSaving = false;
+
+        // =========================================================
         // COLORS
         // =========================================================
 
-        private readonly Color BackgroundColor = Color.FromArgb(241, 245, 249);
-        private readonly Color CardColor = Color.White;
-        private readonly Color DarkColor = Color.FromArgb(15, 23, 42);
-        private readonly Color TextColor = Color.FromArgb(51, 65, 85);
-        private readonly Color MutedColor = Color.FromArgb(100, 116, 139);
-        private readonly Color GreenColor = Color.FromArgb(22, 163, 74);
-        private readonly Color BorderColor = Color.FromArgb(226, 232, 240);
-        private readonly Color MaroonColor = Color.FromArgb(128, 45, 58);
-        private readonly Color MaroonSoft = Color.FromArgb(250, 235, 238);
-        private readonly Color OptionBackColor = Color.FromArgb(248, 250, 252);
+        private readonly Color BackgroundColor =
+            Color.FromArgb(241, 245, 249);
+
+        private readonly Color CardColor =
+            Color.White;
+
+        private readonly Color DarkColor =
+            Color.FromArgb(15, 23, 42);
+
+        private readonly Color TextColor =
+            Color.FromArgb(51, 65, 85);
+
+        private readonly Color MutedColor =
+            Color.FromArgb(100, 116, 139);
+
+        private readonly Color GreenColor =
+            Color.FromArgb(22, 163, 74);
+
+        private readonly Color BorderColor =
+            Color.FromArgb(226, 232, 240);
+
+        private readonly Color MaroonColor =
+            Color.FromArgb(128, 45, 58);
+
+        private readonly Color MaroonSoft =
+            Color.FromArgb(250, 235, 238);
+
+        private readonly Color OptionBackColor =
+            Color.FromArgb(248, 250, 252);
 
         // =========================================================
         // DOUBLE BUFFERED PANELS
@@ -55,6 +118,7 @@ namespace WinFormsApp1
                     ControlStyles.OptimizedDoubleBuffer |
                     ControlStyles.ResizeRedraw,
                     true);
+
                 this.DoubleBuffered = true;
             }
         }
@@ -69,6 +133,7 @@ namespace WinFormsApp1
                     ControlStyles.OptimizedDoubleBuffer |
                     ControlStyles.ResizeRedraw,
                     true);
+
                 this.DoubleBuffered = true;
             }
         }
@@ -94,13 +159,23 @@ namespace WinFormsApp1
         // QUESTION CONTROLS
         // =========================================================
 
-        private List<Panel> questionCards = new List<Panel>();
-        private List<Panel> sectionHeaders = new List<Panel>();
+        private List<Panel> questionCards =
+            new List<Panel>();
 
-        private List<RadioButton[]> multipleChoiceControls = new List<RadioButton[]>();
-        private List<RadioButton[]> trueFalseControls = new List<RadioButton[]>();
-        private List<TextBox> identificationControls = new List<TextBox>();
-        private List<TextBox> essayControls = new List<TextBox>();
+        private List<Panel> sectionHeaders =
+            new List<Panel>();
+
+        private List<RadioButton[]> multipleChoiceControls =
+            new List<RadioButton[]>();
+
+        private List<RadioButton[]> trueFalseControls =
+            new List<RadioButton[]>();
+
+        private List<TextBox> identificationControls =
+            new List<TextBox>();
+
+        private List<TextBox> essayControls =
+            new List<TextBox>();
 
         // =========================================================
         // CONSTRUCTOR
@@ -112,11 +187,11 @@ namespace WinFormsApp1
             selectedQuizId = quizId;
 
             InitializeUI();
-            LoadQuiz(quizId);   // <-- now loads the SPECIFIC quiz
+            LoadQuiz(quizId);
         }
 
         // =========================================================
-        // INITIALIZE UI  (unchanged)
+        // INITIALIZE UI
         // =========================================================
 
         private void InitializeUI()
@@ -144,15 +219,18 @@ namespace WinFormsApp1
 
             lblExamPeriod = new Label();
             lblExamPeriod.Text = "EXAMINATION";
-            lblExamPeriod.Font = new Font("Segoe UI", 11, FontStyle.Bold);
-            lblExamPeriod.ForeColor = Color.FromArgb(248, 113, 113);
+            lblExamPeriod.Font =
+                new Font("Segoe UI", 11, FontStyle.Bold);
+            lblExamPeriod.ForeColor =
+                Color.FromArgb(248, 113, 113);
             lblExamPeriod.AutoSize = true;
             lblExamPeriod.Location = new Point(38, 10);
             headerPanel.Controls.Add(lblExamPeriod);
 
             lblQuizTitle = new Label();
             lblQuizTitle.Text = "Loading Quiz...";
-            lblQuizTitle.Font = new Font("Segoe UI", 25, FontStyle.Bold);
+            lblQuizTitle.Font =
+                new Font("Segoe UI", 25, FontStyle.Bold);
             lblQuizTitle.ForeColor = Color.White;
             lblQuizTitle.AutoSize = true;
             lblQuizTitle.Location = new Point(35, 30);
@@ -160,31 +238,79 @@ namespace WinFormsApp1
 
             lblSubject = new Label();
             lblSubject.Text = "Preparing examination...";
-            lblSubject.Font = new Font("Segoe UI", 12);
-            lblSubject.ForeColor = Color.FromArgb(203, 213, 225);
+            lblSubject.Font =
+                new Font("Segoe UI", 12);
+            lblSubject.ForeColor =
+                Color.FromArgb(203, 213, 225);
             lblSubject.AutoSize = true;
             lblSubject.Location = new Point(38, 72);
             headerPanel.Controls.Add(lblSubject);
 
             lblInstruction = new Label();
-            lblInstruction.Text = "Answer all questions carefully. Scroll down to continue.";
-            lblInstruction.Font = new Font("Segoe UI", 10);
-            lblInstruction.ForeColor = Color.FromArgb(148, 163, 184);
+            lblInstruction.Text =
+                "Answer all questions carefully. Scroll down to continue.";
+            lblInstruction.Font =
+                new Font("Segoe UI", 10);
+            lblInstruction.ForeColor =
+                Color.FromArgb(148, 163, 184);
             lblInstruction.AutoSize = true;
             lblInstruction.Location = new Point(38, 101);
             headerPanel.Controls.Add(lblInstruction);
 
+            // =====================================================
+            // COUNTDOWN TIMER LABEL
+            // =====================================================
+
+            lblTimer = new Label();
+            lblTimer.Text = "TIME: 60:00";
+            lblTimer.Font =
+                new Font(
+                    "Segoe UI",
+                    18,
+                    FontStyle.Bold);
+            lblTimer.ForeColor = Color.White;
+            lblTimer.BackColor = MaroonColor;
+            lblTimer.TextAlign =
+                ContentAlignment.MiddleCenter;
+            lblTimer.Size =
+                new Size(180, 48);
+
+            lblTimer.Anchor =
+                AnchorStyles.Top |
+                AnchorStyles.Right;
+
+            lblTimer.Location =
+                new Point(
+                    this.ClientSize.Width - 215,
+                    38);
+
+            headerPanel.Controls.Add(lblTimer);
+            lblTimer.BringToFront();
+
             // ---- Scroll Panel ----
             scrollPanel = new SmoothPanel();
-            scrollPanel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom |
-                                 AnchorStyles.Left | AnchorStyles.Right;
-            scrollPanel.Location = new Point(0, headerPanel.Height);
-            scrollPanel.Size = new Size(
-                this.ClientSize.Width,
-                Math.Max(0, this.ClientSize.Height - headerPanel.Height));
+            scrollPanel.Anchor =
+                AnchorStyles.Top |
+                AnchorStyles.Bottom |
+                AnchorStyles.Left |
+                AnchorStyles.Right;
+
+            scrollPanel.Location =
+                new Point(0, headerPanel.Height);
+
+            scrollPanel.Size =
+                new Size(
+                    this.ClientSize.Width,
+                    Math.Max(
+                        0,
+                        this.ClientSize.Height -
+                        headerPanel.Height));
+
             scrollPanel.AutoScroll = true;
             scrollPanel.BackColor = BackgroundColor;
-            scrollPanel.Padding = new Padding(0, 25, 0, 40);
+            scrollPanel.Padding =
+                new Padding(0, 25, 0, 40);
+
             this.Controls.Add(scrollPanel);
             headerPanel.BringToFront();
 
@@ -197,7 +323,8 @@ namespace WinFormsApp1
 
             lblQuestionCount = new Label();
             lblQuestionCount.Text = "0 Questions";
-            lblQuestionCount.Font = new Font("Segoe UI", 14, FontStyle.Bold);
+            lblQuestionCount.Font =
+                new Font("Segoe UI", 14, FontStyle.Bold);
             lblQuestionCount.ForeColor = DarkColor;
             lblQuestionCount.AutoSize = true;
             lblQuestionCount.Location = new Point(5, 0);
@@ -214,7 +341,8 @@ namespace WinFormsApp1
             btnSubmit = new Button();
             btnSubmit.Text = "✓  SUBMIT";
             btnSubmit.Size = new Size(240, 55);
-            btnSubmit.Font = new Font("Segoe UI", 13, FontStyle.Bold);
+            btnSubmit.Font =
+                new Font("Segoe UI", 13, FontStyle.Bold);
             btnSubmit.BackColor = GreenColor;
             btnSubmit.ForeColor = Color.White;
             btnSubmit.FlatStyle = FlatStyle.Flat;
@@ -225,61 +353,134 @@ namespace WinFormsApp1
             contentPanel.Controls.Add(btnSubmit);
 
             this.Resize += StudentQuizForm_Resize;
-            StudentQuizForm_Resize(null, EventArgs.Empty);
+
+            this.FormClosed += StudentQuizForm_FormClosed;
+
+            StudentQuizForm_Resize(
+                null,
+                EventArgs.Empty);
 
             EnableAntiCheat();
         }
 
-        private void StudentQuizForm_Resize(object sender, EventArgs e)
+        // =========================================================
+        // FORM CLOSED
+        // =========================================================
+
+        private void StudentQuizForm_FormClosed(
+            object sender,
+            FormClosedEventArgs e)
         {
-            if (scrollPanel == null || contentPanel == null) return;
+            StopExamTimer();
+            StopAutoSave();
+            StopHeartbeat();
+        }
+
+        // =========================================================
+        // RESIZE
+        // =========================================================
+
+        private void StudentQuizForm_Resize(
+            object sender,
+            EventArgs e)
+        {
+            if (scrollPanel == null ||
+                contentPanel == null)
+                return;
 
             if (headerPanel != null)
             {
-                scrollPanel.Location = new Point(0, headerPanel.Height);
-                scrollPanel.Size = new Size(
-                    this.ClientSize.Width,
-                    Math.Max(0, this.ClientSize.Height - headerPanel.Height));
+                scrollPanel.Location =
+                    new Point(0, headerPanel.Height);
+
+                scrollPanel.Size =
+                    new Size(
+                        this.ClientSize.Width,
+                        Math.Max(
+                            0,
+                            this.ClientSize.Height -
+                            headerPanel.Height));
             }
 
-            int availableWidth = scrollPanel.ClientSize.Width;
-            int contentWidth = Math.Max(780, Math.Min(900, availableWidth - 70));
-            contentPanel.Width = contentWidth;
-            contentPanel.Left = Math.Max(25, (availableWidth - contentPanel.Width) / 2);
+            if (lblTimer != null)
+            {
+                lblTimer.Location =
+                    new Point(
+                        Math.Max(
+                            10,
+                            headerPanel.ClientSize.Width -
+                            lblTimer.Width -
+                            30),
+                        38);
+            }
 
-            progressBar.Width = contentPanel.Width - 10;
+            int availableWidth =
+                scrollPanel.ClientSize.Width;
+
+            int contentWidth =
+                Math.Max(
+                    780,
+                    Math.Min(
+                        900,
+                        availableWidth - 70));
+
+            contentPanel.Width =
+                contentWidth;
+
+            contentPanel.Left =
+                Math.Max(
+                    25,
+                    (availableWidth -
+                     contentPanel.Width) / 2);
+
+            progressBar.Width =
+                contentPanel.Width - 10;
 
             foreach (Panel header in sectionHeaders)
             {
-                if (header == null) continue;
-                header.Width = contentPanel.Width - 10;
+                if (header == null)
+                    continue;
+
+                header.Width =
+                    contentPanel.Width - 10;
+
                 ResizeSectionHeader(header);
                 header.Invalidate();
             }
 
             foreach (Panel card in questionCards)
             {
-                if (card == null) continue;
-                card.Width = contentPanel.Width - 10;
+                if (card == null)
+                    continue;
+
+                card.Width =
+                    contentPanel.Width - 10;
+
                 ResizeQuestionCard(card);
                 card.Invalidate();
             }
 
             if (btnSubmit != null)
-                btnSubmit.Left = (contentPanel.Width - btnSubmit.Width) / 2;
+            {
+                btnSubmit.Left =
+                    (contentPanel.Width -
+                     btnSubmit.Width) / 2;
+            }
         }
 
         // =========================================================
-        // LOAD QUIZ  (rewritten to match new schema)
+        // LOAD QUIZ
         // =========================================================
 
         private void LoadQuiz(int quizId)
         {
-            string connStr = SettingsManager.Current.GetConnectionString();
+            string connStr =
+                SettingsManager.Current.GetConnectionString();
 
             try
             {
-                using (var conn = new MySqlConnection(connStr))
+                using (var conn =
+                       new MySqlConnection(connStr))
                 {
                     conn.Open();
 
@@ -293,11 +494,15 @@ namespace WinFormsApp1
                         WHERE quiz_id = @quiz_id
                         LIMIT 1";
 
-                    using (var cmd = new MySqlCommand(query, conn))
+                    using (var cmd =
+                           new MySqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@quiz_id", quizId);
+                        cmd.Parameters.AddWithValue(
+                            "@quiz_id",
+                            quizId);
 
-                        using (var reader = cmd.ExecuteReader())
+                        using (var reader =
+                               cmd.ExecuteReader())
                         {
                             if (!reader.Read())
                             {
@@ -306,20 +511,40 @@ namespace WinFormsApp1
                                     "Not Found",
                                     MessageBoxButtons.OK,
                                     MessageBoxIcon.Warning);
+
                                 DisableQuiz();
                                 return;
                             }
 
-                            selectedQuizId = Convert.ToInt32(reader["quiz_id"]);
+                            selectedQuizId =
+                                Convert.ToInt32(
+                                    reader["quiz_id"]);
 
-                            string examPeriod = reader["exam_period"] == DBNull.Value
-                                ? "PRELIM"
-                                : reader["exam_period"].ToString().Trim().ToUpper();
+                            string examPeriod =
+                                reader["exam_period"] ==
+                                DBNull.Value
+                                    ? "PRELIM"
+                                    : reader["exam_period"]
+                                        .ToString()
+                                        .Trim()
+                                        .ToUpper();
 
-                            lblExamPeriod.Text = GetExamPeriodDisplay(examPeriod);
-                            lblQuizTitle.Text = reader["quiz_title"].ToString();
-                            lblSubject.Text = "Subject: " + reader["subject"].ToString();
-                            lblInstruction.Text = "Answer all questions carefully. Scroll down to continue.";
+                            lblExamPeriod.Text =
+                                GetExamPeriodDisplay(
+                                    examPeriod);
+
+                            lblQuizTitle.Text =
+                                reader["quiz_title"]
+                                    .ToString();
+
+                            lblSubject.Text =
+                                "Subject: " +
+                                reader["subject"]
+                                    .ToString();
+
+                            lblInstruction.Text =
+                                "Answer all questions carefully. " +
+                                "Scroll down to continue.";
                         }
                     }
 
@@ -329,31 +554,45 @@ namespace WinFormsApp1
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    "Unable to load the quiz.\n\n" + ex.Message,
+                    "Unable to load the quiz.\n\n" +
+                    ex.Message,
                     "Database Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
+
                 DisableQuiz();
             }
         }
 
-        private string GetExamPeriodDisplay(string examPeriod)
+        private string GetExamPeriodDisplay(
+            string examPeriod)
         {
             switch (examPeriod)
             {
-                case "PRELIM": return "PRELIM EXAMINATION";
-                case "MIDTERM": return "MIDTERM EXAMINATION";
-                case "SEMIFINALS": return "SEMIFINALS EXAMINATION";
-                case "FINALS": return "FINAL EXAMINATION";
+                case "PRELIM":
+                    return "PRELIM EXAMINATION";
+
+                case "MIDTERM":
+                    return "MIDTERM EXAMINATION";
+
+                case "SEMIFINALS":
+                    return "SEMIFINALS EXAMINATION";
+
+                case "FINALS":
+                    return "FINAL EXAMINATION";
+
                 default:
-                    if (string.IsNullOrWhiteSpace(examPeriod))
+                    if (string.IsNullOrWhiteSpace(
+                        examPeriod))
                         return "EXAMINATION";
-                    return examPeriod.ToUpper() + " EXAMINATION";
+
+                    return examPeriod.ToUpper() +
+                           " EXAMINATION";
             }
         }
 
         // =========================================================
-        // LOAD QUESTIONS  (unchanged - already matches schema)
+        // LOAD QUESTIONS
         // =========================================================
 
         private void LoadQuestions()
@@ -370,14 +609,20 @@ namespace WinFormsApp1
             essayControls.Clear();
 
             contentPanel.Controls.Clear();
-            contentPanel.Controls.Add(lblQuestionCount);
-            contentPanel.Controls.Add(progressBar);
 
-            string connStr = SettingsManager.Current.GetConnectionString();
+            contentPanel.Controls.Add(
+                lblQuestionCount);
+
+            contentPanel.Controls.Add(
+                progressBar);
+
+            string connStr =
+                SettingsManager.Current.GetConnectionString();
 
             try
             {
-                using (var conn = new MySqlConnection(connStr))
+                using (var conn =
+                       new MySqlConnection(connStr))
                 {
                     conn.Open();
 
@@ -394,44 +639,99 @@ namespace WinFormsApp1
                         WHERE quiz_id = @quiz_id
                         ORDER BY question_id ASC";
 
-                    using (var cmd = new MySqlCommand(query, conn))
+                    using (var cmd =
+                           new MySqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@quiz_id", selectedQuizId);
+                        cmd.Parameters.AddWithValue(
+                            "@quiz_id",
+                            selectedQuizId);
 
-                        using (var reader = cmd.ExecuteReader())
+                        using (var reader =
+                               cmd.ExecuteReader())
                         {
                             while (reader.Read())
                             {
-                                QuizQuestion question = new QuizQuestion();
+                                QuizQuestion question =
+                                    new QuizQuestion();
 
-                                question.QuestionId = Convert.ToInt32(reader["question_id"]);
-                                question.Question = reader["question_text"].ToString();
-                                question.QuestionType = reader["question_type"].ToString();
+                                question.QuestionId =
+                                    Convert.ToInt32(
+                                        reader["question_id"]);
 
-                                question.ChoiceA = reader["choice_a"] == DBNull.Value ? "" : reader["choice_a"].ToString();
-                                question.ChoiceB = reader["choice_b"] == DBNull.Value ? "" : reader["choice_b"].ToString();
-                                question.ChoiceC = reader["choice_c"] == DBNull.Value ? "" : reader["choice_c"].ToString();
-                                question.ChoiceD = reader["choice_d"] == DBNull.Value ? "" : reader["choice_d"].ToString();
+                                question.Question =
+                                    reader["question_text"]
+                                        .ToString();
 
-                                question.CorrectAnswer = reader["correct_answer"] == DBNull.Value
-                                    ? ""
-                                    : reader["correct_answer"].ToString();
+                                question.QuestionType =
+                                    reader["question_type"]
+                                        .ToString();
 
-                                string loadedType = NormalizeQuestionType(question.QuestionType);
+                                question.ChoiceA =
+                                    reader["choice_a"] ==
+                                    DBNull.Value
+                                        ? ""
+                                        : reader["choice_a"]
+                                            .ToString();
+
+                                question.ChoiceB =
+                                    reader["choice_b"] ==
+                                    DBNull.Value
+                                        ? ""
+                                        : reader["choice_b"]
+                                            .ToString();
+
+                                question.ChoiceC =
+                                    reader["choice_c"] ==
+                                    DBNull.Value
+                                        ? ""
+                                        : reader["choice_c"]
+                                            .ToString();
+
+                                question.ChoiceD =
+                                    reader["choice_d"] ==
+                                    DBNull.Value
+                                        ? ""
+                                        : reader["choice_d"]
+                                            .ToString();
+
+                                question.CorrectAnswer =
+                                    reader["correct_answer"] ==
+                                    DBNull.Value
+                                        ? ""
+                                        : reader["correct_answer"]
+                                            .ToString();
+
+                                string loadedType =
+                                    NormalizeQuestionType(
+                                        question.QuestionType);
 
                                 bool noChoices =
-                                    string.IsNullOrWhiteSpace(question.ChoiceA) &&
-                                    string.IsNullOrWhiteSpace(question.ChoiceB) &&
-                                    string.IsNullOrWhiteSpace(question.ChoiceC) &&
-                                    string.IsNullOrWhiteSpace(question.ChoiceD);
+                                    string.IsNullOrWhiteSpace(
+                                        question.ChoiceA) &&
+                                    string.IsNullOrWhiteSpace(
+                                        question.ChoiceB) &&
+                                    string.IsNullOrWhiteSpace(
+                                        question.ChoiceC) &&
+                                    string.IsNullOrWhiteSpace(
+                                        question.ChoiceD);
 
                                 bool hasCorrectAnswer =
-                                    !string.IsNullOrWhiteSpace(question.CorrectAnswer);
+                                    !string.IsNullOrWhiteSpace(
+                                        question.CorrectAnswer);
 
-                                if (loadedType == "multiple_choice" && noChoices && hasCorrectAnswer)
-                                    question.QuestionType = "identification";
+                                if (loadedType ==
+                                        "multiple_choice" &&
+                                    noChoices &&
+                                    hasCorrectAnswer)
+                                {
+                                    question.QuestionType =
+                                        "identification";
+                                }
                                 else
-                                    question.QuestionType = loadedType;
+                                {
+                                    question.QuestionType =
+                                        loadedType;
+                                }
 
                                 questions.Add(question);
                             }
@@ -446,56 +746,912 @@ namespace WinFormsApp1
                         "No Questions",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning);
+
                     DisableQuiz();
                     return;
                 }
 
-                lblQuestionCount.Text = questions.Count + " Questions";
+                lblQuestionCount.Text =
+                    questions.Count + " Questions";
+
                 progressBar.Value = 0;
 
+                // -------------------------------------------------
+                // BUILD QUESTIONS FIRST
+                // -------------------------------------------------
+
                 BuildAllQuestions();
+
                 btnSubmit.Visible = true;
 
-                StudentQuizForm_Resize(null, EventArgs.Empty);
+                StudentQuizForm_Resize(
+                    null,
+                    EventArgs.Empty);
+
+                // -------------------------------------------------
+                // CREATE OR RESUME ATTEMPT
+                // -------------------------------------------------
+
+                if (!CreateQuizAttempt())
+                {
+                    DisableQuiz();
+                    return;
+                }
+
+                // -------------------------------------------------
+                // LOAD SAVED ANSWERS
+                // -------------------------------------------------
+                //
+                // CreateQuizAttempt() determines whether this is
+                // a new attempt or an existing attempt.
+                //
+                // For a resumed attempt, restore saved answers.
+                // -------------------------------------------------
+
+                LoadSavedAnswers();
+
+                // -------------------------------------------------
+                // START EXAM COUNTDOWN
+                // -------------------------------------------------
+
+                if (!StartExamTimer())
+                {
+                    DisableQuiz();
+                    return;
+                }
+
+                // -------------------------------------------------
+                // HEARTBEAT
+                // -------------------------------------------------
+
+                StartHeartbeat();
+
+                // -------------------------------------------------
+                // AUTO-SAVE
+                // -------------------------------------------------
+
+                StartAutoSave();
             }
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    "Unable to load questions.\n\n" + ex.Message,
+                    "Unable to load questions.\n\n" +
+                    ex.Message,
                     "Database Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
+
                 DisableQuiz();
             }
         }
 
         // =========================================================
-        // NORMALIZE QUESTION TYPE  (unchanged)
+        // CREATE OR RESUME QUIZ ATTEMPT
+        // =========================================================
+        //
+        // If the student already has a TAKING attempt for this
+        // quiz, reuse that attempt.
+        //
+        // The original started_at is also loaded so the countdown
+        // continues from where the student left off.
+        //
+        // If there is no existing TAKING attempt, create a new one.
         // =========================================================
 
-        private string NormalizeQuestionType(string type)
+        private bool CreateQuizAttempt()
+        {
+            string connStr =
+                SettingsManager.Current.GetConnectionString();
+
+            try
+            {
+                using (var conn =
+                       new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    // -------------------------------------------------
+                    // 1. LOOK FOR EXISTING TAKING ATTEMPT
+                    // -------------------------------------------------
+
+                    string findAttemptQuery = @"
+                        SELECT attempt_id,
+                               started_at
+                        FROM quiz_attempts
+                        WHERE quiz_id = @quiz_id
+                          AND user_id = @user_id
+                          AND status = 'TAKING'
+                        ORDER BY attempt_id DESC
+                        LIMIT 1";
+
+                    using (var findCmd =
+                           new MySqlCommand(
+                               findAttemptQuery,
+                               conn))
+                    {
+                        findCmd.Parameters.AddWithValue(
+                            "@quiz_id",
+                            selectedQuizId);
+
+                        findCmd.Parameters.AddWithValue(
+                            "@user_id",
+                            studentUserId);
+
+                        using (var reader =
+                               findCmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                currentAttemptId =
+                                    Convert.ToInt32(
+                                        reader["attempt_id"]);
+
+                                if (reader["started_at"] !=
+                                    DBNull.Value)
+                                {
+                                    attemptStartedAt =
+                                        Convert.ToDateTime(
+                                            reader["started_at"]);
+                                }
+                            }
+                        }
+
+                        // -------------------------------------------------
+                        // RESUME EXISTING ATTEMPT
+                        // -------------------------------------------------
+
+                        if (currentAttemptId > 0)
+                        {
+                            UpdateAttemptOnResume(conn);
+
+                            return true;
+                        }
+                    }
+
+                    // -------------------------------------------------
+                    // 2. NO EXISTING ATTEMPT
+                    // -------------------------------------------------
+                    // Create a brand-new attempt.
+                    // -------------------------------------------------
+
+                    string insertQuery = @"
+                        INSERT INTO quiz_attempts
+                        (
+                            quiz_id,
+                            user_id,
+                            score,
+                            total_questions,
+                            percentage,
+                            status,
+                            started_at,
+                            last_seen
+                        )
+                        VALUES
+                        (
+                            @quiz_id,
+                            @user_id,
+                            0,
+                            @total_questions,
+                            0,
+                            'TAKING',
+                            NOW(),
+                            NOW()
+                        )";
+
+                    using (var insertCmd =
+                           new MySqlCommand(
+                               insertQuery,
+                               conn))
+                    {
+                        insertCmd.Parameters.AddWithValue(
+                            "@quiz_id",
+                            selectedQuizId);
+
+                        insertCmd.Parameters.AddWithValue(
+                            "@user_id",
+                            studentUserId);
+
+                        insertCmd.Parameters.AddWithValue(
+                            "@total_questions",
+                            questions.Count);
+
+                        insertCmd.ExecuteNonQuery();
+
+                        currentAttemptId =
+                            Convert.ToInt32(
+                                insertCmd.LastInsertedId);
+                    }
+
+                    // -------------------------------------------------
+                    // GET THE DATABASE'S ACTUAL started_at
+                    // -------------------------------------------------
+
+                    string getStartQuery = @"
+                        SELECT started_at
+                        FROM quiz_attempts
+                        WHERE attempt_id = @attempt_id
+                        LIMIT 1";
+
+                    using (var startCmd =
+                           new MySqlCommand(
+                               getStartQuery,
+                               conn))
+                    {
+                        startCmd.Parameters.AddWithValue(
+                            "@attempt_id",
+                            currentAttemptId);
+
+                        object startValue =
+                            startCmd.ExecuteScalar();
+
+                        if (startValue != null &&
+                            startValue != DBNull.Value)
+                        {
+                            attemptStartedAt =
+                                Convert.ToDateTime(
+                                    startValue);
+                        }
+                        else
+                        {
+                            attemptStartedAt =
+                                DateTime.Now;
+                        }
+                    }
+                }
+
+                return currentAttemptId > 0;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Unable to start or resume the examination.\n\n" +
+                    "Please check your database connection and try again.\n\n" +
+                    "Error:\n" +
+                    ex.Message,
+                    "Unable to Start Examination",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+
+                currentAttemptId = 0;
+                attemptStartedAt = DateTime.MinValue;
+
+                return false;
+            }
+        }
+
+        // =========================================================
+        // UPDATE ATTEMPT WHEN RESUMING
+        // =========================================================
+
+        private void UpdateAttemptOnResume(
+            MySqlConnection conn)
+        {
+            if (currentAttemptId <= 0)
+                return;
+
+            string query = @"
+                UPDATE quiz_attempts
+                SET last_seen = NOW(),
+                    status = 'TAKING'
+                WHERE attempt_id = @attempt_id
+                  AND status = 'TAKING'";
+
+            using (var cmd =
+                   new MySqlCommand(
+                       query,
+                       conn))
+            {
+                cmd.Parameters.AddWithValue(
+                    "@attempt_id",
+                    currentAttemptId);
+
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        // =========================================================
+        // LOAD SAVED ANSWERS
+        // =========================================================
+
+        private void LoadSavedAnswers()
+        {
+            if (currentAttemptId <= 0)
+                return;
+
+            string connStr =
+                SettingsManager.Current.GetConnectionString();
+
+            try
+            {
+                using (var conn =
+                       new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    string query = @"
+                        SELECT question_id,
+                               student_answer
+                        FROM student_answers
+                        WHERE attempt_id = @attempt_id";
+
+                    using (var cmd =
+                           new MySqlCommand(
+                               query,
+                               conn))
+                    {
+                        cmd.Parameters.AddWithValue(
+                            "@attempt_id",
+                            currentAttemptId);
+
+                        using (var reader =
+                               cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                int questionId =
+                                    Convert.ToInt32(
+                                        reader["question_id"]);
+
+                                string answer =
+                                    reader["student_answer"] ==
+                                    DBNull.Value
+                                        ? ""
+                                        : reader["student_answer"]
+                                            .ToString();
+
+                                studentAnswers[questionId] =
+                                    answer;
+                            }
+                        }
+                    }
+                }
+
+                // -------------------------------------------------
+                // RESTORE SAVED ANSWERS TO UI
+                // -------------------------------------------------
+
+                for (int i = 0;
+                     i < questions.Count;
+                     i++)
+                {
+                    QuizQuestion question =
+                        questions[i];
+
+                    int questionId =
+                        question.QuestionId;
+
+                    if (!studentAnswers.ContainsKey(
+                        questionId))
+                    {
+                        continue;
+                    }
+
+                    string savedAnswer =
+                        studentAnswers[questionId];
+
+                    if (string.IsNullOrWhiteSpace(
+                        savedAnswer))
+                    {
+                        continue;
+                    }
+
+                    string type =
+                        NormalizeQuestionType(
+                            question.QuestionType);
+
+                    // -------------------------------------------------
+                    // MULTIPLE CHOICE
+                    // -------------------------------------------------
+
+                    if (type == "multiple_choice")
+                    {
+                        if (i <
+                                multipleChoiceControls.Count &&
+                            multipleChoiceControls[i] != null)
+                        {
+                            RadioButton[] radios =
+                                multipleChoiceControls[i];
+
+                            for (int r = 0;
+                                 r < radios.Length;
+                                 r++)
+                            {
+                                if (radios[r] == null)
+                                    continue;
+
+                                string tagValue =
+                                    radios[r].Tag == null
+                                        ? ""
+                                        : radios[r].Tag.ToString();
+
+                                if (tagValue.Equals(
+                                    savedAnswer.Trim(),
+                                    StringComparison.OrdinalIgnoreCase))
+                                {
+                                    radios[r].Checked = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    // -------------------------------------------------
+                    // TRUE / FALSE
+                    // -------------------------------------------------
+
+                    else if (type == "true_false")
+                    {
+                        if (i <
+                                trueFalseControls.Count &&
+                            trueFalseControls[i] != null)
+                        {
+                            RadioButton[] radios =
+                                trueFalseControls[i];
+
+                            for (int r = 0;
+                                 r < radios.Length;
+                                 r++)
+                            {
+                                if (radios[r] == null)
+                                    continue;
+
+                                string tagValue =
+                                    radios[r].Tag == null
+                                        ? ""
+                                        : radios[r].Tag.ToString();
+
+                                if (tagValue.Equals(
+                                    savedAnswer.Trim(),
+                                    StringComparison.OrdinalIgnoreCase))
+                                {
+                                    radios[r].Checked = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    // -------------------------------------------------
+                    // IDENTIFICATION
+                    // -------------------------------------------------
+
+                    else if (type == "identification")
+                    {
+                        if (i <
+                                identificationControls.Count &&
+                            identificationControls[i] != null)
+                        {
+                            identificationControls[i].Text =
+                                savedAnswer;
+                        }
+                    }
+
+                    // -------------------------------------------------
+                    // ESSAY
+                    // -------------------------------------------------
+
+                    else if (type == "essay")
+                    {
+                        if (i <
+                                essayControls.Count &&
+                            essayControls[i] != null)
+                        {
+                            essayControls[i].Text =
+                                savedAnswer;
+                        }
+                    }
+                }
+
+                UpdateProgress();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "The previous examination attempt was found, " +
+                    "but some saved answers could not be restored.\n\n" +
+                    ex.Message,
+                    "Resume Examination",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
+        }
+
+        // =========================================================
+        // START EXAM COUNTDOWN TIMER
+        // =========================================================
+
+        private bool StartExamTimer()
+        {
+            StopExamTimer();
+
+            if (currentAttemptId <= 0)
+                return false;
+
+            if (attemptStartedAt == DateTime.MinValue)
+            {
+                MessageBox.Show(
+                    "The examination start time could not be determined.",
+                    "Timer Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+
+                return false;
+            }
+
+            examTimer =
+                new System.Windows.Forms.Timer();
+
+            // Update every second.
+            examTimer.Interval = 1000;
+
+            examTimer.Tick +=
+                ExamTimer_Tick;
+
+            examTimer.Start();
+
+            // Immediately calculate remaining time.
+            UpdateExamTimer();
+
+            return true;
+        }
+
+        // =========================================================
+        // EXAM COUNTDOWN TICK
+        // =========================================================
+
+        private void ExamTimer_Tick(
+            object sender,
+            EventArgs e)
+        {
+            UpdateExamTimer();
+        }
+
+        // =========================================================
+        // UPDATE EXAM TIMER
+        // =========================================================
+
+        private void UpdateExamTimer()
+        {
+            if (currentAttemptId <= 0 ||
+                attemptStartedAt == DateTime.MinValue)
+                return;
+
+            TimeSpan elapsed =
+                DateTime.Now - attemptStartedAt;
+
+            TimeSpan totalDuration =
+                TimeSpan.FromMinutes(
+                    ExamDurationMinutes);
+
+            TimeSpan remaining =
+                totalDuration - elapsed;
+
+            if (remaining <= TimeSpan.Zero)
+            {
+                if (lblTimer != null)
+                {
+                    lblTimer.Text = "TIME: 00:00";
+                }
+
+                StopExamTimer();
+
+                AutoSubmitWhenTimeExpires();
+
+                return;
+            }
+
+            int totalSeconds =
+                Math.Max(
+                    0,
+                    (int)Math.Ceiling(
+                        remaining.TotalSeconds));
+
+            int minutes =
+                totalSeconds / 60;
+
+            int seconds =
+                totalSeconds % 60;
+
+            if (lblTimer != null)
+            {
+                lblTimer.Text =
+                    "TIME: " +
+                    minutes.ToString("00") +
+                    ":" +
+                    seconds.ToString("00");
+
+                // Warn visually when 5 minutes remain.
+                if (totalSeconds <= 300)
+                {
+                    lblTimer.BackColor =
+                        Color.FromArgb(185, 28, 28);
+                }
+                else
+                {
+                    lblTimer.BackColor =
+                        MaroonColor;
+                }
+            }
+        }
+
+        // =========================================================
+        // AUTO SUBMIT WHEN TIME EXPIRES
+        // =========================================================
+
+        private void AutoSubmitWhenTimeExpires()
+        {
+            if (isSubmitting)
+                return;
+
+            if (currentAttemptId <= 0)
+                return;
+
+            isSubmitting = true;
+
+            try
+            {
+                // Save whatever is currently in the controls first.
+                SaveAllAnswers();
+
+                // Save answers and submit without asking for
+                // confirmation because the time has expired.
+                SaveQuizResult(true);
+            }
+            finally
+            {
+                isSubmitting = false;
+            }
+        }
+
+        // =========================================================
+        // STOP EXAM TIMER
+        // =========================================================
+
+        private void StopExamTimer()
+        {
+            if (examTimer == null)
+                return;
+
+            try
+            {
+                examTimer.Stop();
+
+                examTimer.Tick -=
+                    ExamTimer_Tick;
+
+                examTimer.Dispose();
+            }
+            catch
+            {
+                // Ignore timer cleanup errors.
+            }
+
+            examTimer = null;
+        }
+
+        // =========================================================
+        // START HEARTBEAT
+        // =========================================================
+
+        private void StartHeartbeat()
+        {
+            StopHeartbeat();
+
+            if (currentAttemptId <= 0)
+                return;
+
+            heartbeatTimer =
+                new System.Windows.Forms.Timer();
+
+            // 5 seconds
+            heartbeatTimer.Interval = 5000;
+
+            heartbeatTimer.Tick +=
+                HeartbeatTimer_Tick;
+
+            heartbeatTimer.Start();
+        }
+
+        // =========================================================
+        // HEARTBEAT UPDATE
+        // =========================================================
+
+        private void HeartbeatTimer_Tick(
+            object sender,
+            EventArgs e)
+        {
+            if (currentAttemptId <= 0)
+                return;
+
+            string connStr =
+                SettingsManager.Current.GetConnectionString();
+
+            try
+            {
+                using (var conn =
+                       new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    string query = @"
+                        UPDATE quiz_attempts
+                        SET
+                            last_seen = NOW(),
+                            status = 'TAKING'
+                        WHERE attempt_id = @attempt_id
+                          AND status = 'TAKING'";
+
+                    using (var cmd =
+                           new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue(
+                            "@attempt_id",
+                            currentAttemptId);
+
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore temporary database/network errors.
+            }
+        }
+
+        // =========================================================
+        // STOP HEARTBEAT
+        // =========================================================
+
+        private void StopHeartbeat()
+        {
+            if (heartbeatTimer == null)
+                return;
+
+            try
+            {
+                heartbeatTimer.Stop();
+
+                heartbeatTimer.Tick -=
+                    HeartbeatTimer_Tick;
+
+                heartbeatTimer.Dispose();
+            }
+            catch
+            {
+                // Ignore timer cleanup errors.
+            }
+
+            heartbeatTimer = null;
+        }
+
+        // =========================================================
+        // START AUTO-SAVE
+        // =========================================================
+
+        private void StartAutoSave()
+        {
+            StopAutoSave();
+
+            if (currentAttemptId <= 0)
+                return;
+
+            autoSaveTimer =
+                new System.Windows.Forms.Timer();
+
+            // Auto-save every 5 seconds.
+            autoSaveTimer.Interval = 5000;
+
+            autoSaveTimer.Tick +=
+                AutoSaveTimer_Tick;
+
+            autoSaveTimer.Start();
+        }
+
+        // =========================================================
+        // AUTO-SAVE TIMER
+        // =========================================================
+
+        private void AutoSaveTimer_Tick(
+            object sender,
+            EventArgs e)
+        {
+            if (currentAttemptId <= 0)
+                return;
+
+            if (isAutoSaving)
+                return;
+
+            if (isSubmitting)
+                return;
+
+            try
+            {
+                isAutoSaving = true;
+
+                SaveAnswersToDatabase();
+            }
+            catch
+            {
+                // Try again on the next auto-save tick.
+            }
+            finally
+            {
+                isAutoSaving = false;
+            }
+        }
+
+        // =========================================================
+        // STOP AUTO-SAVE
+        // =========================================================
+
+        private void StopAutoSave()
+        {
+            if (autoSaveTimer == null)
+                return;
+
+            try
+            {
+                autoSaveTimer.Stop();
+
+                autoSaveTimer.Tick -=
+                    AutoSaveTimer_Tick;
+
+                autoSaveTimer.Dispose();
+            }
+            catch
+            {
+                // Ignore timer cleanup errors.
+            }
+
+            autoSaveTimer = null;
+        }
+
+        // =========================================================
+        // NORMALIZE QUESTION TYPE
+        // =========================================================
+
+        private string NormalizeQuestionType(
+            string type)
         {
             if (string.IsNullOrWhiteSpace(type))
                 return "multiple_choice";
 
-            string value = type.Trim().ToLower().Replace("-", "_").Replace(" ", "_");
+            string value =
+                type.Trim()
+                    .ToLower()
+                    .Replace("-", "_")
+                    .Replace(" ", "_");
 
-            if (value == "multiple_choice" || value == "multiplechoice" || value == "mc")
+            if (value == "multiple_choice" ||
+                value == "multiplechoice" ||
+                value == "mc")
                 return "multiple_choice";
-            if (value == "true_false" || value == "truefalse" || value == "true_or_false" || value == "tf")
+
+            if (value == "true_false" ||
+                value == "truefalse" ||
+                value == "true_or_false" ||
+                value == "tf")
                 return "true_false";
-            if (value == "identification" || value == "identification_question" ||
-                value == "identification_questions" || value == "identify" ||
-                value == "id" || value == "fill_in_the_blank" || value == "fillintheblank")
+
+            if (value == "identification" ||
+                value == "identification_question" ||
+                value == "identification_questions" ||
+                value == "identify" ||
+                value == "id" ||
+                value == "fill_in_the_blank" ||
+                value == "fillintheblank")
                 return "identification";
-            if (value == "essay" || value == "essay_question" || value == "essay_questions")
+
+            if (value == "essay" ||
+                value == "essay_question" ||
+                value == "essay_questions")
                 return "essay";
 
             return value;
         }
 
         // =========================================================
-        // BUILD ALL QUESTIONS  (unchanged)
+        // BUILD ALL QUESTIONS
         // =========================================================
 
         private void BuildAllQuestions()
@@ -510,7 +1666,9 @@ namespace WinFormsApp1
             identificationControls.Clear();
             essayControls.Clear();
 
-            for (int i = 0; i < questions.Count; i++)
+            for (int i = 0;
+                 i < questions.Count;
+                 i++)
             {
                 questionCards.Add(null);
                 multipleChoiceControls.Add(null);
@@ -521,12 +1679,18 @@ namespace WinFormsApp1
 
             string[] typeOrder =
             {
-                "multiple_choice", "true_false", "identification", "essay"
+                "multiple_choice",
+                "true_false",
+                "identification",
+                "essay"
             };
 
             string[] sectionTitles =
             {
-                "MULTIPLE CHOICE", "TRUE OR FALSE", "IDENTIFICATION", "ESSAY"
+                "MULTIPLE CHOICE",
+                "TRUE OR FALSE",
+                "IDENTIFICATION",
+                "ESSAY"
             };
 
             string[] sectionDirections =
@@ -537,38 +1701,63 @@ namespace WinFormsApp1
                 "Direction: Answer the following item(s) in complete and well-organized sentences."
             };
 
-            string[] romanNumerals = { "I", "II", "III", "IV" };
+            string[] romanNumerals =
+            {
+                "I",
+                "II",
+                "III",
+                "IV"
+            };
 
             int sectionCounter = 0;
             int displayNumber = 0;
 
-            Random random = new Random();
+            Random random =
+                new Random();
 
-            for (int t = 0; t < typeOrder.Length; t++)
+            for (int t = 0;
+                 t < typeOrder.Length;
+                 t++)
             {
-                List<int> indices = new List<int>();
+                List<int> indices =
+                    new List<int>();
 
-                for (int i = 0; i < questions.Count; i++)
+                for (int i = 0;
+                     i < questions.Count;
+                     i++)
                 {
-                    string qType = NormalizeQuestionType(questions[i].QuestionType);
+                    string qType =
+                        NormalizeQuestionType(
+                            questions[i].QuestionType);
+
                     if (qType == typeOrder[t])
                         indices.Add(i);
                 }
 
-                if (indices.Count == 0) continue;
+                if (indices.Count == 0)
+                    continue;
 
-                ShuffleQuestionIndices(indices, random);
+                ShuffleQuestionIndices(
+                    indices,
+                    random);
 
                 sectionCounter++;
 
-                Panel header = CreateSectionHeader(
-                    romanNumerals[sectionCounter - 1],
-                    sectionTitles[t],
-                    sectionDirections[t]);
+                Panel header =
+                    CreateSectionHeader(
+                        romanNumerals[
+                            sectionCounter - 1],
+                        sectionTitles[t],
+                        sectionDirections[t]);
 
-                header.Location = new Point(5, y);
-                contentPanel.Controls.Add(header);
-                sectionHeaders.Add(header);
+                header.Location =
+                    new Point(5, y);
+
+                contentPanel.Controls.Add(
+                    header);
+
+                sectionHeaders.Add(
+                    header);
 
                 y += header.Height + 16;
 
@@ -576,385 +1765,943 @@ namespace WinFormsApp1
                 {
                     displayNumber++;
 
-                    Panel card = CreateQuestionCard(
-                        questions[originalIndex],
-                        originalIndex,
-                        displayNumber);
+                    Panel card =
+                        CreateQuestionCard(
+                            questions[originalIndex],
+                            originalIndex,
+                            displayNumber);
 
-                    card.Location = new Point(5, y);
-                    contentPanel.Controls.Add(card);
+                    card.Location =
+                        new Point(5, y);
 
-                    questionCards[originalIndex] = card;
+                    contentPanel.Controls.Add(
+                        card);
+
+                    questionCards[
+                        originalIndex] =
+                        card;
+
                     y += card.Height + 22;
                 }
             }
 
-            Panel submitPanel = new RoundedPanel();
-            submitPanel.BackColor = CardColor;
-            submitPanel.BorderStyle = BorderStyle.None;
-            submitPanel.Size = new Size(contentPanel.Width - 10, 118);
-            submitPanel.Location = new Point(5, y);
-            StyleRoundedPanel(submitPanel, false);
-            contentPanel.Controls.Add(submitPanel);
+            Panel submitPanel =
+                new RoundedPanel();
 
-            Label submitLabel = new Label();
-            submitLabel.Text = "You have reached the end of the examination.";
-            submitLabel.Font = new Font("Segoe UI", 11, FontStyle.Regular);
-            submitLabel.ForeColor = MutedColor;
+            submitPanel.BackColor =
+                CardColor;
+
+            submitPanel.BorderStyle =
+                BorderStyle.None;
+
+            submitPanel.Size =
+                new Size(
+                    contentPanel.Width - 10,
+                    118);
+
+            submitPanel.Location =
+                new Point(5, y);
+
+            StyleRoundedPanel(
+                submitPanel,
+                false);
+
+            contentPanel.Controls.Add(
+                submitPanel);
+
+            Label submitLabel =
+                new Label();
+
+            submitLabel.Text =
+                "You have reached the end of the examination.";
+
+            submitLabel.Font =
+                new Font(
+                    "Segoe UI",
+                    11,
+                    FontStyle.Regular);
+
+            submitLabel.ForeColor =
+                MutedColor;
+
             submitLabel.AutoSize = true;
-            submitLabel.Location = new Point(20, 20);
-            submitPanel.Controls.Add(submitLabel);
 
-            btnSubmit.Parent = submitPanel;
-            btnSubmit.Left = (submitPanel.Width - btnSubmit.Width) / 2;
+            submitLabel.Location =
+                new Point(20, 20);
+
+            submitPanel.Controls.Add(
+                submitLabel);
+
+            btnSubmit.Parent =
+                submitPanel;
+
+            btnSubmit.Left =
+                (submitPanel.Width -
+                 btnSubmit.Width) / 2;
+
             btnSubmit.Top = 52;
 
-            contentPanel.Height = y + submitPanel.Height + 30;
+            contentPanel.Height =
+                y +
+                submitPanel.Height + 30;
 
             UpdateProgress();
         }
 
-        private void ShuffleQuestionIndices(List<int> indices, Random random)
+        private void ShuffleQuestionIndices(
+            List<int> indices,
+            Random random)
         {
-            for (int i = indices.Count - 1; i > 0; i--)
+            for (int i = indices.Count - 1;
+                 i > 0;
+                 i--)
             {
-                int j = random.Next(0, i + 1);
-                int temp = indices[i];
-                indices[i] = indices[j];
-                indices[j] = temp;
+                int j =
+                    random.Next(
+                        0,
+                        i + 1);
+
+                int temp =
+                    indices[i];
+
+                indices[i] =
+                    indices[j];
+
+                indices[j] =
+                    temp;
             }
         }
 
         // =========================================================
-        // ROUNDED PANEL HELPERS  (unchanged)
+        // ROUNDED PANEL HELPERS
         // =========================================================
 
-        private GraphicsPath GetRoundedRectPath(Rectangle rect, int radius)
+        private GraphicsPath GetRoundedRectPath(
+            Rectangle rect,
+            int radius)
         {
-            GraphicsPath path = new GraphicsPath();
+            GraphicsPath path =
+                new GraphicsPath();
+
             int d = radius * 2;
+
             path.StartFigure();
-            path.AddArc(rect.X, rect.Y, d, d, 180, 90);
-            path.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
-            path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90);
-            path.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
+
+            path.AddArc(
+                rect.X,
+                rect.Y,
+                d,
+                d,
+                180,
+                90);
+
+            path.AddArc(
+                rect.Right - d,
+                rect.Y,
+                d,
+                d,
+                270,
+                90);
+
+            path.AddArc(
+                rect.Right - d,
+                rect.Bottom - d,
+                d,
+                d,
+                0,
+                90);
+
+            path.AddArc(
+                rect.X,
+                rect.Bottom - d,
+                d,
+                d,
+                90,
+                90);
+
             path.CloseFigure();
+
             return path;
         }
 
-        private void ApplyRoundedRegion(Panel panel)
+        private void ApplyRoundedRegion(
+            Panel panel)
         {
-            if (panel.Width <= 0 || panel.Height <= 0) return;
+            if (panel.Width <= 0 ||
+                panel.Height <= 0)
+                return;
 
-            Rectangle rect = new Rectangle(0, 0, panel.Width - 1, panel.Height - 1);
+            Rectangle rect =
+                new Rectangle(
+                    0,
+                    0,
+                    panel.Width - 1,
+                    panel.Height - 1);
 
-            using (GraphicsPath path = GetRoundedRectPath(rect, 16))
-                panel.Region = new Region(path);
+            using (GraphicsPath path =
+                   GetRoundedRectPath(
+                       rect,
+                       16))
+            {
+                panel.Region =
+                    new Region(path);
+            }
         }
 
-        private void StyleRoundedPanel(Panel panel, bool showAccent,
-                                       Color? fillColor = null, int accentHeight = 44)
+        private void StyleRoundedPanel(
+            Panel panel,
+            bool showAccent,
+            Color? fillColor = null,
+            int accentHeight = 44)
         {
-            panel.BorderStyle = BorderStyle.None;
+            panel.BorderStyle =
+                BorderStyle.None;
 
-            Color actualFill = fillColor.HasValue ? fillColor.Value : CardColor;
+            Color actualFill =
+                fillColor.HasValue
+                    ? fillColor.Value
+                    : CardColor;
 
             ApplyRoundedRegion(panel);
-            panel.Resize += (s, e) => ApplyRoundedRegion(panel);
 
-            panel.Paint += (s, e) =>
-            {
-                Graphics g = e.Graphics;
-                g.SmoothingMode = SmoothingMode.AntiAlias;
+            panel.Resize +=
+                (s, e) =>
+                    ApplyRoundedRegion(panel);
 
-                Rectangle rect = new Rectangle(0, 0, panel.Width - 1, panel.Height - 1);
-
-                using (GraphicsPath path = GetRoundedRectPath(rect, 16))
+            panel.Paint +=
+                (s, e) =>
                 {
-                    using (SolidBrush backBrush = new SolidBrush(actualFill))
-                        g.FillPath(backBrush, path);
+                    Graphics g =
+                        e.Graphics;
 
-                    using (Pen borderPen = new Pen(BorderColor, 1))
-                        g.DrawPath(borderPen, path);
-                }
+                    g.SmoothingMode =
+                        SmoothingMode.AntiAlias;
 
-                if (showAccent)
-                {
-                    using (SolidBrush accentBrush = new SolidBrush(MaroonColor))
+                    Rectangle rect =
+                        new Rectangle(
+                            0,
+                            0,
+                            panel.Width - 1,
+                            panel.Height - 1);
+
+                    using (GraphicsPath path =
+                           GetRoundedRectPath(
+                               rect,
+                               16))
                     {
-                        Rectangle accentRect = new Rectangle(0, 0, 5,
-                            Math.Min(accentHeight, panel.Height));
-                        g.FillRectangle(accentBrush, accentRect);
+                        using (SolidBrush backBrush =
+                               new SolidBrush(
+                                   actualFill))
+                        {
+                            g.FillPath(
+                                backBrush,
+                                path);
+                        }
+
+                        using (Pen borderPen =
+                               new Pen(
+                                   BorderColor,
+                                   1))
+                        {
+                            g.DrawPath(
+                                borderPen,
+                                path);
+                        }
                     }
-                }
-            };
+
+                    if (showAccent)
+                    {
+                        using (SolidBrush accentBrush =
+                               new SolidBrush(
+                                   MaroonColor))
+                        {
+                            Rectangle accentRect =
+                                new Rectangle(
+                                    0,
+                                    0,
+                                    5,
+                                    Math.Min(
+                                        accentHeight,
+                                        panel.Height));
+
+                            g.FillRectangle(
+                                accentBrush,
+                                accentRect);
+                        }
+                    }
+                };
         }
 
         // =========================================================
-        // SECTION HEADER  (unchanged)
+        // SECTION HEADER
         // =========================================================
 
-        private Panel CreateSectionHeader(string romanNumeral, string sectionTitle, string direction)
+        private Panel CreateSectionHeader(
+            string romanNumeral,
+            string sectionTitle,
+            string direction)
         {
-            Panel header = new RoundedPanel();
-            header.Width = contentPanel.Width - 10;
+            Panel header =
+                new RoundedPanel();
+
+            header.Width =
+                contentPanel.Width - 10;
+
             header.Height = 92;
-            StyleRoundedPanel(header, true, MaroonSoft, header.Height);
 
-            Label lblTitle = new Label();
-            lblTitle.Text = romanNumeral + ".  " + sectionTitle;
-            lblTitle.Font = new Font("Segoe UI", 16, FontStyle.Bold);
-            lblTitle.ForeColor = MaroonColor;
+            StyleRoundedPanel(
+                header,
+                true,
+                MaroonSoft,
+                header.Height);
+
+            Label lblTitle =
+                new Label();
+
+            lblTitle.Text =
+                romanNumeral +
+                ".  " +
+                sectionTitle;
+
+            lblTitle.Font =
+                new Font(
+                    "Segoe UI",
+                    16,
+                    FontStyle.Bold);
+
+            lblTitle.ForeColor =
+                MaroonColor;
+
             lblTitle.AutoSize = true;
-            lblTitle.Location = new Point(28, 16);
-            header.Controls.Add(lblTitle);
 
-            Label lblDirection = new Label();
-            lblDirection.Text = direction;
-            lblDirection.Font = new Font("Segoe UI", 10.5F, FontStyle.Italic);
-            lblDirection.ForeColor = TextColor;
+            lblTitle.Location =
+                new Point(28, 16);
+
+            header.Controls.Add(
+                lblTitle);
+
+            Label lblDirection =
+                new Label();
+
+            lblDirection.Text =
+                direction;
+
+            lblDirection.Font =
+                new Font(
+                    "Segoe UI",
+                    10.5F,
+                    FontStyle.Italic);
+
+            lblDirection.ForeColor =
+                TextColor;
+
             lblDirection.AutoSize = false;
-            lblDirection.Location = new Point(28, 52);
-            lblDirection.Size = new Size(header.Width - 56, 32);
-            header.Controls.Add(lblDirection);
+
+            lblDirection.Location =
+                new Point(28, 52);
+
+            lblDirection.Size =
+                new Size(
+                    header.Width - 56,
+                    32);
+
+            header.Controls.Add(
+                lblDirection);
 
             return header;
         }
 
-        private void ResizeSectionHeader(Panel header)
+        private void ResizeSectionHeader(
+            Panel header)
         {
             foreach (Control control in header.Controls)
             {
-                if (control is Label && control.Location.Y >= 40)
-                    control.Width = header.Width - 56;
+                if (control is Label &&
+                    control.Location.Y >= 40)
+                {
+                    control.Width =
+                        header.Width - 56;
+                }
             }
         }
 
         // =========================================================
-        // QUESTION CARD  (unchanged)
+        // QUESTION CARD
         // =========================================================
 
-        private Panel CreateQuestionCard(QuizQuestion q, int originalIndex, int displayNumber)
+        private Panel CreateQuestionCard(
+            QuizQuestion q,
+            int originalIndex,
+            int displayNumber)
         {
-            Panel card = new RoundedPanel();
-            card.BackColor = CardColor;
-            card.Width = contentPanel.Width - 10;
+            Panel card =
+                new RoundedPanel();
 
-            string questionType = NormalizeQuestionType(q.QuestionType);
+            card.BackColor =
+                CardColor;
+
+            card.Width =
+                contentPanel.Width - 10;
+
+            string questionType =
+                NormalizeQuestionType(
+                    q.QuestionType);
 
             int height = 250;
-            if (questionType == "multiple_choice") height = 510;
-            else if (questionType == "true_false") height = 350;
-            else if (questionType == "identification") height = 330;
-            else if (questionType == "essay") height = 420;
 
-            card.Height = height;
-            StyleRoundedPanel(card, true);
+            if (questionType ==
+                "multiple_choice")
+                height = 510;
 
-            Label numberLabel = new Label();
-            numberLabel.Text = "QUESTION " + displayNumber;
-            numberLabel.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-            numberLabel.ForeColor = MaroonColor;
+            else if (questionType ==
+                     "true_false")
+                height = 350;
+
+            else if (questionType ==
+                     "identification")
+                height = 330;
+
+            else if (questionType ==
+                     "essay")
+                height = 420;
+
+            card.Height =
+                height;
+
+            StyleRoundedPanel(
+                card,
+                true);
+
+            Label numberLabel =
+                new Label();
+
+            numberLabel.Text =
+                "QUESTION " +
+                displayNumber;
+
+            numberLabel.Font =
+                new Font(
+                    "Segoe UI",
+                    10,
+                    FontStyle.Bold);
+
+            numberLabel.ForeColor =
+                MaroonColor;
+
             numberLabel.AutoSize = true;
-            numberLabel.Location = new Point(28, 22);
-            card.Controls.Add(numberLabel);
 
-            Label typeLabel = new Label();
-            if (questionType == "multiple_choice") typeLabel.Text = "MULTIPLE CHOICE";
-            else if (questionType == "true_false") typeLabel.Text = "TRUE OR FALSE";
-            else if (questionType == "identification") typeLabel.Text = "IDENTIFICATION";
-            else if (questionType == "essay") typeLabel.Text = "ESSAY";
-            else typeLabel.Text = questionType.ToUpper();
+            numberLabel.Location =
+                new Point(28, 22);
 
-            typeLabel.Font = new Font("Segoe UI", 9, FontStyle.Bold);
-            typeLabel.ForeColor = MutedColor;
+            card.Controls.Add(
+                numberLabel);
+
+            Label typeLabel =
+                new Label();
+
+            if (questionType ==
+                "multiple_choice")
+                typeLabel.Text =
+                    "MULTIPLE CHOICE";
+
+            else if (questionType ==
+                     "true_false")
+                typeLabel.Text =
+                    "TRUE OR FALSE";
+
+            else if (questionType ==
+                     "identification")
+                typeLabel.Text =
+                    "IDENTIFICATION";
+
+            else if (questionType ==
+                     "essay")
+                typeLabel.Text =
+                    "ESSAY";
+
+            else
+                typeLabel.Text =
+                    questionType.ToUpper();
+
+            typeLabel.Font =
+                new Font(
+                    "Segoe UI",
+                    9,
+                    FontStyle.Bold);
+
+            typeLabel.ForeColor =
+                MutedColor;
+
             typeLabel.AutoSize = true;
-            typeLabel.Location = new Point(28, 48);
-            card.Controls.Add(typeLabel);
 
-            Label questionLabel = new Label();
-            questionLabel.Text = q.Question;
-            questionLabel.Font = new Font("Segoe UI", 17, FontStyle.Bold);
-            questionLabel.ForeColor = DarkColor;
-            questionLabel.Location = new Point(28, 78);
-            questionLabel.Size = new Size(card.Width - 56, 82);
+            typeLabel.Location =
+                new Point(28, 48);
+
+            card.Controls.Add(
+                typeLabel);
+
+            Label questionLabel =
+                new Label();
+
+            questionLabel.Text =
+                q.Question;
+
+            questionLabel.Font =
+                new Font(
+                    "Segoe UI",
+                    17,
+                    FontStyle.Bold);
+
+            questionLabel.ForeColor =
+                DarkColor;
+
+            questionLabel.Location =
+                new Point(28, 78);
+
+            questionLabel.Size =
+                new Size(
+                    card.Width - 56,
+                    82);
+
             questionLabel.AutoEllipsis = false;
-            card.Controls.Add(questionLabel);
 
-            if (questionType == "multiple_choice")
+            card.Controls.Add(
+                questionLabel);
+
+            // =====================================================
+            // MULTIPLE CHOICE
+            // =====================================================
+
+            if (questionType ==
+                "multiple_choice")
             {
-                RadioButton[] radios = new RadioButton[4];
-                radios[0] = CreateOption("A. " + q.ChoiceA, 28, 170);
-                radios[1] = CreateOption("B. " + q.ChoiceB, 28, 240);
-                radios[2] = CreateOption("C. " + q.ChoiceC, 28, 310);
-                radios[3] = CreateOption("D. " + q.ChoiceD, 28, 380);
+                RadioButton[] radios =
+                    new RadioButton[4];
 
-                foreach (RadioButton rb in radios) card.Controls.Add(rb);
-                multipleChoiceControls[originalIndex] = radios;
+                radios[0] =
+                    CreateOption(
+                        "A. " + q.ChoiceA,
+                        28,
+                        170);
+
+                radios[1] =
+                    CreateOption(
+                        "B. " + q.ChoiceB,
+                        28,
+                        240);
+
+                radios[2] =
+                    CreateOption(
+                        "C. " + q.ChoiceC,
+                        28,
+                        310);
+
+                radios[3] =
+                    CreateOption(
+                        "D. " + q.ChoiceD,
+                        28,
+                        380);
+
+                radios[0].Tag = "A";
+                radios[1].Tag = "B";
+                radios[2].Tag = "C";
+                radios[3].Tag = "D";
+
+                foreach (RadioButton rb in radios)
+                    card.Controls.Add(rb);
+
+                multipleChoiceControls[
+                    originalIndex] =
+                    radios;
             }
-            else if (questionType == "true_false")
-            {
-                RadioButton[] radios = new RadioButton[2];
-                radios[0] = CreateOption("True", 28, 175);
-                radios[1] = CreateOption("False", 28, 245);
 
-                card.Controls.Add(radios[0]);
-                card.Controls.Add(radios[1]);
-                trueFalseControls[originalIndex] = radios;
-            }
-            else if (questionType == "identification")
+            // =====================================================
+            // TRUE / FALSE
+            // =====================================================
+
+            else if (questionType ==
+                     "true_false")
             {
-                Label answerLabel = new Label();
-                answerLabel.Text = "Your Answer:";
-                answerLabel.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-                answerLabel.ForeColor = TextColor;
+                RadioButton[] radios =
+                    new RadioButton[2];
+
+                radios[0] =
+                    CreateOption(
+                        "True",
+                        28,
+                        175);
+
+                radios[1] =
+                    CreateOption(
+                        "False",
+                        28,
+                        245);
+
+                radios[0].Tag = "TRUE";
+                radios[1].Tag = "FALSE";
+
+                card.Controls.Add(
+                    radios[0]);
+
+                card.Controls.Add(
+                    radios[1]);
+
+                trueFalseControls[
+                    originalIndex] =
+                    radios;
+            }
+
+            // =====================================================
+            // IDENTIFICATION
+            // =====================================================
+
+            else if (questionType ==
+                     "identification")
+            {
+                Label answerLabel =
+                    new Label();
+
+                answerLabel.Text =
+                    "Your Answer:";
+
+                answerLabel.Font =
+                    new Font(
+                        "Segoe UI",
+                        10,
+                        FontStyle.Bold);
+
+                answerLabel.ForeColor =
+                    TextColor;
+
                 answerLabel.AutoSize = true;
-                answerLabel.Location = new Point(28, 170);
-                card.Controls.Add(answerLabel);
 
-                TextBox identification = new TextBox();
-                identification.Font = new Font("Segoe UI", 14);
-                identification.ForeColor = TextColor;
-                identification.BackColor = OptionBackColor;
-                identification.BorderStyle = BorderStyle.FixedSingle;
-                identification.Location = new Point(28, 198);
-                identification.Size = new Size(card.Width - 56, 45);
+                answerLabel.Location =
+                    new Point(28, 170);
+
+                card.Controls.Add(
+                    answerLabel);
+
+                TextBox identification =
+                    new TextBox();
+
+                identification.Font =
+                    new Font(
+                        "Segoe UI",
+                        14);
+
+                identification.ForeColor =
+                    TextColor;
+
+                identification.BackColor =
+                    OptionBackColor;
+
+                identification.BorderStyle =
+                    BorderStyle.FixedSingle;
+
+                identification.Location =
+                    new Point(28, 198);
+
+                identification.Size =
+                    new Size(
+                        card.Width - 56,
+                        45);
+
                 identification.MaxLength = 500;
+
                 identification.Multiline = false;
 
-                card.Controls.Add(identification);
-                identificationControls[originalIndex] = identification;
+                card.Controls.Add(
+                    identification);
 
-                BlockTextEditingShortcuts(identification);
-                identification.TextChanged += Identification_TextChanged;
+                identificationControls[
+                    originalIndex] =
+                    identification;
+
+                BlockTextEditingShortcuts(
+                    identification);
+
+                identification.TextChanged +=
+                    Identification_TextChanged;
             }
-            else if (questionType == "essay")
+
+            // =====================================================
+            // ESSAY
+            // =====================================================
+
+            else if (questionType ==
+                     "essay")
             {
-                TextBox essay = new TextBox();
+                TextBox essay =
+                    new TextBox();
+
                 essay.Multiline = true;
-                essay.ScrollBars = ScrollBars.Vertical;
-                essay.Font = new Font("Segoe UI", 13);
-                essay.ForeColor = TextColor;
-                essay.BackColor = OptionBackColor;
-                essay.BorderStyle = BorderStyle.FixedSingle;
-                essay.Location = new Point(28, 175);
-                essay.Size = new Size(card.Width - 56, 195);
+
+                essay.ScrollBars =
+                    ScrollBars.Vertical;
+
+                essay.Font =
+                    new Font(
+                        "Segoe UI",
+                        13);
+
+                essay.ForeColor =
+                    TextColor;
+
+                essay.BackColor =
+                    OptionBackColor;
+
+                essay.BorderStyle =
+                    BorderStyle.FixedSingle;
+
+                essay.Location =
+                    new Point(28, 175);
+
+                essay.Size =
+                    new Size(
+                        card.Width - 56,
+                        195);
+
                 essay.MaxLength = 5000;
 
-                card.Controls.Add(essay);
-                essayControls[originalIndex] = essay;
+                card.Controls.Add(
+                    essay);
 
-                BlockTextEditingShortcuts(essay);
+                essayControls[
+                    originalIndex] =
+                    essay;
+
+                BlockTextEditingShortcuts(
+                    essay);
+
+                essay.TextChanged +=
+                    Identification_TextChanged;
             }
 
             return card;
         }
 
-        private RadioButton CreateOption(string text, int x, int y)
+        // =========================================================
+        // CREATE OPTION
+        // =========================================================
+
+        private RadioButton CreateOption(
+            string text,
+            int x,
+            int y)
         {
-            RadioButton rb = new RadioButton();
+            RadioButton rb =
+                new RadioButton();
+
             rb.Text = text;
-            rb.Font = new Font("Segoe UI", 13);
-            rb.ForeColor = TextColor;
-            rb.BackColor = OptionBackColor;
-            rb.Location = new Point(x, y);
-            rb.Size = new Size(contentPanel.Width - 66, 55);
+
+            rb.Font =
+                new Font(
+                    "Segoe UI",
+                    13);
+
+            rb.ForeColor =
+                TextColor;
+
+            rb.BackColor =
+                OptionBackColor;
+
+            rb.Location =
+                new Point(x, y);
+
+            rb.Size =
+                new Size(
+                    contentPanel.Width - 66,
+                    55);
+
             rb.AutoSize = false;
-            rb.Padding = new Padding(14, 0, 8, 0);
-            rb.Cursor = Cursors.Hand;
-            rb.FlatStyle = FlatStyle.Standard;
-            rb.CheckedChanged += Option_CheckedChanged;
+
+            rb.Padding =
+                new Padding(
+                    14,
+                    0,
+                    8,
+                    0);
+
+            rb.Cursor =
+                Cursors.Hand;
+
+            rb.FlatStyle =
+                FlatStyle.Standard;
+
+            rb.CheckedChanged +=
+                Option_CheckedChanged;
+
             BlockTextEditingShortcuts(rb);
+
             return rb;
         }
 
-        private void Option_CheckedChanged(object sender, EventArgs e)
+        private void Option_CheckedChanged(
+            object sender,
+            EventArgs e)
         {
-            RadioButton rb = sender as RadioButton;
-            if (rb == null) return;
+            RadioButton rb =
+                sender as RadioButton;
+
+            if (rb == null)
+                return;
 
             if (rb.Checked)
             {
-                rb.BackColor = MaroonSoft;
-                rb.ForeColor = MaroonColor;
-                rb.Font = new Font(rb.Font, FontStyle.Bold);
+                rb.BackColor =
+                    MaroonSoft;
+
+                rb.ForeColor =
+                    MaroonColor;
+
+                rb.Font =
+                    new Font(
+                        rb.Font,
+                        FontStyle.Bold);
             }
             else
             {
-                rb.BackColor = OptionBackColor;
-                rb.ForeColor = TextColor;
-                rb.Font = new Font(rb.Font.FontFamily, rb.Font.Size, FontStyle.Regular);
+                rb.BackColor =
+                    OptionBackColor;
+
+                rb.ForeColor =
+                    TextColor;
+
+                rb.Font =
+                    new Font(
+                        rb.Font.FontFamily,
+                        rb.Font.Size,
+                        FontStyle.Regular);
             }
 
             UpdateProgress();
         }
 
-        private void Identification_TextChanged(object sender, EventArgs e)
+        private void Identification_TextChanged(
+            object sender,
+            EventArgs e)
         {
             UpdateProgress();
         }
 
-        private void ResizeQuestionCard(Panel card)
+        private void ResizeQuestionCard(
+            Panel card)
         {
             foreach (Control control in card.Controls)
             {
-                if (control is RadioButton) control.Width = card.Width - 66;
-                else if (control is TextBox) control.Width = card.Width - 56;
+                if (control is RadioButton)
+                {
+                    control.Width =
+                        card.Width - 66;
+                }
+                else if (control is TextBox)
+                {
+                    control.Width =
+                        card.Width - 56;
+                }
                 else if (control is Label)
                 {
-                    Label label = control as Label;
+                    Label label =
+                        control as Label;
+
                     if (label.Location.Y >= 70)
-                        label.Width = card.Width - 56;
+                    {
+                        label.Width =
+                            card.Width - 56;
+                    }
                 }
             }
         }
 
         // =========================================================
-        // VALIDATE / SAVE ANSWERS  (unchanged)
+        // VALIDATE ANSWERS
         // =========================================================
 
         private bool ValidateAllAnswers()
         {
-            for (int i = 0; i < questions.Count; i++)
+            for (int i = 0;
+                 i < questions.Count;
+                 i++)
             {
-                QuizQuestion q = questions[i];
-                string type = NormalizeQuestionType(q.QuestionType);
+                QuizQuestion q =
+                    questions[i];
+
+                string type =
+                    NormalizeQuestionType(
+                        q.QuestionType);
+
                 bool answered = false;
 
-                if (type == "multiple_choice")
+                if (type ==
+                    "multiple_choice")
                 {
-                    RadioButton[] radios = multipleChoiceControls[i];
+                    RadioButton[] radios =
+                        multipleChoiceControls[i];
+
                     if (radios != null)
+                    {
                         foreach (RadioButton rb in radios)
-                            if (rb.Checked) { answered = true; break; }
+                        {
+                            if (rb.Checked)
+                            {
+                                answered = true;
+                                break;
+                            }
+                        }
+                    }
                 }
-                else if (type == "true_false")
+                else if (type ==
+                         "true_false")
                 {
-                    RadioButton[] radios = trueFalseControls[i];
+                    RadioButton[] radios =
+                        trueFalseControls[i];
+
                     if (radios != null)
-                        answered = radios[0].Checked || radios[1].Checked;
+                    {
+                        answered =
+                            radios[0].Checked ||
+                            radios[1].Checked;
+                    }
                 }
-                else if (type == "identification")
+                else if (type ==
+                         "identification")
                 {
-                    TextBox identification = identificationControls[i];
+                    TextBox identification =
+                        identificationControls[i];
+
                     if (identification != null)
-                        answered = !string.IsNullOrWhiteSpace(identification.Text);
+                    {
+                        answered =
+                            !string.IsNullOrWhiteSpace(
+                                identification.Text);
+                    }
                 }
-                else if (type == "essay")
+                else if (type ==
+                         "essay")
                 {
-                    TextBox essay = essayControls[i];
+                    TextBox essay =
+                        essayControls[i];
+
                     if (essay != null)
-                        answered = !string.IsNullOrWhiteSpace(essay.Text);
+                    {
+                        answered =
+                            !string.IsNullOrWhiteSpace(
+                                essay.Text);
+                    }
                 }
 
                 if (!answered)
                 {
                     MessageBox.Show(
-                        "Please answer Question " + (i + 1) + " before submitting.",
+                        "Please answer Question " +
+                        (i + 1) +
+                        " before submitting.",
                         "Unanswered Question",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning);
+
                     ScrollToQuestion(i);
+
                     return false;
                 }
             }
@@ -962,200 +2709,584 @@ namespace WinFormsApp1
             return true;
         }
 
+        // =========================================================
+        // COLLECT CURRENT ANSWERS
+        // =========================================================
+
         private void SaveAllAnswers()
         {
             studentAnswers.Clear();
 
-            for (int i = 0; i < questions.Count; i++)
+            for (int i = 0;
+                 i < questions.Count;
+                 i++)
             {
-                QuizQuestion q = questions[i];
-                string type = NormalizeQuestionType(q.QuestionType);
+                QuizQuestion q =
+                    questions[i];
+
+                string type =
+                    NormalizeQuestionType(
+                        q.QuestionType);
+
                 string answer = "";
 
-                if (type == "multiple_choice")
+                if (type ==
+                    "multiple_choice")
                 {
-                    RadioButton[] radios = multipleChoiceControls[i];
+                    RadioButton[] radios =
+                        multipleChoiceControls[i];
+
                     if (radios != null)
                     {
-                        if (radios[0].Checked) answer = "A";
-                        else if (radios[1].Checked) answer = "B";
-                        else if (radios[2].Checked) answer = "C";
-                        else if (radios[3].Checked) answer = "D";
+                        if (radios[0].Checked)
+                            answer = "A";
+
+                        else if (radios[1].Checked)
+                            answer = "B";
+
+                        else if (radios[2].Checked)
+                            answer = "C";
+
+                        else if (radios[3].Checked)
+                            answer = "D";
                     }
                 }
-                else if (type == "true_false")
+                else if (type ==
+                         "true_false")
                 {
-                    RadioButton[] radios = trueFalseControls[i];
+                    RadioButton[] radios =
+                        trueFalseControls[i];
+
                     if (radios != null)
                     {
-                        if (radios[0].Checked) answer = "TRUE";
-                        else if (radios[1].Checked) answer = "FALSE";
+                        if (radios[0].Checked)
+                            answer = "TRUE";
+
+                        else if (radios[1].Checked)
+                            answer = "FALSE";
                     }
                 }
-                else if (type == "identification")
+                else if (type ==
+                         "identification")
                 {
-                    TextBox identification = identificationControls[i];
+                    TextBox identification =
+                        identificationControls[i];
+
                     if (identification != null)
-                        answer = identification.Text.Trim();
+                        answer =
+                            identification.Text.Trim();
                 }
-                else if (type == "essay")
+                else if (type ==
+                         "essay")
                 {
-                    TextBox essay = essayControls[i];
+                    TextBox essay =
+                        essayControls[i];
+
                     if (essay != null)
-                        answer = essay.Text.Trim();
+                        answer =
+                            essay.Text.Trim();
                 }
 
-                studentAnswers[i] = answer;
+                studentAnswers[i] =
+                    answer;
             }
         }
 
-        private void BtnSubmit_Click(object sender, EventArgs e)
+        // =========================================================
+        // AUTO-SAVE ANSWERS TO DATABASE
+        // =========================================================
+
+        private bool SaveAnswersToDatabase()
         {
-            if (!ValidateAllAnswers()) return;
+            if (currentAttemptId <= 0)
+                return false;
 
             SaveAllAnswers();
 
-            DialogResult confirm = MessageBox.Show(
-                "Are you sure you want to submit the examination?\n\n" +
-                "You will not be able to change your answers after submission.",
-                "Submit Examination",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
+            string connStr =
+                SettingsManager.Current.GetConnectionString();
 
-            if (confirm != DialogResult.Yes) return;
-
-            SaveQuizResult();
-        }
-
-        private void SaveQuizResult()
-        {
-            score = 0;
-
-            for (int i = 0; i < questions.Count; i++)
-            {
-                QuizQuestion q = questions[i];
-                string studentAnswer = studentAnswers.ContainsKey(i) ? studentAnswers[i] : "";
-                string type = NormalizeQuestionType(q.QuestionType);
-
-                if (type == "essay") continue;
-
-                if (!string.IsNullOrWhiteSpace(studentAnswer) &&
-                    !string.IsNullOrWhiteSpace(q.CorrectAnswer))
-                {
-                    string studentValue = studentAnswer.Trim().ToUpper();
-                    string correctValue = q.CorrectAnswer.Trim().ToUpper();
-
-                    if (studentValue == correctValue) score++;
-                }
-            }
-
-            SaveAttemptToDatabase(score, questions.Count);
-        }
-
-        // =========================================================
-        // SAVE ATTEMPT TO DATABASE  (rewritten with transaction)
-        // =========================================================
-
-        private void SaveAttemptToDatabase(int finalScore, int totalQuestions)
-        {
-            decimal percentage = 0;
-
-            if (totalQuestions > 0)
-                percentage = ((decimal)finalScore / totalQuestions) * 100;
-
-            string connStr = SettingsManager.Current.GetConnectionString();
-
-            using (var conn = new MySqlConnection(connStr))
+            using (var conn =
+                   new MySqlConnection(connStr))
             {
                 MySqlTransaction tx = null;
 
                 try
                 {
                     conn.Open();
+
                     tx = conn.BeginTransaction();
 
-                    // ---------- 1. Insert quiz_attempts row ----------
-                    string attemptQuery = @"
-                        INSERT INTO quiz_attempts
-                            (quiz_id, user_id, score, total_questions, percentage)
-                        VALUES
-                            (@quiz_id, @user_id, @score, @total_questions, @percentage)";
-
-                    int attemptId;
-
-                    using (var cmd = new MySqlCommand(attemptQuery, conn, tx))
+                    for (int i = 0;
+                         i < questions.Count;
+                         i++)
                     {
-                        cmd.Parameters.AddWithValue("@quiz_id", selectedQuizId);
-                        cmd.Parameters.AddWithValue("@user_id", studentUserId);
-                        cmd.Parameters.AddWithValue("@score", finalScore);
-                        cmd.Parameters.AddWithValue("@total_questions", totalQuestions);
-                        cmd.Parameters.AddWithValue("@percentage", percentage);
+                        QuizQuestion q =
+                            questions[i];
 
-                        cmd.ExecuteNonQuery();
-                        attemptId = (int)cmd.LastInsertedId;
-                    }
+                        int questionId =
+                            q.QuestionId;
 
-                    // ---------- 2. Insert each student_answers row ----------
-                    for (int i = 0; i < questions.Count; i++)
-                    {
-                        QuizQuestion q = questions[i];
+                        string answer =
+                            studentAnswers.ContainsKey(i)
+                                ? studentAnswers[i]
+                                : "";
 
-                        string answer = studentAnswers.ContainsKey(i) ? studentAnswers[i] : "";
-                        string type = NormalizeQuestionType(q.QuestionType);
+                        string type =
+                            NormalizeQuestionType(
+                                q.QuestionType);
 
                         bool isCorrect = false;
-                        if (type != "essay"
-                            && !string.IsNullOrWhiteSpace(answer)
-                            && !string.IsNullOrWhiteSpace(q.CorrectAnswer))
+
+                        if (type != "essay" &&
+                            !string.IsNullOrWhiteSpace(
+                                answer) &&
+                            !string.IsNullOrWhiteSpace(
+                                q.CorrectAnswer))
                         {
-                            if (answer.Trim().ToUpper() == q.CorrectAnswer.Trim().ToUpper())
-                                isCorrect = true;
+                            isCorrect =
+                                answer.Trim()
+                                    .ToUpper() ==
+                                q.CorrectAnswer.Trim()
+                                    .ToUpper();
                         }
 
-                        // Use the question_id we loaded earlier
-                        int questionId = q.QuestionId;
+                        // -------------------------------------------------
+                        // BLANK ANSWER
+                        // -------------------------------------------------
 
-                        string answerQuery = @"
-                            INSERT INTO student_answers
-                                (attempt_id, question_id, student_answer, is_correct)
-                            VALUES
-                                (@attempt_id, @question_id, @student_answer, @is_correct)";
-
-                        using (var cmd = new MySqlCommand(answerQuery, conn, tx))
+                        if (string.IsNullOrWhiteSpace(
+                            answer))
                         {
-                            cmd.Parameters.AddWithValue("@attempt_id", attemptId);
-                            cmd.Parameters.AddWithValue("@question_id", questionId);
+                            string deleteQuery = @"
+                                DELETE FROM student_answers
+                                WHERE attempt_id = @attempt_id
+                                  AND question_id = @question_id";
 
-                            if (string.IsNullOrWhiteSpace(answer))
-                                cmd.Parameters.AddWithValue("@student_answer", DBNull.Value);
-                            else
-                                cmd.Parameters.AddWithValue("@student_answer", answer);
+                            using (var deleteCmd =
+                                   new MySqlCommand(
+                                       deleteQuery,
+                                       conn,
+                                       tx))
+                            {
+                                deleteCmd.Parameters.AddWithValue(
+                                    "@attempt_id",
+                                    currentAttemptId);
 
-                            cmd.Parameters.AddWithValue("@is_correct", isCorrect);
+                                deleteCmd.Parameters.AddWithValue(
+                                    "@question_id",
+                                    questionId);
 
-                            cmd.ExecuteNonQuery();
+                                deleteCmd.ExecuteNonQuery();
+                            }
+
+                            continue;
+                        }
+
+                        // -------------------------------------------------
+                        // CHECK IF ANSWER ALREADY EXISTS
+                        // -------------------------------------------------
+
+                        bool exists = false;
+
+                        string checkQuery = @"
+                            SELECT COUNT(*)
+                            FROM student_answers
+                            WHERE attempt_id = @attempt_id
+                              AND question_id = @question_id";
+
+                        using (var checkCmd =
+                               new MySqlCommand(
+                                   checkQuery,
+                                   conn,
+                                   tx))
+                        {
+                            checkCmd.Parameters.AddWithValue(
+                                "@attempt_id",
+                                currentAttemptId);
+
+                            checkCmd.Parameters.AddWithValue(
+                                "@question_id",
+                                questionId);
+
+                            exists =
+                                Convert.ToInt32(
+                                    checkCmd.ExecuteScalar()) > 0;
+                        }
+
+                        // -------------------------------------------------
+                        // UPDATE EXISTING ANSWER
+                        // -------------------------------------------------
+
+                        if (exists)
+                        {
+                            string updateQuery = @"
+                                UPDATE student_answers
+                                SET
+                                    student_answer = @student_answer,
+                                    is_correct = @is_correct
+                                WHERE attempt_id = @attempt_id
+                                  AND question_id = @question_id";
+
+                            using (var updateCmd =
+                                   new MySqlCommand(
+                                       updateQuery,
+                                       conn,
+                                       tx))
+                            {
+                                updateCmd.Parameters.AddWithValue(
+                                    "@student_answer",
+                                    answer);
+
+                                updateCmd.Parameters.AddWithValue(
+                                    "@is_correct",
+                                    isCorrect);
+
+                                updateCmd.Parameters.AddWithValue(
+                                    "@attempt_id",
+                                    currentAttemptId);
+
+                                updateCmd.Parameters.AddWithValue(
+                                    "@question_id",
+                                    questionId);
+
+                                updateCmd.ExecuteNonQuery();
+                            }
+                        }
+                        else
+                        {
+                            // -------------------------------------------------
+                            // INSERT NEW ANSWER
+                            // -------------------------------------------------
+
+                            string insertQuery = @"
+                                INSERT INTO student_answers
+                                (
+                                    attempt_id,
+                                    question_id,
+                                    student_answer,
+                                    is_correct
+                                )
+                                VALUES
+                                (
+                                    @attempt_id,
+                                    @question_id,
+                                    @student_answer,
+                                    @is_correct
+                                )";
+
+                            using (var insertCmd =
+                                   new MySqlCommand(
+                                       insertQuery,
+                                       conn,
+                                       tx))
+                            {
+                                insertCmd.Parameters.AddWithValue(
+                                    "@attempt_id",
+                                    currentAttemptId);
+
+                                insertCmd.Parameters.AddWithValue(
+                                    "@question_id",
+                                    questionId);
+
+                                insertCmd.Parameters.AddWithValue(
+                                    "@student_answer",
+                                    answer);
+
+                                insertCmd.Parameters.AddWithValue(
+                                    "@is_correct",
+                                    isCorrect);
+
+                                insertCmd.ExecuteNonQuery();
+                            }
                         }
                     }
 
                     tx.Commit();
 
-                    MessageBox.Show(
-                        "Examination submitted successfully!\n\n" +
-                        "Score: " + finalScore + " / " + totalQuestions +
-                        "\nPercentage: " + percentage.ToString("0.00") + "%",
-                        "Examination Submitted",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information);
+                    return true;
+                }
+                catch
+                {
+                    try
+                    {
+                        tx?.Rollback();
+                    }
+                    catch
+                    {
+                        // Ignore rollback errors.
+                    }
+
+                    return false;
+                }
+            }
+        }
+
+        // =========================================================
+        // MANUAL SUBMIT
+        // =========================================================
+
+        private void BtnSubmit_Click(
+            object sender,
+            EventArgs e)
+        {
+            if (isSubmitting)
+                return;
+
+            if (currentAttemptId <= 0)
+            {
+                MessageBox.Show(
+                    "The examination attempt could not be identified.\n\n" +
+                    "Please restart the examination.",
+                    "Attempt Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+
+                return;
+            }
+
+            if (!ValidateAllAnswers())
+                return;
+
+            SaveAllAnswers();
+
+            DialogResult confirm =
+                MessageBox.Show(
+                    "Are you sure you want to submit the examination?\n\n" +
+                    "You will not be able to change your answers after submission.",
+                    "Submit Examination",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+            if (confirm != DialogResult.Yes)
+                return;
+
+            isSubmitting = true;
+
+            try
+            {
+                StopExamTimer();
+
+                SaveQuizResult(false);
+            }
+            finally
+            {
+                isSubmitting = false;
+            }
+        }
+
+        // =========================================================
+        // SAVE QUIZ RESULT
+        // =========================================================
+        //
+        // automaticSubmit = true:
+        // The timer expired, so unanswered questions are allowed.
+        //
+        // automaticSubmit = false:
+        // Student manually submitted after normal validation.
+        // =========================================================
+
+        private void SaveQuizResult(
+            bool automaticSubmit)
+        {
+            score = 0;
+
+            for (int i = 0;
+                 i < questions.Count;
+                 i++)
+            {
+                QuizQuestion q =
+                    questions[i];
+
+                string studentAnswer =
+                    studentAnswers.ContainsKey(i)
+                        ? studentAnswers[i]
+                        : "";
+
+                string type =
+                    NormalizeQuestionType(
+                        q.QuestionType);
+
+                // Essays are not automatically graded.
+                if (type == "essay")
+                    continue;
+
+                if (!string.IsNullOrWhiteSpace(
+                        studentAnswer) &&
+                    !string.IsNullOrWhiteSpace(
+                        q.CorrectAnswer))
+                {
+                    string studentValue =
+                        studentAnswer.Trim()
+                            .ToUpper();
+
+                    string correctValue =
+                        q.CorrectAnswer.Trim()
+                            .ToUpper();
+
+                    if (studentValue ==
+                        correctValue)
+                    {
+                        score++;
+                    }
+                }
+            }
+
+            // =====================================================
+            // FINAL ANSWER SAVE
+            // =====================================================
+
+            if (!SaveAnswersToDatabase())
+            {
+                MessageBox.Show(
+                    "Your latest answers could not be saved.\n\n" +
+                    "Please check the database/network connection " +
+                    "and try submitting again.",
+                    "Unable to Save Answers",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+
+                return;
+            }
+
+            SaveAttemptToDatabase(
+                score,
+                questions.Count,
+                automaticSubmit);
+        }
+
+        // =========================================================
+        // SAVE ATTEMPT TO DATABASE
+        // =========================================================
+
+        private void SaveAttemptToDatabase(
+            int finalScore,
+            int totalQuestions,
+            bool automaticSubmit)
+        {
+            decimal percentage = 0;
+
+            if (totalQuestions > 0)
+            {
+                percentage =
+                    ((decimal)finalScore /
+                     totalQuestions) *
+                    100;
+            }
+
+            string connStr =
+                SettingsManager.Current.GetConnectionString();
+
+            using (var conn =
+                   new MySqlConnection(connStr))
+            {
+                MySqlTransaction tx = null;
+
+                try
+                {
+                    conn.Open();
+
+                    tx = conn.BeginTransaction();
+
+                    string attemptQuery = @"
+                        UPDATE quiz_attempts
+                        SET
+                            score = @score,
+                            total_questions = @total_questions,
+                            percentage = @percentage,
+                            status = 'SUBMITTED',
+                            last_seen = NOW()
+                        WHERE attempt_id = @attempt_id";
+
+                    using (var cmd =
+                           new MySqlCommand(
+                               attemptQuery,
+                               conn,
+                               tx))
+                    {
+                        cmd.Parameters.AddWithValue(
+                            "@score",
+                            finalScore);
+
+                        cmd.Parameters.AddWithValue(
+                            "@total_questions",
+                            totalQuestions);
+
+                        cmd.Parameters.AddWithValue(
+                            "@percentage",
+                            percentage);
+
+                        cmd.Parameters.AddWithValue(
+                            "@attempt_id",
+                            currentAttemptId);
+
+                        int affectedRows =
+                            cmd.ExecuteNonQuery();
+
+                        if (affectedRows != 1)
+                        {
+                            throw new Exception(
+                                "The quiz attempt could not be updated.");
+                        }
+                    }
+
+                    tx.Commit();
+
+                    StopExamTimer();
+                    StopAutoSave();
+                    StopHeartbeat();
+
+                    if (automaticSubmit)
+                    {
+                        MessageBox.Show(
+                            "Time is up.\n\n" +
+                            "Your examination has been submitted automatically.\n\n" +
+                            "Score: " +
+                            finalScore +
+                            " / " +
+                            totalQuestions +
+                            "\nPercentage: " +
+                            percentage.ToString("0.00") +
+                            "%",
+                            "Time Expired",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show(
+                            "Examination submitted successfully!\n\n" +
+                            "Score: " +
+                            finalScore +
+                            " / " +
+                            totalQuestions +
+                            "\nPercentage: " +
+                            percentage.ToString("0.00") +
+                            "%",
+                            "Examination Submitted",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
+                    }
 
                     DisableQuiz();
                 }
                 catch (Exception ex)
                 {
-                    try { tx?.Rollback(); } catch { }
+                    try
+                    {
+                        tx?.Rollback();
+                    }
+                    catch
+                    {
+                        // Ignore rollback errors.
+                    }
 
                     MessageBox.Show(
-                        "Your examination was completed, but the result could not be saved.\n\n" +
-                        "Error:\n" + ex.Message,
+                        "Your examination could not be submitted.\n\n" +
+                        "Please check the database/network connection " +
+                        "and try submitting again.\n\n" +
+                        "Error:\n" +
+                        ex.Message,
                         "Database Error",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
@@ -1164,15 +3295,24 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        // SCROLL / PROGRESS  (unchanged)
+        // SCROLL / PROGRESS
         // =========================================================
 
-        private void ScrollToQuestion(int index)
+        private void ScrollToQuestion(
+            int index)
         {
-            if (index < 0 || index >= questionCards.Count) return;
-            Panel card = questionCards[index];
+            if (index < 0 ||
+                index >= questionCards.Count)
+                return;
+
+            Panel card =
+                questionCards[index];
+
             if (card != null)
-                scrollPanel.ScrollControlIntoView(card);
+            {
+                scrollPanel.ScrollControlIntoView(
+                    card);
+            }
         }
 
         private void UpdateProgress()
@@ -1184,140 +3324,242 @@ namespace WinFormsApp1
             }
 
             int answered = 0;
-            for (int i = 0; i < questions.Count; i++)
-                if (IsQuestionAnswered(i)) answered++;
 
-            int percentage = (int)(((double)answered / questions.Count) * 100);
+            for (int i = 0;
+                 i < questions.Count;
+                 i++)
+            {
+                if (IsQuestionAnswered(i))
+                    answered++;
+            }
 
-            if (percentage < 0) percentage = 0;
-            if (percentage > 100) percentage = 100;
+            int percentage =
+                (int)(((double)answered /
+                       questions.Count) *
+                      100);
 
-            progressBar.Value = percentage;
+            if (percentage < 0)
+                percentage = 0;
+
+            if (percentage > 100)
+                percentage = 100;
+
+            progressBar.Value =
+                percentage;
         }
 
-        private bool IsQuestionAnswered(int index)
+        private bool IsQuestionAnswered(
+            int index)
         {
-            if (index < 0 || index >= questions.Count) return false;
+            if (index < 0 ||
+                index >= questions.Count)
+                return false;
 
-            QuizQuestion q = questions[index];
-            string type = NormalizeQuestionType(q.QuestionType);
+            QuizQuestion q =
+                questions[index];
 
-            if (type == "multiple_choice")
+            string type =
+                NormalizeQuestionType(
+                    q.QuestionType);
+
+            if (type ==
+                "multiple_choice")
             {
-                RadioButton[] radios = multipleChoiceControls[index];
-                if (radios == null) return false;
-                foreach (RadioButton rb in radios) if (rb.Checked) return true;
+                RadioButton[] radios =
+                    multipleChoiceControls[index];
+
+                if (radios == null)
+                    return false;
+
+                foreach (RadioButton rb in radios)
+                {
+                    if (rb.Checked)
+                        return true;
+                }
+
                 return false;
             }
-            if (type == "true_false")
+
+            if (type ==
+                "true_false")
             {
-                RadioButton[] radios = trueFalseControls[index];
-                if (radios == null) return false;
-                return radios[0].Checked || radios[1].Checked;
+                RadioButton[] radios =
+                    trueFalseControls[index];
+
+                if (radios == null)
+                    return false;
+
+                return radios[0].Checked ||
+                       radios[1].Checked;
             }
-            if (type == "identification")
+
+            if (type ==
+                "identification")
             {
-                TextBox identification = identificationControls[index];
-                if (identification == null) return false;
-                return !string.IsNullOrWhiteSpace(identification.Text);
+                TextBox identification =
+                    identificationControls[index];
+
+                if (identification == null)
+                    return false;
+
+                return
+                    !string.IsNullOrWhiteSpace(
+                        identification.Text);
             }
-            if (type == "essay")
+
+            if (type ==
+                "essay")
             {
-                TextBox essay = essayControls[index];
-                if (essay == null) return false;
-                return !string.IsNullOrWhiteSpace(essay.Text);
+                TextBox essay =
+                    essayControls[index];
+
+                if (essay == null)
+                    return false;
+
+                return
+                    !string.IsNullOrWhiteSpace(
+                        essay.Text);
             }
+
             return false;
         }
 
         // =========================================================
-        // ANTI CHEAT  (unchanged)
+        // ANTI CHEAT
         // =========================================================
 
         private void EnableAntiCheat()
         {
-            this.KeyDown += StudentQuizForm_KeyDown;
-            this.MouseDown += StudentQuizForm_MouseDown;
+            this.KeyDown +=
+                StudentQuizForm_KeyDown;
+
+            this.MouseDown +=
+                StudentQuizForm_MouseDown;
+
             ApplyAntiCheatToControlTree(this);
         }
 
-        private void StudentQuizForm_KeyDown(object sender, KeyEventArgs e)
+        private void StudentQuizForm_KeyDown(
+            object sender,
+            KeyEventArgs e)
         {
-            if (e.Control && (e.KeyCode == Keys.C || e.KeyCode == Keys.X ||
-                              e.KeyCode == Keys.V || e.KeyCode == Keys.A ||
-                              e.KeyCode == Keys.Z))
+            if (e.Control &&
+                (e.KeyCode == Keys.C ||
+                 e.KeyCode == Keys.X ||
+                 e.KeyCode == Keys.V ||
+                 e.KeyCode == Keys.A ||
+                 e.KeyCode == Keys.Z))
             {
                 e.SuppressKeyPress = true;
                 e.Handled = true;
                 return;
             }
 
-            if (e.Shift && e.KeyCode == Keys.Insert)
+            if (e.Shift &&
+                e.KeyCode == Keys.Insert)
             {
                 e.SuppressKeyPress = true;
                 e.Handled = true;
             }
         }
 
-        private void StudentQuizForm_MouseDown(object sender, MouseEventArgs e)
+        private void StudentQuizForm_MouseDown(
+            object sender,
+            MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Right) { /* disabled */ }
+            if (e.Button ==
+                MouseButtons.Right)
+            {
+                // Disabled
+            }
         }
 
-        private void ApplyAntiCheatToControlTree(Control parent)
+        private void ApplyAntiCheatToControlTree(
+            Control parent)
         {
             foreach (Control control in parent.Controls)
             {
                 control.ContextMenuStrip = null;
-                control.MouseDown += AntiCheat_MouseDown;
+
+                control.MouseDown +=
+                    AntiCheat_MouseDown;
 
                 if (control is Label)
-                    ((Label)control).Cursor = Cursors.Default;
+                {
+                    ((Label)control).Cursor =
+                        Cursors.Default;
+                }
 
                 if (control.HasChildren)
-                    ApplyAntiCheatToControlTree(control);
+                {
+                    ApplyAntiCheatToControlTree(
+                        control);
+                }
             }
         }
 
-        private void AntiCheat_MouseDown(object sender, MouseEventArgs e)
+        private void AntiCheat_MouseDown(
+            object sender,
+            MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Right)
+            if (e.Button ==
+                MouseButtons.Right)
             {
-                Control control = sender as Control;
-                if (control != null) control.ContextMenuStrip = null;
+                Control control =
+                    sender as Control;
+
+                if (control != null)
+                    control.ContextMenuStrip = null;
             }
         }
 
-        private void BlockTextEditingShortcuts(Control control)
+        private void BlockTextEditingShortcuts(
+            Control control)
         {
-            control.KeyDown += TextControl_KeyDown;
-            control.MouseDown += TextControl_MouseDown;
+            control.KeyDown +=
+                TextControl_KeyDown;
+
+            control.MouseDown +=
+                TextControl_MouseDown;
+
             control.ContextMenuStrip = null;
         }
 
-        private void TextControl_KeyDown(object sender, KeyEventArgs e)
+        private void TextControl_KeyDown(
+            object sender,
+            KeyEventArgs e)
         {
-            if (e.Control && (e.KeyCode == Keys.C || e.KeyCode == Keys.X ||
-                              e.KeyCode == Keys.V || e.KeyCode == Keys.A))
+            if (e.Control &&
+                (e.KeyCode == Keys.C ||
+                 e.KeyCode == Keys.X ||
+                 e.KeyCode == Keys.V ||
+                 e.KeyCode == Keys.A))
             {
                 e.SuppressKeyPress = true;
                 e.Handled = true;
                 return;
             }
 
-            if (e.Shift && e.KeyCode == Keys.Insert)
+            if (e.Shift &&
+                e.KeyCode == Keys.Insert)
             {
                 e.SuppressKeyPress = true;
                 e.Handled = true;
             }
         }
 
-        private void TextControl_MouseDown(object sender, MouseEventArgs e)
+        private void TextControl_MouseDown(
+            object sender,
+            MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Right)
+            if (e.Button ==
+                MouseButtons.Right)
             {
-                TextBox textBox = sender as TextBox;
-                if (textBox != null) textBox.ContextMenuStrip = null;
+                TextBox textBox =
+                    sender as TextBox;
+
+                if (textBox != null)
+                    textBox.ContextMenuStrip = null;
             }
         }
 
@@ -1327,10 +3569,23 @@ namespace WinFormsApp1
 
         private void DisableQuiz()
         {
-            if (btnSubmit != null) btnSubmit.Enabled = false;
-            if (scrollPanel != null) scrollPanel.Enabled = false;
+            StopExamTimer();
+            StopAutoSave();
+
+            if (btnSubmit != null)
+                btnSubmit.Enabled = false;
+
+            if (scrollPanel != null)
+                scrollPanel.Enabled = false;
+
+            if (lblTimer != null)
+                lblTimer.Text = "TIME: 00:00";
+
             if (lblInstruction != null)
-                lblInstruction.Text = "This examination is no longer available.";
+            {
+                lblInstruction.Text =
+                    "This examination is no longer available.";
+            }
         }
     }
 }

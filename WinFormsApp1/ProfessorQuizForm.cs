@@ -18,29 +18,69 @@ namespace WinFormsApp1
         private TextBox txtQuizTitle;
         private TextBox txtSubject;
 
+        // =========================================================
+        // TIME LIMIT
+        // =========================================================
+
+        private NumericUpDown numDurationMinutes;
+
         private RoundedButton btnImportDocx;
         private RoundedButton btnSaveQuiz;
         private RoundedButton btnClear;
+        private RoundedButton btnMonitor;
 
         private Label lblFileName;
         private Label lblQuestionCount;
+        private Label lblMonitoringTitle;
+        private Label lblMonitoringQuiz;
 
         private ListBox lstQuestions;
+
+        // =========================================================
+        // PROFESSOR MONITORING
+        // =========================================================
+
+        private DataGridView dgvAttempts;
+
+        private System.Windows.Forms.Timer monitoringTimer;
+
+        private int monitoredQuizId = 0;
 
         private List<QuizQuestion> importedQuestions =
             new List<QuizQuestion>();
 
         // ---- Colors ----
-        private static readonly Color ClrMaroon = Color.FromArgb(94, 14, 33);
-        private static readonly Color ClrMaroonDark = Color.FromArgb(70, 10, 24);
-        private static readonly Color ClrBlack = Color.FromArgb(20, 20, 20);
-        private static readonly Color ClrBlackHover = Color.FromArgb(50, 50, 50);
-        private static readonly Color ClrLabelGray = Color.FromArgb(50, 50, 50);
+        private static readonly Color ClrMaroon =
+            Color.FromArgb(94, 14, 33);
+
+        private static readonly Color ClrMaroonDark =
+            Color.FromArgb(70, 10, 24);
+
+        private static readonly Color ClrBlack =
+            Color.FromArgb(20, 20, 20);
+
+        private static readonly Color ClrBlackHover =
+            Color.FromArgb(50, 50, 50);
+
+        private static readonly Color ClrLabelGray =
+            Color.FromArgb(50, 50, 50);
+
+        private static readonly Color ClrGreen =
+            Color.FromArgb(22, 163, 74);
+
+        private static readonly Color ClrYellow =
+            Color.FromArgb(202, 138, 4);
+
+        private static readonly Color ClrRed =
+            Color.FromArgb(220, 38, 38);
 
         public ProfessorQuizForm(int professorID)
         {
             professorUserId = professorID;
+
             BuildProfessorInterface();
+
+            this.FormClosed += ProfessorQuizForm_FormClosed;
         }
 
         // =========================================================
@@ -51,206 +91,964 @@ namespace WinFormsApp1
         {
             Text = "Professor - Create Quiz / Exam";
             StartPosition = FormStartPosition.CenterScreen;
-            Size = new Size(1000, 700);
-            MinimumSize = new Size(900, 600);
+            Size = new Size(1200, 760);
+            MinimumSize = new Size(1100, 700);
             BackColor = Color.White;
             FormBorderStyle = FormBorderStyle.None;
             Font = new Font("Segoe UI", 9.5F);
 
-            // Thin light-blue border sa buong dialog (parang modal frame)
             this.Paint += (s, e) =>
             {
-                using (var pen = new Pen(Color.FromArgb(120, 170, 230), 1.5f))
-                    e.Graphics.DrawRectangle(pen, 0, 0, this.Width - 1, this.Height - 1);
+                using (var pen =
+                       new Pen(
+                           Color.FromArgb(120, 170, 230),
+                           1.5f))
+                {
+                    e.Graphics.DrawRectangle(
+                        pen,
+                        0,
+                        0,
+                        this.Width - 1,
+                        this.Height - 1);
+                }
             };
 
-            int pad = 35;
-            int contentWidth = this.ClientSize.Width - pad * 2;
+            // =====================================================
+            // MAIN LAYOUT
+            // =====================================================
+
+            int pad = 30;
+
+            int leftWidth = 690;
+            int rightWidth = 410;
+
+            int rightX =
+                pad +
+                leftWidth +
+                25;
 
             // =====================================================
-            // HEADER (title + X close)
+            // HEADER
             // =====================================================
 
             Label lblHeader = new Label();
-            lblHeader.Text = "Create Quiz / Exam";
-            lblHeader.Font = new Font("Segoe UI Semibold", 20, FontStyle.Bold);
-            lblHeader.ForeColor = ClrBlack;
+
+            lblHeader.Text =
+                "Create Quiz / Exam";
+
+            lblHeader.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    20,
+                    FontStyle.Bold);
+
+            lblHeader.ForeColor =
+                ClrBlack;
+
             lblHeader.AutoSize = true;
-            lblHeader.Location = new Point(pad, 25);
+
+            lblHeader.Location =
+                new Point(
+                    pad,
+                    25);
+
             Controls.Add(lblHeader);
 
             Label lblClose = new Label();
+
             lblClose.Text = "✕";
-            lblClose.Font = new Font("Segoe UI", 14);
-            lblClose.ForeColor = ClrBlack;
+
+            lblClose.Font =
+                new Font(
+                    "Segoe UI",
+                    14);
+
+            lblClose.ForeColor =
+                ClrBlack;
+
             lblClose.AutoSize = true;
-            lblClose.Cursor = Cursors.Hand;
-            lblClose.Location = new Point(this.ClientSize.Width - pad - 16, 28);
-            lblClose.Click += (s, e) => this.Close();
+
+            lblClose.Cursor =
+                Cursors.Hand;
+
+            lblClose.Location =
+                new Point(
+                    this.ClientSize.Width - pad - 16,
+                    28);
+
+            lblClose.Click +=
+                (s, e) => this.Close();
+
             Controls.Add(lblClose);
 
             // =====================================================
-            // TITLE
+            // LEFT SIDE - QUIZ CREATION
             // =====================================================
 
             Label lblTitle = new Label();
+
             lblTitle.Text = "Title";
-            lblTitle.Font = new Font("Segoe UI Semibold", 10, FontStyle.Bold);
-            lblTitle.ForeColor = ClrLabelGray;
+
+            lblTitle.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    10,
+                    FontStyle.Bold);
+
+            lblTitle.ForeColor =
+                ClrLabelGray;
+
             lblTitle.AutoSize = true;
-            lblTitle.Location = new Point(pad, 85);
+
+            lblTitle.Location =
+                new Point(
+                    pad,
+                    85);
+
             Controls.Add(lblTitle);
 
             txtQuizTitle = new TextBox();
-            txtQuizTitle.Font = new Font("Segoe UI", 10);
-            txtQuizTitle.BorderStyle = BorderStyle.FixedSingle;
-            txtQuizTitle.Location = new Point(pad, 108);
-            txtQuizTitle.Size = new Size(contentWidth, 30);
+
+            txtQuizTitle.Font =
+                new Font(
+                    "Segoe UI",
+                    10);
+
+            txtQuizTitle.BorderStyle =
+                BorderStyle.FixedSingle;
+
+            txtQuizTitle.Location =
+                new Point(
+                    pad,
+                    108);
+
+            txtQuizTitle.Size =
+                new Size(
+                    leftWidth,
+                    30);
+
             Controls.Add(txtQuizTitle);
 
             // =====================================================
-            // ASSESSMENT TYPE  /  EXAM PERIOD (magkatabing dropdowns)
+            // ASSESSMENT TYPE / EXAM PERIOD
             // =====================================================
 
-            int halfWidth = (contentWidth - 24) / 2;
+            int halfWidth =
+                (leftWidth - 24) / 2;
 
             Label lblType = new Label();
-            lblType.Text = "Assessment Type";
-            lblType.Font = new Font("Segoe UI Semibold", 10, FontStyle.Bold);
-            lblType.ForeColor = ClrLabelGray;
+
+            lblType.Text =
+                "Assessment Type";
+
+            lblType.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    10,
+                    FontStyle.Bold);
+
+            lblType.ForeColor =
+                ClrLabelGray;
+
             lblType.AutoSize = true;
-            lblType.Location = new Point(pad, 155);
+
+            lblType.Location =
+                new Point(
+                    pad,
+                    155);
+
             Controls.Add(lblType);
 
             Label lblExamPeriod = new Label();
-            lblExamPeriod.Text = "Exam Period";
-            lblExamPeriod.Font = new Font("Segoe UI Semibold", 10, FontStyle.Bold);
-            lblExamPeriod.ForeColor = ClrLabelGray;
+
+            lblExamPeriod.Text =
+                "Exam Period";
+
+            lblExamPeriod.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    10,
+                    FontStyle.Bold);
+
+            lblExamPeriod.ForeColor =
+                ClrLabelGray;
+
             lblExamPeriod.AutoSize = true;
-            lblExamPeriod.Location = new Point(pad + halfWidth + 24, 155);
+
+            lblExamPeriod.Location =
+                new Point(
+                    pad +
+                    halfWidth +
+                    24,
+                    155);
+
             Controls.Add(lblExamPeriod);
 
-            cmbAssessmentType = new ComboBox();
-            cmbAssessmentType.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbAssessmentType =
+                new ComboBox();
+
+            cmbAssessmentType.DropDownStyle =
+                ComboBoxStyle.DropDownList;
+
             cmbAssessmentType.Items.Add("Quiz");
             cmbAssessmentType.Items.Add("Exam");
-            cmbAssessmentType.SelectedIndex = 0;
-            cmbAssessmentType.Font = new Font("Segoe UI", 10);
-            cmbAssessmentType.Location = new Point(pad, 178);
-            cmbAssessmentType.Size = new Size(halfWidth, 30);
+
+            cmbAssessmentType.SelectedIndex =
+                0;
+
+            cmbAssessmentType.Font =
+                new Font(
+                    "Segoe UI",
+                    10);
+
+            cmbAssessmentType.Location =
+                new Point(
+                    pad,
+                    178);
+
+            cmbAssessmentType.Size =
+                new Size(
+                    halfWidth,
+                    30);
+
             Controls.Add(cmbAssessmentType);
 
-            cmbExamPeriod = new ComboBox();
-            cmbExamPeriod.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbExamPeriod =
+                new ComboBox();
+
+            cmbExamPeriod.DropDownStyle =
+                ComboBoxStyle.DropDownList;
+
             cmbExamPeriod.Items.Add("PRELIM");
             cmbExamPeriod.Items.Add("MIDTERM");
             cmbExamPeriod.Items.Add("SEMIFINALS");
             cmbExamPeriod.Items.Add("FINALS");
-            cmbExamPeriod.SelectedIndex = 0;
-            cmbExamPeriod.Font = new Font("Segoe UI", 10);
-            cmbExamPeriod.Location = new Point(pad + halfWidth + 24, 178);
-            cmbExamPeriod.Size = new Size(halfWidth, 30);
+
+            cmbExamPeriod.SelectedIndex =
+                0;
+
+            cmbExamPeriod.Font =
+                new Font(
+                    "Segoe UI",
+                    10);
+
+            cmbExamPeriod.Location =
+                new Point(
+                    pad +
+                    halfWidth +
+                    24,
+                    178);
+
+            cmbExamPeriod.Size =
+                new Size(
+                    halfWidth,
+                    30);
+
             Controls.Add(cmbExamPeriod);
 
             // =====================================================
-            // SUBJECT
+            // SUBJECT / TIME LIMIT
             // =====================================================
 
             Label lblSubject = new Label();
-            lblSubject.Text = "Subject";
-            lblSubject.Font = new Font("Segoe UI Semibold", 10, FontStyle.Bold);
-            lblSubject.ForeColor = ClrLabelGray;
+
+            lblSubject.Text =
+                "Subject";
+
+            lblSubject.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    10,
+                    FontStyle.Bold);
+
+            lblSubject.ForeColor =
+                ClrLabelGray;
+
             lblSubject.AutoSize = true;
-            lblSubject.Location = new Point(pad, 225);
+
+            lblSubject.Location =
+                new Point(
+                    pad,
+                    225);
+
             Controls.Add(lblSubject);
 
-            txtSubject = new TextBox();
-            txtSubject.Font = new Font("Segoe UI", 10);
-            txtSubject.BorderStyle = BorderStyle.FixedSingle;
-            txtSubject.Location = new Point(pad, 248);
-            txtSubject.Size = new Size(contentWidth, 30);
+            Label lblDuration = new Label();
+
+            lblDuration.Text =
+                "Time Limit (minutes)";
+
+            lblDuration.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    10,
+                    FontStyle.Bold);
+
+            lblDuration.ForeColor =
+                ClrLabelGray;
+
+            lblDuration.AutoSize = true;
+
+            lblDuration.Location =
+                new Point(
+                    pad +
+                    halfWidth +
+                    24,
+                    225);
+
+            Controls.Add(lblDuration);
+
+            txtSubject =
+                new TextBox();
+
+            txtSubject.Font =
+                new Font(
+                    "Segoe UI",
+                    10);
+
+            txtSubject.BorderStyle =
+                BorderStyle.FixedSingle;
+
+            txtSubject.Location =
+                new Point(
+                    pad,
+                    248);
+
+            txtSubject.Size =
+                new Size(
+                    halfWidth,
+                    30);
+
             Controls.Add(txtSubject);
 
             // =====================================================
-            // IMPORT DOCX (maroon button, katabi ang file name + question count)
+            // TIME LIMIT INPUT
             // =====================================================
 
-            btnImportDocx = new RoundedButton();
-            btnImportDocx.Text = "⬆  IMPORT DOCX";
-            btnImportDocx.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
-            btnImportDocx.Size = new Size(190, 40);
-            btnImportDocx.Location = new Point(pad, 300);
-            btnImportDocx.BackColor = ClrMaroon;
-            btnImportDocx.HoverColor = ClrMaroonDark;
-            btnImportDocx.ForeColor = Color.White;
-            btnImportDocx.Click += BtnImportDocx_Click;
+            numDurationMinutes =
+                new NumericUpDown();
+
+            numDurationMinutes.Font =
+                new Font(
+                    "Segoe UI",
+                    10);
+
+            numDurationMinutes.Location =
+                new Point(
+                    pad +
+                    halfWidth +
+                    24,
+                    248);
+
+            numDurationMinutes.Size =
+                new Size(
+                    halfWidth,
+                    30);
+
+            // Minimum: 1 minute
+            numDurationMinutes.Minimum = 1;
+
+            // Maximum: 24 hours
+            numDurationMinutes.Maximum = 1440;
+
+            // Default: 60 minutes
+            numDurationMinutes.Value = 60;
+
+            numDurationMinutes.Increment = 5;
+
+            numDurationMinutes.TextAlign =
+                HorizontalAlignment.Left;
+
+            Controls.Add(numDurationMinutes);
+
+            // =====================================================
+            // IMPORT DOCX
+            // =====================================================
+
+            btnImportDocx =
+                new RoundedButton();
+
+            btnImportDocx.Text =
+                "⬆  IMPORT DOCX";
+
+            btnImportDocx.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    9.5F,
+                    FontStyle.Bold);
+
+            btnImportDocx.Size =
+                new Size(
+                    190,
+                    40);
+
+            btnImportDocx.Location =
+                new Point(
+                    pad,
+                    300);
+
+            btnImportDocx.BackColor =
+                ClrMaroon;
+
+            btnImportDocx.HoverColor =
+                ClrMaroonDark;
+
+            btnImportDocx.ForeColor =
+                Color.White;
+
+            btnImportDocx.Click +=
+                BtnImportDocx_Click;
+
             Controls.Add(btnImportDocx);
 
-            lblFileName = new Label();
-            lblFileName.Text = "No DOCX file selected.";
-            lblFileName.Font = new Font("Segoe UI Italic", 9F, FontStyle.Italic);
-            lblFileName.ForeColor = Color.FromArgb(120, 115, 110);
+            lblFileName =
+                new Label();
+
+            lblFileName.Text =
+                "No DOCX file selected.";
+
+            lblFileName.Font =
+                new Font(
+                    "Segoe UI Italic",
+                    9F,
+                    FontStyle.Italic);
+
+            lblFileName.ForeColor =
+                Color.FromArgb(
+                    120,
+                    115,
+                    110);
+
             lblFileName.AutoSize = true;
-            lblFileName.Location = new Point(pad + 210, 312);
+
+            lblFileName.Location =
+                new Point(
+                    pad + 210,
+                    312);
+
             Controls.Add(lblFileName);
 
-            lblQuestionCount = new Label();
-            lblQuestionCount.Text = "Questions: 0";
-            lblQuestionCount.Font = new Font("Segoe UI Semibold", 10, FontStyle.Bold);
-            lblQuestionCount.ForeColor = ClrMaroon;
+            lblQuestionCount =
+                new Label();
+
+            lblQuestionCount.Text =
+                "Questions: 0";
+
+            lblQuestionCount.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    10,
+                    FontStyle.Bold);
+
+            lblQuestionCount.ForeColor =
+                ClrMaroon;
+
             lblQuestionCount.AutoSize = true;
-            lblQuestionCount.Location = new Point(pad + contentWidth - 110, 312);
+
+            lblQuestionCount.Location =
+                new Point(
+                    pad +
+                    leftWidth -
+                    110,
+                    312);
+
             Controls.Add(lblQuestionCount);
 
             // =====================================================
             // PREVIEW TITLE
             // =====================================================
 
-            Label lblPreview = new Label();
-            lblPreview.Text = "Imported Questions / Exam Structure";
-            lblPreview.Font = new Font("Segoe UI Semibold", 10.5F, FontStyle.Bold);
-            lblPreview.ForeColor = ClrLabelGray;
+            Label lblPreview =
+                new Label();
+
+            lblPreview.Text =
+                "Imported Questions / Exam Structure";
+
+            lblPreview.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    10.5F,
+                    FontStyle.Bold);
+
+            lblPreview.ForeColor =
+                ClrLabelGray;
+
             lblPreview.AutoSize = true;
-            lblPreview.Location = new Point(pad, 358);
+
+            lblPreview.Location =
+                new Point(
+                    pad,
+                    358);
+
             Controls.Add(lblPreview);
 
             // =====================================================
-            // QUESTION LIST (parang malaking textarea box)
+            // QUESTION LIST
             // =====================================================
 
-            lstQuestions = new ListBox();
-            lstQuestions.Font = new Font("Segoe UI", 10);
-            lstQuestions.HorizontalScrollbar = true;
-            lstQuestions.BorderStyle = BorderStyle.FixedSingle;
-            lstQuestions.Location = new Point(pad, 385);
-            lstQuestions.Size = new Size(contentWidth, 220);
+            lstQuestions =
+                new ListBox();
+
+            lstQuestions.Font =
+                new Font(
+                    "Segoe UI",
+                    9.5F);
+
+            lstQuestions.HorizontalScrollbar =
+                true;
+
+            lstQuestions.BorderStyle =
+                BorderStyle.FixedSingle;
+
+            lstQuestions.Location =
+                new Point(
+                    pad,
+                    385);
+
+            lstQuestions.Size =
+                new Size(
+                    leftWidth,
+                    270);
+
             Controls.Add(lstQuestions);
 
             // =====================================================
-            // SUBMIT (maroon) / CLEAR (black)
+            // SAVE / CLEAR
             // =====================================================
 
-            btnSaveQuiz = new RoundedButton();
-            btnSaveQuiz.Text = "✓  SUBMIT";
-            btnSaveQuiz.Font = new Font("Segoe UI Semibold", 10, FontStyle.Bold);
-            btnSaveQuiz.Size = new Size(170, 42);
-            btnSaveQuiz.Location = new Point(pad + contentWidth - 170 - 180, 625);
-            btnSaveQuiz.BackColor = ClrMaroon;
-            btnSaveQuiz.HoverColor = ClrMaroonDark;
-            btnSaveQuiz.ForeColor = Color.White;
-            btnSaveQuiz.Click += BtnSaveQuiz_Click;
+            btnSaveQuiz =
+                new RoundedButton();
+
+            btnSaveQuiz.Text =
+                "✓  SUBMIT";
+
+            btnSaveQuiz.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    10,
+                    FontStyle.Bold);
+
+            btnSaveQuiz.Size =
+                new Size(
+                    150,
+                    42);
+
+            btnSaveQuiz.Location =
+                new Point(
+                    pad +
+                    leftWidth -
+                    480,
+                    675);
+
+            btnSaveQuiz.BackColor =
+                ClrMaroon;
+
+            btnSaveQuiz.HoverColor =
+                ClrMaroonDark;
+
+            btnSaveQuiz.ForeColor =
+                Color.White;
+
+            btnSaveQuiz.Click +=
+                BtnSaveQuiz_Click;
+
             Controls.Add(btnSaveQuiz);
 
-            btnClear = new RoundedButton();
-            btnClear.Text = "CLEAR";
-            btnClear.Font = new Font("Segoe UI Semibold", 10, FontStyle.Bold);
-            btnClear.Size = new Size(150, 42);
-            btnClear.Location = new Point(pad + contentWidth - 150, 625);
-            btnClear.BackColor = ClrBlack;
-            btnClear.HoverColor = ClrBlackHover;
-            btnClear.ForeColor = Color.White;
-            btnClear.Click += BtnClear_Click;
+            btnMonitor =
+                new RoundedButton();
+
+            btnMonitor.Text =
+                "◉  MONITOR";
+
+            btnMonitor.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    10,
+                    FontStyle.Bold);
+
+            btnMonitor.Size =
+                new Size(
+                    150,
+                    42);
+
+            btnMonitor.Location =
+                new Point(
+                    pad +
+                    leftWidth -
+                    315,
+                    675);
+
+            btnMonitor.BackColor =
+                Color.FromArgb(
+                    37,
+                    99,
+                    235);
+
+            btnMonitor.HoverColor =
+                Color.FromArgb(
+                    29,
+                    78,
+                    216);
+
+            btnMonitor.ForeColor =
+                Color.White;
+
+            btnMonitor.Enabled =
+                false;
+
+            btnMonitor.Click +=
+                BtnMonitor_Click;
+
+            Controls.Add(btnMonitor);
+
+            btnClear =
+                new RoundedButton();
+
+            btnClear.Text =
+                "CLEAR";
+
+            btnClear.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    10,
+                    FontStyle.Bold);
+
+            btnClear.Size =
+                new Size(
+                    130,
+                    42);
+
+            btnClear.Location =
+                new Point(
+                    pad +
+                    leftWidth -
+                    150,
+                    675);
+
+            btnClear.BackColor =
+                ClrBlack;
+
+            btnClear.HoverColor =
+                ClrBlackHover;
+
+            btnClear.ForeColor =
+                Color.White;
+
+            btnClear.Click +=
+                BtnClear_Click;
+
             Controls.Add(btnClear);
+
+            // =====================================================
+            // RIGHT SIDE - MONITORING DASHBOARD
+            // =====================================================
+
+            Panel monitoringPanel =
+                new Panel();
+
+            monitoringPanel.Location =
+                new Point(
+                    rightX,
+                    85);
+
+            monitoringPanel.Size =
+                new Size(
+                    rightWidth,
+                    632);
+
+            monitoringPanel.BorderStyle =
+                BorderStyle.FixedSingle;
+
+            monitoringPanel.BackColor =
+                Color.White;
+
+            Controls.Add(monitoringPanel);
+
+            lblMonitoringTitle =
+                new Label();
+
+            lblMonitoringTitle.Text =
+                "Student Monitoring";
+
+            lblMonitoringTitle.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    15,
+                    FontStyle.Bold);
+
+            lblMonitoringTitle.ForeColor =
+                ClrBlack;
+
+            lblMonitoringTitle.AutoSize = true;
+
+            lblMonitoringTitle.Location =
+                new Point(
+                    20,
+                    18);
+
+            monitoringPanel.Controls.Add(
+                lblMonitoringTitle);
+
+            lblMonitoringQuiz =
+                new Label();
+
+            lblMonitoringQuiz.Text =
+                "No quiz selected.";
+
+            lblMonitoringQuiz.Font =
+                new Font(
+                    "Segoe UI",
+                    9.5F);
+
+            lblMonitoringQuiz.ForeColor =
+                Color.FromArgb(
+                    100,
+                    116,
+                    139);
+
+            lblMonitoringQuiz.AutoSize =
+                false;
+
+            lblMonitoringQuiz.Size =
+                new Size(
+                    rightWidth - 40,
+                    42);
+
+            lblMonitoringQuiz.Location =
+                new Point(
+                    20,
+                    52);
+
+            monitoringPanel.Controls.Add(
+                lblMonitoringQuiz);
+
+            // =====================================================
+            // STATUS LEGEND
+            // =====================================================
+
+            Label lblLegend =
+                new Label();
+
+            lblLegend.Text =
+                "🟢 Taking Quiz    🟡 Disconnected    ✓ Submitted";
+
+            lblLegend.Font =
+                new Font(
+                    "Segoe UI",
+                    8.5F);
+
+            lblLegend.ForeColor =
+                ClrLabelGray;
+
+            lblLegend.AutoSize =
+                false;
+
+            lblLegend.Size =
+                new Size(
+                    rightWidth - 40,
+                    30);
+
+            lblLegend.Location =
+                new Point(
+                    20,
+                    94);
+
+            monitoringPanel.Controls.Add(
+                lblLegend);
+
+            // =====================================================
+            // DATAGRIDVIEW
+            // =====================================================
+
+            dgvAttempts =
+                new DataGridView();
+
+            dgvAttempts.Location =
+                new Point(
+                    20,
+                    130);
+
+            dgvAttempts.Size =
+                new Size(
+                    rightWidth - 40,
+                    475);
+
+            dgvAttempts.AllowUserToAddRows =
+                false;
+
+            dgvAttempts.AllowUserToDeleteRows =
+                false;
+
+            dgvAttempts.AllowUserToResizeRows =
+                false;
+
+            dgvAttempts.ReadOnly =
+                true;
+
+            dgvAttempts.MultiSelect =
+                false;
+
+            dgvAttempts.SelectionMode =
+                DataGridViewSelectionMode.FullRowSelect;
+
+            dgvAttempts.AutoGenerateColumns =
+                false;
+
+            dgvAttempts.RowHeadersVisible =
+                false;
+
+            dgvAttempts.BackgroundColor =
+                Color.White;
+
+            dgvAttempts.BorderStyle =
+                BorderStyle.FixedSingle;
+
+            dgvAttempts.AutoSizeRowsMode =
+                DataGridViewAutoSizeRowsMode.None;
+
+            dgvAttempts.ColumnHeadersHeight =
+                35;
+
+            dgvAttempts.RowTemplate.Height =
+                38;
+
+            dgvAttempts.EnableHeadersVisualStyles =
+                false;
+
+            dgvAttempts.ColumnHeadersDefaultCellStyle =
+                new DataGridViewCellStyle
+                {
+                    Font =
+                        new Font(
+                            "Segoe UI Semibold",
+                            9,
+                            FontStyle.Bold),
+
+                    BackColor =
+                        Color.FromArgb(
+                            248,
+                            250,
+                            252),
+
+                    ForeColor =
+                        ClrBlack,
+
+                    Alignment =
+                        DataGridViewContentAlignment.MiddleLeft
+                };
+
+            dgvAttempts.DefaultCellStyle =
+                new DataGridViewCellStyle
+                {
+                    Font =
+                        new Font(
+                            "Segoe UI",
+                            9),
+
+                    ForeColor =
+                        ClrBlack,
+
+                    BackColor =
+                        Color.White,
+
+                    SelectionBackColor =
+                        Color.FromArgb(
+                            241,
+                            245,
+                            249),
+
+                    SelectionForeColor =
+                        ClrBlack,
+
+                    WrapMode =
+                        DataGridViewTriState.False
+                };
+
+            DataGridViewTextBoxColumn colStudent =
+                new DataGridViewTextBoxColumn();
+
+            colStudent.Name =
+                "Student";
+
+            colStudent.HeaderText =
+                "Student";
+
+            colStudent.DataPropertyName =
+                "Student";
+
+            colStudent.AutoSizeMode =
+                DataGridViewAutoSizeColumnMode.Fill;
+
+            colStudent.FillWeight =
+                52;
+
+            dgvAttempts.Columns.Add(
+                colStudent);
+
+            DataGridViewTextBoxColumn colStatus =
+                new DataGridViewTextBoxColumn();
+
+            colStatus.Name =
+                "Status";
+
+            colStatus.HeaderText =
+                "Status";
+
+            colStatus.DataPropertyName =
+                "Status";
+
+            colStatus.AutoSizeMode =
+                DataGridViewAutoSizeColumnMode.Fill;
+
+            colStatus.FillWeight =
+                48;
+
+            dgvAttempts.Columns.Add(
+                colStatus);
+
+            monitoringPanel.Controls.Add(
+                dgvAttempts);
+
+            Label lblRefresh =
+                new Label();
+
+            lblRefresh.Text =
+                "Automatically refreshes every 5 seconds";
+
+            lblRefresh.Font =
+                new Font(
+                    "Segoe UI Italic",
+                    8.5F,
+                    FontStyle.Italic);
+
+            lblRefresh.ForeColor =
+                Color.FromArgb(
+                    100,
+                    116,
+                    139);
+
+            lblRefresh.AutoSize = true;
+
+            lblRefresh.Location =
+                new Point(
+                    20,
+                    610);
+
+            monitoringPanel.Controls.Add(
+                lblRefresh);
+
+            // =====================================================
+            // MONITORING TIMER
+            // =====================================================
+
+            monitoringTimer =
+                new System.Windows.Forms.Timer();
+
+            monitoringTimer.Interval =
+                5000;
+
+            monitoringTimer.Tick +=
+                MonitoringTimer_Tick;
         }
 
         // =========================================================
@@ -436,10 +1234,6 @@ namespace WinFormsApp1
                 return;
             }
 
-            // =====================================================
-            // SECTION HEADER
-            // =====================================================
-
             lstQuestions.Items.Add(
                 "────────────────────────────────────────");
 
@@ -455,10 +1249,6 @@ namespace WinFormsApp1
 
             lstQuestions.Items.Add(
                 "────────────────────────────────────────");
-
-            // =====================================================
-            // QUESTIONS
-            // =====================================================
 
             for (int i = 0;
                  i < sectionQuestions.Count;
@@ -587,6 +1377,40 @@ namespace WinFormsApp1
                 return;
             }
 
+            // =====================================================
+            // VALIDATE TIME LIMIT
+            // =====================================================
+
+            int durationMinutes =
+                Convert.ToInt32(
+                    numDurationMinutes.Value);
+
+            if (durationMinutes < 1)
+            {
+                MessageBox.Show(
+                    "Time limit must be at least 1 minute.",
+                    "Invalid Time Limit",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                numDurationMinutes.Focus();
+
+                return;
+            }
+
+            if (durationMinutes > 1440)
+            {
+                MessageBox.Show(
+                    "Time limit cannot exceed 1440 minutes (24 hours).",
+                    "Invalid Time Limit",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                numDurationMinutes.Focus();
+
+                return;
+            }
+
             if (importedQuestions == null ||
                 importedQuestions.Count == 0)
             {
@@ -657,6 +1481,11 @@ namespace WinFormsApp1
                     "\n" +
                     "Subject: " +
                     subject +
+                    "\n" +
+                    "Time Limit: " +
+                    durationMinutes +
+                    " minute" +
+                    (durationMinutes == 1 ? "" : "s") +
                     "\n\n" +
                     "QUESTION STRUCTURE\n" +
                     "Multiple Choice: " +
@@ -683,9 +1512,12 @@ namespace WinFormsApp1
                 return;
             }
 
-            string connStr = SettingsManager.Current.GetConnectionString();
+            string connStr =
+                SettingsManager.Current
+                .GetConnectionString();
 
-            using (var connection = new MySqlConnection(connStr))
+            using (var connection =
+                   new MySqlConnection(connStr))
             {
                 MySqlTransaction transaction =
                     null;
@@ -708,7 +1540,8 @@ namespace WinFormsApp1
                             assessment_type,
                             subject,
                             exam_period,
-                            created_by
+                            created_by,
+                            duration_minutes
                         )
                         VALUES
                         (
@@ -716,7 +1549,8 @@ namespace WinFormsApp1
                             @assessment_type,
                             @subject,
                             @exam_period,
-                            @created_by
+                            @created_by,
+                            @duration_minutes
                         );";
 
                     int quizId;
@@ -746,6 +1580,10 @@ namespace WinFormsApp1
                         command.Parameters.AddWithValue(
                             "@created_by",
                             professorUserId);
+
+                        command.Parameters.AddWithValue(
+                            "@duration_minutes",
+                            durationMinutes);
 
                         command.ExecuteNonQuery();
 
@@ -981,6 +1819,19 @@ namespace WinFormsApp1
 
                     transaction.Commit();
 
+                    // =================================================
+                    // START MONITORING THIS QUIZ
+                    // =================================================
+
+                    monitoredQuizId =
+                        quizId;
+
+                    btnMonitor.Enabled =
+                        true;
+
+                    StartMonitoring(
+                        monitoredQuizId);
+
                     MessageBox.Show(
                         assessmentType.ToUpper() +
                         " submitted successfully!\n\n" +
@@ -989,6 +1840,11 @@ namespace WinFormsApp1
                         "\n" +
                         "Exam Period: " +
                         examPeriod +
+                        "\n" +
+                        "Time Limit: " +
+                        durationMinutes +
+                        " minute" +
+                        (durationMinutes == 1 ? "" : "s") +
                         "\n\n" +
                         "Question Structure:\n" +
                         "Multiple Choice: " +
@@ -1004,12 +1860,15 @@ namespace WinFormsApp1
                         essayCount +
                         "\n\n" +
                         "Total Questions: " +
-                        importedQuestions.Count,
+                        importedQuestions.Count +
+                        "\n\n" +
+                        "Student monitoring is now active.",
                         "Submit Successful",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Information);
 
-                    ClearForm();
+                    ClearForm(
+                        false);
                 }
                 catch (Exception ex)
                 {
@@ -1033,6 +1892,291 @@ namespace WinFormsApp1
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
                 }
+            }
+        }
+
+        // =========================================================
+        // START MONITORING
+        // =========================================================
+
+        private void StartMonitoring(
+            int quizId)
+        {
+            monitoredQuizId =
+                quizId;
+
+            lblMonitoringQuiz.Text =
+                "Monitoring Quiz ID: " +
+                quizId;
+
+            dgvAttempts.Rows.Clear();
+
+            LoadStudentAttempts();
+
+            if (monitoringTimer != null)
+            {
+                monitoringTimer.Stop();
+                monitoringTimer.Start();
+            }
+        }
+
+        // =========================================================
+        // MONITOR BUTTON
+        // =========================================================
+
+        private void BtnMonitor_Click(
+            object sender,
+            EventArgs e)
+        {
+            if (monitoredQuizId <= 0)
+            {
+                MessageBox.Show(
+                    "No quiz is currently selected for monitoring.",
+                    "Monitoring",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
+                return;
+            }
+
+            LoadStudentAttempts();
+
+            if (monitoringTimer != null)
+            {
+                monitoringTimer.Start();
+            }
+        }
+
+        // =========================================================
+        // MONITORING TIMER
+        // =========================================================
+
+        private void MonitoringTimer_Tick(
+            object sender,
+            EventArgs e)
+        {
+            if (monitoredQuizId <= 0)
+            {
+                return;
+            }
+
+            LoadStudentAttempts();
+        }
+
+        // =========================================================
+        // LOAD STUDENT ATTEMPTS
+        // =========================================================
+
+        private void LoadStudentAttempts()
+        {
+            if (monitoredQuizId <= 0)
+            {
+                return;
+            }
+
+            try
+            {
+                string connStr =
+                    SettingsManager.Current
+                    .GetConnectionString();
+
+                using (var connection =
+                       new MySqlConnection(connStr))
+                {
+                    connection.Open();
+
+                    string query = @"
+                        SELECT
+                            qa.attempt_id,
+                            qa.user_id,
+                            uc.full_name,
+                            qa.status,
+                            qa.last_seen,
+                            qa.submitted_at
+                        FROM quiz_attempts qa
+                        INNER JOIN user_credential uc
+                            ON uc.user_id = qa.user_id
+                        WHERE qa.quiz_id = @quiz_id
+                        ORDER BY uc.full_name;";
+
+                    using (var command =
+                           new MySqlCommand(
+                               query,
+                               connection))
+                    {
+                        command.Parameters.AddWithValue(
+                            "@quiz_id",
+                            monitoredQuizId);
+
+                        using (var reader =
+                               command.ExecuteReader())
+                        {
+                            dgvAttempts.Rows.Clear();
+
+                            while (reader.Read())
+                            {
+                                string fullName =
+                                    reader["full_name"] == DBNull.Value
+                                        ? "Unknown Student"
+                                        : reader["full_name"].ToString();
+
+                                string dbStatus =
+                                    reader["status"] == DBNull.Value
+                                        ? ""
+                                        : reader["status"].ToString();
+
+                                DateTime? lastSeen =
+                                    null;
+
+                                if (reader["last_seen"] !=
+                                    DBNull.Value)
+                                {
+                                    lastSeen =
+                                        Convert.ToDateTime(
+                                            reader["last_seen"]);
+                                }
+
+                                string displayStatus =
+                                    GetDisplayStatus(
+                                        dbStatus,
+                                        lastSeen);
+
+                                int rowIndex =
+                                    dgvAttempts.Rows.Add(
+                                        fullName,
+                                        displayStatus);
+
+                                DataGridViewRow row =
+                                    dgvAttempts.Rows[
+                                        rowIndex];
+
+                                ApplyStatusStyle(
+                                    row,
+                                    displayStatus);
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Do not continuously show database/LAN errors
+                // to the professor while the timer is refreshing.
+                //
+                // The next refresh will try again.
+            }
+        }
+
+        // =========================================================
+        // GET DISPLAY STATUS
+        // =========================================================
+
+        private string GetDisplayStatus(
+            string dbStatus,
+            DateTime? lastSeen)
+        {
+            string status =
+                dbStatus == null
+                    ? ""
+                    : dbStatus.Trim().ToUpper();
+
+            // Submitted always remains Submitted.
+            if (status ==
+                "SUBMITTED")
+            {
+                return "✓ Submitted";
+            }
+
+            // Taking + recent heartbeat.
+            if (status ==
+                    "TAKING" &&
+                lastSeen.HasValue)
+            {
+                TimeSpan elapsed =
+                    DateTime.Now -
+                    lastSeen.Value;
+
+                if (elapsed.TotalSeconds <=
+                    15)
+                {
+                    return "🟢 Taking Quiz";
+                }
+
+                return "🟡 Disconnected";
+            }
+
+            // If TAKING but last_seen is missing,
+            // treat it as disconnected rather than
+            // incorrectly showing the student as active.
+            if (status ==
+                "TAKING")
+            {
+                return "🟡 Disconnected";
+            }
+
+            return status;
+        }
+
+        // =========================================================
+        // APPLY STATUS STYLE
+        // =========================================================
+
+        private void ApplyStatusStyle(
+            DataGridViewRow row,
+            string displayStatus)
+        {
+            if (row == null)
+            {
+                return;
+            }
+
+            if (displayStatus ==
+                "🟢 Taking Quiz")
+            {
+                row.Cells["Status"]
+                    .Style.ForeColor =
+                    ClrGreen;
+
+                row.Cells["Status"]
+                    .Style.Font =
+                    new Font(
+                        "Segoe UI Semibold",
+                        9,
+                        FontStyle.Bold);
+            }
+            else if (displayStatus ==
+                     "🟡 Disconnected")
+            {
+                row.Cells["Status"]
+                    .Style.ForeColor =
+                    ClrYellow;
+
+                row.Cells["Status"]
+                    .Style.Font =
+                    new Font(
+                        "Segoe UI Semibold",
+                        9,
+                        FontStyle.Bold);
+            }
+            else if (displayStatus ==
+                     "✓ Submitted")
+            {
+                row.Cells["Status"]
+                    .Style.ForeColor =
+                    ClrGreen;
+
+                row.Cells["Status"]
+                    .Style.Font =
+                    new Font(
+                        "Segoe UI Semibold",
+                        9,
+                        FontStyle.Bold);
+            }
+            else
+            {
+                row.Cells["Status"]
+                    .Style.ForeColor =
+                    ClrRed;
             }
         }
 
@@ -1476,7 +2620,8 @@ namespace WinFormsApp1
         // CLEAR FORM
         // =========================================================
 
-        private void ClearForm()
+        private void ClearForm(
+            bool clearMonitoring = true)
         {
             txtQuizTitle.Clear();
 
@@ -1488,6 +2633,12 @@ namespace WinFormsApp1
             cmbExamPeriod.SelectedIndex =
                 0;
 
+            // Reset time limit to default 60 minutes.
+            if (numDurationMinutes != null)
+            {
+                numDurationMinutes.Value = 60;
+            }
+
             importedQuestions =
                 new List<QuizQuestion>();
 
@@ -1498,9 +2649,60 @@ namespace WinFormsApp1
 
             lblQuestionCount.Text =
                 "Questions: 0";
+
+            if (clearMonitoring)
+            {
+                StopMonitoring();
+
+                monitoredQuizId =
+                    0;
+
+                btnMonitor.Enabled =
+                    false;
+
+                lblMonitoringQuiz.Text =
+                    "No quiz selected.";
+
+                dgvAttempts.Rows.Clear();
+            }
+        }
+
+        // =========================================================
+        // STOP MONITORING
+        // =========================================================
+
+        private void StopMonitoring()
+        {
+            if (monitoringTimer != null)
+            {
+                monitoringTimer.Stop();
+            }
+        }
+
+        // =========================================================
+        // FORM CLOSED
+        // =========================================================
+
+        private void ProfessorQuizForm_FormClosed(
+            object sender,
+            FormClosedEventArgs e)
+        {
+            StopMonitoring();
+
+            if (monitoringTimer != null)
+            {
+                monitoringTimer.Tick -=
+                    MonitoringTimer_Tick;
+
+                monitoringTimer.Dispose();
+
+                monitoringTimer =
+                    null;
+            }
         }
     }
 
-    // NOTE: RoundedButton class ay nasa LivenessCheckForm.cs na —
-    // inalis dito para maiwasan ang "ambiguous" / duplicate class error.
+    // NOTE:
+    // RoundedButton class ay nasa LivenessCheckForm.cs na —
+    // inalis dito para maiwasan ang duplicate/ambiguous class error.
 }
