@@ -271,11 +271,6 @@ namespace WinFormsApp1
             EnableAntiCheat();
         }
 
-        // =========================================================
-<<<<<<< Updated upstream
-        // TIMER BADGE - GOLD OUTLINE
-        // =========================================================
-
         private void LblTimer_Paint(object sender, PaintEventArgs e)
         {
             Label label = sender as Label;
@@ -292,12 +287,7 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // FORM CLOSED
-=======
-        // FORM CLOSED — final save + mark DISCONNECTED
->>>>>>> Stashed changes
-        // =========================================================
+
 
         private void StudentQuizForm_FormClosed(object sender, FormClosedEventArgs e)
         {
@@ -883,13 +873,8 @@ namespace WinFormsApp1
             lblTimer.Text = $"TIME: {minutes:00}:{seconds:00}";
 
             lblTimer.BackColor = remainingSeconds <= 300
-<<<<<<< Updated upstream
                 ? Color.FromArgb(185, 28, 28)   // red warning in last 5 minutes
-                : DarkColor;
-=======
-                ? Color.FromArgb(185, 28, 28)
                 : MaroonColor;
->>>>>>> Stashed changes
         }
 
         private void SaveRemainingSecondsToDb(int seconds)
