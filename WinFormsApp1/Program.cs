@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace WinFormsApp1
@@ -15,9 +16,25 @@ namespace WinFormsApp1
 
             Application.SetCompatibleTextRenderingDefault(false);
 
-            var login = new Login();
+            // ---- Show splash non-modally ----
+            SplashForm splash = new SplashForm();
+            splash.Show();
+            splash.Refresh();
 
-            // Hold a reference so the app stays alive while Login is hidden
+            // Give the user ~2.5 seconds to see the splash
+            DateTime start = DateTime.Now;
+            while ((DateTime.Now - start).TotalMilliseconds < 2500)
+            {
+                Application.DoEvents();      // keep the splash responsive
+                System.Threading.Thread.Sleep(20);
+            }
+
+            // Close splash
+            splash.Close();
+            splash.Dispose();
+
+            // ---- Then show Login ----
+            var login = new Login();
             var context = new ApplicationContext(login);
             Application.Run(context);
         }

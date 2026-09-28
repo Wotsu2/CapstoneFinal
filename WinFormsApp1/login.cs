@@ -35,6 +35,8 @@ namespace WinFormsApp1
         public Login()
         {
             InitializeComponent();
+            txtUsername.Text = "";
+            txtPassword.Text = "";
         }
 
         private void Login_Load(object sender, EventArgs e)
