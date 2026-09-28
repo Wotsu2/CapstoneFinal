@@ -1114,19 +1114,36 @@ namespace WinFormsApp1
             DateTime now = DateTime.Now;
             string FullDateTime = now.ToString("MMM-dd HH:mm:ss");
 
-            byte[] pdfBytes = null;
+            string savedFilePath = null;
             string pdfName = null;
 
             if (!string.IsNullOrEmpty(selectedFilePath) && File.Exists(selectedFilePath))
             {
                 try
                 {
-                    pdfBytes = File.ReadAllBytes(selectedFilePath);
-                    pdfName = Path.GetFileName(selectedFilePath);
+                    if (string.IsNullOrEmpty(saveFolder) || saveFolder == "Null")
+                    {
+                        MessageBox.Show("Save folder is not configured for this account.");
+                        return;
+                    }
+
+                    pdfName = SanitizeFolderName(Path.GetFileName(selectedFilePath));
+                    string section = SanitizeFolderName(cmbActivitySection.Text.Trim());
+
+                    // Same root (saveFolder) + same per-section pattern as student submissions,
+                    // just a dedicated "ActivityFiles" subfolder to keep posted materials separate
+                    string sectionFolder = Path.Combine(saveFolder, section);
+                    string activityFolder = Path.Combine(sectionFolder, "ActivityFiles");
+
+                    if (!Directory.Exists(activityFolder))
+                        Directory.CreateDirectory(activityFolder);
+
+                    savedFilePath = Path.Combine(activityFolder, pdfName);
+                    File.Copy(selectedFilePath, savedFilePath, true);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Could not read the selected file: " + ex.Message);
+                    MessageBox.Show("Could not save the selected file: " + ex.Message);
                     return;
                 }
             }
@@ -1137,12 +1154,12 @@ namespace WinFormsApp1
                 {
                     conn.Open();
                     string query = @"INSERT INTO professor_activity 
-                            (professor_id, title, description, section, activity_subject, 
-                             start_time, due_date, activity_status, score, 
-                             activity_file, activity_filename) 
-                            VALUES (@professor_id, @title, @description, @section, @activity_subject, 
-                                    @start_time, @due_date, @activity_status, @score, 
-                                    @activity_file, @activity_filename)";
+                    (professor_id, title, description, section, activity_subject, 
+                     start_time, due_date, activity_status, score, 
+                     activity_file, activity_filename) 
+                    VALUES (@professor_id, @title, @description, @section, @activity_subject, 
+                            @start_time, @due_date, @activity_status, @score, 
+                            @activity_file, @activity_filename)";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -1155,7 +1172,7 @@ namespace WinFormsApp1
                         cmd.Parameters.AddWithValue("@due_date", dtpActivityDeadline.Value);
                         cmd.Parameters.AddWithValue("@activity_status", "Pending");
                         cmd.Parameters.AddWithValue("@score", txtActivityScore.Text.Trim());
-                        cmd.Parameters.AddWithValue("@activity_file", (object)pdfBytes ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@activity_file", (object)savedFilePath ?? DBNull.Value);
                         cmd.Parameters.AddWithValue("@activity_filename", (object)pdfName ?? DBNull.Value);
                         cmd.ExecuteNonQuery();
                     }
@@ -1165,6 +1182,10 @@ namespace WinFormsApp1
                     selectedFilePath = "";
                     btnActivityUploadFile.Text = "Upload File";
                     RecentActivity();
+
+                    // Refresh the file browser if the professor is currently viewing that section's folder
+                    if (!string.IsNullOrEmpty(currentFolder) && Directory.Exists(currentFolder))
+                        LoadServerFolder(currentFolder, addToHistory: false);
                 }
             }
             catch (Exception ex)

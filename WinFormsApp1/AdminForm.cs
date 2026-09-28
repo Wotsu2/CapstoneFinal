@@ -42,7 +42,6 @@ namespace WinFormsApp1
         // FILE MANAGEMENT
         private string currentFolder;
         private Stack<string> folderHistory = new Stack<string>();
-        private string saveFolder = @"C:\ReceivedFileFolder";
 
         // WORKSTATION
         private TcpListener listener;
@@ -335,8 +334,6 @@ namespace WinFormsApp1
             PanelIndicator = navbarStyle.CreateIndicator(btnFileManagement);
 
             string root = SettingsManager.Current.SaveFolder;
-            if (string.IsNullOrEmpty(root))
-                root = saveFolder;
 
             if (!Directory.Exists(root))
             {

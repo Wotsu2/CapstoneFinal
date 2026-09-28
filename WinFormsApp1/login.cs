@@ -353,7 +353,11 @@ namespace WinFormsApp1
                 SettingsManager.Current.DatabasePassword = txtDatabasePassword.Text;
 
                 if (!string.IsNullOrEmpty(selectedRootFolder))
+                {
                     SettingsManager.Current.SaveFolder = selectedRootFolder;
+                    SaveRootFolderToDatabase(selectedRootFolder);
+                }
+                    
 
                 SettingsManager.Save();
             }
@@ -365,7 +369,40 @@ namespace WinFormsApp1
 
             MessageBox.Show("Settings saved successfully!\n\nRoot folder: " + SettingsManager.Current.SaveFolder);
         }
+        private void SaveRootFolderToDatabase(string path)
+        {
+            string connStr = SettingsManager.Current.GetConnectionString();
 
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    // Ensure the table exists (safe to run every time)
+                    string createTable = @"CREATE TABLE IF NOT EXISTS mainfolderpath (
+                                        user_id INT PRIMARY KEY,
+                                        FolderPath VARCHAR(255)
+                                    )";
+                    using (var createCmd = new MySqlCommand(createTable, conn))
+                        createCmd.ExecuteNonQuery();
+
+                    string query = @"INSERT INTO mainfolderpath (user_id, FolderPath) 
+                              VALUES (0, @path)
+                              ON DUPLICATE KEY UPDATE FolderPath = @path";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@path", path);
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Warning: Root folder saved locally, but failed to sync to shared database:\n" + ex.Message);
+            }
+        }
         // =========================================================
         // CONFIGURATION — SELECT FOLDER
         // =========================================================
