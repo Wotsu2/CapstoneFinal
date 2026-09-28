@@ -1107,54 +1107,48 @@ namespace WinFormsApp1
             }
         }
 
-
-        private void btnPostActivity_Click(object sender, EventArgs e)
+        private async void btnPostActivity_Click(object sender, EventArgs e)
         {
             string connStr = SettingsManager.Current.GetConnectionString();
-
             DateTime now = DateTime.Now;
             string FullDateTime = now.ToString("MMM-dd HH:mm:ss");
 
-            string savedFilePath = null;
             string pdfName = null;
+            byte[] fileBytes = null;
+            string uncPath = null;                    // <-- path stored in DB (shared)
+            string section = SanitizeFolderName(cmbActivitySection.Text.Trim());
 
+            // ---------- 1) Read the file (NO local save) ----------
             if (!string.IsNullOrEmpty(selectedFilePath) && File.Exists(selectedFilePath))
             {
                 try
                 {
-                    if (string.IsNullOrEmpty(saveFolder) || saveFolder == "Null")
-                    {
-                        MessageBox.Show("Save folder is not configured for this account.");
-                        return;
-                    }
-
                     pdfName = SanitizeFolderName(Path.GetFileName(selectedFilePath));
-                    string section = SanitizeFolderName(cmbActivitySection.Text.Trim());
-
-                    // saveFolder should be a UNC root like \\192.168.1.10\SharedFolder\MERIALES_M_J_V
-                    string sectionFolder = Path.Combine(saveFolder, section);
-                    string activityFolder = Path.Combine(sectionFolder, "ActivityFiles");
-
-                    if (!Directory.Exists(activityFolder))
-                        Directory.CreateDirectory(activityFolder);
-
-                    savedFilePath = Path.Combine(activityFolder, pdfName);
-                    File.Copy(selectedFilePath, savedFilePath, true);
-
-                    // Sanity check: make sure it actually landed where we think it did
-                    if (!File.Exists(savedFilePath))
-                    {
-                        MessageBox.Show("File copy failed silently.\nExpected at:\n" + savedFilePath);
-                        return;
-                    }
+                    fileBytes = await File.ReadAllBytesAsync(selectedFilePath);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Could not save the selected file: " + ex.Message);
+                    MessageBox.Show("Could not read the selected file: " + ex.Message);
                     return;
                 }
             }
 
+            // ---------- 2) Send bytes to the SERVER (server writes to shared folder) ----------
+            if (fileBytes != null && !string.IsNullOrEmpty(pdfName))
+            {
+                bool sent = await SendActivityFileToServer(section, pdfName, fileBytes);
+                if (!sent)
+                {
+                    MessageBox.Show("Failed to send activity file to server. Activity not posted.");
+                    return;
+                }
+
+                // Build the UNC path the SERVER wrote to (so all PCs can read it)
+                string sharedFolderName = new DirectoryInfo(SettingsManager.Current.SaveFolder).Name;
+                uncPath = $@"\\{SettingsManager.Current.ServerIp}\{sharedFolderName}\{section}\ActivityFiles\{pdfName}";
+            }
+
+            // ---------- 3) Insert into DB ----------
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -1179,8 +1173,8 @@ namespace WinFormsApp1
                         cmd.Parameters.AddWithValue("@due_date", dtpActivityDeadline.Value);
                         cmd.Parameters.AddWithValue("@activity_status", "Pending");
                         cmd.Parameters.AddWithValue("@score", txtActivityScore.Text.Trim());
+                        cmd.Parameters.AddWithValue("@activity_file", (object)uncPath ?? DBNull.Value);
                         cmd.Parameters.AddWithValue("@activity_filename", (object)pdfName ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@activity_file", (object)savedFilePath ?? DBNull.Value);
                         cmd.ExecuteNonQuery();
                     }
                 }
@@ -1196,32 +1190,42 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("btnPostActivity_Click error: " + ex.Message);
+                Console.WriteLine("btnPostActivity_Click error: " + ex.Message);
+                MessageBox.Show("Error posting activity: " + ex.Message);
             }
         }
 
-        private async Task<bool> SendActivityFileToStudent(
-            string studentIp, string section, string fileName, byte[] fileBytes)
+        private async Task<bool> SendActivityFileToServer(string section, string fileName, byte[] fileBytes)
         {
             try
             {
-                int port = SettingsManager.Current.FileTransferPort;
+                string serverIp = SettingsManager.Current.ServerIp;
+                int serverPort = SettingsManager.Current.FileTransferPort;
 
                 using (TcpClient client = new TcpClient())
                 {
-                    var connectTask = client.ConnectAsync(studentIp, port);
+                    var connectTask = client.ConnectAsync(serverIp, serverPort);
                     var timeoutTask = Task.Delay(5000);
                     var completed = await Task.WhenAny(connectTask, timeoutTask);
 
-                    if (completed == timeoutTask) return false;
+                    if (completed == timeoutTask)
+                    {
+                        MessageBox.Show($"Server ({serverIp}:{serverPort}) not reachable (timeout).");
+                        return false;
+                    }
+
                     await connectTask;
-                    if (!client.Connected) return false;
+                    if (!client.Connected)
+                    {
+                        MessageBox.Show($"Server ({serverIp}:{serverPort}) refused the connection.");
+                        return false;
+                    }
 
                     using (NetworkStream stream = client.GetStream())
                     using (BinaryWriter writer = new BinaryWriter(stream))
                     {
-                        writer.Write("ACTIVITY_FILE");
-                        writer.Write(section);
+                        writer.Write("ACTIVITY_FILE");   // message type
+                        writer.Write(section);           // subfolder
                         writer.Write(fileName);
                         writer.Write(fileBytes.Length);
                         writer.Write(fileBytes);
@@ -1232,7 +1236,7 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Send to {studentIp} failed: {ex.Message}");
+                Console.WriteLine("SendActivityFileToServer error: " + ex.Message);
                 return false;
             }
         }
