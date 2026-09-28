@@ -49,7 +49,7 @@ namespace WinFormsApp1
         private string Isauthentication_photoEmpty;
 
         private System.Windows.Forms.Timer assessmentsRefreshTimer;
-        private System.Windows.Forms.Timer activitiesRefreshTimer;   // <-- NEW
+        private System.Windows.Forms.Timer activitiesRefreshTimer;
 
         private Guna.UI2.WinForms.Guna2Panel assessmentsPanel;
         private FlowLayoutPanel assessmentsList;
@@ -57,7 +57,6 @@ namespace WinFormsApp1
         private bool _assessmentsInitialized = false;
         private bool _reminderShown = false;
 
-        // Banner slideshow
         private System.Windows.Forms.Timer slideshowTimer;
         private List<Image> slideshowImages = new List<Image>();
         private int slideshowIndex = 0;
@@ -117,10 +116,8 @@ namespace WinFormsApp1
                 flpPendingActivities.FlowDirection = FlowDirection.LeftToRight;
                 flpPendingActivities.PerformLayout();
 
-                // ✅ Start the banner slideshow
                 StartSlideshow();
 
-                // ✅ NEW: poll pending activities every 10s while Home is visible
                 activitiesRefreshTimer = new System.Windows.Forms.Timer { Interval = 10000 };
                 activitiesRefreshTimer.Tick += (s, ev) =>
                 {
@@ -323,8 +320,6 @@ namespace WinFormsApp1
             btnSubject.Checked = false;
 
             try { LoadAssessments(); } catch { }
-
-            // ✅ NEW: refresh immediately when the user navigates back to Home
             try { RefreshPendingActivities(); } catch { }
         }
 
@@ -345,7 +340,6 @@ namespace WinFormsApp1
             btnSubject.Checked = false;
             btnGrades.Checked = false;
 
-            // ✅ NEW: refresh the grid when opening Activities
             try { InitializeDataGridViewActivities(); } catch { }
         }
 
@@ -916,8 +910,8 @@ namespace WinFormsApp1
                     conn.Open();
 
                     string query = @"
-                SELECT pa.title, pa.start_time, pa.due_date,
-                       pa.activity_status,
+                SELECT pa.activity_id, pa.title, pa.start_time, pa.due_date,
+                       pa.activity_subject, pa.activity_status,
                        pa.description, pa.professor_id
                 FROM professor_activity pa
                 INNER JOIN student_class sc
@@ -1301,7 +1295,6 @@ namespace WinFormsApp1
                     InitializeCreadeClass(className, classSection, classTime, classDate);
                     MessageBox.Show("Successfully Joined Class!");
 
-                    // NEW: refresh pending activities immediately after joining
                     try { RefreshPendingActivities(); } catch { }
                 }
             }
@@ -1443,7 +1436,6 @@ namespace WinFormsApp1
                                     flpSubjectClass.Controls.Remove(cardPanel);
                                     cardPanel.Dispose();
 
-                                    // NEW: refresh pending activities after unjoining
                                     try { RefreshPendingActivities(); } catch { }
                                 };
 
@@ -1552,12 +1544,18 @@ namespace WinFormsApp1
 
         private void ClearAllFormData()
         {
-            foreach (Control ctrl in this.Controls)
+            ClearAllFormData(this);
+        }
+
+        private void ClearAllFormData(Control parent)
+        {
+            foreach (Control ctrl in parent.Controls)
             {
-                if (ctrl is TextBox) ((TextBox)ctrl).Text = "";
-                else if (ctrl is ComboBox) ((ComboBox)ctrl).SelectedIndex = -1;
-                else if (ctrl is DataGridView) ((DataGridView)ctrl).DataSource = null;
-                else if (ctrl is ListBox) ((ListBox)ctrl).Items.Clear();
+                if (ctrl is TextBox tb) tb.Text = "";
+                else if (ctrl is ComboBox cb) cb.SelectedIndex = -1;
+                else if (ctrl is DataGridView dgv) dgv.DataSource = null;
+                else if (ctrl is ListBox lb) lb.Items.Clear();
+                else if (ctrl.HasChildren) ClearAllFormData(ctrl);
             }
         }
 
@@ -1613,7 +1611,6 @@ namespace WinFormsApp1
             try { StopServer(); } catch { }
             try { ClearAllFormData(); } catch { }
 
-            // Dispose any existing Login instance so a fresh one is created
             foreach (Form f in Application.OpenForms.Cast<Form>().ToList())
             {
                 if (f is Login && !f.IsDisposed)
@@ -1751,14 +1748,28 @@ namespace WinFormsApp1
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
                     CurrentProfilePath = ofd.FileName;
-                    picboxNewPicture.Image = Image.FromFile(CurrentProfilePath);
+
+                    // Load into memory so we don't lock the source file
+                    byte[] bytes = File.ReadAllBytes(CurrentProfilePath);
+                    using (var ms = new MemoryStream(bytes))
+                    {
+                        var temp = Image.FromStream(ms);
+                        var bmp = new Bitmap(temp);
+                        temp.Dispose();
+
+                        picboxNewPicture.Image?.Dispose();
+                        picboxNewPicture.Image = bmp;
+                    }
                     picboxNewPicture.SizeMode = PictureBoxSizeMode.Zoom;
                     btnSubmitChangePhoto.Enabled = true;
                 }
             }
         }
 
-        private void btnSubmitChangePhoto_Click(object sender, EventArgs e)
+        // =========================================================
+        // PROFILE PHOTO — SEND TO ADMIN (like auth photo)
+        // =========================================================
+        private async void btnSubmitChangePhoto_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(CurrentProfilePath))
             {
@@ -1766,29 +1777,125 @@ namespace WinFormsApp1
                 return;
             }
 
-            string connStr = SettingsManager.Current.GetConnectionString();
+            if (!File.Exists(CurrentProfilePath))
+            {
+                MessageBox.Show("The selected file no longer exists.");
+                return;
+            }
 
             try
             {
+                byte[] imageBytes = await File.ReadAllBytesAsync(CurrentProfilePath);
+
+                string ext = Path.GetExtension(CurrentProfilePath);
+                string fileName = SanitizeFolderName(StudentUsername) + "_" +
+                                  DateTime.Now.ToString("yyyyMMddHHmmss") + ext;
+
+                string uncPath = await SendProfilePhotoToAdmin(imageBytes, fileName);
+
+                if (string.IsNullOrEmpty(uncPath))
+                {
+                    MessageBox.Show("Failed to send profile picture to server.");
+                    return;
+                }
+
+                Console.WriteLine("[ChangePhoto] Admin returned UNC: " + uncPath);
+
+                string connStr = SettingsManager.Current.GetConnectionString();
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    using (var cmd = new MySqlCommand("UPDATE user_credential SET profile_picture = @profile_picture WHERE username = @username", conn))
+                    using (var cmd = new MySqlCommand(
+                        "UPDATE user_credential SET profile_picture = @path WHERE username = @username", conn))
                     {
-                        string fileName = Path.GetFileName(CurrentProfilePath);
-                        string destinationPath = Path.Combine(SaveCurrentProfilePath, fileName);
-                        File.Copy(CurrentProfilePath, destinationPath, true);
-                        cmd.Parameters.AddWithValue("@profile_picture", destinationPath);
+                        cmd.Parameters.AddWithValue("@path", uncPath);
                         cmd.Parameters.AddWithValue("@username", StudentUsername);
-                        cmd.ExecuteNonQuery();
+
+                        int rows = cmd.ExecuteNonQuery();
+                        if (rows == 0)
+                        {
+                            MessageBox.Show("No user row was updated. Check the username.");
+                            return;
+                        }
                     }
-                    InitializeChangingPicture();
-                    MessageBox.Show("Profile picture updated successfully.");
+                }
+
+                // Force reload
+                picboxSettingProfilePicture.Image?.Dispose();
+                picboxSettingProfilePicture.Image = null;
+
+                btnAccount.Image?.Dispose();
+                btnAccount.Image = null;
+
+                InitializeChangingPicture();
+                MessageBox.Show("Profile picture updated successfully.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("btnSubmitChangePhoto_Click error: " + ex);
+                MessageBox.Show("Error: " + ex.Message);
+            }
+        }
+
+        private async Task<string> SendProfilePhotoToAdmin(byte[] imageBytes, string fileName)
+        {
+            try
+            {
+                string adminIp = SettingsManager.Current.ServerIp.TrimStart('\\').TrimEnd('\\');
+                int adminPort = SettingsManager.Current.FileTransferPort;
+
+                Console.WriteLine($"[PROFILE PHOTO] Sending {fileName} ({imageBytes.Length} bytes) to {adminIp}:{adminPort}");
+
+                using (var client = new TcpClient())
+                {
+                    var connectTask = client.ConnectAsync(adminIp, adminPort);
+                    var timeoutTask = Task.Delay(5000);
+                    var completed = await Task.WhenAny(connectTask, timeoutTask);
+
+                    if (completed == timeoutTask)
+                    {
+                        MessageBox.Show($"Server ({adminIp}:{adminPort}) not reachable (timeout).");
+                        return null;
+                    }
+
+                    await connectTask;
+                    if (!client.Connected)
+                    {
+                        MessageBox.Show($"Server ({adminIp}:{adminPort}) refused the connection.");
+                        return null;
+                    }
+
+                    string returnedUnc = null;
+
+                    using (var stream = client.GetStream())
+                    using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
+                    {
+                        writer.Write("PROFILE_PHOTO");
+                        writer.Write(StudentUsername);
+                        writer.Write(fileName);
+                        writer.Write(imageBytes.Length);
+                        writer.Write(imageBytes);
+                        writer.Flush();
+
+                        try
+                        {
+                            var reader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true);
+                            returnedUnc = reader.ReadString();
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Read reply error: " + ex.Message);
+                        }
+                    }
+
+                    return returnedUnc;
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("btnSubmitChangePhoto_Click error: " + ex.Message);
+                Console.WriteLine("SendProfilePhotoToAdmin error: " + ex.Message);
+                MessageBox.Show("Send error: " + ex.Message);
+                return null;
             }
         }
 
@@ -1803,20 +1910,32 @@ namespace WinFormsApp1
                     using (var cmd = new MySqlCommand("SELECT profile_picture FROM user_credential WHERE username = @username", conn))
                     {
                         cmd.Parameters.AddWithValue("@username", StudentUsername);
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                if (reader.IsDBNull(reader.GetOrdinal("profile_picture"))) return;
 
-                                string path = reader.GetString("profile_picture");
-                                if (File.Exists(path))
-                                {
-                                    picboxSettingProfilePicture.Image = Image.FromFile(path);
-                                    picboxSettingProfilePicture.SizeMode = PictureBoxSizeMode.Zoom;
-                                    btnAccount.Image = Image.FromFile(path);
-                                }
-                            }
+                        object raw = cmd.ExecuteScalar();
+                        if (raw == null || raw == DBNull.Value) return;
+
+                        string path = raw.ToString();
+                        Console.WriteLine("[ChangingPicture] Loading: " + path);
+
+                        if (!File.Exists(path))
+                        {
+                            Console.WriteLine("[ChangingPicture] File not found.");
+                            return;
+                        }
+
+                        byte[] bytes = File.ReadAllBytes(path);
+                        using (var ms = new MemoryStream(bytes))
+                        {
+                            var temp = Image.FromStream(ms);
+                            var bmp = new Bitmap(temp);
+                            temp.Dispose();
+
+                            picboxSettingProfilePicture.Image?.Dispose();
+                            picboxSettingProfilePicture.Image = bmp;
+                            picboxSettingProfilePicture.SizeMode = PictureBoxSizeMode.Zoom;
+
+                            btnAccount.Image?.Dispose();
+                            btnAccount.Image = bmp;
                         }
                     }
                 }
@@ -2458,6 +2577,23 @@ namespace WinFormsApp1
             navToolTip.SetToolTip(btnGrades, "Grades");
             navToolTip.SetToolTip(btnQuizExam, "Quiz / Exam");
             navToolTip.SetToolTip(btnAccount, "Settings");
+        }
+
+        // =========================================================
+        // UTILITIES
+        // =========================================================
+
+        private string SanitizeFolderName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "Unknown";
+
+            foreach (char c in Path.GetInvalidFileNameChars())
+                name = name.Replace(c, '_');
+
+            name = name.Trim().TrimEnd('.');
+            if (string.IsNullOrWhiteSpace(name)) return "Unknown";
+
+            return name;
         }
     }
 }
