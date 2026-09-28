@@ -449,6 +449,21 @@ namespace WinFormsApp1
             return type;
         }
 
+        private void InitializeComponent()
+        {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ProfessorStudentAnswersForm));
+            SuspendLayout();
+            // 
+            // ProfessorStudentAnswersForm
+            // 
+            ClientSize = new Size(284, 261);
+            Icon = (Icon)resources.GetObject("$this.Icon");
+            Name = "ProfessorStudentAnswersForm";
+            Text = "Quiz & Exam Answer";
+            ResumeLayout(false);
+
+        }
+
         // =========================================================
         // RESULT FORMATTING
         // =========================================================

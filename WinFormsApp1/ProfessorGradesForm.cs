@@ -530,6 +530,11 @@ namespace WinFormsApp1
                 "OR quiz_title LIKE '%" + search + "%'";
         }
 
+        private void InitializeComponent()
+        {
+
+        }
+
         // =========================================================
         // VIEW ANSWERS
         // =========================================================

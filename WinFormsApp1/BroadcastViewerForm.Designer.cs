@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(BroadcastViewerForm));
             pictureBoxBroadcast = new PictureBox();
             ((System.ComponentModel.ISupportInitialize)pictureBoxBroadcast).BeginInit();
             SuspendLayout();
@@ -48,10 +49,11 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1370, 749);
             Controls.Add(pictureBoxBroadcast);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "BroadcastViewerForm";
-            Text = "BroadcastViewerForm";
+            Text = "Broadcast";
             ((System.ComponentModel.ISupportInitialize)pictureBoxBroadcast).EndInit();
             ResumeLayout(false);
         }

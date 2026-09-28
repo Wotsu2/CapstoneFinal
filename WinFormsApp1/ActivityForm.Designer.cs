@@ -28,12 +28,13 @@
         /// </summary>
         private void InitializeComponent()
         {
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges1 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges2 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges3 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges4 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges5 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges6 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges7 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges8 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges9 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges10 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges11 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges12 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ActivityForm));
             lblActivityTitle = new Label();
             lblActivityDueDate = new Label();
             guna2Panel1 = new Guna.UI2.WinForms.Guna2Panel();
@@ -69,11 +70,11 @@
             guna2Panel1.BackColor = Color.Transparent;
             guna2Panel1.BorderRadius = 20;
             guna2Panel1.Controls.Add(lblActivityStatus);
-            guna2Panel1.CustomizableEdges = customizableEdges1;
+            guna2Panel1.CustomizableEdges = customizableEdges7;
             guna2Panel1.FillColor = Color.FromArgb(184, 186, 66);
             guna2Panel1.Location = new Point(623, 34);
             guna2Panel1.Name = "guna2Panel1";
-            guna2Panel1.ShadowDecoration.CustomizableEdges = customizableEdges2;
+            guna2Panel1.ShadowDecoration.CustomizableEdges = customizableEdges8;
             guna2Panel1.Size = new Size(105, 38);
             guna2Panel1.TabIndex = 2;
             // 
@@ -117,7 +118,7 @@
             // 
             btnUploadActivity.BorderRadius = 20;
             btnUploadActivity.BorderThickness = 1;
-            btnUploadActivity.CustomizableEdges = customizableEdges3;
+            btnUploadActivity.CustomizableEdges = customizableEdges9;
             btnUploadActivity.DisabledState.BorderColor = Color.DarkGray;
             btnUploadActivity.DisabledState.CustomBorderColor = Color.DarkGray;
             btnUploadActivity.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -130,7 +131,7 @@
             btnUploadActivity.ImageSize = new Size(25, 23);
             btnUploadActivity.Location = new Point(12, 810);
             btnUploadActivity.Name = "btnUploadActivity";
-            btnUploadActivity.ShadowDecoration.CustomizableEdges = customizableEdges4;
+            btnUploadActivity.ShadowDecoration.CustomizableEdges = customizableEdges10;
             btnUploadActivity.Size = new Size(800, 170);
             btnUploadActivity.TabIndex = 5;
             btnUploadActivity.Text = "Click to upload your file or \r\ndrag and drop your file here";
@@ -141,7 +142,7 @@
             // 
             btnPostActivity.BorderRadius = 15;
             btnPostActivity.BorderThickness = 1;
-            btnPostActivity.CustomizableEdges = customizableEdges5;
+            btnPostActivity.CustomizableEdges = customizableEdges11;
             btnPostActivity.DisabledState.BorderColor = Color.DarkGray;
             btnPostActivity.DisabledState.CustomBorderColor = Color.DarkGray;
             btnPostActivity.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -152,7 +153,7 @@
             btnPostActivity.ImageSize = new Size(25, 23);
             btnPostActivity.Location = new Point(735, 1016);
             btnPostActivity.Name = "btnPostActivity";
-            btnPostActivity.ShadowDecoration.CustomizableEdges = customizableEdges6;
+            btnPostActivity.ShadowDecoration.CustomizableEdges = customizableEdges12;
             btnPostActivity.Size = new Size(77, 33);
             btnPostActivity.TabIndex = 6;
             btnPostActivity.Text = "Submit";
@@ -172,8 +173,9 @@
             Controls.Add(guna2Panel1);
             Controls.Add(lblActivityDueDate);
             Controls.Add(lblActivityTitle);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "ActivityForm";
-            Text = "ActivityForm";
+            Text = "Activities";
             guna2Panel1.ResumeLayout(false);
             guna2Panel1.PerformLayout();
             ResumeLayout(false);

@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ScreenViewerForm));
             pictureBoxScreen = new PictureBox();
             ((System.ComponentModel.ISupportInitialize)pictureBoxScreen).BeginInit();
             SuspendLayout();
@@ -48,8 +49,9 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1435, 806);
             Controls.Add(pictureBoxScreen);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "ScreenViewerForm";
-            Text = "ScreenViewerForm";
+            Text = "Monitor";
             ((System.ComponentModel.ISupportInitialize)pictureBoxScreen).EndInit();
             ResumeLayout(false);
         }

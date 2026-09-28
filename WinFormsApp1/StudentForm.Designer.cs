@@ -2716,11 +2716,12 @@
             Controls.Add(pnlQuizExam);
             Controls.Add(pnlSubject);
             Controls.Add(pnlHome);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "StudentForm";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "Cdsga";
+            Text = "Cdsga Student";
             Load += StudentForm_Load;
             guna2Panel2.ResumeLayout(false);
             guna2Panel2.PerformLayout();
