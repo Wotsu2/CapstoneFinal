@@ -1108,26 +1108,49 @@ namespace WinFormsApp1
         }
 
 
-        private async void btnPostActivity_Click(object sender, EventArgs e)
+        private void btnPostActivity_Click(object sender, EventArgs e)
         {
             string connStr = SettingsManager.Current.GetConnectionString();
 
             DateTime now = DateTime.Now;
             string FullDateTime = now.ToString("MMM-dd HH:mm:ss");
 
+            string savedFilePath = null;
             string pdfName = null;
-            byte[] fileBytes = null;
 
             if (!string.IsNullOrEmpty(selectedFilePath) && File.Exists(selectedFilePath))
             {
                 try
                 {
+                    if (string.IsNullOrEmpty(saveFolder) || saveFolder == "Null")
+                    {
+                        MessageBox.Show("Save folder is not configured for this account.");
+                        return;
+                    }
+
                     pdfName = SanitizeFolderName(Path.GetFileName(selectedFilePath));
-                    fileBytes = await File.ReadAllBytesAsync(selectedFilePath);
+                    string section = SanitizeFolderName(cmbActivitySection.Text.Trim());
+
+                    // saveFolder should be a UNC root like \\192.168.1.10\SharedFolder\MERIALES_M_J_V
+                    string sectionFolder = Path.Combine(saveFolder, section);
+                    string activityFolder = Path.Combine(sectionFolder, "ActivityFiles");
+
+                    if (!Directory.Exists(activityFolder))
+                        Directory.CreateDirectory(activityFolder);
+
+                    savedFilePath = Path.Combine(activityFolder, pdfName);
+                    File.Copy(selectedFilePath, savedFilePath, true);
+
+                    // Sanity check: make sure it actually landed where we think it did
+                    if (!File.Exists(savedFilePath))
+                    {
+                        MessageBox.Show("File copy failed silently.\nExpected at:\n" + savedFilePath);
+                        return;
+                    }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Could not read the selected file: " + ex.Message);
+                    MessageBox.Show("Could not save the selected file: " + ex.Message);
                     return;
                 }
             }
@@ -1157,33 +1180,19 @@ namespace WinFormsApp1
                         cmd.Parameters.AddWithValue("@activity_status", "Pending");
                         cmd.Parameters.AddWithValue("@score", txtActivityScore.Text.Trim());
                         cmd.Parameters.AddWithValue("@activity_filename", (object)pdfName ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@activity_file", (object)pdfName ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@activity_file", (object)savedFilePath ?? DBNull.Value);
                         cmd.ExecuteNonQuery();
                     }
                 }
 
                 MessageBox.Show("Activity Posted Successfully");
 
-                // Push the file over TCP to every connected student workstation
-                if (fileBytes != null && !string.IsNullOrEmpty(cmbActivitySection.Text))
-                {
-                    string section = cmbActivitySection.Text.Trim();
-                    var targets = workstationButtons.Keys.ToList();
-
-                    int sent = 0, failed = 0;
-
-                    foreach (string ip in targets)
-                    {
-                        bool ok = await SendActivityFileToStudent(ip, section, pdfName, fileBytes);
-                        if (ok) sent++; else failed++;
-                    }
-
-                    MessageBox.Show($"File sent to {sent} workstation(s). Failed: {failed}.");
-                }
-
                 selectedFilePath = "";
                 btnActivityUploadFile.Text = "Upload File";
                 RecentActivity();
+
+                if (!string.IsNullOrEmpty(currentFolder) && Directory.Exists(currentFolder))
+                    LoadServerFolder(currentFolder, addToHistory: false);
             }
             catch (Exception ex)
             {
