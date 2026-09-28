@@ -1107,43 +1107,27 @@ namespace WinFormsApp1
             }
         }
 
-        private void btnPostActivity_Click(object sender, EventArgs e)
+
+        private async void btnPostActivity_Click(object sender, EventArgs e)
         {
             string connStr = SettingsManager.Current.GetConnectionString();
 
             DateTime now = DateTime.Now;
             string FullDateTime = now.ToString("MMM-dd HH:mm:ss");
 
-            string savedFilePath = null;
             string pdfName = null;
+            byte[] fileBytes = null;
 
             if (!string.IsNullOrEmpty(selectedFilePath) && File.Exists(selectedFilePath))
             {
                 try
                 {
-                    if (string.IsNullOrEmpty(saveFolder) || saveFolder == "Null")
-                    {
-                        MessageBox.Show("Save folder is not configured for this account.");
-                        return;
-                    }
-
                     pdfName = SanitizeFolderName(Path.GetFileName(selectedFilePath));
-                    string section = SanitizeFolderName(cmbActivitySection.Text.Trim());
-
-                    // Same root (saveFolder) + same per-section pattern as student submissions,
-                    // just a dedicated "ActivityFiles" subfolder to keep posted materials separate
-                    string sectionFolder = Path.Combine(saveFolder, section);
-                    string activityFolder = Path.Combine(sectionFolder, "ActivityFiles");
-
-                    if (!Directory.Exists(activityFolder))
-                        Directory.CreateDirectory(activityFolder);
-
-                    savedFilePath = Path.Combine(activityFolder, pdfName);
-                    File.Copy(selectedFilePath, savedFilePath, true);
+                    fileBytes = await File.ReadAllBytesAsync(selectedFilePath);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Could not save the selected file: " + ex.Message);
+                    MessageBox.Show("Could not read the selected file: " + ex.Message);
                     return;
                 }
             }
@@ -1154,12 +1138,12 @@ namespace WinFormsApp1
                 {
                     conn.Open();
                     string query = @"INSERT INTO professor_activity 
-                    (professor_id, title, description, section, activity_subject, 
-                     start_time, due_date, activity_status, score, 
-                     activity_file, activity_filename) 
-                    VALUES (@professor_id, @title, @description, @section, @activity_subject, 
-                            @start_time, @due_date, @activity_status, @score, 
-                            @activity_file, @activity_filename)";
+                (professor_id, title, description, section, activity_subject, 
+                 start_time, due_date, activity_status, score, 
+                 activity_filename, activity_file) 
+                VALUES (@professor_id, @title, @description, @section, @activity_subject, 
+                        @start_time, @due_date, @activity_status, @score, 
+                        @activity_filename, @activity_file)";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -1172,28 +1156,77 @@ namespace WinFormsApp1
                         cmd.Parameters.AddWithValue("@due_date", dtpActivityDeadline.Value);
                         cmd.Parameters.AddWithValue("@activity_status", "Pending");
                         cmd.Parameters.AddWithValue("@score", txtActivityScore.Text.Trim());
-                        cmd.Parameters.AddWithValue("@activity_file", (object)savedFilePath ?? DBNull.Value);
                         cmd.Parameters.AddWithValue("@activity_filename", (object)pdfName ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@activity_file", (object)pdfName ?? DBNull.Value);
                         cmd.ExecuteNonQuery();
                     }
-
-                    MessageBox.Show("Activity Posted Successfully");
-
-                    selectedFilePath = "";
-                    btnActivityUploadFile.Text = "Upload File";
-                    RecentActivity();
-
-                    // Refresh the file browser if the professor is currently viewing that section's folder
-                    if (!string.IsNullOrEmpty(currentFolder) && Directory.Exists(currentFolder))
-                        LoadServerFolder(currentFolder, addToHistory: false);
                 }
+
+                MessageBox.Show("Activity Posted Successfully");
+
+                // Push the file over TCP to every connected student workstation
+                if (fileBytes != null && !string.IsNullOrEmpty(cmbActivitySection.Text))
+                {
+                    string section = cmbActivitySection.Text.Trim();
+                    var targets = workstationButtons.Keys.ToList();
+
+                    int sent = 0, failed = 0;
+
+                    foreach (string ip in targets)
+                    {
+                        bool ok = await SendActivityFileToStudent(ip, section, pdfName, fileBytes);
+                        if (ok) sent++; else failed++;
+                    }
+
+                    MessageBox.Show($"File sent to {sent} workstation(s). Failed: {failed}.");
+                }
+
+                selectedFilePath = "";
+                btnActivityUploadFile.Text = "Upload File";
+                RecentActivity();
             }
             catch (Exception ex)
             {
-                Console.WriteLine("btnPostActivity_Click error: " + ex.Message);
+                MessageBox.Show("btnPostActivity_Click error: " + ex.Message);
             }
         }
 
+        private async Task<bool> SendActivityFileToStudent(
+            string studentIp, string section, string fileName, byte[] fileBytes)
+        {
+            try
+            {
+                int port = SettingsManager.Current.FileTransferPort;
+
+                using (TcpClient client = new TcpClient())
+                {
+                    var connectTask = client.ConnectAsync(studentIp, port);
+                    var timeoutTask = Task.Delay(5000);
+                    var completed = await Task.WhenAny(connectTask, timeoutTask);
+
+                    if (completed == timeoutTask) return false;
+                    await connectTask;
+                    if (!client.Connected) return false;
+
+                    using (NetworkStream stream = client.GetStream())
+                    using (BinaryWriter writer = new BinaryWriter(stream))
+                    {
+                        writer.Write("ACTIVITY_FILE");
+                        writer.Write(section);
+                        writer.Write(fileName);
+                        writer.Write(fileBytes.Length);
+                        writer.Write(fileBytes);
+                        writer.Flush();
+                    }
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Send to {studentIp} failed: {ex.Message}");
+                return false;
+            }
+        }
         private void ActivitySectionSubject()
         {
             cmbActivitySection.Items.Clear();
