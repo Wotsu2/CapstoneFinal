@@ -20,7 +20,6 @@ namespace WinFormsApp1
 {
     public partial class AdminForm : Form
     {
-        // USER DETAILS
         private Panel overlayPanel;
         private Panel userDetailsPanel;
         private PictureBox detailsPhoto;
@@ -32,18 +31,14 @@ namespace WinFormsApp1
         private Button detailsInfoTab, detailsHistoryTab;
         private Panel detailsInfoPage, detailsHistoryPage;
 
-        // CONTEXT MENU
         private ContextMenuStrip userContextMenu;
         private int contextUserId = -1;
 
-        // DASHBOARD
         private Panel PanelIndicator;
 
-        // FILE MANAGEMENT
         private string currentFolder;
         private Stack<string> folderHistory = new Stack<string>();
 
-        // WORKSTATION
         private TcpListener listener;
         private TcpListener fileListener;
         private int fileSubmittedCount = 0;
@@ -55,11 +50,9 @@ namespace WinFormsApp1
         private string selectedWorkstationId = "";
         private volatile bool isRunning = false;
 
-        // AUTH PHOTO / FILE TRANSFER LISTENER
         private TcpListener authPhotoListener;
         private volatile bool adminIsRunning = true;
 
-        // BANNER MANAGEMENT
         private Guna.UI2.WinForms.Guna2Button btnUploadBanner;
         private Guna.UI2.WinForms.Guna2Button btnOpenBannersFolder;
 
@@ -94,7 +87,7 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        //  FILE RECEIVER  (handles BOTH auth photos and activity files)
+        //  FILE RECEIVER  (auth photos, activity files, student submissions, profile photos)
         // =========================================================
         private async Task StartAuthPhotoListener()
         {
@@ -215,6 +208,53 @@ namespace WinFormsApp1
                         return;
                     }
 
+                    // ---------- PROFILE PHOTO ----------
+                    // [PROFILE_PHOTO][username][fileName][length][bytes]
+                    if (firstToken == "PROFILE_PHOTO")
+                    {
+                        string username = reader.ReadString();
+                        string fileName = reader.ReadString();
+                        int length = reader.ReadInt32();
+
+                        if (length <= 0 || length > 20 * 1024 * 1024)
+                        {
+                            Console.WriteLine("[Admin] Invalid profile photo length: " + length);
+                            return;
+                        }
+
+                        byte[] bytes = reader.ReadBytes(length);
+
+                        username = SanitizeFolderName(username);
+                        fileName = SanitizeFolderName(fileName);
+
+                        string root = SettingsManager.Current.SaveFolder;
+                        string folder = Path.Combine(root, "ProfilePictures");
+                        Directory.CreateDirectory(folder);
+
+                        string finalName = $"{username}_{fileName}";
+                        string savePath = Path.Combine(folder, finalName);
+
+                        await File.WriteAllBytesAsync(savePath, bytes);
+
+                        string uncPath = ToUnc(savePath);
+                        Console.WriteLine("[Admin] Profile photo saved → " + savePath);
+                        Console.WriteLine("[Admin] Returning UNC → " + uncPath);
+
+                        try
+                        {
+                            using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
+                            {
+                                writer.Write(uncPath);
+                                writer.Flush();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("[Admin] Write reply error: " + ex.Message);
+                        }
+                        return;
+                    }
+
                     // ---------- AUTH PHOTO ----------
                     // [fileName][length][bytes]
                     string authFileName = SanitizeFolderName(firstToken);
@@ -240,8 +280,8 @@ namespace WinFormsApp1
                 Console.WriteLine("HandleIncomingFile error: " + ex.Message);
             }
         }
+
         // Convert  C:\SharedFolder\sub\file.pdf  →  \\192.168.100.4\SharedFolder\sub\file.pdf
-        // If already UNC, returns unchanged.
         private string ToUnc(string path)
         {
             try
@@ -250,7 +290,7 @@ namespace WinFormsApp1
                 if (path.StartsWith(@"\\")) return path;
 
                 string localRoot = SettingsManager.Current.SaveFolder ?? "";
-                string sharedName = new DirectoryInfo(localRoot).Name;      // "SharedFolder"
+                string sharedName = new DirectoryInfo(localRoot).Name;
                 string ip = CleanIp(SettingsManager.Current.ServerIp);
 
                 string relative = path;
@@ -298,6 +338,7 @@ namespace WinFormsApp1
             catch { }
             return "127.0.0.1";
         }
+
         private string SanitizeFolderName(string name)
         {
             if (string.IsNullOrWhiteSpace(name)) return "Unknown";
@@ -862,27 +903,44 @@ namespace WinFormsApp1
 
         private Image LoadUserPhoto(DataGridViewRow row)
         {
-            if (UserDataList.Columns.Contains("profile_picture"))
+            try
             {
-                object raw = row.Cells["profile_picture"].Value;
-
-                byte[] bytes = raw as byte[];
-                if (bytes != null && bytes.Length > 0)
+                if (UserDataList.Columns.Contains("profile_picture"))
                 {
-                    try
+                    object raw = row.Cells["profile_picture"].Value;
+
+                    byte[] bytes = raw as byte[];
+                    if (bytes != null && bytes.Length > 0)
                     {
                         using (var ms = new MemoryStream(bytes))
-                            return Image.FromStream(ms);
+                        {
+                            var temp = Image.FromStream(ms);
+                            return new Bitmap(temp);
+                        }
                     }
-                    catch { }
-                }
 
-                string path = raw as string;
-                if (!string.IsNullOrEmpty(path) && File.Exists(path))
-                {
-                    using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
-                        return Image.FromStream(fs);
+                    string path = raw as string;
+                    if (!string.IsNullOrWhiteSpace(path))
+                    {
+                        if (File.Exists(path))
+                        {
+                            byte[] fileBytes = File.ReadAllBytes(path);
+                            using (var ms = new MemoryStream(fileBytes))
+                            {
+                                var temp = Image.FromStream(ms);
+                                return new Bitmap(temp);
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("[LoadUserPhoto] Not found: " + path);
+                        }
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[LoadUserPhoto] Error: " + ex.Message);
             }
 
             return MakePlaceholderAvatar();

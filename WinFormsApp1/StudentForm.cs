@@ -708,9 +708,9 @@ namespace WinFormsApp1
                        pa.section
                 FROM professor_activity pa
                 INNER JOIN student_class sc
-                    ON  sc.user_id    = @user_id
-                    AND LOWER(TRIM(sc.section))    = LOWER(TRIM(pa.section))
-                    AND LOWER(TRIM(sc.class_name)) = LOWER(TRIM(pa.activity_subject))
+                    ON  sc.user_id      = @user_id
+                    AND sc.professor_id = pa.professor_id
+                    AND LOWER(TRIM(sc.section)) = LOWER(TRIM(pa.section))
                 WHERE NOT EXISTS (
                     SELECT 1 FROM submitted_activity sa
                     WHERE sa.user_id = @user_id
@@ -916,14 +916,14 @@ namespace WinFormsApp1
                     conn.Open();
 
                     string query = @"
-                SELECT pa.activity_id, pa.title, pa.start_time, pa.due_date,
-                       pa.activity_subject, pa.activity_status,
+                SELECT pa.title, pa.start_time, pa.due_date,
+                       pa.activity_status,
                        pa.description, pa.professor_id
                 FROM professor_activity pa
                 INNER JOIN student_class sc
-                    ON  sc.user_id    = @user_id
-                    AND LOWER(TRIM(sc.section))    = LOWER(TRIM(pa.section))
-                    AND LOWER(TRIM(sc.class_name)) = LOWER(TRIM(pa.activity_subject))
+                    ON  sc.user_id      = @user_id
+                    AND sc.professor_id = pa.professor_id
+                    AND LOWER(TRIM(sc.section)) = LOWER(TRIM(pa.section))
                 WHERE 1 = 1";
 
                     if (string.IsNullOrEmpty(selectedActivitiesCategory) ||
@@ -1613,28 +1613,20 @@ namespace WinFormsApp1
             try { StopServer(); } catch { }
             try { ClearAllFormData(); } catch { }
 
-            Login loginForm = null;
-            foreach (Form f in Application.OpenForms)
+            // Dispose any existing Login instance so a fresh one is created
+            foreach (Form f in Application.OpenForms.Cast<Form>().ToList())
             {
                 if (f is Login && !f.IsDisposed)
                 {
-                    loginForm = (Login)f;
-                    break;
+                    f.Hide();
+                    f.Dispose();
                 }
             }
 
-            if (loginForm != null)
-            {
-                loginForm.Show();
-                loginForm.BringToFront();
-                loginForm.Activate();
-                loginForm.WindowState = FormWindowState.Normal;
-            }
-            else
-            {
-                loginForm = new Login();
-                loginForm.Show();
-            }
+            var loginForm = new Login();
+            loginForm.Show();
+            loginForm.BringToFront();
+            loginForm.Activate();
 
             this.Hide();
         }

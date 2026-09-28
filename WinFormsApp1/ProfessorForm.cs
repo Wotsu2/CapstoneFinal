@@ -65,7 +65,6 @@ namespace WinFormsApp1
         private string SaveAuthenticationPhoto;
         private string ProfessorName;
 
-
         private Image cachedProfileImage;
         private bool profileImageLoaded = false;
 
@@ -106,7 +105,6 @@ namespace WinFormsApp1
             InitializeChangingPicture();
             lsServerFolderSetup();
 
-            // Load file panel root
             if (!string.IsNullOrEmpty(saveFolder) && saveFolder != "Null" && Directory.Exists(saveFolder))
                 LoadServerFolder(saveFolder);
 
@@ -126,7 +124,6 @@ namespace WinFormsApp1
         // =========================================================
         private void ShowPage(Panel page, string title, Guna.UI2.WinForms.Guna2Button activeBtn)
         {
-            // Hide every page
             pnlHome.Visible = false;
             pnlWorkstation.Visible = false;
             pnlStudent.Visible = false;
@@ -137,12 +134,10 @@ namespace WinFormsApp1
             pnlFile.Visible = false;
             pnlSetting.Visible = false;
 
-            // Show the target
             page.Visible = true;
             page.BringToFront();
             lblPanelName.Text = title;
 
-            // Uncheck every nav button
             btnHome.Checked = false;
             btnWorkstation.Checked = false;
             btnStudent.Checked = false;
@@ -153,7 +148,6 @@ namespace WinFormsApp1
             btnFile.Checked = false;
             btnAccount.Checked = false;
 
-            // Check the active one
             if (activeBtn != null) activeBtn.Checked = true;
         }
 
@@ -1133,7 +1127,6 @@ namespace WinFormsApp1
             string uncPath = null;
             string section = SanitizeFolderName(cmbActivitySection.Text.Trim());
 
-            // Make sure we have the professor folder name
             if (string.IsNullOrEmpty(ProfessorName))
                 NameGet();
 
@@ -1144,7 +1137,6 @@ namespace WinFormsApp1
             Console.WriteLine("SaveFolder      = " + SettingsManager.Current.SaveFolder);
             Console.WriteLine("ProfessorFolder = " + professorFolder);
 
-            // ---------- 1) Read the file ----------
             if (!string.IsNullOrEmpty(selectedFilePath) && File.Exists(selectedFilePath))
             {
                 try
@@ -1159,7 +1151,6 @@ namespace WinFormsApp1
                 }
             }
 
-            // ---------- 2) Send bytes to the SERVER ----------
             if (fileBytes != null && !string.IsNullOrEmpty(pdfName))
             {
                 bool sent = await SendActivityFileToServer(professorFolder, section, pdfName, fileBytes);
@@ -1169,7 +1160,6 @@ namespace WinFormsApp1
                     return;
                 }
 
-                // ---------- 3) Build UNC path the admin just wrote to ----------
                 string saveRoot = SettingsManager.Current.SaveFolder;
 
                 if (saveRoot.StartsWith(@"\\"))
@@ -1186,7 +1176,6 @@ namespace WinFormsApp1
                 Console.WriteLine("uncPath         = " + uncPath);
             }
 
-            // ---------- 4) Insert into DB ----------
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -1234,7 +1223,7 @@ namespace WinFormsApp1
         }
 
         private async Task<bool> SendActivityFileToServer(
-    string professorFolder, string section, string fileName, byte[] fileBytes)
+            string professorFolder, string section, string fileName, byte[] fileBytes)
         {
             try
             {
@@ -1266,7 +1255,7 @@ namespace WinFormsApp1
                     using (BinaryWriter writer = new BinaryWriter(stream))
                     {
                         writer.Write("ACTIVITY_FILE");
-                        writer.Write(professorFolder);   // <-- professor folder name
+                        writer.Write(professorFolder);
                         writer.Write(section);
                         writer.Write(fileName);
                         writer.Write(fileBytes.Length);
@@ -1283,6 +1272,7 @@ namespace WinFormsApp1
                 return false;
             }
         }
+
         private void ActivitySectionSubject()
         {
             cmbActivitySection.Items.Clear();
@@ -1371,7 +1361,6 @@ namespace WinFormsApp1
             imageList1.Images.Clear();
             int imageIndex = 0;
 
-            // Folders first
             foreach (string dir in Directory.GetDirectories(path).OrderBy(d => d))
             {
                 imageList1.Images.Add(Properties.Resources.Folder);
@@ -1381,7 +1370,6 @@ namespace WinFormsApp1
                 imageIndex++;
             }
 
-            // Then files
             foreach (string file in Directory.GetFiles(path).OrderBy(f => f))
             {
                 imageList1.Images.Add(Properties.Resources.Item);
@@ -1425,12 +1413,10 @@ namespace WinFormsApp1
         // =========================================================
         private void btnAddFolder_Click(object sender, EventArgs e)
         {
-            // Prevent stacking
             if (pnlFile.Controls.OfType<Guna.UI2.WinForms.Guna2Panel>()
                               .Any(p => p.Name == "pnlNewFolderPrompt"))
                 return;
 
-            // --- Dim overlay covering the whole pnlFile ---
             Guna.UI2.WinForms.Guna2Panel overlay = new Guna.UI2.WinForms.Guna2Panel();
             overlay.Name = "pnlNewFolderPrompt";
             overlay.Dock = DockStyle.Fill;
@@ -1439,7 +1425,6 @@ namespace WinFormsApp1
             pnlFile.Controls.Add(overlay);
             overlay.BringToFront();
 
-            // --- Inner card ---
             Guna.UI2.WinForms.Guna2Panel card = new Guna.UI2.WinForms.Guna2Panel();
             card.Size = new Size(420, 210);
             card.BorderRadius = 15;
@@ -1451,7 +1436,6 @@ namespace WinFormsApp1
                 Math.Max(0, (overlay.Height - card.Height) / 2));
             overlay.Controls.Add(card);
 
-            // Recenter on resize
             overlay.Resize += (s, args) =>
             {
                 card.Location = new Point(
@@ -1459,7 +1443,6 @@ namespace WinFormsApp1
                     Math.Max(0, (overlay.Height - card.Height) / 2));
             };
 
-            // --- Title ---
             Label lblTitle = new Label();
             lblTitle.Text = "Create New Folder";
             lblTitle.Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold);
@@ -1468,7 +1451,6 @@ namespace WinFormsApp1
             lblTitle.Location = new Point(24, 20);
             card.Controls.Add(lblTitle);
 
-            // --- Subtitle ---
             Label lblSub = new Label();
             lblSub.Text = "Enter a folder name:";
             lblSub.Font = new Font("Segoe UI", 10F);
@@ -1477,7 +1459,6 @@ namespace WinFormsApp1
             lblSub.Location = new Point(24, 60);
             card.Controls.Add(lblSub);
 
-            // --- TextBox ---
             Guna.UI2.WinForms.Guna2TextBox txtFolderName = new Guna.UI2.WinForms.Guna2TextBox();
             txtFolderName.Width = 372;
             txtFolderName.Height = 42;
@@ -1487,7 +1468,6 @@ namespace WinFormsApp1
             txtFolderName.PlaceholderText = "Folder name";
             card.Controls.Add(txtFolderName);
 
-            // --- Cancel ---
             Guna.UI2.WinForms.Guna2Button btnCancel = new Guna.UI2.WinForms.Guna2Button();
             btnCancel.Text = "Cancel";
             btnCancel.Size = new Size(120, 42);
@@ -1503,7 +1483,6 @@ namespace WinFormsApp1
             };
             card.Controls.Add(btnCancel);
 
-            // --- Create ---
             Guna.UI2.WinForms.Guna2Button btnCreate = new Guna.UI2.WinForms.Guna2Button();
             btnCreate.Text = "Create";
             btnCreate.Size = new Size(120, 42);
@@ -1536,7 +1515,6 @@ namespace WinFormsApp1
             };
             card.Controls.Add(btnCreate);
 
-            // --- Keyboard shortcuts ---
             txtFolderName.KeyDown += (s, args) =>
             {
                 if (args.KeyCode == Keys.Enter)
@@ -1551,7 +1529,6 @@ namespace WinFormsApp1
                 }
             };
 
-            // --- Click outside card cancels ---
             overlay.Click += (s, args) =>
             {
                 pnlFile.Controls.Remove(overlay);
@@ -1613,7 +1590,6 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
-                    // 1. Try to load the professor's own row
                     using (var cmd = new MySqlCommand(
                         "SELECT FolderPath FROM mainfolderpath WHERE user_id = @id", conn))
                     {
@@ -1632,7 +1608,6 @@ namespace WinFormsApp1
                         }
                     }
 
-                    // 2. Fallback — read the shared ROOT (user_id = 0)
                     string rootPath = null;
                     using (var cmd = new MySqlCommand(
                         "SELECT FolderPath FROM mainfolderpath WHERE user_id = 0", conn))
@@ -1651,14 +1626,12 @@ namespace WinFormsApp1
                         return "Null";
                     }
 
-                    // 3. Build folder from username
                     string folderName = SanitizeFolderName(ProfessorUsername);
                     string newPath = Path.Combine(rootPath, folderName);
 
                     if (!Directory.Exists(newPath))
                         Directory.CreateDirectory(newPath);
 
-                    // 4. Save it back so next launch loads it
                     using (var cmd = new MySqlCommand(
                         @"INSERT INTO mainfolderpath (user_id, FolderPath) 
                   VALUES (@id, @path)
@@ -2613,7 +2586,10 @@ namespace WinFormsApp1
             }
         }
 
-        private void btnSubmitChangePhoto_Click(object sender, EventArgs e)
+        // =========================================================
+        // PROFILE PHOTO — SEND TO ADMIN SHARED FOLDER (like auth photo)
+        // =========================================================
+        private async void btnSubmitChangePhoto_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(CurrentProfilePath))
             {
@@ -2621,25 +2597,48 @@ namespace WinFormsApp1
                 return;
             }
 
-            string connStr = SettingsManager.Current.GetConnectionString();
+            if (!File.Exists(CurrentProfilePath))
+            {
+                MessageBox.Show("The selected file no longer exists.");
+                return;
+            }
 
             try
             {
-                string fileName = Path.GetFileName(CurrentProfilePath);
-                string destinationPath = Path.Combine(SaveCurrentProfilePath, fileName);
+                byte[] imageBytes = await File.ReadAllBytesAsync(CurrentProfilePath);
 
-                if (!string.Equals(CurrentProfilePath, destinationPath, StringComparison.OrdinalIgnoreCase))
-                    File.Copy(CurrentProfilePath, destinationPath, true);
+                string ext = Path.GetExtension(CurrentProfilePath);
+                string fileName = SanitizeFolderName(ProfessorUsername) + "_" +
+                                  DateTime.Now.ToString("yyyyMMddHHmmss") + ext;
 
+                string uncPath = await SendProfilePhotoToAdmin(imageBytes, fileName);
+
+                if (string.IsNullOrEmpty(uncPath))
+                {
+                    MessageBox.Show("Failed to send profile picture to server.");
+                    return;
+                }
+
+                Console.WriteLine("[ChangePhoto] Admin returned UNC: " + uncPath);
+
+                string connStr = SettingsManager.Current.GetConnectionString();
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = @"UPDATE user_credential SET profile_picture = @profile_picture WHERE username = @username";
+                    string query = @"UPDATE user_credential 
+                                     SET profile_picture = @profile_picture 
+                                     WHERE username = @username";
                     using (var cmd = new MySqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@profile_picture", destinationPath);
+                        cmd.Parameters.AddWithValue("@profile_picture", uncPath);
                         cmd.Parameters.AddWithValue("@username", ProfessorUsername);
-                        cmd.ExecuteNonQuery();
+
+                        int rows = cmd.ExecuteNonQuery();
+                        if (rows == 0)
+                        {
+                            MessageBox.Show("No user row was updated. Check the username.");
+                            return;
+                        }
                     }
                 }
 
@@ -2652,7 +2651,70 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                Console.WriteLine("btnSubmitChangePhoto_Click error: " + ex.Message);
+                Console.WriteLine("btnSubmitChangePhoto_Click error: " + ex);
+                MessageBox.Show("Error: " + ex.Message);
+            }
+        }
+
+        private async Task<string> SendProfilePhotoToAdmin(byte[] imageBytes, string fileName)
+        {
+            try
+            {
+                string adminIp = SettingsManager.Current.ServerIp.TrimStart('\\').TrimEnd('\\');
+                int adminPort = SettingsManager.Current.FileTransferPort;
+
+                Console.WriteLine($"[PROFILE PHOTO] Sending {fileName} ({imageBytes.Length} bytes) to {adminIp}:{adminPort}");
+
+                using (var client = new TcpClient())
+                {
+                    var connectTask = client.ConnectAsync(adminIp, adminPort);
+                    var timeoutTask = Task.Delay(5000);
+                    var completed = await Task.WhenAny(connectTask, timeoutTask);
+
+                    if (completed == timeoutTask)
+                    {
+                        MessageBox.Show($"Server ({adminIp}:{adminPort}) not reachable (timeout).");
+                        return null;
+                    }
+
+                    await connectTask;
+                    if (!client.Connected)
+                    {
+                        MessageBox.Show($"Server ({adminIp}:{adminPort}) refused the connection.");
+                        return null;
+                    }
+
+                    string returnedUnc = null;
+
+                    using (var stream = client.GetStream())
+                    using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
+                    {
+                        writer.Write("PROFILE_PHOTO");
+                        writer.Write(ProfessorUsername);
+                        writer.Write(fileName);
+                        writer.Write(imageBytes.Length);
+                        writer.Write(imageBytes);
+                        writer.Flush();
+
+                        try
+                        {
+                            var reader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true);
+                            returnedUnc = reader.ReadString();
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Read reply error: " + ex.Message);
+                        }
+                    }
+
+                    return returnedUnc;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("SendProfilePhotoToAdmin error: " + ex.Message);
+                MessageBox.Show("Send error: " + ex.Message);
+                return null;
             }
         }
 
@@ -2676,21 +2738,30 @@ namespace WinFormsApp1
                                 if (reader.IsDBNull(reader.GetOrdinal("profile_picture"))) return;
 
                                 string path = reader.GetString("profile_picture");
-                                if (File.Exists(path))
+                                Console.WriteLine("[ChangingPicture] Loading: " + path);
+
+                                if (!File.Exists(path))
                                 {
-                                    using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
-                                    {
-                                        cachedProfileImage = Image.FromStream(fs);
-                                    }
-
-                                    picboxSettingProfilePicture.Image?.Dispose();
-                                    picboxSettingProfilePicture.Image = cachedProfileImage;
-                                    picboxSettingProfilePicture.SizeMode = PictureBoxSizeMode.Zoom;
-
-                                    btnAccount.Image = cachedProfileImage;
-
-                                    profileImageLoaded = true;
+                                    Console.WriteLine("[ChangingPicture] File does not exist.");
+                                    return;
                                 }
+
+                                byte[] bytes = File.ReadAllBytes(path);
+                                using (var ms = new MemoryStream(bytes))
+                                {
+                                    var temp = Image.FromStream(ms);
+                                    cachedProfileImage = new Bitmap(temp);
+                                    temp.Dispose();
+                                }
+
+                                picboxSettingProfilePicture.Image?.Dispose();
+                                picboxSettingProfilePicture.Image = cachedProfileImage;
+                                picboxSettingProfilePicture.SizeMode = PictureBoxSizeMode.Zoom;
+
+                                btnAccount.Image?.Dispose();
+                                btnAccount.Image = cachedProfileImage;
+
+                                profileImageLoaded = true;
                             }
                         }
                     }
@@ -2905,7 +2976,6 @@ namespace WinFormsApp1
                 return;
             }
 
-            // Safety: don't allow deleting the professor's root folder
             if (isFolder && !string.IsNullOrEmpty(saveFolder) &&
                 string.Equals(Path.GetFullPath(path).TrimEnd('\\'),
                               Path.GetFullPath(saveFolder).TrimEnd('\\'),
@@ -2932,7 +3002,6 @@ namespace WinFormsApp1
 
             try
             {
-                // Read-only files block File.Delete — clear the attribute first
                 if (isFile)
                 {
                     var attrs = File.GetAttributes(path);
@@ -2948,7 +3017,6 @@ namespace WinFormsApp1
                 MessageBox.Show("Deleted successfully.",
                     "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                // Refresh the current folder
                 if (!string.IsNullOrEmpty(currentFolder) && Directory.Exists(currentFolder))
                     LoadServerFolder(currentFolder, addToHistory: false);
                 else if (!string.IsNullOrEmpty(saveFolder) && Directory.Exists(saveFolder))
@@ -2976,26 +3044,14 @@ namespace WinFormsApp1
 
         private void InitializeComboBoxes()
         {
-            // Section filter (My Students)
             ConfigureCombo(cmbSection, "Select Section", "Section");
-
-            // Year filter (My Students)
             ConfigureCombo(cmbYear, "Select Year", "Year");
-
-            // Semester filter (My Students)
             ConfigureCombo(cmbSemester, "Select Semester", "Semester");
-
-            // Attendance section
             ConfigureCombo(guna2ComboBox11, "Section", "Section");
-
-            // Class day
             ConfigureCombo(cmbClassDate, "Select Day", "Day");
-
-            // Activity section/subject
             ConfigureCombo(cmbActivityTitle, "Select Title", "Title");
             ConfigureCombo(cmbActivitySection, "Select Section", "Section");
             ConfigureCombo(cmbActivitySubject, "Select Subject", "Subject");
-
         }
 
         private void ConfigureCombo(Guna.UI2.WinForms.Guna2ComboBox cmb, string placeholder, string fieldName)
@@ -3010,21 +3066,20 @@ namespace WinFormsApp1
 
             cmb.SelectedIndex = 0;
         }
+
         private void InitializeNavTooltips()
         {
             navToolTip = new ToolTip();
 
-            // Look & feel
-            navToolTip.AutoPopDelay = 5000;      // how long it stays visible (ms)
-            navToolTip.InitialDelay = 350;       // delay before it appears (ms)
-            navToolTip.ReshowDelay = 100;       // delay before it reappears
-            navToolTip.ShowAlways = true;      // show even if form is inactive
-            navToolTip.IsBalloon = false;     // true = speech-bubble style
-            navToolTip.ToolTipTitle = "";        // optional bold header
+            navToolTip.AutoPopDelay = 5000;
+            navToolTip.InitialDelay = 350;
+            navToolTip.ReshowDelay = 100;
+            navToolTip.ShowAlways = true;
+            navToolTip.IsBalloon = false;
+            navToolTip.ToolTipTitle = "";
             navToolTip.UseFading = true;
             navToolTip.UseAnimation = true;
 
-            // Attach names to the nav buttons
             navToolTip.SetToolTip(btnHome, "Home");
             navToolTip.SetToolTip(btnWorkstation, "Workstations");
             navToolTip.SetToolTip(btnStudent, "My Students");
@@ -3036,6 +3091,5 @@ namespace WinFormsApp1
             navToolTip.SetToolTip(btnAccount, "Settings");
             navToolTip.SetToolTip(btnQuizExam, "Quiz Exam Grades");
         }
-
     }
 }

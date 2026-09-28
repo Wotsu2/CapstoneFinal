@@ -35,8 +35,17 @@ namespace WinFormsApp1
         public Login()
         {
             InitializeComponent();
-            txtUsername.Text = "";
-            txtPassword.Text = "";
+
+            // Clear textboxes EVERY time the form is shown (not just on first load).
+            this.Shown += Login_Shown;
+        }
+
+        // Fires every time the form becomes visible — including re-shows after logout.
+        private void Login_Shown(object sender, EventArgs e)
+        {
+            txtUsername.Clear();
+            txtPassword.Clear();
+            txtUsername.Focus();
         }
 
         private void Login_Load(object sender, EventArgs e)
@@ -359,7 +368,7 @@ namespace WinFormsApp1
                     SettingsManager.Current.SaveFolder = selectedRootFolder;
                     SaveRootFolderToDatabase(selectedRootFolder);
                 }
-                    
+
 
                 SettingsManager.Save();
             }
@@ -371,6 +380,7 @@ namespace WinFormsApp1
 
             MessageBox.Show("Settings saved successfully!\n\nRoot folder: " + SettingsManager.Current.SaveFolder);
         }
+
         private void SaveRootFolderToDatabase(string path)
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -405,6 +415,7 @@ namespace WinFormsApp1
                 MessageBox.Show("Warning: Root folder saved locally, but failed to sync to shared database:\n" + ex.Message);
             }
         }
+
         // =========================================================
         // CONFIGURATION — SELECT FOLDER
         // =========================================================
