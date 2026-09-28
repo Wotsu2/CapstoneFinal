@@ -493,6 +493,7 @@
             IdNumberText.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
             IdNumberText.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
             IdNumberText.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
+            IdNumberText.Enabled = false;
             IdNumberText.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
             IdNumberText.Font = new Font("Segoe UI", 9F);
             IdNumberText.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
@@ -1595,7 +1596,7 @@
             // lvServerFolder
             // 
             lvServerFolder.BackColor = Color.White;
-            lvServerFolder.ForeColor = Color.White;
+            lvServerFolder.ForeColor = Color.Black;
             lvServerFolder.Location = new Point(0, 62);
             lvServerFolder.Name = "lvServerFolder";
             lvServerFolder.Size = new Size(1345, 453);
@@ -1610,6 +1611,7 @@
             guna2ComboBox1.BorderColor = Color.Black;
             guna2ComboBox1.BorderRadius = 5;
             guna2ComboBox1.CustomizableEdges = customizableEdges76;
+            guna2ComboBox1.DisabledState.FillColor = Color.Maroon;
             guna2ComboBox1.DrawMode = DrawMode.OwnerDrawFixed;
             guna2ComboBox1.DropDownStyle = ComboBoxStyle.DropDownList;
             guna2ComboBox1.Enabled = false;
@@ -1841,6 +1843,7 @@
             guna2ComboBox3.BorderColor = Color.Black;
             guna2ComboBox3.BorderRadius = 5;
             guna2ComboBox3.CustomizableEdges = customizableEdges92;
+            guna2ComboBox3.DisabledState.FillColor = Color.Maroon;
             guna2ComboBox3.DrawMode = DrawMode.OwnerDrawFixed;
             guna2ComboBox3.DropDownStyle = ComboBoxStyle.DropDownList;
             guna2ComboBox3.Enabled = false;
@@ -1867,12 +1870,12 @@
             BackgroundImage = Properties.Resources.Shade;
             BackgroundImageLayout = ImageLayout.Stretch;
             ClientSize = new Size(1629, 749);
-            Controls.Add(pnlWorkstation);
             Controls.Add(pnlFileManagement);
+            Controls.Add(pnlWorkstation);
+            Controls.Add(pnlUserManagement);
             Controls.Add(label6);
             Controls.Add(guna2Panel2);
             Controls.Add(guna2Panel1);
-            Controls.Add(pnlUserManagement);
             Controls.Add(panelDashoard);
             DoubleBuffered = true;
             FormBorderStyle = FormBorderStyle.FixedSingle;

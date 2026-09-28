@@ -131,24 +131,6 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges90 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges93 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges94 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges127 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges128 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges120 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges121 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges122 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges123 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges124 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges125 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges126 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges136 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges137 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges129 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges130 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges131 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges132 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges133 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges134 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges135 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges95 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges96 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges97 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -174,6 +156,24 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges115 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges118 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges119 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges127 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges128 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges120 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges121 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges122 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges123 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges124 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges125 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges126 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges136 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges137 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges129 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges130 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges131 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges132 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges133 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges134 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges135 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges148 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges149 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges138 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -284,18 +284,6 @@
             label26 = new Label();
             label27 = new Label();
             btnSignOut = new Guna.UI2.WinForms.Guna2Button();
-            pnlSettingAuthenticationPhoto = new Guna.UI2.WinForms.Guna2Panel();
-            btnUploadAuthenticationPhoto = new Guna.UI2.WinForms.Guna2Button();
-            picboxAuthenticationPhoto = new Guna.UI2.WinForms.Guna2CirclePictureBox();
-            label18 = new Label();
-            btnCloseUploadAuthenticationPhoto = new Guna.UI2.WinForms.Guna2Button();
-            btnSubmitAuthenticationPhoto = new Guna.UI2.WinForms.Guna2Button();
-            pnlChangePhoto = new Guna.UI2.WinForms.Guna2Panel();
-            btnUploadPhoto = new Guna.UI2.WinForms.Guna2Button();
-            picboxNewPicture = new Guna.UI2.WinForms.Guna2CirclePictureBox();
-            label55 = new Label();
-            btnExitChangePhotoPanel = new Guna.UI2.WinForms.Guna2Button();
-            btnSubmitChangePhoto = new Guna.UI2.WinForms.Guna2Button();
             guna2Button4 = new Guna.UI2.WinForms.Guna2Button();
             btnSettingPanel = new Guna.UI2.WinForms.Guna2Button();
             label15 = new Label();
@@ -313,6 +301,18 @@
             picboxSettingProfilePicture = new Guna.UI2.WinForms.Guna2CirclePictureBox();
             pnlSettingConfiguration = new Guna.UI2.WinForms.Guna2Panel();
             label17 = new Label();
+            pnlSettingAuthenticationPhoto = new Guna.UI2.WinForms.Guna2Panel();
+            btnUploadAuthenticationPhoto = new Guna.UI2.WinForms.Guna2Button();
+            picboxAuthenticationPhoto = new Guna.UI2.WinForms.Guna2CirclePictureBox();
+            label18 = new Label();
+            btnCloseUploadAuthenticationPhoto = new Guna.UI2.WinForms.Guna2Button();
+            btnSubmitAuthenticationPhoto = new Guna.UI2.WinForms.Guna2Button();
+            pnlChangePhoto = new Guna.UI2.WinForms.Guna2Panel();
+            btnUploadPhoto = new Guna.UI2.WinForms.Guna2Button();
+            picboxNewPicture = new Guna.UI2.WinForms.Guna2CirclePictureBox();
+            label55 = new Label();
+            btnExitChangePhotoPanel = new Guna.UI2.WinForms.Guna2Button();
+            btnSubmitChangePhoto = new Guna.UI2.WinForms.Guna2Button();
             pnlChangePassword = new Guna.UI2.WinForms.Guna2Panel();
             label54 = new Label();
             txtConfirmPassword = new Guna.UI2.WinForms.Guna2TextBox();
@@ -359,13 +359,13 @@
             guna2Panel5.SuspendLayout();
             guna2Panel10.SuspendLayout();
             guna2Panel12.SuspendLayout();
+            pnlSettingProfile.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)picboxSettingProfilePicture).BeginInit();
+            pnlSettingConfiguration.SuspendLayout();
             pnlSettingAuthenticationPhoto.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)picboxAuthenticationPhoto).BeginInit();
             pnlChangePhoto.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)picboxNewPicture).BeginInit();
-            pnlSettingProfile.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)picboxSettingProfilePicture).BeginInit();
-            pnlSettingConfiguration.SuspendLayout();
             pnlChangePassword.SuspendLayout();
             pnlChangeUsername.SuspendLayout();
             pnlQuizExam.SuspendLayout();
@@ -379,11 +379,12 @@
             guna2Panel2.Controls.Add(label7);
             guna2Panel2.Controls.Add(lblhometitle);
             guna2Panel2.CustomizableEdges = customizableEdges3;
+            guna2Panel2.Dock = DockStyle.Top;
             guna2Panel2.FillColor = Color.White;
             guna2Panel2.Location = new Point(0, 0);
             guna2Panel2.Name = "guna2Panel2";
             guna2Panel2.ShadowDecoration.CustomizableEdges = customizableEdges4;
-            guna2Panel2.Size = new Size(1386, 83);
+            guna2Panel2.Size = new Size(1384, 83);
             guna2Panel2.TabIndex = 3;
             // 
             // btnAccount
@@ -1750,238 +1751,6 @@
             btnSignOut.TextOffset = new Point(25, 0);
             btnSignOut.Click += btnSignOut_Click;
             // 
-            // pnlSettingAuthenticationPhoto
-            // 
-            pnlSettingAuthenticationPhoto.BorderColor = Color.Black;
-            pnlSettingAuthenticationPhoto.BorderRadius = 10;
-            pnlSettingAuthenticationPhoto.BorderThickness = 1;
-            pnlSettingAuthenticationPhoto.Controls.Add(btnUploadAuthenticationPhoto);
-            pnlSettingAuthenticationPhoto.Controls.Add(picboxAuthenticationPhoto);
-            pnlSettingAuthenticationPhoto.Controls.Add(label18);
-            pnlSettingAuthenticationPhoto.Controls.Add(btnCloseUploadAuthenticationPhoto);
-            pnlSettingAuthenticationPhoto.Controls.Add(btnSubmitAuthenticationPhoto);
-            pnlSettingAuthenticationPhoto.CustomizableEdges = customizableEdges127;
-            pnlSettingAuthenticationPhoto.FillColor = Color.DimGray;
-            pnlSettingAuthenticationPhoto.Location = new Point(72, 290);
-            pnlSettingAuthenticationPhoto.Name = "pnlSettingAuthenticationPhoto";
-            pnlSettingAuthenticationPhoto.ShadowDecoration.CustomizableEdges = customizableEdges128;
-            pnlSettingAuthenticationPhoto.Size = new Size(289, 305);
-            pnlSettingAuthenticationPhoto.TabIndex = 37;
-            pnlSettingAuthenticationPhoto.Visible = false;
-            // 
-            // btnUploadAuthenticationPhoto
-            // 
-            btnUploadAuthenticationPhoto.Animated = true;
-            btnUploadAuthenticationPhoto.BackColor = Color.Transparent;
-            btnUploadAuthenticationPhoto.BorderRadius = 10;
-            btnUploadAuthenticationPhoto.CustomBorderColor = Color.Black;
-            btnUploadAuthenticationPhoto.CustomBorderThickness = new Padding(0, 0, 0, 1);
-            btnUploadAuthenticationPhoto.CustomizableEdges = customizableEdges120;
-            btnUploadAuthenticationPhoto.DisabledState.BorderColor = Color.DarkGray;
-            btnUploadAuthenticationPhoto.DisabledState.CustomBorderColor = Color.DarkGray;
-            btnUploadAuthenticationPhoto.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
-            btnUploadAuthenticationPhoto.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnUploadAuthenticationPhoto.FillColor = Color.Transparent;
-            btnUploadAuthenticationPhoto.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnUploadAuthenticationPhoto.ForeColor = Color.Black;
-            btnUploadAuthenticationPhoto.Location = new Point(102, 197);
-            btnUploadAuthenticationPhoto.Name = "btnUploadAuthenticationPhoto";
-            btnUploadAuthenticationPhoto.ShadowDecoration.BorderRadius = 10;
-            btnUploadAuthenticationPhoto.ShadowDecoration.CustomizableEdges = customizableEdges121;
-            btnUploadAuthenticationPhoto.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
-            btnUploadAuthenticationPhoto.Size = new Size(94, 36);
-            btnUploadAuthenticationPhoto.TabIndex = 37;
-            btnUploadAuthenticationPhoto.Text = "Upload File";
-            btnUploadAuthenticationPhoto.Click += btnUploadAuthenticationPhoto_Click;
-            // 
-            // picboxAuthenticationPhoto
-            // 
-            picboxAuthenticationPhoto.FillColor = Color.Transparent;
-            picboxAuthenticationPhoto.Image = Properties.Resources.Avatar;
-            picboxAuthenticationPhoto.ImageRotate = 0F;
-            picboxAuthenticationPhoto.Location = new Point(109, 72);
-            picboxAuthenticationPhoto.Name = "picboxAuthenticationPhoto";
-            picboxAuthenticationPhoto.ShadowDecoration.CustomizableEdges = customizableEdges122;
-            picboxAuthenticationPhoto.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle;
-            picboxAuthenticationPhoto.Size = new Size(89, 94);
-            picboxAuthenticationPhoto.SizeMode = PictureBoxSizeMode.StretchImage;
-            picboxAuthenticationPhoto.TabIndex = 36;
-            picboxAuthenticationPhoto.TabStop = false;
-            // 
-            // label18
-            // 
-            label18.AutoSize = true;
-            label18.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
-            label18.Location = new Point(12, 14);
-            label18.Name = "label18";
-            label18.Size = new Size(196, 25);
-            label18.TabIndex = 17;
-            label18.Text = "Authentication Photo";
-            // 
-            // btnCloseUploadAuthenticationPhoto
-            // 
-            btnCloseUploadAuthenticationPhoto.Animated = true;
-            btnCloseUploadAuthenticationPhoto.BackColor = Color.Transparent;
-            btnCloseUploadAuthenticationPhoto.BorderRadius = 10;
-            btnCloseUploadAuthenticationPhoto.CustomizableEdges = customizableEdges123;
-            btnCloseUploadAuthenticationPhoto.DisabledState.BorderColor = Color.DarkGray;
-            btnCloseUploadAuthenticationPhoto.DisabledState.CustomBorderColor = Color.DarkGray;
-            btnCloseUploadAuthenticationPhoto.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
-            btnCloseUploadAuthenticationPhoto.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnCloseUploadAuthenticationPhoto.FillColor = Color.Transparent;
-            btnCloseUploadAuthenticationPhoto.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnCloseUploadAuthenticationPhoto.ForeColor = Color.Black;
-            btnCloseUploadAuthenticationPhoto.Image = Properties.Resources.Exit;
-            btnCloseUploadAuthenticationPhoto.ImageSize = new Size(10, 10);
-            btnCloseUploadAuthenticationPhoto.Location = new Point(257, 8);
-            btnCloseUploadAuthenticationPhoto.Name = "btnCloseUploadAuthenticationPhoto";
-            btnCloseUploadAuthenticationPhoto.ShadowDecoration.BorderRadius = 10;
-            btnCloseUploadAuthenticationPhoto.ShadowDecoration.CustomizableEdges = customizableEdges124;
-            btnCloseUploadAuthenticationPhoto.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
-            btnCloseUploadAuthenticationPhoto.Size = new Size(27, 21);
-            btnCloseUploadAuthenticationPhoto.TabIndex = 32;
-            btnCloseUploadAuthenticationPhoto.Click += btnCloseUploadAuthenticationPhoto_Click;
-            // 
-            // btnSubmitAuthenticationPhoto
-            // 
-            btnSubmitAuthenticationPhoto.Animated = true;
-            btnSubmitAuthenticationPhoto.BackColor = Color.Transparent;
-            btnSubmitAuthenticationPhoto.BorderRadius = 10;
-            btnSubmitAuthenticationPhoto.CustomizableEdges = customizableEdges125;
-            btnSubmitAuthenticationPhoto.DisabledState.BorderColor = Color.DarkGray;
-            btnSubmitAuthenticationPhoto.DisabledState.CustomBorderColor = Color.DarkGray;
-            btnSubmitAuthenticationPhoto.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
-            btnSubmitAuthenticationPhoto.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnSubmitAuthenticationPhoto.Enabled = false;
-            btnSubmitAuthenticationPhoto.FillColor = Color.Transparent;
-            btnSubmitAuthenticationPhoto.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnSubmitAuthenticationPhoto.ForeColor = Color.Black;
-            btnSubmitAuthenticationPhoto.Location = new Point(197, 253);
-            btnSubmitAuthenticationPhoto.Name = "btnSubmitAuthenticationPhoto";
-            btnSubmitAuthenticationPhoto.ShadowDecoration.BorderRadius = 10;
-            btnSubmitAuthenticationPhoto.ShadowDecoration.CustomizableEdges = customizableEdges126;
-            btnSubmitAuthenticationPhoto.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
-            btnSubmitAuthenticationPhoto.Size = new Size(79, 36);
-            btnSubmitAuthenticationPhoto.TabIndex = 31;
-            btnSubmitAuthenticationPhoto.Text = "Change";
-            btnSubmitAuthenticationPhoto.Click += btnSubmitAuthenticationPhoto_Click;
-            // 
-            // pnlChangePhoto
-            // 
-            pnlChangePhoto.BorderColor = Color.Black;
-            pnlChangePhoto.BorderRadius = 10;
-            pnlChangePhoto.BorderThickness = 1;
-            pnlChangePhoto.Controls.Add(btnUploadPhoto);
-            pnlChangePhoto.Controls.Add(picboxNewPicture);
-            pnlChangePhoto.Controls.Add(label55);
-            pnlChangePhoto.Controls.Add(btnExitChangePhotoPanel);
-            pnlChangePhoto.Controls.Add(btnSubmitChangePhoto);
-            pnlChangePhoto.CustomizableEdges = customizableEdges136;
-            pnlChangePhoto.FillColor = Color.DimGray;
-            pnlChangePhoto.Location = new Point(72, 290);
-            pnlChangePhoto.Name = "pnlChangePhoto";
-            pnlChangePhoto.ShadowDecoration.CustomizableEdges = customizableEdges137;
-            pnlChangePhoto.Size = new Size(289, 305);
-            pnlChangePhoto.TabIndex = 35;
-            pnlChangePhoto.Visible = false;
-            // 
-            // btnUploadPhoto
-            // 
-            btnUploadPhoto.Animated = true;
-            btnUploadPhoto.BackColor = Color.Transparent;
-            btnUploadPhoto.BorderRadius = 10;
-            btnUploadPhoto.CustomBorderColor = Color.Black;
-            btnUploadPhoto.CustomBorderThickness = new Padding(0, 0, 0, 1);
-            btnUploadPhoto.CustomizableEdges = customizableEdges129;
-            btnUploadPhoto.DisabledState.BorderColor = Color.DarkGray;
-            btnUploadPhoto.DisabledState.CustomBorderColor = Color.DarkGray;
-            btnUploadPhoto.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
-            btnUploadPhoto.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnUploadPhoto.FillColor = Color.Transparent;
-            btnUploadPhoto.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnUploadPhoto.ForeColor = Color.Black;
-            btnUploadPhoto.Location = new Point(102, 197);
-            btnUploadPhoto.Name = "btnUploadPhoto";
-            btnUploadPhoto.ShadowDecoration.BorderRadius = 10;
-            btnUploadPhoto.ShadowDecoration.CustomizableEdges = customizableEdges130;
-            btnUploadPhoto.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
-            btnUploadPhoto.Size = new Size(94, 36);
-            btnUploadPhoto.TabIndex = 37;
-            btnUploadPhoto.Text = "Upload File";
-            btnUploadPhoto.Click += btnUploadPhoto_Click;
-            // 
-            // picboxNewPicture
-            // 
-            picboxNewPicture.FillColor = Color.Transparent;
-            picboxNewPicture.Image = Properties.Resources.Avatar;
-            picboxNewPicture.ImageRotate = 0F;
-            picboxNewPicture.Location = new Point(109, 72);
-            picboxNewPicture.Name = "picboxNewPicture";
-            picboxNewPicture.ShadowDecoration.CustomizableEdges = customizableEdges131;
-            picboxNewPicture.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle;
-            picboxNewPicture.Size = new Size(89, 94);
-            picboxNewPicture.SizeMode = PictureBoxSizeMode.StretchImage;
-            picboxNewPicture.TabIndex = 36;
-            picboxNewPicture.TabStop = false;
-            // 
-            // label55
-            // 
-            label55.AutoSize = true;
-            label55.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
-            label55.Location = new Point(12, 14);
-            label55.Name = "label55";
-            label55.Size = new Size(132, 25);
-            label55.TabIndex = 17;
-            label55.Text = "Change Photo";
-            // 
-            // btnExitChangePhotoPanel
-            // 
-            btnExitChangePhotoPanel.Animated = true;
-            btnExitChangePhotoPanel.BackColor = Color.Transparent;
-            btnExitChangePhotoPanel.BorderRadius = 10;
-            btnExitChangePhotoPanel.CustomizableEdges = customizableEdges132;
-            btnExitChangePhotoPanel.DisabledState.BorderColor = Color.DarkGray;
-            btnExitChangePhotoPanel.DisabledState.CustomBorderColor = Color.DarkGray;
-            btnExitChangePhotoPanel.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
-            btnExitChangePhotoPanel.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnExitChangePhotoPanel.FillColor = Color.Transparent;
-            btnExitChangePhotoPanel.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnExitChangePhotoPanel.ForeColor = Color.Black;
-            btnExitChangePhotoPanel.Image = Properties.Resources.Exit;
-            btnExitChangePhotoPanel.ImageSize = new Size(10, 10);
-            btnExitChangePhotoPanel.Location = new Point(257, 8);
-            btnExitChangePhotoPanel.Name = "btnExitChangePhotoPanel";
-            btnExitChangePhotoPanel.ShadowDecoration.BorderRadius = 10;
-            btnExitChangePhotoPanel.ShadowDecoration.CustomizableEdges = customizableEdges133;
-            btnExitChangePhotoPanel.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
-            btnExitChangePhotoPanel.Size = new Size(27, 21);
-            btnExitChangePhotoPanel.TabIndex = 32;
-            btnExitChangePhotoPanel.Click += btnExitChangePhotoPanel_Click;
-            // 
-            // btnSubmitChangePhoto
-            // 
-            btnSubmitChangePhoto.Animated = true;
-            btnSubmitChangePhoto.BackColor = Color.Transparent;
-            btnSubmitChangePhoto.BorderRadius = 10;
-            btnSubmitChangePhoto.CustomizableEdges = customizableEdges134;
-            btnSubmitChangePhoto.DisabledState.BorderColor = Color.DarkGray;
-            btnSubmitChangePhoto.DisabledState.CustomBorderColor = Color.DarkGray;
-            btnSubmitChangePhoto.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
-            btnSubmitChangePhoto.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnSubmitChangePhoto.Enabled = false;
-            btnSubmitChangePhoto.FillColor = Color.Transparent;
-            btnSubmitChangePhoto.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnSubmitChangePhoto.ForeColor = Color.Black;
-            btnSubmitChangePhoto.Location = new Point(197, 253);
-            btnSubmitChangePhoto.Name = "btnSubmitChangePhoto";
-            btnSubmitChangePhoto.ShadowDecoration.BorderRadius = 10;
-            btnSubmitChangePhoto.ShadowDecoration.CustomizableEdges = customizableEdges135;
-            btnSubmitChangePhoto.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
-            btnSubmitChangePhoto.Size = new Size(79, 36);
-            btnSubmitChangePhoto.TabIndex = 31;
-            btnSubmitChangePhoto.Text = "Change";
-            btnSubmitChangePhoto.Click += btnSubmitChangePhoto_Click;
-            // 
             // guna2Button4
             // 
             guna2Button4.Animated = true;
@@ -2325,6 +2094,238 @@
             label17.Size = new Size(143, 28);
             label17.TabIndex = 17;
             label17.Text = "Configuration";
+            // 
+            // pnlSettingAuthenticationPhoto
+            // 
+            pnlSettingAuthenticationPhoto.BorderColor = Color.Black;
+            pnlSettingAuthenticationPhoto.BorderRadius = 10;
+            pnlSettingAuthenticationPhoto.BorderThickness = 1;
+            pnlSettingAuthenticationPhoto.Controls.Add(btnUploadAuthenticationPhoto);
+            pnlSettingAuthenticationPhoto.Controls.Add(picboxAuthenticationPhoto);
+            pnlSettingAuthenticationPhoto.Controls.Add(label18);
+            pnlSettingAuthenticationPhoto.Controls.Add(btnCloseUploadAuthenticationPhoto);
+            pnlSettingAuthenticationPhoto.Controls.Add(btnSubmitAuthenticationPhoto);
+            pnlSettingAuthenticationPhoto.CustomizableEdges = customizableEdges127;
+            pnlSettingAuthenticationPhoto.FillColor = Color.DimGray;
+            pnlSettingAuthenticationPhoto.Location = new Point(72, 290);
+            pnlSettingAuthenticationPhoto.Name = "pnlSettingAuthenticationPhoto";
+            pnlSettingAuthenticationPhoto.ShadowDecoration.CustomizableEdges = customizableEdges128;
+            pnlSettingAuthenticationPhoto.Size = new Size(289, 305);
+            pnlSettingAuthenticationPhoto.TabIndex = 37;
+            pnlSettingAuthenticationPhoto.Visible = false;
+            // 
+            // btnUploadAuthenticationPhoto
+            // 
+            btnUploadAuthenticationPhoto.Animated = true;
+            btnUploadAuthenticationPhoto.BackColor = Color.Transparent;
+            btnUploadAuthenticationPhoto.BorderRadius = 10;
+            btnUploadAuthenticationPhoto.CustomBorderColor = Color.Black;
+            btnUploadAuthenticationPhoto.CustomBorderThickness = new Padding(0, 0, 0, 1);
+            btnUploadAuthenticationPhoto.CustomizableEdges = customizableEdges120;
+            btnUploadAuthenticationPhoto.DisabledState.BorderColor = Color.DarkGray;
+            btnUploadAuthenticationPhoto.DisabledState.CustomBorderColor = Color.DarkGray;
+            btnUploadAuthenticationPhoto.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            btnUploadAuthenticationPhoto.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            btnUploadAuthenticationPhoto.FillColor = Color.Transparent;
+            btnUploadAuthenticationPhoto.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnUploadAuthenticationPhoto.ForeColor = Color.Black;
+            btnUploadAuthenticationPhoto.Location = new Point(102, 197);
+            btnUploadAuthenticationPhoto.Name = "btnUploadAuthenticationPhoto";
+            btnUploadAuthenticationPhoto.ShadowDecoration.BorderRadius = 10;
+            btnUploadAuthenticationPhoto.ShadowDecoration.CustomizableEdges = customizableEdges121;
+            btnUploadAuthenticationPhoto.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
+            btnUploadAuthenticationPhoto.Size = new Size(94, 36);
+            btnUploadAuthenticationPhoto.TabIndex = 37;
+            btnUploadAuthenticationPhoto.Text = "Upload File";
+            btnUploadAuthenticationPhoto.Click += btnUploadAuthenticationPhoto_Click;
+            // 
+            // picboxAuthenticationPhoto
+            // 
+            picboxAuthenticationPhoto.FillColor = Color.Transparent;
+            picboxAuthenticationPhoto.Image = Properties.Resources.Avatar;
+            picboxAuthenticationPhoto.ImageRotate = 0F;
+            picboxAuthenticationPhoto.Location = new Point(109, 72);
+            picboxAuthenticationPhoto.Name = "picboxAuthenticationPhoto";
+            picboxAuthenticationPhoto.ShadowDecoration.CustomizableEdges = customizableEdges122;
+            picboxAuthenticationPhoto.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle;
+            picboxAuthenticationPhoto.Size = new Size(89, 94);
+            picboxAuthenticationPhoto.SizeMode = PictureBoxSizeMode.StretchImage;
+            picboxAuthenticationPhoto.TabIndex = 36;
+            picboxAuthenticationPhoto.TabStop = false;
+            // 
+            // label18
+            // 
+            label18.AutoSize = true;
+            label18.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
+            label18.Location = new Point(12, 14);
+            label18.Name = "label18";
+            label18.Size = new Size(196, 25);
+            label18.TabIndex = 17;
+            label18.Text = "Authentication Photo";
+            // 
+            // btnCloseUploadAuthenticationPhoto
+            // 
+            btnCloseUploadAuthenticationPhoto.Animated = true;
+            btnCloseUploadAuthenticationPhoto.BackColor = Color.Transparent;
+            btnCloseUploadAuthenticationPhoto.BorderRadius = 10;
+            btnCloseUploadAuthenticationPhoto.CustomizableEdges = customizableEdges123;
+            btnCloseUploadAuthenticationPhoto.DisabledState.BorderColor = Color.DarkGray;
+            btnCloseUploadAuthenticationPhoto.DisabledState.CustomBorderColor = Color.DarkGray;
+            btnCloseUploadAuthenticationPhoto.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            btnCloseUploadAuthenticationPhoto.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            btnCloseUploadAuthenticationPhoto.FillColor = Color.Transparent;
+            btnCloseUploadAuthenticationPhoto.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnCloseUploadAuthenticationPhoto.ForeColor = Color.Black;
+            btnCloseUploadAuthenticationPhoto.Image = Properties.Resources.Exit;
+            btnCloseUploadAuthenticationPhoto.ImageSize = new Size(10, 10);
+            btnCloseUploadAuthenticationPhoto.Location = new Point(257, 8);
+            btnCloseUploadAuthenticationPhoto.Name = "btnCloseUploadAuthenticationPhoto";
+            btnCloseUploadAuthenticationPhoto.ShadowDecoration.BorderRadius = 10;
+            btnCloseUploadAuthenticationPhoto.ShadowDecoration.CustomizableEdges = customizableEdges124;
+            btnCloseUploadAuthenticationPhoto.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
+            btnCloseUploadAuthenticationPhoto.Size = new Size(27, 21);
+            btnCloseUploadAuthenticationPhoto.TabIndex = 32;
+            btnCloseUploadAuthenticationPhoto.Click += btnCloseUploadAuthenticationPhoto_Click;
+            // 
+            // btnSubmitAuthenticationPhoto
+            // 
+            btnSubmitAuthenticationPhoto.Animated = true;
+            btnSubmitAuthenticationPhoto.BackColor = Color.Transparent;
+            btnSubmitAuthenticationPhoto.BorderRadius = 10;
+            btnSubmitAuthenticationPhoto.CustomizableEdges = customizableEdges125;
+            btnSubmitAuthenticationPhoto.DisabledState.BorderColor = Color.DarkGray;
+            btnSubmitAuthenticationPhoto.DisabledState.CustomBorderColor = Color.DarkGray;
+            btnSubmitAuthenticationPhoto.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            btnSubmitAuthenticationPhoto.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            btnSubmitAuthenticationPhoto.Enabled = false;
+            btnSubmitAuthenticationPhoto.FillColor = Color.Transparent;
+            btnSubmitAuthenticationPhoto.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnSubmitAuthenticationPhoto.ForeColor = Color.Black;
+            btnSubmitAuthenticationPhoto.Location = new Point(197, 253);
+            btnSubmitAuthenticationPhoto.Name = "btnSubmitAuthenticationPhoto";
+            btnSubmitAuthenticationPhoto.ShadowDecoration.BorderRadius = 10;
+            btnSubmitAuthenticationPhoto.ShadowDecoration.CustomizableEdges = customizableEdges126;
+            btnSubmitAuthenticationPhoto.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
+            btnSubmitAuthenticationPhoto.Size = new Size(79, 36);
+            btnSubmitAuthenticationPhoto.TabIndex = 31;
+            btnSubmitAuthenticationPhoto.Text = "Change";
+            btnSubmitAuthenticationPhoto.Click += btnSubmitAuthenticationPhoto_Click;
+            // 
+            // pnlChangePhoto
+            // 
+            pnlChangePhoto.BorderColor = Color.Black;
+            pnlChangePhoto.BorderRadius = 10;
+            pnlChangePhoto.BorderThickness = 1;
+            pnlChangePhoto.Controls.Add(btnUploadPhoto);
+            pnlChangePhoto.Controls.Add(picboxNewPicture);
+            pnlChangePhoto.Controls.Add(label55);
+            pnlChangePhoto.Controls.Add(btnExitChangePhotoPanel);
+            pnlChangePhoto.Controls.Add(btnSubmitChangePhoto);
+            pnlChangePhoto.CustomizableEdges = customizableEdges136;
+            pnlChangePhoto.FillColor = Color.DimGray;
+            pnlChangePhoto.Location = new Point(72, 290);
+            pnlChangePhoto.Name = "pnlChangePhoto";
+            pnlChangePhoto.ShadowDecoration.CustomizableEdges = customizableEdges137;
+            pnlChangePhoto.Size = new Size(289, 305);
+            pnlChangePhoto.TabIndex = 35;
+            pnlChangePhoto.Visible = false;
+            // 
+            // btnUploadPhoto
+            // 
+            btnUploadPhoto.Animated = true;
+            btnUploadPhoto.BackColor = Color.Transparent;
+            btnUploadPhoto.BorderRadius = 10;
+            btnUploadPhoto.CustomBorderColor = Color.Black;
+            btnUploadPhoto.CustomBorderThickness = new Padding(0, 0, 0, 1);
+            btnUploadPhoto.CustomizableEdges = customizableEdges129;
+            btnUploadPhoto.DisabledState.BorderColor = Color.DarkGray;
+            btnUploadPhoto.DisabledState.CustomBorderColor = Color.DarkGray;
+            btnUploadPhoto.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            btnUploadPhoto.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            btnUploadPhoto.FillColor = Color.Transparent;
+            btnUploadPhoto.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnUploadPhoto.ForeColor = Color.Black;
+            btnUploadPhoto.Location = new Point(102, 197);
+            btnUploadPhoto.Name = "btnUploadPhoto";
+            btnUploadPhoto.ShadowDecoration.BorderRadius = 10;
+            btnUploadPhoto.ShadowDecoration.CustomizableEdges = customizableEdges130;
+            btnUploadPhoto.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
+            btnUploadPhoto.Size = new Size(94, 36);
+            btnUploadPhoto.TabIndex = 37;
+            btnUploadPhoto.Text = "Upload File";
+            btnUploadPhoto.Click += btnUploadPhoto_Click;
+            // 
+            // picboxNewPicture
+            // 
+            picboxNewPicture.FillColor = Color.Transparent;
+            picboxNewPicture.Image = Properties.Resources.Avatar;
+            picboxNewPicture.ImageRotate = 0F;
+            picboxNewPicture.Location = new Point(109, 72);
+            picboxNewPicture.Name = "picboxNewPicture";
+            picboxNewPicture.ShadowDecoration.CustomizableEdges = customizableEdges131;
+            picboxNewPicture.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle;
+            picboxNewPicture.Size = new Size(89, 94);
+            picboxNewPicture.SizeMode = PictureBoxSizeMode.StretchImage;
+            picboxNewPicture.TabIndex = 36;
+            picboxNewPicture.TabStop = false;
+            // 
+            // label55
+            // 
+            label55.AutoSize = true;
+            label55.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
+            label55.Location = new Point(12, 14);
+            label55.Name = "label55";
+            label55.Size = new Size(132, 25);
+            label55.TabIndex = 17;
+            label55.Text = "Change Photo";
+            // 
+            // btnExitChangePhotoPanel
+            // 
+            btnExitChangePhotoPanel.Animated = true;
+            btnExitChangePhotoPanel.BackColor = Color.Transparent;
+            btnExitChangePhotoPanel.BorderRadius = 10;
+            btnExitChangePhotoPanel.CustomizableEdges = customizableEdges132;
+            btnExitChangePhotoPanel.DisabledState.BorderColor = Color.DarkGray;
+            btnExitChangePhotoPanel.DisabledState.CustomBorderColor = Color.DarkGray;
+            btnExitChangePhotoPanel.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            btnExitChangePhotoPanel.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            btnExitChangePhotoPanel.FillColor = Color.Transparent;
+            btnExitChangePhotoPanel.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnExitChangePhotoPanel.ForeColor = Color.Black;
+            btnExitChangePhotoPanel.Image = Properties.Resources.Exit;
+            btnExitChangePhotoPanel.ImageSize = new Size(10, 10);
+            btnExitChangePhotoPanel.Location = new Point(257, 8);
+            btnExitChangePhotoPanel.Name = "btnExitChangePhotoPanel";
+            btnExitChangePhotoPanel.ShadowDecoration.BorderRadius = 10;
+            btnExitChangePhotoPanel.ShadowDecoration.CustomizableEdges = customizableEdges133;
+            btnExitChangePhotoPanel.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
+            btnExitChangePhotoPanel.Size = new Size(27, 21);
+            btnExitChangePhotoPanel.TabIndex = 32;
+            btnExitChangePhotoPanel.Click += btnExitChangePhotoPanel_Click;
+            // 
+            // btnSubmitChangePhoto
+            // 
+            btnSubmitChangePhoto.Animated = true;
+            btnSubmitChangePhoto.BackColor = Color.Transparent;
+            btnSubmitChangePhoto.BorderRadius = 10;
+            btnSubmitChangePhoto.CustomizableEdges = customizableEdges134;
+            btnSubmitChangePhoto.DisabledState.BorderColor = Color.DarkGray;
+            btnSubmitChangePhoto.DisabledState.CustomBorderColor = Color.DarkGray;
+            btnSubmitChangePhoto.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            btnSubmitChangePhoto.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            btnSubmitChangePhoto.Enabled = false;
+            btnSubmitChangePhoto.FillColor = Color.Transparent;
+            btnSubmitChangePhoto.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnSubmitChangePhoto.ForeColor = Color.Black;
+            btnSubmitChangePhoto.Location = new Point(197, 253);
+            btnSubmitChangePhoto.Name = "btnSubmitChangePhoto";
+            btnSubmitChangePhoto.ShadowDecoration.BorderRadius = 10;
+            btnSubmitChangePhoto.ShadowDecoration.CustomizableEdges = customizableEdges135;
+            btnSubmitChangePhoto.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
+            btnSubmitChangePhoto.Size = new Size(79, 36);
+            btnSubmitChangePhoto.TabIndex = 31;
+            btnSubmitChangePhoto.Text = "Change";
+            btnSubmitChangePhoto.Click += btnSubmitChangePhoto_Click;
             // 
             // pnlChangePassword
             // 
@@ -2759,17 +2760,17 @@
             guna2Panel10.PerformLayout();
             guna2Panel12.ResumeLayout(false);
             guna2Panel12.PerformLayout();
+            pnlSettingProfile.ResumeLayout(false);
+            pnlSettingProfile.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)picboxSettingProfilePicture).EndInit();
+            pnlSettingConfiguration.ResumeLayout(false);
+            pnlSettingConfiguration.PerformLayout();
             pnlSettingAuthenticationPhoto.ResumeLayout(false);
             pnlSettingAuthenticationPhoto.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)picboxAuthenticationPhoto).EndInit();
             pnlChangePhoto.ResumeLayout(false);
             pnlChangePhoto.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)picboxNewPicture).EndInit();
-            pnlSettingProfile.ResumeLayout(false);
-            pnlSettingProfile.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)picboxSettingProfilePicture).EndInit();
-            pnlSettingConfiguration.ResumeLayout(false);
-            pnlSettingConfiguration.PerformLayout();
             pnlChangePassword.ResumeLayout(false);
             pnlChangePassword.PerformLayout();
             pnlChangeUsername.ResumeLayout(false);

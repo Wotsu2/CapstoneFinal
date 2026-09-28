@@ -10,6 +10,7 @@ using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Mail;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,6 +21,17 @@ namespace WinFormsApp1
 {
     public partial class AdminForm : Form
     {
+        // =========================================================
+        //  SMTP CONFIG — change these to your own
+        // =========================================================
+        private const string SmtpHost = "smtp.gmail.com";
+        private const int SmtpPort = 587;
+        private const string SmtpUser = "mjmeriales22@gmail.com";
+        private const string SmtpPass = "eroh cert nhpm yacq";
+        private const string SmtpFrom = "your.email@gmail.com";
+        private const string SmtpFromName = "CDSGA Hub";
+
+        // USER DETAILS
         private Panel overlayPanel;
         private Panel userDetailsPanel;
         private PictureBox detailsPhoto;
@@ -31,14 +43,18 @@ namespace WinFormsApp1
         private Button detailsInfoTab, detailsHistoryTab;
         private Panel detailsInfoPage, detailsHistoryPage;
 
+        // CONTEXT MENU
         private ContextMenuStrip userContextMenu;
         private int contextUserId = -1;
 
+        // DASHBOARD
         private Panel PanelIndicator;
 
+        // FILE MANAGEMENT
         private string currentFolder;
         private Stack<string> folderHistory = new Stack<string>();
 
+        // WORKSTATION
         private TcpListener listener;
         private TcpListener fileListener;
         private int fileSubmittedCount = 0;
@@ -50,9 +66,11 @@ namespace WinFormsApp1
         private string selectedWorkstationId = "";
         private volatile bool isRunning = false;
 
+        // AUTH PHOTO / FILE TRANSFER LISTENER
         private TcpListener authPhotoListener;
         private volatile bool adminIsRunning = true;
 
+        // BANNER MANAGEMENT
         private Guna.UI2.WinForms.Guna2Button btnUploadBanner;
         private Guna.UI2.WinForms.Guna2Button btnOpenBannersFolder;
 
@@ -1434,32 +1452,49 @@ namespace WinFormsApp1
         {
             string connStr = SettingsManager.Current.GetConnectionString();
 
-            if (string.IsNullOrEmpty(IdNumberText.Text) && string.IsNullOrEmpty(ContextRoleText.Text) && string.IsNullOrEmpty(LastnameText.Text) && string.IsNullOrEmpty(FirstnameText.Text) && string.IsNullOrEmpty(MiddlenameText.Text)
-                && string.IsNullOrEmpty(EmailText.Text) && string.IsNullOrEmpty(ContextYearText.Text) && string.IsNullOrEmpty(ContextSectionText.Text) && string.IsNullOrEmpty(ContextCourseText.Text))
+            if (string.IsNullOrEmpty(LastnameText.Text) ||
+                string.IsNullOrEmpty(FirstnameText.Text) ||
+                string.IsNullOrEmpty(ContextRoleText.Text) ||
+                string.IsNullOrEmpty(EmailText.Text))
             {
-                MessageBox.Show("Please Fill up the Blank");
+                MessageBox.Show("Please fill in at least: Role, Last Name, First Name, and Email.");
                 return;
             }
 
+            // ---- Semester default by role ----
             if (ContextRoleText.Text == "Professor")
                 semester = "Null";
             else if (ContextRoleText.Text == "Student")
                 semester = "1st Semester";
+            else
+                semester = "Null";
+
+            // ---- Auto-generate username ----
+            string username = GenerateUsername(
+                LastnameText.Text,
+                FirstnameText.Text,
+                MiddlenameText.Text,
+                connStr);
+
+            const string defaultPassword = "12345678";
 
             try
             {
+                long userId;
+
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
 
-                    string Insertquery2 = @"INSERT INTO user_credential (username, p_word, roles, user_status, authentication_condition)
-                                            VALUES (@Uname, @Password, @UserRole, @Status, @authentication_condition); SELECT LAST_INSERT_ID();";
+                    string Insertquery2 = @"
+                        INSERT INTO user_credential (username, p_word, roles, user_status, authentication_condition)
+                        VALUES (@Uname, @Password, @UserRole, @Status, @authentication_condition);
+                        SELECT LAST_INSERT_ID();";
 
-                    long userId;
                     using (MySqlCommand cmd2 = new MySqlCommand(Insertquery2, conn))
                     {
-                        cmd2.Parameters.AddWithValue("@Uname", IdNumberText.Text.Trim());
-                        cmd2.Parameters.AddWithValue("@Password", "12345678");
+                        cmd2.Parameters.AddWithValue("@Uname", username);
+                        cmd2.Parameters.AddWithValue("@Password", defaultPassword);
                         cmd2.Parameters.AddWithValue("@UserRole", ContextRoleText.Text.Trim());
                         cmd2.Parameters.AddWithValue("@Status", "Active");
                         cmd2.Parameters.AddWithValue("@authentication_condition", "Disabled");
@@ -1467,10 +1502,10 @@ namespace WinFormsApp1
                     }
 
                     string Insertquery = @"
-                                INSERT INTO user_information 
-                                    (user_id, lastname, firstname, middlename, email, school_year, school_section, school_semester, school_course) 
-                                VALUES 
-                                    (@user_id, @lastname, @firstname, @middlename, @email, @school_year, @school_section, @school_semester, @school_course)";
+                        INSERT INTO user_information 
+                            (user_id, lastname, firstname, middlename, email, school_year, school_section, school_semester, school_course) 
+                        VALUES 
+                            (@user_id, @lastname, @firstname, @middlename, @email, @school_year, @school_section, @school_semester, @school_course)";
 
                     using (MySqlCommand cmd = new MySqlCommand(Insertquery, conn))
                     {
@@ -1490,12 +1525,13 @@ namespace WinFormsApp1
                     using (MySqlCommand cmd3 = new MySqlCommand(AttendanceQuery, conn))
                     {
                         cmd3.Parameters.AddWithValue("@student_id", userId);
-                        cmd3.Parameters.AddWithValue("@student_name", $"{LastnameText.Text.ToUpper()} {FirstnameText.Text.ToUpper()} {MiddlenameText.Text.ToUpper()}");
+                        cmd3.Parameters.AddWithValue("@student_name",
+                            $"{LastnameText.Text.ToUpper()} {FirstnameText.Text.ToUpper()} {MiddlenameText.Text.ToUpper()}");
                         cmd3.ExecuteNonQuery();
                     }
 
+                    // ---- User folder on share ----
                     string rootPath = SettingsManager.Current.SaveFolder;
-
                     if (string.IsNullOrEmpty(rootPath))
                     {
                         MessageBox.Show(
@@ -1518,7 +1554,6 @@ namespace WinFormsApp1
 
                     string folderName = SanitizeFolderName(
                         $"{LastnameText.Text.ToUpper()}_{FirstnameText.Text.ToUpper()}_{MiddlenameText.Text.ToUpper()}");
-
                     string userFolderPath = Path.Combine(rootPath, folderName);
 
                     try
@@ -1539,15 +1574,130 @@ namespace WinFormsApp1
                         cmd4.Parameters.AddWithValue("@FolderPath", userFolderPath);
                         cmd4.ExecuteNonQuery();
                     }
-
-                    MessageBox.Show("Account Successfully Created!");
-                    ClearText();
-                    LoadUserData();
                 }
+
+                // ---- Send credentials to email ----
+                string email = EmailText.Text.Trim();
+                string fullName = $"{FirstnameText.Text.Trim()} {MiddlenameText.Text.Trim()} {LastnameText.Text.Trim()}".Trim();
+                string role = ContextRoleText.Text.Trim();
+
+                bool emailed = TrySendCredentialsEmail(email, fullName, username, defaultPassword, role);
+
+                if (emailed)
+                {
+                    MessageBox.Show(
+                        $"Account successfully created!\n\n" +
+                        $"Username: {username}\n" +
+                        $"Password: {defaultPassword}\n\n" +
+                        $"Credentials were emailed to:\n{email}",
+                        "Account Created",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show(
+                        $"Account successfully created, but the email could not be sent.\n\n" +
+                        $"Please give the credentials manually:\n\n" +
+                        $"Username: {username}\n" +
+                        $"Password: {defaultPassword}\n\n" +
+                        $"Email address on file: {email}",
+                        "Account Created (Email Failed)",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+
+                ClearText();
+                LoadUserData();
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error: " + ex.Message);
+            }
+        }
+
+        // =========================================================
+        // AUTO-GENERATE USERNAME
+        // =========================================================
+        private string GenerateUsername(string last, string first, string middle, string connStr)
+        {
+            string l = string.IsNullOrWhiteSpace(last) ? "X" : last.Trim().Substring(0, 1).ToUpper();
+            string f = string.IsNullOrWhiteSpace(first) ? "X" : first.Trim().Substring(0, 1).ToUpper();
+            string m = string.IsNullOrWhiteSpace(middle) ? "X" : middle.Trim().Substring(0, 1).ToUpper();
+
+            string baseUser = $"{l}{f}{m}{DateTime.Now:MMddyyyy}";
+            string candidate = baseUser;
+            int suffix = 1;
+
+            using (var conn = new MySqlConnection(connStr))
+            {
+                conn.Open();
+
+                while (true)
+                {
+                    using (var cmd = new MySqlCommand(
+                        "SELECT COUNT(*) FROM user_credential WHERE username = @u", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@u", candidate);
+                        int exists = Convert.ToInt32(cmd.ExecuteScalar());
+                        if (exists == 0) return candidate;
+                    }
+
+                    candidate = $"{baseUser}-{suffix}";
+                    suffix++;
+                }
+            }
+        }
+
+        // =========================================================
+        // SEND CREDENTIALS EMAIL
+        // =========================================================
+        private bool TrySendCredentialsEmail(string toEmail, string fullName, string username, string password, string role)
+        {
+            try
+            {
+                using (var mail = new MailMessage())
+                {
+                    mail.From = new MailAddress(SmtpFrom, SmtpFromName);
+                    mail.To.Add(toEmail);
+                    mail.Subject = "Your CDSGA Hub account credentials";
+                    mail.IsBodyHtml = true;
+
+                    string safeName = System.Security.SecurityElement.Escape(fullName);
+                    string safeUser = System.Security.SecurityElement.Escape(username);
+                    string safePass = System.Security.SecurityElement.Escape(password);
+                    string safeRole = System.Security.SecurityElement.Escape(role);
+
+                    mail.Body = $@"
+<div style='font-family:Segoe UI,Arial,sans-serif;font-size:14px;color:#222;'>
+  <h2 style='color:#8B0000;margin:0 0 12px 0;'>CDSGA Hub</h2>
+  <p>Hello <b>{safeName}</b>,</p>
+  <p>Your account has been created. Below are your login credentials:</p>
+  <table style='border-collapse:collapse;margin:12px 0;'>
+    <tr><td style='padding:6px 12px;background:#f5f5f5;'><b>Role</b></td><td style='padding:6px 12px;'>{safeRole}</td></tr>
+    <tr><td style='padding:6px 12px;background:#f5f5f5;'><b>Username</b></td><td style='padding:6px 12px;'>{safeUser}</td></tr>
+    <tr><td style='padding:6px 12px;background:#f5f5f5;'><b>Password</b></td><td style='padding:6px 12px;'>{safePass}</td></tr>
+  </table>
+  <p>Please log in and change your password as soon as possible.</p>
+  <p style='color:#666;font-size:12px;'>This is an automated message. Do not reply.</p>
+</div>";
+
+                    using (var smtp = new SmtpClient(SmtpHost, SmtpPort))
+                    {
+                        smtp.EnableSsl = true;
+                        smtp.Credentials = new System.Net.NetworkCredential(SmtpUser, SmtpPass);
+                        smtp.DeliveryMethod = SmtpDeliveryMethod.Network;
+                        smtp.Timeout = 15000;
+
+                        smtp.Send(mail);
+                    }
+                }
+
+                Console.WriteLine($"[CreateUser] Credentials emailed to {toEmail}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[CreateUser] Email send failed: " + ex.Message);
+                return false;
             }
         }
 
@@ -1934,8 +2084,19 @@ namespace WinFormsApp1
             }
             screenViewers.Clear();
 
+            foreach (Form f in Application.OpenForms.Cast<Form>().ToList())
+            {
+                if (f is Login && !f.IsDisposed)
+                {
+                    f.Hide();
+                    f.Dispose();
+                }
+            }
+
             Login loginForm = new Login();
             loginForm.Show();
+            loginForm.BringToFront();
+            loginForm.Activate();
 
             this.Hide();
             this.Close();
