@@ -49,6 +49,7 @@ namespace WinFormsApp1
         private string Isauthentication_photoEmpty;
 
         private System.Windows.Forms.Timer assessmentsRefreshTimer;
+        private System.Windows.Forms.Timer activitiesRefreshTimer;   // <-- NEW
 
         private Guna.UI2.WinForms.Guna2Panel assessmentsPanel;
         private FlowLayoutPanel assessmentsList;
@@ -118,6 +119,23 @@ namespace WinFormsApp1
 
                 // ✅ Start the banner slideshow
                 StartSlideshow();
+
+                // ✅ NEW: poll pending activities every 10s while Home is visible
+                activitiesRefreshTimer = new System.Windows.Forms.Timer { Interval = 10000 };
+                activitiesRefreshTimer.Tick += (s, ev) =>
+                {
+                    try
+                    {
+                        if (!pnlHome.Visible) return;
+                        flpPendingActivities.Controls.Clear();
+                        InitializeCreateButtonActivity();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("activitiesRefreshTimer error: " + ex.Message);
+                    }
+                };
+                activitiesRefreshTimer.Start();
             }
             catch (Exception ex)
             {
@@ -305,7 +323,9 @@ namespace WinFormsApp1
             btnSubject.Checked = false;
 
             try { LoadAssessments(); } catch { }
-            InitializeCreateButtonActivity();
+
+            // ✅ NEW: refresh immediately when the user navigates back to Home
+            try { RefreshPendingActivities(); } catch { }
         }
 
         private void btnActivities_Click(object sender, EventArgs e)
@@ -324,6 +344,9 @@ namespace WinFormsApp1
             btnAccount.Checked = false;
             btnSubject.Checked = false;
             btnGrades.Checked = false;
+
+            // ✅ NEW: refresh the grid when opening Activities
+            try { InitializeDataGridViewActivities(); } catch { }
         }
 
         private void btnSubject_Click(object sender, EventArgs e)
@@ -727,7 +750,7 @@ namespace WinFormsApp1
                                 card.BorderThickness = 2;
                                 card.BorderRadius = 14;
                                 card.Cursor = Cursors.Hand;
-                                card.Tag = activityId;                       // <-- useful for debugging
+                                card.Tag = activityId;
 
                                 int capturedId = activityId;
                                 card.Click += (s, e) => InitializeHomeActivityButton(capturedId);
@@ -852,7 +875,6 @@ namespace WinFormsApp1
 
                                 activityForm.ShowDialog(this);
 
-                                // Always refresh after the dialog closes — cheap and safe
                                 RefreshPendingActivities();
                             }
                         }
@@ -904,7 +926,6 @@ namespace WinFormsApp1
                     AND LOWER(TRIM(sc.class_name)) = LOWER(TRIM(pa.activity_subject))
                 WHERE 1 = 1";
 
-                    // Pending / no filter → hide already-submitted
                     if (string.IsNullOrEmpty(selectedActivitiesCategory) ||
                         selectedActivitiesCategory == "Pending")
                     {
@@ -930,7 +951,6 @@ namespace WinFormsApp1
                     }
                     else if (selectedActivitiesCategory == "Incomplete")
                     {
-                        // Anything past due and NOT submitted
                         query += @"
                     AND pa.due_date < NOW()
                     AND NOT EXISTS (
@@ -1030,11 +1050,9 @@ namespace WinFormsApp1
                         object result = cmd.ExecuteScalar();
                         if (result == null || result == DBNull.Value) return null;
 
-                        // activity_file now stores a UNC path string
                         if (result is string s && !string.IsNullOrWhiteSpace(s))
                             return s.Trim();
 
-                        // Backward compat: if it's still a byte[] (old rows), save to temp
                         if (result is byte[] bytes && bytes.Length > 0)
                         {
                             string tempFolder = Path.Combine(Path.GetTempPath(), "cdsga_activities", userId);
@@ -1282,6 +1300,9 @@ namespace WinFormsApp1
 
                     InitializeCreadeClass(className, classSection, classTime, classDate);
                     MessageBox.Show("Successfully Joined Class!");
+
+                    // NEW: refresh pending activities immediately after joining
+                    try { RefreshPendingActivities(); } catch { }
                 }
             }
             catch (Exception ex)
@@ -1421,6 +1442,9 @@ namespace WinFormsApp1
 
                                     flpSubjectClass.Controls.Remove(cardPanel);
                                     cardPanel.Dispose();
+
+                                    // NEW: refresh pending activities after unjoining
+                                    try { RefreshPendingActivities(); } catch { }
                                 };
 
                                 cardPanel.ContextMenuStrip = menu;
@@ -1571,6 +1595,10 @@ namespace WinFormsApp1
             try { assessmentsRefreshTimer?.Stop(); } catch { }
             try { assessmentsRefreshTimer?.Dispose(); } catch { }
             assessmentsRefreshTimer = null;
+
+            try { activitiesRefreshTimer?.Stop(); } catch { }
+            try { activitiesRefreshTimer?.Dispose(); } catch { }
+            activitiesRefreshTimer = null;
 
             MessageBox.Show("Signed out successfully.");
         }
@@ -1840,7 +1868,6 @@ namespace WinFormsApp1
         {
             try
             {
-                // Use the SAME ServerIp and FileTransferPort
                 string adminIp = SettingsManager.Current.ServerIp;
                 int adminPort = SettingsManager.Current.FileTransferPort;
 
@@ -1906,10 +1933,6 @@ namespace WinFormsApp1
                 bool sent = await SendAuthenticationPhotoToAdmin(imageBytes, fileName);
                 if (!sent) return;
 
-                // Store the network path in DB using ServerIp + FileTransferPort isn't needed — 
-                // just build the UNC/network path from ServerIp + SaveFolder + AuthPhotoSubfolder.
-                // Since we only have the shared root name (SaveFolder's last segment), store the
-                // logical path: \\ServerIp\<SharedFolderName>\AuthenticationPhotos\fileName
                 string sharedFolderName = new DirectoryInfo(SettingsManager.Current.SaveFolder).Name;
                 string uncPath = $@"\\{SettingsManager.Current.ServerIp}\{sharedFolderName}\{SettingsManager.Current.AuthPhotoSubfolder}\{fileName}";
 
@@ -1955,7 +1978,7 @@ namespace WinFormsApp1
                 BorderRadius = 10,
                 BorderColor = Color.FromArgb(220, 220, 220),
                 BorderThickness = 1,
-                ShadowDecoration = { BorderRadius = 10, Enabled = true, Depth = 30, Color = Color.FromArgb(60, 0, 0, 0)},
+                ShadowDecoration = { BorderRadius = 10, Enabled = true, Depth = 30, Color = Color.FromArgb(60, 0, 0, 0) },
                 AutoScroll = false
             };
 
@@ -2405,6 +2428,11 @@ namespace WinFormsApp1
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             try { assessmentsRefreshTimer?.Stop(); } catch { }
+            try { assessmentsRefreshTimer?.Dispose(); } catch { }
+
+            try { activitiesRefreshTimer?.Stop(); } catch { }
+            try { activitiesRefreshTimer?.Dispose(); } catch { }
+            activitiesRefreshTimer = null;
 
             try { slideshowTimer?.Stop(); } catch { }
             try { slideshowTimer?.Dispose(); } catch { }
@@ -2418,7 +2446,6 @@ namespace WinFormsApp1
 
             base.OnFormClosing(e);
         }
-
 
         private void InitializeNavTooltips()
         {
