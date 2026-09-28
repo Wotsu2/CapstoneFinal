@@ -37,6 +37,27 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges6 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges7 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges8 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges9 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(AdminForm));
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges10 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges11 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges12 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges13 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges14 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges15 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges16 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges17 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges18 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges19 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges20 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges21 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges22 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges23 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges24 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges25 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges26 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges27 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges28 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges29 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges30 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges31 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -71,27 +92,6 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges54 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges55 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges56 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges9 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(AdminForm));
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges10 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges11 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges12 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges13 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges14 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges15 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges16 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges17 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges18 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges19 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges20 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges21 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges22 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges23 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges24 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges25 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges26 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges27 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges28 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges67 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges68 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges59 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -141,6 +141,27 @@
             lblTotalUsers = new Label();
             label5 = new Label();
             pnlUserManagement = new Panel();
+            pnlCreateAccount = new Panel();
+            CreateButton = new Guna.UI2.WinForms.Guna2Button();
+            IdNumberText = new Guna.UI2.WinForms.Guna2TextBox();
+            label14 = new Label();
+            ContextRoleText = new Guna.UI2.WinForms.Guna2ComboBox();
+            label13 = new Label();
+            LastnameText = new Guna.UI2.WinForms.Guna2TextBox();
+            label12 = new Label();
+            label19 = new Label();
+            label11 = new Label();
+            FirstnameText = new Guna.UI2.WinForms.Guna2TextBox();
+            label15 = new Label();
+            label18 = new Label();
+            ContextCourseText = new Guna.UI2.WinForms.Guna2ComboBox();
+            MiddlenameText = new Guna.UI2.WinForms.Guna2TextBox();
+            ContextSectionText = new Guna.UI2.WinForms.Guna2ComboBox();
+            label17 = new Label();
+            ContextYearText = new Guna.UI2.WinForms.Guna2ComboBox();
+            EmailText = new Guna.UI2.WinForms.Guna2TextBox();
+            label16 = new Label();
+            label20 = new Label();
             pnlUserList = new Panel();
             cmbSelection = new Guna.UI2.WinForms.Guna2ComboBox();
             guna2Panel21 = new Guna.UI2.WinForms.Guna2Panel();
@@ -169,27 +190,6 @@
             guna2Panel9 = new Guna.UI2.WinForms.Guna2Panel();
             guna2ComboBox2 = new Guna.UI2.WinForms.Guna2ComboBox();
             SearchButton = new Guna.UI2.WinForms.Guna2TextBox();
-            pnlCreateAccount = new Panel();
-            CreateButton = new Guna.UI2.WinForms.Guna2Button();
-            IdNumberText = new Guna.UI2.WinForms.Guna2TextBox();
-            label14 = new Label();
-            ContextRoleText = new Guna.UI2.WinForms.Guna2ComboBox();
-            label13 = new Label();
-            LastnameText = new Guna.UI2.WinForms.Guna2TextBox();
-            label12 = new Label();
-            label19 = new Label();
-            label11 = new Label();
-            FirstnameText = new Guna.UI2.WinForms.Guna2TextBox();
-            label15 = new Label();
-            label18 = new Label();
-            ContextCourseText = new Guna.UI2.WinForms.Guna2ComboBox();
-            MiddlenameText = new Guna.UI2.WinForms.Guna2TextBox();
-            ContextSectionText = new Guna.UI2.WinForms.Guna2ComboBox();
-            label17 = new Label();
-            ContextYearText = new Guna.UI2.WinForms.Guna2ComboBox();
-            EmailText = new Guna.UI2.WinForms.Guna2TextBox();
-            label16 = new Label();
-            label20 = new Label();
             label6 = new Label();
             guna2Panel2 = new Guna.UI2.WinForms.Guna2Panel();
             btnDashboard = new Guna.UI2.WinForms.Guna2Button();
@@ -235,6 +235,7 @@
             guna2Panel4.SuspendLayout();
             guna2Panel3.SuspendLayout();
             pnlUserManagement.SuspendLayout();
+            pnlCreateAccount.SuspendLayout();
             pnlUserList.SuspendLayout();
             guna2Panel21.SuspendLayout();
             guna2Panel20.SuspendLayout();
@@ -249,7 +250,6 @@
             guna2Panel11.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)UserDataList).BeginInit();
             guna2Panel9.SuspendLayout();
-            pnlCreateAccount.SuspendLayout();
             guna2Panel2.SuspendLayout();
             guna2Panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
@@ -432,6 +432,385 @@
             pnlUserManagement.Name = "pnlUserManagement";
             pnlUserManagement.Size = new Size(1345, 590);
             pnlUserManagement.TabIndex = 9;
+            // 
+            // pnlCreateAccount
+            // 
+            pnlCreateAccount.Controls.Add(CreateButton);
+            pnlCreateAccount.Controls.Add(IdNumberText);
+            pnlCreateAccount.Controls.Add(label14);
+            pnlCreateAccount.Controls.Add(ContextRoleText);
+            pnlCreateAccount.Controls.Add(label13);
+            pnlCreateAccount.Controls.Add(LastnameText);
+            pnlCreateAccount.Controls.Add(label12);
+            pnlCreateAccount.Controls.Add(label19);
+            pnlCreateAccount.Controls.Add(label11);
+            pnlCreateAccount.Controls.Add(FirstnameText);
+            pnlCreateAccount.Controls.Add(label15);
+            pnlCreateAccount.Controls.Add(label18);
+            pnlCreateAccount.Controls.Add(ContextCourseText);
+            pnlCreateAccount.Controls.Add(MiddlenameText);
+            pnlCreateAccount.Controls.Add(ContextSectionText);
+            pnlCreateAccount.Controls.Add(label17);
+            pnlCreateAccount.Controls.Add(ContextYearText);
+            pnlCreateAccount.Controls.Add(EmailText);
+            pnlCreateAccount.Controls.Add(label16);
+            pnlCreateAccount.Controls.Add(label20);
+            pnlCreateAccount.Location = new Point(0, 45);
+            pnlCreateAccount.Name = "pnlCreateAccount";
+            pnlCreateAccount.Size = new Size(1345, 538);
+            pnlCreateAccount.TabIndex = 80;
+            // 
+            // CreateButton
+            // 
+            CreateButton.BorderRadius = 20;
+            CreateButton.CustomizableEdges = customizableEdges9;
+            CreateButton.DisabledState.BorderColor = Color.DarkGray;
+            CreateButton.DisabledState.CustomBorderColor = Color.DarkGray;
+            CreateButton.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            CreateButton.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            CreateButton.FillColor = Color.Maroon;
+            CreateButton.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            CreateButton.ForeColor = Color.White;
+            CreateButton.Image = (Image)resources.GetObject("CreateButton.Image");
+            CreateButton.Location = new Point(895, 418);
+            CreateButton.Margin = new Padding(3, 2, 3, 2);
+            CreateButton.Name = "CreateButton";
+            CreateButton.RightToLeft = RightToLeft.Yes;
+            CreateButton.ShadowDecoration.CustomizableEdges = customizableEdges10;
+            CreateButton.Size = new Size(278, 49);
+            CreateButton.TabIndex = 78;
+            CreateButton.Text = "Create Account";
+            CreateButton.Click += CreateButton_Click;
+            // 
+            // IdNumberText
+            // 
+            IdNumberText.BackColor = Color.Transparent;
+            IdNumberText.BorderColor = Color.Black;
+            IdNumberText.BorderRadius = 20;
+            IdNumberText.CustomizableEdges = customizableEdges11;
+            IdNumberText.DefaultText = "";
+            IdNumberText.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
+            IdNumberText.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
+            IdNumberText.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
+            IdNumberText.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
+            IdNumberText.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
+            IdNumberText.Font = new Font("Segoe UI", 9F);
+            IdNumberText.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
+            IdNumberText.Location = new Point(246, 42);
+            IdNumberText.Name = "IdNumberText";
+            IdNumberText.PlaceholderForeColor = Color.Gray;
+            IdNumberText.PlaceholderText = "   e.g., A12345678";
+            IdNumberText.SelectedText = "";
+            IdNumberText.ShadowDecoration.CustomizableEdges = customizableEdges12;
+            IdNumberText.Size = new Size(301, 45);
+            IdNumberText.TabIndex = 58;
+            // 
+            // label14
+            // 
+            label14.AutoSize = true;
+            label14.BackColor = Color.Transparent;
+            label14.FlatStyle = FlatStyle.Flat;
+            label14.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label14.ForeColor = Color.Black;
+            label14.Location = new Point(706, 372);
+            label14.Name = "label14";
+            label14.Size = new Size(282, 20);
+            label14.TabIndex = 76;
+            label14.Text = "*Notice: Default Password is \"12345678\"";
+            // 
+            // ContextRoleText
+            // 
+            ContextRoleText.BackColor = Color.Transparent;
+            ContextRoleText.BorderColor = Color.Black;
+            ContextRoleText.BorderRadius = 20;
+            ContextRoleText.CustomizableEdges = customizableEdges13;
+            ContextRoleText.DrawMode = DrawMode.OwnerDrawFixed;
+            ContextRoleText.DropDownStyle = ComboBoxStyle.DropDownList;
+            ContextRoleText.FocusedColor = Color.FromArgb(94, 148, 255);
+            ContextRoleText.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
+            ContextRoleText.Font = new Font("Segoe UI", 10F);
+            ContextRoleText.ForeColor = Color.FromArgb(68, 88, 112);
+            ContextRoleText.ItemHeight = 54;
+            ContextRoleText.Items.AddRange(new object[] { "Admin", "Professor", "Student" });
+            ContextRoleText.Location = new Point(697, 42);
+            ContextRoleText.Margin = new Padding(3, 2, 3, 2);
+            ContextRoleText.Name = "ContextRoleText";
+            ContextRoleText.ShadowDecoration.CustomizableEdges = customizableEdges14;
+            ContextRoleText.Size = new Size(231, 60);
+            ContextRoleText.TabIndex = 60;
+            ContextRoleText.SelectedIndexChanged += ContextRoleText_SelectedIndexChanged;
+            // 
+            // label13
+            // 
+            label13.AutoSize = true;
+            label13.BackColor = Color.Transparent;
+            label13.FlatStyle = FlatStyle.Flat;
+            label13.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label13.ForeColor = Color.Black;
+            label13.Location = new Point(706, 259);
+            label13.Name = "label13";
+            label13.Size = new Size(56, 20);
+            label13.TabIndex = 75;
+            label13.Text = "Course";
+            // 
+            // LastnameText
+            // 
+            LastnameText.BackColor = Color.Transparent;
+            LastnameText.BorderColor = Color.Black;
+            LastnameText.BorderRadius = 20;
+            LastnameText.CustomizableEdges = customizableEdges15;
+            LastnameText.DefaultText = "";
+            LastnameText.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
+            LastnameText.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
+            LastnameText.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
+            LastnameText.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
+            LastnameText.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
+            LastnameText.Font = new Font("Segoe UI", 9F);
+            LastnameText.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
+            LastnameText.Location = new Point(246, 122);
+            LastnameText.Name = "LastnameText";
+            LastnameText.PlaceholderForeColor = Color.Gray;
+            LastnameText.PlaceholderText = "   e.g., Cabañero";
+            LastnameText.SelectedText = "";
+            LastnameText.ShadowDecoration.CustomizableEdges = customizableEdges16;
+            LastnameText.Size = new Size(301, 45);
+            LastnameText.TabIndex = 61;
+            // 
+            // label12
+            // 
+            label12.AutoSize = true;
+            label12.BackColor = Color.Transparent;
+            label12.FlatStyle = FlatStyle.Flat;
+            label12.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label12.ForeColor = Color.Black;
+            label12.Location = new Point(706, 179);
+            label12.Name = "label12";
+            label12.Size = new Size(59, 20);
+            label12.TabIndex = 74;
+            label12.Text = "Section";
+            // 
+            // label19
+            // 
+            label19.AutoSize = true;
+            label19.BackColor = Color.Transparent;
+            label19.FlatStyle = FlatStyle.Flat;
+            label19.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label19.ForeColor = Color.Black;
+            label19.Location = new Point(254, 101);
+            label19.Name = "label19";
+            label19.Size = new Size(80, 20);
+            label19.TabIndex = 62;
+            label19.Text = "Last Name";
+            // 
+            // label11
+            // 
+            label11.AutoSize = true;
+            label11.BackColor = Color.Transparent;
+            label11.FlatStyle = FlatStyle.Flat;
+            label11.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label11.ForeColor = Color.Black;
+            label11.Location = new Point(706, 101);
+            label11.Name = "label11";
+            label11.Size = new Size(39, 20);
+            label11.TabIndex = 73;
+            label11.Text = "Year";
+            // 
+            // FirstnameText
+            // 
+            FirstnameText.BackColor = Color.Transparent;
+            FirstnameText.BorderColor = Color.Black;
+            FirstnameText.BorderRadius = 20;
+            FirstnameText.CustomizableEdges = customizableEdges17;
+            FirstnameText.DefaultText = "";
+            FirstnameText.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
+            FirstnameText.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
+            FirstnameText.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
+            FirstnameText.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
+            FirstnameText.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
+            FirstnameText.Font = new Font("Segoe UI", 9F);
+            FirstnameText.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
+            FirstnameText.Location = new Point(246, 200);
+            FirstnameText.Name = "FirstnameText";
+            FirstnameText.PlaceholderForeColor = Color.Gray;
+            FirstnameText.PlaceholderText = "   e.g., Vince";
+            FirstnameText.SelectedText = "";
+            FirstnameText.ShadowDecoration.CustomizableEdges = customizableEdges18;
+            FirstnameText.Size = new Size(301, 45);
+            FirstnameText.TabIndex = 63;
+            // 
+            // label15
+            // 
+            label15.AutoSize = true;
+            label15.BackColor = Color.Transparent;
+            label15.FlatStyle = FlatStyle.Flat;
+            label15.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label15.ForeColor = Color.Black;
+            label15.Location = new Point(706, 21);
+            label15.Name = "label15";
+            label15.Size = new Size(39, 20);
+            label15.TabIndex = 72;
+            label15.Text = "Role";
+            // 
+            // label18
+            // 
+            label18.AutoSize = true;
+            label18.BackColor = Color.Transparent;
+            label18.FlatStyle = FlatStyle.Flat;
+            label18.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label18.ForeColor = Color.Black;
+            label18.Location = new Point(254, 179);
+            label18.Name = "label18";
+            label18.Size = new Size(83, 20);
+            label18.TabIndex = 64;
+            label18.Text = "First Name";
+            // 
+            // ContextCourseText
+            // 
+            ContextCourseText.BackColor = Color.Transparent;
+            ContextCourseText.BorderColor = Color.Black;
+            ContextCourseText.BorderRadius = 20;
+            ContextCourseText.CustomizableEdges = customizableEdges19;
+            ContextCourseText.DrawMode = DrawMode.OwnerDrawFixed;
+            ContextCourseText.DropDownStyle = ComboBoxStyle.DropDownList;
+            ContextCourseText.FocusedColor = Color.FromArgb(94, 148, 255);
+            ContextCourseText.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
+            ContextCourseText.Font = new Font("Segoe UI", 10F);
+            ContextCourseText.ForeColor = Color.FromArgb(68, 88, 112);
+            ContextCourseText.ItemHeight = 54;
+            ContextCourseText.Items.AddRange(new object[] { "Bachelor of Science in Information Techonology", "Bachelor of Science in Computer Science", "Bacherlor of Science in Computer Engineering" });
+            ContextCourseText.Location = new Point(697, 281);
+            ContextCourseText.Margin = new Padding(3, 2, 3, 2);
+            ContextCourseText.Name = "ContextCourseText";
+            ContextCourseText.ShadowDecoration.CustomizableEdges = customizableEdges20;
+            ContextCourseText.Size = new Size(231, 60);
+            ContextCourseText.TabIndex = 71;
+            // 
+            // MiddlenameText
+            // 
+            MiddlenameText.BackColor = Color.Transparent;
+            MiddlenameText.BorderColor = Color.Black;
+            MiddlenameText.BorderRadius = 20;
+            MiddlenameText.CustomizableEdges = customizableEdges21;
+            MiddlenameText.DefaultText = "";
+            MiddlenameText.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
+            MiddlenameText.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
+            MiddlenameText.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
+            MiddlenameText.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
+            MiddlenameText.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
+            MiddlenameText.Font = new Font("Segoe UI", 9F);
+            MiddlenameText.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
+            MiddlenameText.Location = new Point(246, 281);
+            MiddlenameText.Name = "MiddlenameText";
+            MiddlenameText.PlaceholderForeColor = Color.Gray;
+            MiddlenameText.PlaceholderText = "   e.g., A";
+            MiddlenameText.SelectedText = "";
+            MiddlenameText.ShadowDecoration.CustomizableEdges = customizableEdges22;
+            MiddlenameText.Size = new Size(301, 45);
+            MiddlenameText.TabIndex = 65;
+            // 
+            // ContextSectionText
+            // 
+            ContextSectionText.BackColor = Color.Transparent;
+            ContextSectionText.BorderColor = Color.Black;
+            ContextSectionText.BorderRadius = 20;
+            ContextSectionText.CustomizableEdges = customizableEdges23;
+            ContextSectionText.DrawMode = DrawMode.OwnerDrawFixed;
+            ContextSectionText.DropDownStyle = ComboBoxStyle.DropDownList;
+            ContextSectionText.FocusedColor = Color.FromArgb(94, 148, 255);
+            ContextSectionText.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
+            ContextSectionText.Font = new Font("Segoe UI", 10F);
+            ContextSectionText.ForeColor = Color.FromArgb(68, 88, 112);
+            ContextSectionText.ItemHeight = 54;
+            ContextSectionText.Items.AddRange(new object[] { "1-1", "1-2", "1-3", "2-1", "2-2", "2-3", "3-1", "3-2", "3-3", "4-1", "4-2", "4-3" });
+            ContextSectionText.Location = new Point(697, 200);
+            ContextSectionText.Margin = new Padding(3, 2, 3, 2);
+            ContextSectionText.Name = "ContextSectionText";
+            ContextSectionText.ShadowDecoration.CustomizableEdges = customizableEdges24;
+            ContextSectionText.Size = new Size(231, 60);
+            ContextSectionText.TabIndex = 70;
+            // 
+            // label17
+            // 
+            label17.AutoSize = true;
+            label17.BackColor = Color.Transparent;
+            label17.FlatStyle = FlatStyle.Flat;
+            label17.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label17.ForeColor = Color.Black;
+            label17.Location = new Point(254, 259);
+            label17.Name = "label17";
+            label17.Size = new Size(99, 20);
+            label17.TabIndex = 66;
+            label17.Text = "Middle Initial";
+            // 
+            // ContextYearText
+            // 
+            ContextYearText.BackColor = Color.Transparent;
+            ContextYearText.BorderColor = Color.Black;
+            ContextYearText.BorderRadius = 20;
+            ContextYearText.CustomizableEdges = customizableEdges25;
+            ContextYearText.DrawMode = DrawMode.OwnerDrawFixed;
+            ContextYearText.DropDownStyle = ComboBoxStyle.DropDownList;
+            ContextYearText.FocusedColor = Color.FromArgb(94, 148, 255);
+            ContextYearText.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
+            ContextYearText.Font = new Font("Segoe UI", 10F);
+            ContextYearText.ForeColor = Color.FromArgb(68, 88, 112);
+            ContextYearText.ItemHeight = 54;
+            ContextYearText.Items.AddRange(new object[] { "1st Year", "2nd Year", "3rd Year", "4th Year", "Irregular" });
+            ContextYearText.Location = new Point(697, 122);
+            ContextYearText.Margin = new Padding(3, 2, 3, 2);
+            ContextYearText.Name = "ContextYearText";
+            ContextYearText.ShadowDecoration.CustomizableEdges = customizableEdges26;
+            ContextYearText.Size = new Size(231, 60);
+            ContextYearText.TabIndex = 69;
+            // 
+            // EmailText
+            // 
+            EmailText.BackColor = Color.Transparent;
+            EmailText.BorderColor = Color.Black;
+            EmailText.BorderRadius = 20;
+            EmailText.CustomizableEdges = customizableEdges27;
+            EmailText.DefaultText = "";
+            EmailText.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
+            EmailText.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
+            EmailText.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
+            EmailText.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
+            EmailText.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
+            EmailText.Font = new Font("Segoe UI", 9F);
+            EmailText.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
+            EmailText.Location = new Point(246, 360);
+            EmailText.Name = "EmailText";
+            EmailText.PlaceholderForeColor = Color.Gray;
+            EmailText.PlaceholderText = "   e.g., vince@email.com";
+            EmailText.SelectedText = "";
+            EmailText.ShadowDecoration.CustomizableEdges = customizableEdges28;
+            EmailText.Size = new Size(301, 45);
+            EmailText.TabIndex = 67;
+            // 
+            // label16
+            // 
+            label16.AutoSize = true;
+            label16.BackColor = Color.Transparent;
+            label16.FlatStyle = FlatStyle.Flat;
+            label16.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label16.ForeColor = Color.Black;
+            label16.Location = new Point(254, 338);
+            label16.Name = "label16";
+            label16.Size = new Size(46, 20);
+            label16.TabIndex = 68;
+            label16.Text = "Email";
+            // 
+            // label20
+            // 
+            label20.AutoSize = true;
+            label20.BackColor = Color.Transparent;
+            label20.FlatStyle = FlatStyle.Flat;
+            label20.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label20.ForeColor = Color.Black;
+            label20.Location = new Point(254, 20);
+            label20.Name = "label20";
+            label20.Size = new Size(85, 20);
+            label20.TabIndex = 59;
+            label20.Text = "ID Number";
             // 
             // pnlUserList
             // 
@@ -879,385 +1258,6 @@
             SearchButton.TabIndex = 1;
             SearchButton.TextChanged += SearchButton_TextChanged;
             // 
-            // pnlCreateAccount
-            // 
-            pnlCreateAccount.Controls.Add(CreateButton);
-            pnlCreateAccount.Controls.Add(IdNumberText);
-            pnlCreateAccount.Controls.Add(label14);
-            pnlCreateAccount.Controls.Add(ContextRoleText);
-            pnlCreateAccount.Controls.Add(label13);
-            pnlCreateAccount.Controls.Add(LastnameText);
-            pnlCreateAccount.Controls.Add(label12);
-            pnlCreateAccount.Controls.Add(label19);
-            pnlCreateAccount.Controls.Add(label11);
-            pnlCreateAccount.Controls.Add(FirstnameText);
-            pnlCreateAccount.Controls.Add(label15);
-            pnlCreateAccount.Controls.Add(label18);
-            pnlCreateAccount.Controls.Add(ContextCourseText);
-            pnlCreateAccount.Controls.Add(MiddlenameText);
-            pnlCreateAccount.Controls.Add(ContextSectionText);
-            pnlCreateAccount.Controls.Add(label17);
-            pnlCreateAccount.Controls.Add(ContextYearText);
-            pnlCreateAccount.Controls.Add(EmailText);
-            pnlCreateAccount.Controls.Add(label16);
-            pnlCreateAccount.Controls.Add(label20);
-            pnlCreateAccount.Location = new Point(0, 45);
-            pnlCreateAccount.Name = "pnlCreateAccount";
-            pnlCreateAccount.Size = new Size(1345, 538);
-            pnlCreateAccount.TabIndex = 80;
-            // 
-            // CreateButton
-            // 
-            CreateButton.BorderRadius = 20;
-            CreateButton.CustomizableEdges = customizableEdges9;
-            CreateButton.DisabledState.BorderColor = Color.DarkGray;
-            CreateButton.DisabledState.CustomBorderColor = Color.DarkGray;
-            CreateButton.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
-            CreateButton.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            CreateButton.FillColor = Color.Maroon;
-            CreateButton.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            CreateButton.ForeColor = Color.White;
-            CreateButton.Image = (Image)resources.GetObject("CreateButton.Image");
-            CreateButton.Location = new Point(895, 418);
-            CreateButton.Margin = new Padding(3, 2, 3, 2);
-            CreateButton.Name = "CreateButton";
-            CreateButton.RightToLeft = RightToLeft.Yes;
-            CreateButton.ShadowDecoration.CustomizableEdges = customizableEdges10;
-            CreateButton.Size = new Size(278, 49);
-            CreateButton.TabIndex = 78;
-            CreateButton.Text = "Create Account";
-            CreateButton.Click += CreateButton_Click;
-            // 
-            // IdNumberText
-            // 
-            IdNumberText.BackColor = Color.Transparent;
-            IdNumberText.BorderColor = Color.Black;
-            IdNumberText.BorderRadius = 20;
-            IdNumberText.CustomizableEdges = customizableEdges11;
-            IdNumberText.DefaultText = "";
-            IdNumberText.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
-            IdNumberText.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
-            IdNumberText.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
-            IdNumberText.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
-            IdNumberText.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
-            IdNumberText.Font = new Font("Segoe UI", 9F);
-            IdNumberText.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            IdNumberText.Location = new Point(246, 42);
-            IdNumberText.Name = "IdNumberText";
-            IdNumberText.PlaceholderForeColor = Color.Gray;
-            IdNumberText.PlaceholderText = "   e.g., A12345678";
-            IdNumberText.SelectedText = "";
-            IdNumberText.ShadowDecoration.CustomizableEdges = customizableEdges12;
-            IdNumberText.Size = new Size(301, 45);
-            IdNumberText.TabIndex = 58;
-            // 
-            // label14
-            // 
-            label14.AutoSize = true;
-            label14.BackColor = Color.Transparent;
-            label14.FlatStyle = FlatStyle.Flat;
-            label14.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label14.ForeColor = Color.Black;
-            label14.Location = new Point(706, 372);
-            label14.Name = "label14";
-            label14.Size = new Size(282, 20);
-            label14.TabIndex = 76;
-            label14.Text = "*Notice: Default Password is \"12345678\"";
-            // 
-            // ContextRoleText
-            // 
-            ContextRoleText.BackColor = Color.Transparent;
-            ContextRoleText.BorderColor = Color.Black;
-            ContextRoleText.BorderRadius = 20;
-            ContextRoleText.CustomizableEdges = customizableEdges13;
-            ContextRoleText.DrawMode = DrawMode.OwnerDrawFixed;
-            ContextRoleText.DropDownStyle = ComboBoxStyle.DropDownList;
-            ContextRoleText.FocusedColor = Color.FromArgb(94, 148, 255);
-            ContextRoleText.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
-            ContextRoleText.Font = new Font("Segoe UI", 10F);
-            ContextRoleText.ForeColor = Color.FromArgb(68, 88, 112);
-            ContextRoleText.ItemHeight = 54;
-            ContextRoleText.Items.AddRange(new object[] { "Admin", "Professor", "Student" });
-            ContextRoleText.Location = new Point(697, 42);
-            ContextRoleText.Margin = new Padding(3, 2, 3, 2);
-            ContextRoleText.Name = "ContextRoleText";
-            ContextRoleText.ShadowDecoration.CustomizableEdges = customizableEdges14;
-            ContextRoleText.Size = new Size(231, 60);
-            ContextRoleText.TabIndex = 60;
-            ContextRoleText.SelectedIndexChanged += ContextRoleText_SelectedIndexChanged;
-            // 
-            // label13
-            // 
-            label13.AutoSize = true;
-            label13.BackColor = Color.Transparent;
-            label13.FlatStyle = FlatStyle.Flat;
-            label13.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label13.ForeColor = Color.Black;
-            label13.Location = new Point(706, 259);
-            label13.Name = "label13";
-            label13.Size = new Size(56, 20);
-            label13.TabIndex = 75;
-            label13.Text = "Course";
-            // 
-            // LastnameText
-            // 
-            LastnameText.BackColor = Color.Transparent;
-            LastnameText.BorderColor = Color.Black;
-            LastnameText.BorderRadius = 20;
-            LastnameText.CustomizableEdges = customizableEdges15;
-            LastnameText.DefaultText = "";
-            LastnameText.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
-            LastnameText.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
-            LastnameText.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
-            LastnameText.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
-            LastnameText.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
-            LastnameText.Font = new Font("Segoe UI", 9F);
-            LastnameText.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            LastnameText.Location = new Point(246, 122);
-            LastnameText.Name = "LastnameText";
-            LastnameText.PlaceholderForeColor = Color.Gray;
-            LastnameText.PlaceholderText = "   e.g., Cabañero";
-            LastnameText.SelectedText = "";
-            LastnameText.ShadowDecoration.CustomizableEdges = customizableEdges16;
-            LastnameText.Size = new Size(301, 45);
-            LastnameText.TabIndex = 61;
-            // 
-            // label12
-            // 
-            label12.AutoSize = true;
-            label12.BackColor = Color.Transparent;
-            label12.FlatStyle = FlatStyle.Flat;
-            label12.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label12.ForeColor = Color.Black;
-            label12.Location = new Point(706, 179);
-            label12.Name = "label12";
-            label12.Size = new Size(59, 20);
-            label12.TabIndex = 74;
-            label12.Text = "Section";
-            // 
-            // label19
-            // 
-            label19.AutoSize = true;
-            label19.BackColor = Color.Transparent;
-            label19.FlatStyle = FlatStyle.Flat;
-            label19.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label19.ForeColor = Color.Black;
-            label19.Location = new Point(254, 101);
-            label19.Name = "label19";
-            label19.Size = new Size(80, 20);
-            label19.TabIndex = 62;
-            label19.Text = "Last Name";
-            // 
-            // label11
-            // 
-            label11.AutoSize = true;
-            label11.BackColor = Color.Transparent;
-            label11.FlatStyle = FlatStyle.Flat;
-            label11.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label11.ForeColor = Color.Black;
-            label11.Location = new Point(706, 101);
-            label11.Name = "label11";
-            label11.Size = new Size(39, 20);
-            label11.TabIndex = 73;
-            label11.Text = "Year";
-            // 
-            // FirstnameText
-            // 
-            FirstnameText.BackColor = Color.Transparent;
-            FirstnameText.BorderColor = Color.Black;
-            FirstnameText.BorderRadius = 20;
-            FirstnameText.CustomizableEdges = customizableEdges17;
-            FirstnameText.DefaultText = "";
-            FirstnameText.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
-            FirstnameText.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
-            FirstnameText.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
-            FirstnameText.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
-            FirstnameText.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
-            FirstnameText.Font = new Font("Segoe UI", 9F);
-            FirstnameText.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            FirstnameText.Location = new Point(246, 200);
-            FirstnameText.Name = "FirstnameText";
-            FirstnameText.PlaceholderForeColor = Color.Gray;
-            FirstnameText.PlaceholderText = "   e.g., Vince";
-            FirstnameText.SelectedText = "";
-            FirstnameText.ShadowDecoration.CustomizableEdges = customizableEdges18;
-            FirstnameText.Size = new Size(301, 45);
-            FirstnameText.TabIndex = 63;
-            // 
-            // label15
-            // 
-            label15.AutoSize = true;
-            label15.BackColor = Color.Transparent;
-            label15.FlatStyle = FlatStyle.Flat;
-            label15.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label15.ForeColor = Color.Black;
-            label15.Location = new Point(706, 21);
-            label15.Name = "label15";
-            label15.Size = new Size(39, 20);
-            label15.TabIndex = 72;
-            label15.Text = "Role";
-            // 
-            // label18
-            // 
-            label18.AutoSize = true;
-            label18.BackColor = Color.Transparent;
-            label18.FlatStyle = FlatStyle.Flat;
-            label18.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label18.ForeColor = Color.Black;
-            label18.Location = new Point(254, 179);
-            label18.Name = "label18";
-            label18.Size = new Size(83, 20);
-            label18.TabIndex = 64;
-            label18.Text = "First Name";
-            // 
-            // ContextCourseText
-            // 
-            ContextCourseText.BackColor = Color.Transparent;
-            ContextCourseText.BorderColor = Color.Black;
-            ContextCourseText.BorderRadius = 20;
-            ContextCourseText.CustomizableEdges = customizableEdges19;
-            ContextCourseText.DrawMode = DrawMode.OwnerDrawFixed;
-            ContextCourseText.DropDownStyle = ComboBoxStyle.DropDownList;
-            ContextCourseText.FocusedColor = Color.FromArgb(94, 148, 255);
-            ContextCourseText.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
-            ContextCourseText.Font = new Font("Segoe UI", 10F);
-            ContextCourseText.ForeColor = Color.FromArgb(68, 88, 112);
-            ContextCourseText.ItemHeight = 54;
-            ContextCourseText.Items.AddRange(new object[] { "Bachelor of Science in Information Techonology", "Bachelor of Science in Computer Science", "Bacherlor of Science in Computer Engineering" });
-            ContextCourseText.Location = new Point(697, 281);
-            ContextCourseText.Margin = new Padding(3, 2, 3, 2);
-            ContextCourseText.Name = "ContextCourseText";
-            ContextCourseText.ShadowDecoration.CustomizableEdges = customizableEdges20;
-            ContextCourseText.Size = new Size(231, 60);
-            ContextCourseText.TabIndex = 71;
-            // 
-            // MiddlenameText
-            // 
-            MiddlenameText.BackColor = Color.Transparent;
-            MiddlenameText.BorderColor = Color.Black;
-            MiddlenameText.BorderRadius = 20;
-            MiddlenameText.CustomizableEdges = customizableEdges21;
-            MiddlenameText.DefaultText = "";
-            MiddlenameText.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
-            MiddlenameText.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
-            MiddlenameText.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
-            MiddlenameText.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
-            MiddlenameText.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
-            MiddlenameText.Font = new Font("Segoe UI", 9F);
-            MiddlenameText.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            MiddlenameText.Location = new Point(246, 281);
-            MiddlenameText.Name = "MiddlenameText";
-            MiddlenameText.PlaceholderForeColor = Color.Gray;
-            MiddlenameText.PlaceholderText = "   e.g., A";
-            MiddlenameText.SelectedText = "";
-            MiddlenameText.ShadowDecoration.CustomizableEdges = customizableEdges22;
-            MiddlenameText.Size = new Size(301, 45);
-            MiddlenameText.TabIndex = 65;
-            // 
-            // ContextSectionText
-            // 
-            ContextSectionText.BackColor = Color.Transparent;
-            ContextSectionText.BorderColor = Color.Black;
-            ContextSectionText.BorderRadius = 20;
-            ContextSectionText.CustomizableEdges = customizableEdges23;
-            ContextSectionText.DrawMode = DrawMode.OwnerDrawFixed;
-            ContextSectionText.DropDownStyle = ComboBoxStyle.DropDownList;
-            ContextSectionText.FocusedColor = Color.FromArgb(94, 148, 255);
-            ContextSectionText.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
-            ContextSectionText.Font = new Font("Segoe UI", 10F);
-            ContextSectionText.ForeColor = Color.FromArgb(68, 88, 112);
-            ContextSectionText.ItemHeight = 54;
-            ContextSectionText.Items.AddRange(new object[] { "1-1", "1-2", "1-3", "2-1", "2-2", "2-3", "3-1", "3-2", "3-3", "4-1", "4-2", "4-3" });
-            ContextSectionText.Location = new Point(697, 200);
-            ContextSectionText.Margin = new Padding(3, 2, 3, 2);
-            ContextSectionText.Name = "ContextSectionText";
-            ContextSectionText.ShadowDecoration.CustomizableEdges = customizableEdges24;
-            ContextSectionText.Size = new Size(231, 60);
-            ContextSectionText.TabIndex = 70;
-            // 
-            // label17
-            // 
-            label17.AutoSize = true;
-            label17.BackColor = Color.Transparent;
-            label17.FlatStyle = FlatStyle.Flat;
-            label17.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label17.ForeColor = Color.Black;
-            label17.Location = new Point(254, 259);
-            label17.Name = "label17";
-            label17.Size = new Size(99, 20);
-            label17.TabIndex = 66;
-            label17.Text = "Middle Initial";
-            // 
-            // ContextYearText
-            // 
-            ContextYearText.BackColor = Color.Transparent;
-            ContextYearText.BorderColor = Color.Black;
-            ContextYearText.BorderRadius = 20;
-            ContextYearText.CustomizableEdges = customizableEdges25;
-            ContextYearText.DrawMode = DrawMode.OwnerDrawFixed;
-            ContextYearText.DropDownStyle = ComboBoxStyle.DropDownList;
-            ContextYearText.FocusedColor = Color.FromArgb(94, 148, 255);
-            ContextYearText.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
-            ContextYearText.Font = new Font("Segoe UI", 10F);
-            ContextYearText.ForeColor = Color.FromArgb(68, 88, 112);
-            ContextYearText.ItemHeight = 54;
-            ContextYearText.Items.AddRange(new object[] { "1st Year", "2nd Year", "3rd Year", "4th Year", "Irregular" });
-            ContextYearText.Location = new Point(697, 122);
-            ContextYearText.Margin = new Padding(3, 2, 3, 2);
-            ContextYearText.Name = "ContextYearText";
-            ContextYearText.ShadowDecoration.CustomizableEdges = customizableEdges26;
-            ContextYearText.Size = new Size(231, 60);
-            ContextYearText.TabIndex = 69;
-            // 
-            // EmailText
-            // 
-            EmailText.BackColor = Color.Transparent;
-            EmailText.BorderColor = Color.Black;
-            EmailText.BorderRadius = 20;
-            EmailText.CustomizableEdges = customizableEdges27;
-            EmailText.DefaultText = "";
-            EmailText.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
-            EmailText.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
-            EmailText.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
-            EmailText.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
-            EmailText.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
-            EmailText.Font = new Font("Segoe UI", 9F);
-            EmailText.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            EmailText.Location = new Point(246, 360);
-            EmailText.Name = "EmailText";
-            EmailText.PlaceholderForeColor = Color.Gray;
-            EmailText.PlaceholderText = "   e.g., vince@email.com";
-            EmailText.SelectedText = "";
-            EmailText.ShadowDecoration.CustomizableEdges = customizableEdges28;
-            EmailText.Size = new Size(301, 45);
-            EmailText.TabIndex = 67;
-            // 
-            // label16
-            // 
-            label16.AutoSize = true;
-            label16.BackColor = Color.Transparent;
-            label16.FlatStyle = FlatStyle.Flat;
-            label16.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label16.ForeColor = Color.Black;
-            label16.Location = new Point(254, 338);
-            label16.Name = "label16";
-            label16.Size = new Size(46, 20);
-            label16.TabIndex = 68;
-            label16.Text = "Email";
-            // 
-            // label20
-            // 
-            label20.AutoSize = true;
-            label20.BackColor = Color.Transparent;
-            label20.FlatStyle = FlatStyle.Flat;
-            label20.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label20.ForeColor = Color.Black;
-            label20.Location = new Point(254, 20);
-            label20.Name = "label20";
-            label20.Size = new Size(85, 20);
-            label20.TabIndex = 59;
-            label20.Text = "ID Number";
-            // 
             // label6
             // 
             label6.AutoSize = true;
@@ -1395,6 +1395,7 @@
             guna2Panel1.Controls.Add(label1);
             guna2Panel1.Controls.Add(pictureBox1);
             guna2Panel1.CustomizableEdges = customizableEdges71;
+            guna2Panel1.Dock = DockStyle.Top;
             guna2Panel1.FillColor = Color.White;
             guna2Panel1.Location = new Point(0, 0);
             guna2Panel1.Name = "guna2Panel1";
@@ -1611,6 +1612,7 @@
             guna2ComboBox1.CustomizableEdges = customizableEdges76;
             guna2ComboBox1.DrawMode = DrawMode.OwnerDrawFixed;
             guna2ComboBox1.DropDownStyle = ComboBoxStyle.DropDownList;
+            guna2ComboBox1.Enabled = false;
             guna2ComboBox1.FillColor = Color.DarkRed;
             guna2ComboBox1.FocusedColor = Color.FromArgb(94, 148, 255);
             guna2ComboBox1.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
@@ -1865,13 +1867,13 @@
             BackgroundImage = Properties.Resources.Shade;
             BackgroundImageLayout = ImageLayout.Stretch;
             ClientSize = new Size(1629, 749);
+            Controls.Add(pnlWorkstation);
+            Controls.Add(pnlFileManagement);
             Controls.Add(label6);
             Controls.Add(guna2Panel2);
             Controls.Add(guna2Panel1);
             Controls.Add(pnlUserManagement);
             Controls.Add(panelDashoard);
-            Controls.Add(pnlWorkstation);
-            Controls.Add(pnlFileManagement);
             DoubleBuffered = true;
             FormBorderStyle = FormBorderStyle.FixedSingle;
             Margin = new Padding(3, 2, 3, 2);
@@ -1891,6 +1893,8 @@
             guna2Panel3.ResumeLayout(false);
             guna2Panel3.PerformLayout();
             pnlUserManagement.ResumeLayout(false);
+            pnlCreateAccount.ResumeLayout(false);
+            pnlCreateAccount.PerformLayout();
             pnlUserList.ResumeLayout(false);
             guna2Panel21.ResumeLayout(false);
             guna2Panel21.PerformLayout();
@@ -1916,8 +1920,6 @@
             guna2Panel11.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)UserDataList).EndInit();
             guna2Panel9.ResumeLayout(false);
-            pnlCreateAccount.ResumeLayout(false);
-            pnlCreateAccount.PerformLayout();
             guna2Panel2.ResumeLayout(false);
             guna2Panel1.ResumeLayout(false);
             guna2Panel1.PerformLayout();
