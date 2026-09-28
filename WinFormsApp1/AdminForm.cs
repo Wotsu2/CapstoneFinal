@@ -138,11 +138,10 @@ namespace WinFormsApp1
                 using (NetworkStream stream = client.GetStream())
                 using (BinaryReader reader = new BinaryReader(stream))
                 {
-                    // First token tells us the message type
                     string firstToken = reader.ReadString();
 
-                    // ---------- ACTIVITY FILE ----------
-                    // Format: [ACTIVITY_FILE][professorFolder][section][fileName][length][bytes]
+                    // ---------- ACTIVITY FILE (professor → admin) ----------
+                    // [ACTIVITY_FILE][professorFolder][section][fileName][length][bytes]
                     if (firstToken == "ACTIVITY_FILE")
                     {
                         string professorFolder = reader.ReadString();
@@ -150,11 +149,7 @@ namespace WinFormsApp1
                         string fileName = reader.ReadString();
                         int length = reader.ReadInt32();
 
-                        if (length <= 0 || length > 200 * 1024 * 1024)
-                        {
-                            Console.WriteLine("[Admin] Invalid activity file length: " + length);
-                            return;
-                        }
+                        if (length <= 0 || length > 200 * 1024 * 1024) return;
 
                         byte[] bytes = reader.ReadBytes(length);
 
@@ -162,12 +157,9 @@ namespace WinFormsApp1
                         section = SanitizeFolderName(section);
                         fileName = SanitizeFolderName(fileName);
 
-                        // Save inside:  SaveFolder\ProfessorName\Section\ActivityFiles\
                         string root = SettingsManager.Current.SaveFolder;
                         string folder = Path.Combine(root, professorFolder, section, "ActivityFiles");
-
-                        if (!Directory.Exists(folder))
-                            Directory.CreateDirectory(folder);
+                        Directory.CreateDirectory(folder);
 
                         string savePath = Path.Combine(folder, fileName);
                         await File.WriteAllBytesAsync(savePath, bytes);
@@ -176,25 +168,65 @@ namespace WinFormsApp1
                         return;
                     }
 
-                    // ---------- AUTH PHOTO ----------
-                    // Format: [fileName][length][bytes]
-                    string authFileName = SanitizeFolderName(firstToken);
-                    int authLength = reader.ReadInt32();
-
-                    if (authLength <= 0 || authLength > 20 * 1024 * 1024)
+                    // ---------- STUDENT SUBMISSION (student → admin) ----------
+                    // [STUDENT_SUBMISSION][professorFolder][section][studentName][title][fileName][length][bytes]
+                    if (firstToken == "STUDENT_SUBMISSION")
                     {
-                        Console.WriteLine("[Admin] Invalid auth photo length: " + authLength);
+                        string professorFolder = reader.ReadString();
+                        string section = reader.ReadString();
+                        string studentName = reader.ReadString();
+                        string title = reader.ReadString();
+                        string fileName = reader.ReadString();
+                        int length = reader.ReadInt32();
+
+                        if (length <= 0 || length > 200 * 1024 * 1024) return;
+
+                        byte[] bytes = reader.ReadBytes(length);
+
+                        professorFolder = SanitizeFolderName(professorFolder);
+                        section = SanitizeFolderName(section);
+                        studentName = SanitizeFolderName(studentName);
+                        title = SanitizeFolderName(title);
+                        fileName = SanitizeFolderName(fileName);
+
+                        string root = SettingsManager.Current.SaveFolder;
+                        string folder = Path.Combine(root, professorFolder, section, "Submissions");
+                        Directory.CreateDirectory(folder);
+
+                        // Prefix filename with student + activity so duplicates don't collide
+                        string finalName = SanitizeFolderName($"{studentName}_{title}_{fileName}");
+                        string savePath = Path.Combine(folder, finalName);
+
+                        await File.WriteAllBytesAsync(savePath, bytes);
+
+                        // Tell the student where it went (send back the UNC path)
+                        try
+                        {
+                            using (var writer = new BinaryWriter(stream))
+                            {
+                                writer.Write(savePath);
+                                writer.Flush();
+                            }
+                        }
+                        catch { /* student may have closed */ }
+
+                        Console.WriteLine("[Admin] Student submission saved → " + savePath);
+
+                        // Also update DB if you want (optional — student also updates DB)
                         return;
                     }
+
+                    // ---------- AUTH PHOTO ----------
+                    string authFileName = SanitizeFolderName(firstToken);
+                    int authLength = reader.ReadInt32();
+                    if (authLength <= 0 || authLength > 20 * 1024 * 1024) return;
 
                     byte[] authBytes = reader.ReadBytes(authLength);
 
                     string authRoot = SettingsManager.Current.SaveFolder;
                     string authSub = SettingsManager.Current.AuthPhotoSubfolder;
                     string authFolder = Path.Combine(authRoot, authSub);
-
-                    if (!Directory.Exists(authFolder))
-                        Directory.CreateDirectory(authFolder);
+                    Directory.CreateDirectory(authFolder);
 
                     string authPath = Path.Combine(authFolder, authFileName);
                     await File.WriteAllBytesAsync(authPath, authBytes);
