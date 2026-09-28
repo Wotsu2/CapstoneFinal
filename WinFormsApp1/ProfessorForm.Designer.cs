@@ -553,27 +553,31 @@
             guna2Panel1.Controls.Add(btnWorkstation);
             guna2Panel1.Controls.Add(btnHome);
             guna2Panel1.CustomizableEdges = customizableEdges19;
-            guna2Panel1.FillColor = Color.White;
-            guna2Panel1.Location = new Point(0, 0);
+            guna2Panel1.FillColor = Color.Maroon;
+            guna2Panel1.Location = new Point(0, 88);
             guna2Panel1.Name = "guna2Panel1";
             guna2Panel1.ShadowDecoration.CustomizableEdges = customizableEdges20;
             guna2Panel1.ShadowDecoration.Enabled = true;
-            guna2Panel1.Size = new Size(78, 1096);
+            guna2Panel1.Size = new Size(78, 1008);
             guna2Panel1.TabIndex = 0;
             // 
             // btnQuizExam
             // 
+            btnQuizExam.Animated = true;
             btnQuizExam.BackColor = Color.Transparent;
+            btnQuizExam.BorderRadius = 10;
+            btnQuizExam.CheckedState.FillColor = Color.Black;
+            btnQuizExam.CheckedState.Image = Properties.Resources.grades_white;
             btnQuizExam.CustomizableEdges = customizableEdges1;
             btnQuizExam.DisabledState.BorderColor = Color.DarkGray;
             btnQuizExam.DisabledState.CustomBorderColor = Color.DarkGray;
             btnQuizExam.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
             btnQuizExam.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnQuizExam.FillColor = Color.White;
+            btnQuizExam.FillColor = Color.Transparent;
             btnQuizExam.Font = new Font("Segoe UI", 9F);
             btnQuizExam.ForeColor = Color.White;
             btnQuizExam.Image = Properties.Resources.Grades;
-            btnQuizExam.Location = new Point(12, 590);
+            btnQuizExam.Location = new Point(12, 517);
             btnQuizExam.Name = "btnQuizExam";
             btnQuizExam.ShadowDecoration.CustomizableEdges = customizableEdges2;
             btnQuizExam.Size = new Size(52, 43);
@@ -582,17 +586,21 @@
             // 
             // btnFile
             // 
+            btnFile.Animated = true;
             btnFile.BackColor = Color.Transparent;
+            btnFile.BorderRadius = 10;
+            btnFile.CheckedState.FillColor = Color.Black;
+            btnFile.CheckedState.Image = Properties.Resources.file_white;
             btnFile.CustomizableEdges = customizableEdges3;
             btnFile.DisabledState.BorderColor = Color.DarkGray;
             btnFile.DisabledState.CustomBorderColor = Color.DarkGray;
             btnFile.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
             btnFile.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnFile.FillColor = Color.White;
+            btnFile.FillColor = Color.Transparent;
             btnFile.Font = new Font("Segoe UI", 9F);
             btnFile.ForeColor = Color.White;
             btnFile.Image = Properties.Resources.File;
-            btnFile.Location = new Point(12, 526);
+            btnFile.Location = new Point(12, 453);
             btnFile.Name = "btnFile";
             btnFile.ShadowDecoration.CustomizableEdges = customizableEdges4;
             btnFile.Size = new Size(52, 43);
@@ -601,17 +609,21 @@
             // 
             // btnSubject
             // 
+            btnSubject.Animated = true;
             btnSubject.BackColor = Color.Transparent;
+            btnSubject.BorderRadius = 10;
+            btnSubject.CheckedState.FillColor = Color.Black;
+            btnSubject.CheckedState.Image = Properties.Resources.subject_white;
             btnSubject.CustomizableEdges = customizableEdges5;
             btnSubject.DisabledState.BorderColor = Color.DarkGray;
             btnSubject.DisabledState.CustomBorderColor = Color.DarkGray;
             btnSubject.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
             btnSubject.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnSubject.FillColor = Color.White;
+            btnSubject.FillColor = Color.Transparent;
             btnSubject.Font = new Font("Segoe UI", 9F);
             btnSubject.ForeColor = Color.White;
             btnSubject.Image = Properties.Resources.Subject;
-            btnSubject.Location = new Point(12, 466);
+            btnSubject.Location = new Point(12, 393);
             btnSubject.Name = "btnSubject";
             btnSubject.ShadowDecoration.CustomizableEdges = customizableEdges6;
             btnSubject.Size = new Size(52, 43);
@@ -620,17 +632,21 @@
             // 
             // btnAttendance
             // 
+            btnAttendance.Animated = true;
             btnAttendance.BackColor = Color.Transparent;
+            btnAttendance.BorderRadius = 10;
+            btnAttendance.CheckedState.FillColor = Color.Black;
+            btnAttendance.CheckedState.Image = Properties.Resources.Attendance_White;
             btnAttendance.CustomizableEdges = customizableEdges7;
             btnAttendance.DisabledState.BorderColor = Color.DarkGray;
             btnAttendance.DisabledState.CustomBorderColor = Color.DarkGray;
             btnAttendance.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
             btnAttendance.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnAttendance.FillColor = Color.White;
+            btnAttendance.FillColor = Color.Transparent;
             btnAttendance.Font = new Font("Segoe UI", 9F);
             btnAttendance.ForeColor = Color.White;
             btnAttendance.Image = Properties.Resources.Attendance;
-            btnAttendance.Location = new Point(12, 405);
+            btnAttendance.Location = new Point(12, 332);
             btnAttendance.Name = "btnAttendance";
             btnAttendance.ShadowDecoration.CustomizableEdges = customizableEdges8;
             btnAttendance.Size = new Size(52, 43);
@@ -639,17 +655,21 @@
             // 
             // btnGrades
             // 
+            btnGrades.Animated = true;
             btnGrades.BackColor = Color.Transparent;
+            btnGrades.BorderRadius = 10;
+            btnGrades.CheckedState.FillColor = Color.Black;
+            btnGrades.CheckedState.Image = Properties.Resources.grades_white;
             btnGrades.CustomizableEdges = customizableEdges9;
             btnGrades.DisabledState.BorderColor = Color.DarkGray;
             btnGrades.DisabledState.CustomBorderColor = Color.DarkGray;
             btnGrades.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
             btnGrades.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnGrades.FillColor = Color.White;
+            btnGrades.FillColor = Color.Transparent;
             btnGrades.Font = new Font("Segoe UI", 9F);
             btnGrades.ForeColor = Color.White;
             btnGrades.Image = Properties.Resources.Grades;
-            btnGrades.Location = new Point(12, 344);
+            btnGrades.Location = new Point(12, 271);
             btnGrades.Name = "btnGrades";
             btnGrades.ShadowDecoration.CustomizableEdges = customizableEdges10;
             btnGrades.Size = new Size(52, 43);
@@ -658,17 +678,21 @@
             // 
             // btnActivities
             // 
+            btnActivities.Animated = true;
             btnActivities.BackColor = Color.Transparent;
+            btnActivities.BorderRadius = 10;
+            btnActivities.CheckedState.FillColor = Color.Black;
+            btnActivities.CheckedState.Image = Properties.Resources.Activity_white;
             btnActivities.CustomizableEdges = customizableEdges11;
             btnActivities.DisabledState.BorderColor = Color.DarkGray;
             btnActivities.DisabledState.CustomBorderColor = Color.DarkGray;
             btnActivities.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
             btnActivities.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnActivities.FillColor = Color.White;
+            btnActivities.FillColor = Color.Transparent;
             btnActivities.Font = new Font("Segoe UI", 9F);
             btnActivities.ForeColor = Color.White;
             btnActivities.Image = Properties.Resources.Activities;
-            btnActivities.Location = new Point(12, 285);
+            btnActivities.Location = new Point(12, 212);
             btnActivities.Name = "btnActivities";
             btnActivities.ShadowDecoration.CustomizableEdges = customizableEdges12;
             btnActivities.Size = new Size(52, 43);
@@ -677,17 +701,21 @@
             // 
             // btnStudent
             // 
+            btnStudent.Animated = true;
             btnStudent.BackColor = Color.Transparent;
+            btnStudent.BorderRadius = 10;
+            btnStudent.CheckedState.FillColor = Color.Black;
+            btnStudent.CheckedState.Image = Properties.Resources.Student_White;
             btnStudent.CustomizableEdges = customizableEdges13;
             btnStudent.DisabledState.BorderColor = Color.DarkGray;
             btnStudent.DisabledState.CustomBorderColor = Color.DarkGray;
             btnStudent.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
             btnStudent.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnStudent.FillColor = Color.White;
+            btnStudent.FillColor = Color.Transparent;
             btnStudent.Font = new Font("Segoe UI", 9F);
             btnStudent.ForeColor = Color.White;
             btnStudent.Image = Properties.Resources.Student;
-            btnStudent.Location = new Point(12, 226);
+            btnStudent.Location = new Point(12, 153);
             btnStudent.Name = "btnStudent";
             btnStudent.ShadowDecoration.CustomizableEdges = customizableEdges14;
             btnStudent.Size = new Size(52, 43);
@@ -696,17 +724,21 @@
             // 
             // btnWorkstation
             // 
+            btnWorkstation.Animated = true;
             btnWorkstation.BackColor = Color.Transparent;
+            btnWorkstation.BorderRadius = 10;
+            btnWorkstation.CheckedState.FillColor = Color.Black;
+            btnWorkstation.CheckedState.Image = Properties.Resources.Workstation_White;
             btnWorkstation.CustomizableEdges = customizableEdges15;
             btnWorkstation.DisabledState.BorderColor = Color.DarkGray;
             btnWorkstation.DisabledState.CustomBorderColor = Color.DarkGray;
             btnWorkstation.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
             btnWorkstation.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnWorkstation.FillColor = Color.White;
+            btnWorkstation.FillColor = Color.Transparent;
             btnWorkstation.Font = new Font("Segoe UI", 9F);
             btnWorkstation.ForeColor = Color.White;
             btnWorkstation.Image = Properties.Resources.Computer;
-            btnWorkstation.Location = new Point(12, 167);
+            btnWorkstation.Location = new Point(12, 94);
             btnWorkstation.Name = "btnWorkstation";
             btnWorkstation.ShadowDecoration.CustomizableEdges = customizableEdges16;
             btnWorkstation.Size = new Size(52, 43);
@@ -715,20 +747,22 @@
             // 
             // btnHome
             // 
+            btnHome.Animated = true;
             btnHome.BackColor = Color.Transparent;
-            btnHome.Checked = true;
-            btnHome.CheckedState.FillColor = Color.White;
+            btnHome.BorderRadius = 10;
+            btnHome.CheckedState.FillColor = Color.Black;
             btnHome.CheckedState.ForeColor = Color.Maroon;
+            btnHome.CheckedState.Image = Properties.Resources.HomeWhite;
             btnHome.CustomizableEdges = customizableEdges17;
             btnHome.DisabledState.BorderColor = Color.DarkGray;
             btnHome.DisabledState.CustomBorderColor = Color.DarkGray;
             btnHome.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
             btnHome.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnHome.FillColor = Color.White;
+            btnHome.FillColor = Color.Transparent;
             btnHome.Font = new Font("Segoe UI", 9F);
             btnHome.ForeColor = Color.White;
             btnHome.Image = Properties.Resources.home;
-            btnHome.Location = new Point(12, 108);
+            btnHome.Location = new Point(12, 35);
             btnHome.Name = "btnHome";
             btnHome.ShadowDecoration.CustomizableEdges = customizableEdges18;
             btnHome.Size = new Size(52, 43);
@@ -740,7 +774,7 @@
             guna2Panel3.BackColor = Color.White;
             guna2Panel3.Controls.Add(pictureBox1);
             guna2Panel3.CustomizableEdges = customizableEdges21;
-            guna2Panel3.FillColor = Color.White;
+            guna2Panel3.FillColor = Color.Maroon;
             guna2Panel3.Location = new Point(0, 0);
             guna2Panel3.Name = "guna2Panel3";
             guna2Panel3.ShadowDecoration.CustomizableEdges = customizableEdges22;
@@ -751,11 +785,12 @@
             // 
             // pictureBox1
             // 
-            pictureBox1.Image = Properties.Resources.Computer;
-            pictureBox1.Location = new Point(25, 37);
+            pictureBox1.BackColor = Color.Transparent;
+            pictureBox1.Image = Properties.Resources.Top_Icon;
+            pictureBox1.Location = new Point(-5, -10);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(26, 20);
-            pictureBox1.SizeMode = PictureBoxSizeMode.AutoSize;
+            pictureBox1.Size = new Size(126, 140);
+            pictureBox1.SizeMode = PictureBoxSizeMode.CenterImage;
             pictureBox1.TabIndex = 2;
             pictureBox1.TabStop = false;
             // 
@@ -770,7 +805,7 @@
             guna2Panel2.Location = new Point(0, 0);
             guna2Panel2.Name = "guna2Panel2";
             guna2Panel2.ShadowDecoration.CustomizableEdges = customizableEdges26;
-            guna2Panel2.Size = new Size(1424, 89);
+            guna2Panel2.Size = new Size(1445, 89);
             guna2Panel2.TabIndex = 1;
             // 
             // btnAccount
@@ -811,7 +846,7 @@
             guna2Panel4.Controls.Add(label2);
             guna2Panel4.CustomizableEdges = customizableEdges27;
             guna2Panel4.FillColor = Color.White;
-            guna2Panel4.Location = new Point(61, 71);
+            guna2Panel4.Location = new Point(85, 32);
             guna2Panel4.Name = "guna2Panel4";
             guna2Panel4.ShadowDecoration.BorderRadius = 10;
             guna2Panel4.ShadowDecoration.CustomizableEdges = customizableEdges28;
@@ -849,7 +884,7 @@
             guna2Panel5.Controls.Add(label4);
             guna2Panel5.CustomizableEdges = customizableEdges29;
             guna2Panel5.FillColor = Color.White;
-            guna2Panel5.Location = new Point(530, 71);
+            guna2Panel5.Location = new Point(554, 32);
             guna2Panel5.Name = "guna2Panel5";
             guna2Panel5.ShadowDecoration.BorderRadius = 10;
             guna2Panel5.ShadowDecoration.CustomizableEdges = customizableEdges30;
@@ -892,7 +927,7 @@
             guna2Panel6.Controls.Add(label6);
             guna2Panel6.CustomizableEdges = customizableEdges35;
             guna2Panel6.FillColor = Color.White;
-            guna2Panel6.Location = new Point(62, 248);
+            guna2Panel6.Location = new Point(86, 209);
             guna2Panel6.Name = "guna2Panel6";
             guna2Panel6.ShadowDecoration.BorderRadius = 10;
             guna2Panel6.ShadowDecoration.CustomizableEdges = customizableEdges36;
@@ -981,7 +1016,7 @@
             guna2Panel8.Controls.Add(label9);
             guna2Panel8.CustomizableEdges = customizableEdges39;
             guna2Panel8.FillColor = Color.White;
-            guna2Panel8.Location = new Point(1004, 71);
+            guna2Panel8.Location = new Point(1028, 32);
             guna2Panel8.Name = "guna2Panel8";
             guna2Panel8.ShadowDecoration.BorderRadius = 10;
             guna2Panel8.ShadowDecoration.CustomizableEdges = customizableEdges40;
@@ -1033,7 +1068,7 @@
             guna2Panel9.Controls.Add(pictureBox2);
             guna2Panel9.CustomizableEdges = customizableEdges41;
             guna2Panel9.FillColor = Color.White;
-            guna2Panel9.Location = new Point(1004, 189);
+            guna2Panel9.Location = new Point(1028, 150);
             guna2Panel9.Name = "guna2Panel9";
             guna2Panel9.ShadowDecoration.BorderRadius = 10;
             guna2Panel9.ShadowDecoration.CustomizableEdges = customizableEdges42;
@@ -1079,7 +1114,7 @@
             guna2Panel10.Controls.Add(pictureBox3);
             guna2Panel10.CustomizableEdges = customizableEdges45;
             guna2Panel10.FillColor = Color.White;
-            guna2Panel10.Location = new Point(1004, 467);
+            guna2Panel10.Location = new Point(1028, 428);
             guna2Panel10.Name = "guna2Panel10";
             guna2Panel10.ShadowDecoration.BorderRadius = 10;
             guna2Panel10.ShadowDecoration.CustomizableEdges = customizableEdges46;
@@ -1163,7 +1198,7 @@
             btnHomeCreateActivity.Image = Properties.Resources.PlusSign;
             btnHomeCreateActivity.ImageOffset = new Point(78, 3);
             btnHomeCreateActivity.ImageSize = new Size(15, 15);
-            btnHomeCreateActivity.Location = new Point(542, 583);
+            btnHomeCreateActivity.Location = new Point(566, 544);
             btnHomeCreateActivity.Name = "btnHomeCreateActivity";
             btnHomeCreateActivity.ShadowDecoration.BorderRadius = 10;
             btnHomeCreateActivity.ShadowDecoration.CustomizableEdges = customizableEdges48;
@@ -1177,6 +1212,9 @@
             // 
             // pnlHome
             // 
+            pnlHome.AutoScroll = true;
+            pnlHome.AutoScrollMargin = new Size(0, 30);
+            pnlHome.AutoScrollMinSize = new Size(0, 30);
             pnlHome.BackColor = Color.Transparent;
             pnlHome.BackgroundImage = Properties.Resources.Shade;
             pnlHome.BackgroundImageLayout = ImageLayout.Stretch;
@@ -1190,7 +1228,7 @@
             pnlHome.Controls.Add(guna2Panel6);
             pnlHome.Location = new Point(84, 96);
             pnlHome.Name = "pnlHome";
-            pnlHome.Size = new Size(1328, 1000);
+            pnlHome.Size = new Size(1361, 727);
             pnlHome.TabIndex = 9;
             // 
             // btnHomeCreateSubject
@@ -1208,7 +1246,7 @@
             btnHomeCreateSubject.Image = Properties.Resources.PlusSign;
             btnHomeCreateSubject.ImageOffset = new Point(78, 3);
             btnHomeCreateSubject.ImageSize = new Size(15, 15);
-            btnHomeCreateSubject.Location = new Point(61, 583);
+            btnHomeCreateSubject.Location = new Point(85, 544);
             btnHomeCreateSubject.Name = "btnHomeCreateSubject";
             btnHomeCreateSubject.ShadowDecoration.BorderRadius = 10;
             btnHomeCreateSubject.ShadowDecoration.CustomizableEdges = customizableEdges50;
@@ -1222,6 +1260,7 @@
             // 
             // pnlWorkstation
             // 
+            pnlWorkstation.AutoScroll = true;
             pnlWorkstation.BackColor = Color.Transparent;
             pnlWorkstation.BackgroundImage = Properties.Resources.Shade;
             pnlWorkstation.BackgroundImageLayout = ImageLayout.Center;
@@ -1229,7 +1268,7 @@
             pnlWorkstation.Controls.Add(guna2Panel15);
             pnlWorkstation.Location = new Point(84, 96);
             pnlWorkstation.Name = "pnlWorkstation";
-            pnlWorkstation.Size = new Size(1328, 1000);
+            pnlWorkstation.Size = new Size(1361, 727);
             pnlWorkstation.TabIndex = 10;
             // 
             // pnlWorkStationMonitoring
@@ -1576,13 +1615,14 @@
             // 
             // pnlStudent
             // 
+            pnlStudent.AutoScroll = true;
             pnlStudent.BackColor = Color.Transparent;
             pnlStudent.BackgroundImage = Properties.Resources.Shade;
             pnlStudent.BackgroundImageLayout = ImageLayout.Stretch;
             pnlStudent.Controls.Add(guna2Panel23);
             pnlStudent.Location = new Point(84, 96);
             pnlStudent.Name = "pnlStudent";
-            pnlStudent.Size = new Size(1328, 1000);
+            pnlStudent.Size = new Size(1361, 752);
             pnlStudent.TabIndex = 11;
             // 
             // guna2Panel23
@@ -1610,7 +1650,7 @@
             guna2Panel23.Controls.Add(label21);
             guna2Panel23.CustomizableEdges = customizableEdges99;
             guna2Panel23.FillColor = Color.White;
-            guna2Panel23.Location = new Point(40, 12);
+            guna2Panel23.Location = new Point(67, 20);
             guna2Panel23.Name = "guna2Panel23";
             guna2Panel23.ShadowDecoration.BorderRadius = 10;
             guna2Panel23.ShadowDecoration.CustomizableEdges = customizableEdges100;
@@ -2009,10 +2049,10 @@
             dgvStudents.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
             dgvStudents.CellBorderStyle = DataGridViewCellBorderStyle.None;
             dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = Color.FromArgb(100, 88, 255);
+            dataGridViewCellStyle2.BackColor = Color.Maroon;
             dataGridViewCellStyle2.Font = new Font("Segoe UI", 9F);
             dataGridViewCellStyle2.ForeColor = Color.White;
-            dataGridViewCellStyle2.SelectionBackColor = Color.FromArgb(100, 88, 255);
+            dataGridViewCellStyle2.SelectionBackColor = Color.Maroon;
             dataGridViewCellStyle2.SelectionForeColor = SystemColors.HighlightText;
             dataGridViewCellStyle2.WrapMode = DataGridViewTriState.True;
             dgvStudents.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle2;
@@ -2048,6 +2088,7 @@
             dgvStudents.ThemeStyle.AlternatingRowsStyle.ForeColor = SystemColors.ControlText;
             dgvStudents.ThemeStyle.AlternatingRowsStyle.SelectionBackColor = Color.FromArgb(231, 229, 255);
             dgvStudents.ThemeStyle.AlternatingRowsStyle.SelectionForeColor = Color.FromArgb(71, 69, 94);
+            dgvStudents.ThemeStyle.HeaderStyle.BackColor = Color.Maroon;
             dgvStudents.ThemeStyle.HeaderStyle.Font = new Font("Segoe UI", 9F);
             dgvStudents.ThemeStyle.HeaderStyle.Height = 40;
             dgvStudents.ThemeStyle.RowsStyle.BorderStyle = DataGridViewCellBorderStyle.None;
@@ -2066,6 +2107,9 @@
             // 
             // pnlActivity
             // 
+            pnlActivity.AutoScroll = true;
+            pnlActivity.AutoScrollMargin = new Size(0, 30);
+            pnlActivity.AutoScrollMinSize = new Size(0, 30);
             pnlActivity.BackColor = Color.Transparent;
             pnlActivity.BackgroundImage = Properties.Resources.Shade;
             pnlActivity.BackgroundImageLayout = ImageLayout.Stretch;
@@ -2086,9 +2130,9 @@
             pnlActivity.Controls.Add(guna2Panel28);
             pnlActivity.Controls.Add(btnPostActivity);
             pnlActivity.Controls.Add(guna2Panel21);
-            pnlActivity.Location = new Point(84, 96);
+            pnlActivity.Location = new Point(84, 88);
             pnlActivity.Name = "pnlActivity";
-            pnlActivity.Size = new Size(1328, 1000);
+            pnlActivity.Size = new Size(1361, 760);
             pnlActivity.TabIndex = 11;
             // 
             // label25
@@ -2353,10 +2397,10 @@
             dgvRecentActivity.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle5;
             dgvRecentActivity.CellBorderStyle = DataGridViewCellBorderStyle.None;
             dataGridViewCellStyle6.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle6.BackColor = Color.FromArgb(100, 88, 255);
+            dataGridViewCellStyle6.BackColor = Color.Maroon;
             dataGridViewCellStyle6.Font = new Font("Segoe UI", 9F);
             dataGridViewCellStyle6.ForeColor = Color.White;
-            dataGridViewCellStyle6.SelectionBackColor = Color.FromArgb(100, 88, 255);
+            dataGridViewCellStyle6.SelectionBackColor = Color.Maroon;
             dataGridViewCellStyle6.SelectionForeColor = SystemColors.HighlightText;
             dataGridViewCellStyle6.WrapMode = DataGridViewTriState.True;
             dgvRecentActivity.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle6;
@@ -2392,6 +2436,7 @@
             dgvRecentActivity.ThemeStyle.AlternatingRowsStyle.ForeColor = SystemColors.ControlText;
             dgvRecentActivity.ThemeStyle.AlternatingRowsStyle.SelectionBackColor = Color.FromArgb(231, 229, 255);
             dgvRecentActivity.ThemeStyle.AlternatingRowsStyle.SelectionForeColor = Color.FromArgb(71, 69, 94);
+            dgvRecentActivity.ThemeStyle.HeaderStyle.BackColor = Color.Maroon;
             dgvRecentActivity.ThemeStyle.HeaderStyle.Font = new Font("Segoe UI", 9F);
             dgvRecentActivity.ThemeStyle.HeaderStyle.Height = 40;
             dgvRecentActivity.ThemeStyle.RowsStyle.BorderStyle = DataGridViewCellBorderStyle.None;
@@ -2458,6 +2503,7 @@
             // 
             // pnlGrades
             // 
+            pnlGrades.AutoScroll = true;
             pnlGrades.BackColor = Color.Transparent;
             pnlGrades.BackgroundImage = Properties.Resources.Shade;
             pnlGrades.BackgroundImageLayout = ImageLayout.Stretch;
@@ -2475,7 +2521,7 @@
             pnlGrades.Controls.Add(cmbSubjectGrades);
             pnlGrades.Location = new Point(84, 96);
             pnlGrades.Name = "pnlGrades";
-            pnlGrades.Size = new Size(1328, 1000);
+            pnlGrades.Size = new Size(1361, 736);
             pnlGrades.TabIndex = 11;
             // 
             // btnGradesClearFilter
@@ -2544,10 +2590,10 @@
             dgvStudentActivitySubmitted.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle9;
             dgvStudentActivitySubmitted.CellBorderStyle = DataGridViewCellBorderStyle.None;
             dataGridViewCellStyle10.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle10.BackColor = Color.FromArgb(100, 88, 255);
+            dataGridViewCellStyle10.BackColor = Color.Maroon;
             dataGridViewCellStyle10.Font = new Font("Segoe UI", 9F);
             dataGridViewCellStyle10.ForeColor = Color.White;
-            dataGridViewCellStyle10.SelectionBackColor = Color.FromArgb(100, 88, 255);
+            dataGridViewCellStyle10.SelectionBackColor = Color.Maroon;
             dataGridViewCellStyle10.SelectionForeColor = SystemColors.HighlightText;
             dataGridViewCellStyle10.WrapMode = DataGridViewTriState.True;
             dgvStudentActivitySubmitted.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle10;
@@ -2583,6 +2629,7 @@
             dgvStudentActivitySubmitted.ThemeStyle.AlternatingRowsStyle.ForeColor = SystemColors.ControlText;
             dgvStudentActivitySubmitted.ThemeStyle.AlternatingRowsStyle.SelectionBackColor = Color.FromArgb(231, 229, 255);
             dgvStudentActivitySubmitted.ThemeStyle.AlternatingRowsStyle.SelectionForeColor = Color.FromArgb(71, 69, 94);
+            dgvStudentActivitySubmitted.ThemeStyle.HeaderStyle.BackColor = Color.Maroon;
             dgvStudentActivitySubmitted.ThemeStyle.HeaderStyle.Font = new Font("Segoe UI", 9F);
             dgvStudentActivitySubmitted.ThemeStyle.HeaderStyle.Height = 40;
             dgvStudentActivitySubmitted.ThemeStyle.ReadOnly = true;
@@ -2811,13 +2858,14 @@
             // 
             // pnlAttendance
             // 
+            pnlAttendance.AutoScroll = true;
             pnlAttendance.BackColor = Color.Transparent;
             pnlAttendance.BackgroundImage = Properties.Resources.Shade;
             pnlAttendance.BackgroundImageLayout = ImageLayout.Stretch;
             pnlAttendance.Controls.Add(guna2Panel30);
             pnlAttendance.Location = new Point(84, 96);
             pnlAttendance.Name = "pnlAttendance";
-            pnlAttendance.Size = new Size(1328, 1000);
+            pnlAttendance.Size = new Size(1361, 715);
             pnlAttendance.TabIndex = 33;
             // 
             // guna2Panel30
@@ -2833,10 +2881,10 @@
             guna2Panel30.Controls.Add(guna2ComboBox11);
             guna2Panel30.CustomizableEdges = customizableEdges145;
             guna2Panel30.FillColor = Color.White;
-            guna2Panel30.Location = new Point(24, 71);
+            guna2Panel30.Location = new Point(61, 42);
             guna2Panel30.Name = "guna2Panel30";
             guna2Panel30.ShadowDecoration.CustomizableEdges = customizableEdges146;
-            guna2Panel30.Size = new Size(1277, 917);
+            guna2Panel30.Size = new Size(1277, 641);
             guna2Panel30.TabIndex = 33;
             // 
             // btnAttendanceUpdate
@@ -2879,10 +2927,10 @@
             ViewStudentAttendance.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle13;
             ViewStudentAttendance.CellBorderStyle = DataGridViewCellBorderStyle.None;
             dataGridViewCellStyle14.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle14.BackColor = Color.FromArgb(100, 88, 255);
+            dataGridViewCellStyle14.BackColor = Color.Maroon;
             dataGridViewCellStyle14.Font = new Font("Segoe UI", 9F);
             dataGridViewCellStyle14.ForeColor = Color.White;
-            dataGridViewCellStyle14.SelectionBackColor = Color.FromArgb(100, 88, 255);
+            dataGridViewCellStyle14.SelectionBackColor = Color.Maroon;
             dataGridViewCellStyle14.SelectionForeColor = SystemColors.HighlightText;
             dataGridViewCellStyle14.WrapMode = DataGridViewTriState.True;
             ViewStudentAttendance.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle14;
@@ -2917,6 +2965,7 @@
             ViewStudentAttendance.ThemeStyle.AlternatingRowsStyle.ForeColor = SystemColors.ControlText;
             ViewStudentAttendance.ThemeStyle.AlternatingRowsStyle.SelectionBackColor = Color.FromArgb(231, 229, 255);
             ViewStudentAttendance.ThemeStyle.AlternatingRowsStyle.SelectionForeColor = Color.FromArgb(71, 69, 94);
+            ViewStudentAttendance.ThemeStyle.HeaderStyle.BackColor = Color.Maroon;
             ViewStudentAttendance.ThemeStyle.HeaderStyle.Font = new Font("Segoe UI", 9F);
             ViewStudentAttendance.ThemeStyle.HeaderStyle.Height = 40;
             ViewStudentAttendance.ThemeStyle.RowsStyle.BorderStyle = DataGridViewCellBorderStyle.None;
@@ -3014,7 +3063,7 @@
             pnlSubject.Controls.Add(pnlCreateClass);
             pnlSubject.Location = new Point(84, 96);
             pnlSubject.Name = "pnlSubject";
-            pnlSubject.Size = new Size(1328, 1000);
+            pnlSubject.Size = new Size(1361, 697);
             pnlSubject.TabIndex = 34;
             // 
             // btnShowPnlCreateClass
@@ -3239,7 +3288,7 @@
             pnlFile.Controls.Add(guna2Panel32);
             pnlFile.Location = new Point(84, 96);
             pnlFile.Name = "pnlFile";
-            pnlFile.Size = new Size(1328, 1000);
+            pnlFile.Size = new Size(1361, 712);
             pnlFile.TabIndex = 35;
             // 
             // guna2Panel33
@@ -3249,7 +3298,7 @@
             guna2Panel33.Controls.Add(FolderListView);
             guna2Panel33.CustomizableEdges = customizableEdges166;
             guna2Panel33.FillColor = Color.White;
-            guna2Panel33.Location = new Point(43, 176);
+            guna2Panel33.Location = new Point(67, 118);
             guna2Panel33.Name = "guna2Panel33";
             guna2Panel33.ShadowDecoration.CustomizableEdges = customizableEdges167;
             guna2Panel33.Size = new Size(1213, 533);
@@ -3290,7 +3339,7 @@
             guna2Panel32.Controls.Add(btnAddFolder);
             guna2Panel32.CustomizableEdges = customizableEdges172;
             guna2Panel32.FillColor = Color.White;
-            guna2Panel32.Location = new Point(65, 95);
+            guna2Panel32.Location = new Point(89, 37);
             guna2Panel32.Name = "guna2Panel32";
             guna2Panel32.ShadowDecoration.CustomizableEdges = customizableEdges173;
             guna2Panel32.Size = new Size(307, 42);
@@ -3316,6 +3365,7 @@
             btnDeleteFile.Size = new Size(147, 36);
             btnDeleteFile.TabIndex = 4;
             btnDeleteFile.Text = "Delete File";
+            btnDeleteFile.Click += btnDeleteFile_Click_1;
             // 
             // btnAddFolder
             // 
@@ -3361,7 +3411,7 @@
             pnlSetting.Controls.Add(pnlChangePassword);
             pnlSetting.Location = new Point(84, 96);
             pnlSetting.Name = "pnlSetting";
-            pnlSetting.Size = new Size(1328, 1000);
+            pnlSetting.Size = new Size(1361, 694);
             pnlSetting.TabIndex = 11;
             // 
             // btnSignOut
@@ -3381,7 +3431,7 @@
             btnSignOut.Image = Properties.Resources.Sign_Out;
             btnSignOut.ImageAlign = HorizontalAlignment.Left;
             btnSignOut.ImageOffset = new Point(15, 0);
-            btnSignOut.Location = new Point(57, 255);
+            btnSignOut.Location = new Point(67, 207);
             btnSignOut.Name = "btnSignOut";
             btnSignOut.ShadowDecoration.CustomizableEdges = customizableEdges175;
             btnSignOut.Size = new Size(261, 45);
@@ -3408,7 +3458,7 @@
             guna2Button4.Image = Properties.Resources.Night_Mode;
             guna2Button4.ImageAlign = HorizontalAlignment.Left;
             guna2Button4.ImageOffset = new Point(15, 0);
-            guna2Button4.Location = new Point(57, 204);
+            guna2Button4.Location = new Point(67, 156);
             guna2Button4.Name = "guna2Button4";
             guna2Button4.ShadowDecoration.CustomizableEdges = customizableEdges177;
             guna2Button4.Size = new Size(261, 45);
@@ -3429,7 +3479,7 @@
             pnlChangePhoto.Controls.Add(btnExitChangePhotoPanel);
             pnlChangePhoto.Controls.Add(btnSubmitChangePhoto);
             pnlChangePhoto.CustomizableEdges = customizableEdges185;
-            pnlChangePhoto.Location = new Point(27, 407);
+            pnlChangePhoto.Location = new Point(37, 284);
             pnlChangePhoto.Name = "pnlChangePhoto";
             pnlChangePhoto.ShadowDecoration.CustomizableEdges = customizableEdges186;
             pnlChangePhoto.Size = new Size(326, 325);
@@ -3551,7 +3601,7 @@
             btnSettingPanel.ImageAlign = HorizontalAlignment.Left;
             btnSettingPanel.ImageOffset = new Point(15, 0);
             btnSettingPanel.ImageSize = new Size(15, 15);
-            btnSettingPanel.Location = new Point(57, 153);
+            btnSettingPanel.Location = new Point(67, 105);
             btnSettingPanel.Name = "btnSettingPanel";
             btnSettingPanel.ShadowDecoration.CustomizableEdges = customizableEdges188;
             btnSettingPanel.Size = new Size(261, 45);
@@ -3564,7 +3614,7 @@
             // 
             label3.AutoSize = true;
             label3.Font = new Font("Arial", 26.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label3.Location = new Point(52, 75);
+            label3.Location = new Point(62, 27);
             label3.Name = "label3";
             label3.Size = new Size(153, 41);
             label3.TabIndex = 17;
@@ -3584,7 +3634,7 @@
             pnlSettingProfile.Controls.Add(picboxSettingProfilePicture);
             pnlSettingProfile.CustomizableEdges = customizableEdges202;
             pnlSettingProfile.FillColor = Color.White;
-            pnlSettingProfile.Location = new Point(391, 151);
+            pnlSettingProfile.Location = new Point(401, 103);
             pnlSettingProfile.Name = "pnlSettingProfile";
             pnlSettingProfile.ShadowDecoration.CustomizableEdges = customizableEdges203;
             pnlSettingProfile.Size = new Size(852, 349);
@@ -3779,7 +3829,7 @@
             pnlSettingConfiguration.Controls.Add(label29);
             pnlSettingConfiguration.CustomizableEdges = customizableEdges204;
             pnlSettingConfiguration.FillColor = Color.White;
-            pnlSettingConfiguration.Location = new Point(391, 151);
+            pnlSettingConfiguration.Location = new Point(401, 103);
             pnlSettingConfiguration.Name = "pnlSettingConfiguration";
             pnlSettingConfiguration.ShadowDecoration.CustomizableEdges = customizableEdges205;
             pnlSettingConfiguration.Size = new Size(852, 350);
@@ -3809,7 +3859,7 @@
             pnlChangeUsername.Controls.Add(label34);
             pnlChangeUsername.Controls.Add(txtCurrentUsername);
             pnlChangeUsername.CustomizableEdges = customizableEdges214;
-            pnlChangeUsername.Location = new Point(27, 407);
+            pnlChangeUsername.Location = new Point(37, 284);
             pnlChangeUsername.Name = "pnlChangeUsername";
             pnlChangeUsername.ShadowDecoration.CustomizableEdges = customizableEdges215;
             pnlChangeUsername.Size = new Size(326, 325);
@@ -3947,7 +3997,7 @@
             pnlChangePassword.Controls.Add(label53);
             pnlChangePassword.Controls.Add(txtCurrentPassword);
             pnlChangePassword.CustomizableEdges = customizableEdges226;
-            pnlChangePassword.Location = new Point(27, 407);
+            pnlChangePassword.Location = new Point(37, 284);
             pnlChangePassword.Name = "pnlChangePassword";
             pnlChangePassword.ShadowDecoration.CustomizableEdges = customizableEdges227;
             pnlChangePassword.Size = new Size(326, 325);
@@ -4100,28 +4150,27 @@
             // 
             // ProfessorForm
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
-            AutoScaleMode = AutoScaleMode.Font;
-            AutoScroll = true;
+            AutoScaleMode = AutoScaleMode.None;
             BackColor = Color.FromArgb(244, 243, 246);
-            ClientSize = new Size(1447, 749);
-            Controls.Add(guna2Panel2);
-            Controls.Add(guna2Panel1);
-            Controls.Add(pnlActivity);
+            ClientSize = new Size(1447, 805);
             Controls.Add(pnlFile);
+            Controls.Add(pnlStudent);
+            Controls.Add(guna2Panel1);
+            Controls.Add(pnlHome);
+            Controls.Add(guna2Panel2);
+            Controls.Add(pnlActivity);
             Controls.Add(pnlSubject);
             Controls.Add(pnlAttendance);
             Controls.Add(pnlGrades);
             Controls.Add(pnlSetting);
             Controls.Add(pnlWorkstation);
-            Controls.Add(pnlHome);
-            Controls.Add(pnlStudent);
+            MaximizeBox = false;
+            MinimizeBox = false;
             Name = "ProfessorForm";
             StartPosition = FormStartPosition.CenterScreen;
             Load += ProfessorForm_Load;
             guna2Panel1.ResumeLayout(false);
             guna2Panel3.ResumeLayout(false);
-            guna2Panel3.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             guna2Panel2.ResumeLayout(false);
             guna2Panel2.PerformLayout();

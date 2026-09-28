@@ -239,7 +239,7 @@ namespace WinFormsApp1
                 {
                     Name = "StudentID",
                     HeaderText = "Student ID",
-                    DataPropertyName = "student_id",
+                    DataPropertyName = "user_id",
                     Width = 120
                 });
 
@@ -249,7 +249,7 @@ namespace WinFormsApp1
                 {
                     Name = "StudentName",
                     HeaderText = "Student Name",
-                    DataPropertyName = "full_name",
+                    DataPropertyName = "student_name",
                     Width = 210
                 });
 
@@ -439,8 +439,8 @@ namespace WinFormsApp1
                     string query = @"
                         SELECT
                             qa.attempt_id,
-                            u.student_id,
-                            u.full_name,
+                            u.user_id,
+                            qa.student_name,
                             q.quiz_title,
                             qa.score,
                             qa.total_questions,
@@ -525,8 +525,8 @@ namespace WinFormsApp1
             }
 
             gradesTable.DefaultView.RowFilter =
-                "student_id LIKE '%" + search + "%' " +
-                "OR full_name LIKE '%" + search + "%' " +
+                "user_id LIKE '%" + search + "%' " +
+                "OR student_name LIKE '%" + search + "%' " +
                 "OR quiz_title LIKE '%" + search + "%'";
         }
 

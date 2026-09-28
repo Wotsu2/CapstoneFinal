@@ -78,6 +78,7 @@ namespace WinFormsApp1
 
         private void admindash_Load(object sender, EventArgs e)
         {
+            panelDashoard.Visible = true;
             isRunning = true;
             adminIsRunning = true;
 
@@ -328,7 +329,7 @@ namespace WinFormsApp1
             btnUploadBanner.Cursor = Cursors.Hand;
             btnUploadBanner.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
 
-            btnUploadBanner.Location = new Point(this.ClientSize.Width, 150);
+            btnUploadBanner.Location = new Point(1250, 150);
 
             btnUploadBanner.Click += BtnUploadBanner_Click;
             this.Controls.Add(btnUploadBanner);
@@ -450,14 +451,20 @@ namespace WinFormsApp1
         // =========================================================
         private void btnDashboard_Click_1(object sender, EventArgs e)
         {
-            panelDashoard.BringToFront();
+            panelDashoard.Visible = true;
+            pnlUserManagement.Visible = false;
+            pnlFileManagement.Visible = false;
+            pnlWorkstation.Visible = false;
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnDashboard);
         }
 
         private void btnUserManagement_Click(object sender, EventArgs e)
         {
-            pnlUserManagement.BringToFront();
+            pnlUserManagement.Visible = true;
+            panelDashoard.Visible = false;
+            pnlFileManagement.Visible = false;
+            pnlWorkstation.Visible = false;
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnUserManagement);
             LoadUserData();
@@ -465,7 +472,10 @@ namespace WinFormsApp1
 
         private void btnFileManagement_Click(object sender, EventArgs e)
         {
-            pnlFileManagement.BringToFront();
+            pnlFileManagement.Visible = true;
+            panelDashoard.Visible = false;
+            pnlUserManagement.Visible = false;
+            pnlWorkstation.Visible = false;
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnFileManagement);
 
@@ -487,7 +497,10 @@ namespace WinFormsApp1
 
         private void btnWorkstation_Click(object sender, EventArgs e)
         {
-            pnlWorkstation.BringToFront();
+            pnlWorkstation.Visible = true;
+            panelDashoard.Visible = false;
+            pnlUserManagement.Visible = false;
+            pnlFileManagement.Visible = false;
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnWorkstation);
         }

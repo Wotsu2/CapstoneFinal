@@ -121,43 +121,64 @@ namespace WinFormsApp1
         // =========================================================
         // NAVIGATION
         // =========================================================
-        private void btnHome_Click(object sender, EventArgs e)
+        private void ShowPage(Panel page, string title, Guna.UI2.WinForms.Guna2Button activeBtn)
         {
-            pnlHome.BringToFront();
-            lblPanelName.Text = "Home";
+            // Hide every page
+            pnlHome.Visible = false;
+            pnlWorkstation.Visible = false;
+            pnlStudent.Visible = false;
+            pnlActivity.Visible = false;
+            pnlGrades.Visible = false;
+            pnlAttendance.Visible = false;
+            pnlSubject.Visible = false;
+            pnlFile.Visible = false;
+            pnlSetting.Visible = false;
+
+            // Show the target
+            page.Visible = true;
+            page.BringToFront();
+            lblPanelName.Text = title;
+
+            // Uncheck every nav button
+            btnHome.Checked = false;
+            btnWorkstation.Checked = false;
+            btnStudent.Checked = false;
+            btnActivities.Checked = false;
+            btnGrades.Checked = false;
+            btnAttendance.Checked = false;
+            btnSubject.Checked = false;
+            btnFile.Checked = false;
+            btnAccount.Checked = false;
+
+            // Check the active one
+            if (activeBtn != null) activeBtn.Checked = true;
         }
+
+        private void btnHome_Click(object sender, EventArgs e)
+            => ShowPage(pnlHome, "Home", btnHome);
 
         private void btnWorkstation_Click(object sender, EventArgs e)
-        {
-            pnlWorkstation.BringToFront();
-            lblPanelName.Text = "Workstations";
-        }
+            => ShowPage(pnlWorkstation, "Workstations", btnWorkstation);
 
         private void btnStudent_Click(object sender, EventArgs e)
-        {
-            pnlStudent.BringToFront();
-            lblPanelName.Text = "My Students";
-        }
+            => ShowPage(pnlStudent, "My Students", btnStudent);
 
         private void btnActivities_Click(object sender, EventArgs e)
         {
-            pnlActivity.BringToFront();
+            ShowPage(pnlActivity, "Activities", btnActivities);
             ActivitySectionSubject();
             RecentActivity();
-            lblPanelName.Text = "Activities";
         }
 
         private void btnGrades_Click(object sender, EventArgs e)
         {
-            pnlGrades.BringToFront();
-            lblPanelName.Text = "Grades";
+            ShowPage(pnlGrades, "Grades", btnGrades);
             ActivityStatus();
         }
 
         private void btnAttendance_Click(object sender, EventArgs e)
         {
-            pnlAttendance.BringToFront();
-            lblPanelName.Text = "Attendance";
+            ShowPage(pnlAttendance, "Attendance", btnAttendance);
 
             LoadAttendanceSections();
 
@@ -168,17 +189,12 @@ namespace WinFormsApp1
         }
 
         private void btnSubject_Click(object sender, EventArgs e)
-        {
-            pnlSubject.BringToFront();
-            lblPanelName.Text = "Subjects";
-        }
+            => ShowPage(pnlSubject, "Subjects", btnSubject);
 
         private void btnFile_Click(object sender, EventArgs e)
         {
-            pnlFile.BringToFront();
-            lblPanelName.Text = "Files";
+            ShowPage(pnlFile, "Files", btnFile);
 
-            // Load the professor's folder root
             if (!string.IsNullOrEmpty(saveFolder) && saveFolder != "Null" && Directory.Exists(saveFolder))
                 LoadServerFolder(saveFolder);
             else
@@ -186,10 +202,7 @@ namespace WinFormsApp1
         }
 
         private void btnAccount_Click(object sender, EventArgs e)
-        {
-            pnlSetting.BringToFront();
-            lblPanelName.Text = "Settings";
-        }
+            => ShowPage(pnlSetting, "Settings", btnAccount);
 
         // =========================================================
         // HOME PAGE
@@ -1587,61 +1600,6 @@ namespace WinFormsApp1
         // =========================================================
         private void btnDeleteFile_Click(object sender, EventArgs e)
         {
-            if (FolderListView.SelectedItems.Count == 0)
-            {
-                MessageBox.Show("Please select a file or folder first.");
-                return;
-            }
-
-            string path = FolderListView.SelectedItems[0].Tag?.ToString();
-
-            if (string.IsNullOrEmpty(path))
-            {
-                MessageBox.Show("Invalid selection.");
-                return;
-            }
-
-            bool isFolder = Directory.Exists(path);
-            bool isFile = File.Exists(path);
-
-            if (!isFolder && !isFile)
-            {
-                MessageBox.Show("The selected item no longer exists.");
-                return;
-            }
-
-            string itemName = Path.GetFileName(path);
-
-            string message = isFolder
-                ? $"Delete folder '{itemName}' and ALL its contents?\n\nThis cannot be undone."
-                : $"Delete file '{itemName}'?\n\nThis cannot be undone.";
-
-            DialogResult confirm = MessageBox.Show(
-                message,
-                "Confirm Delete",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning);
-
-            if (confirm != DialogResult.Yes) return;
-
-            try
-            {
-                if (isFolder)
-                    Directory.Delete(path, recursive: true);
-                else
-                    File.Delete(path);
-
-                MessageBox.Show("Deleted successfully.");
-
-                if (!string.IsNullOrEmpty(currentFolder) && Directory.Exists(currentFolder))
-                    LoadServerFolder(currentFolder, addToHistory: false);
-                else if (!string.IsNullOrEmpty(saveFolder) && Directory.Exists(saveFolder))
-                    LoadServerFolder(saveFolder);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error deleting: " + ex.Message);
-            }
         }
 
         private string GetFolderPath(int professorId)
@@ -2918,6 +2876,101 @@ namespace WinFormsApp1
         {
             ProfessorGradesForm QuizGradeform = new ProfessorGradesForm();
             QuizGradeform.ShowDialog();
+        }
+
+        private void btnDeleteFile_Click_1(object sender, EventArgs e)
+        {
+            if (FolderListView.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("Please select a file or folder first.",
+                    "Nothing Selected", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            string path = FolderListView.SelectedItems[0].Tag?.ToString();
+
+            if (string.IsNullOrEmpty(path))
+            {
+                MessageBox.Show("Invalid selection.");
+                return;
+            }
+
+            bool isFolder = Directory.Exists(path);
+            bool isFile = File.Exists(path);
+
+            if (!isFolder && !isFile)
+            {
+                MessageBox.Show("The selected item no longer exists.");
+                return;
+            }
+
+            // Safety: don't allow deleting the professor's root folder
+            if (isFolder && !string.IsNullOrEmpty(saveFolder) &&
+                string.Equals(Path.GetFullPath(path).TrimEnd('\\'),
+                              Path.GetFullPath(saveFolder).TrimEnd('\\'),
+                              StringComparison.OrdinalIgnoreCase))
+            {
+                MessageBox.Show("You cannot delete your root folder.",
+                    "Not Allowed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string itemName = Path.GetFileName(path);
+
+            string message = isFolder
+                ? $"Delete folder '{itemName}' and ALL of its contents?\n\nThis cannot be undone."
+                : $"Delete file '{itemName}'?\n\nThis cannot be undone.";
+
+            DialogResult confirm = MessageBox.Show(
+                message,
+                "Confirm Delete",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (confirm != DialogResult.Yes) return;
+
+            try
+            {
+                // Read-only files block File.Delete — clear the attribute first
+                if (isFile)
+                {
+                    var attrs = File.GetAttributes(path);
+                    if ((attrs & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+                        File.SetAttributes(path, attrs & ~FileAttributes.ReadOnly);
+                }
+
+                if (isFolder)
+                    Directory.Delete(path, recursive: true);
+                else
+                    File.Delete(path);
+
+                MessageBox.Show("Deleted successfully.",
+                    "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // Refresh the current folder
+                if (!string.IsNullOrEmpty(currentFolder) && Directory.Exists(currentFolder))
+                    LoadServerFolder(currentFolder, addToHistory: false);
+                else if (!string.IsNullOrEmpty(saveFolder) && Directory.Exists(saveFolder))
+                    LoadServerFolder(saveFolder, addToHistory: false);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                MessageBox.Show(
+                    "Access denied.\n\n" +
+                    "The file/folder may be open in another program or you don't have permission.",
+                    "Delete Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (IOException ioEx)
+            {
+                MessageBox.Show(
+                    "The file is in use or locked.\n\nDetails: " + ioEx.Message,
+                    "Delete Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error deleting: " + ex.Message,
+                    "Delete Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }

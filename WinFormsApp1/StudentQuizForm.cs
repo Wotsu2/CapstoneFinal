@@ -20,6 +20,9 @@ namespace WinFormsApp1
         private int studentUserId = 0;
         private int score = 0;
 
+        // Student identity — used in quiz_attempts + student_answers
+        private string studentName = "";
+
         // =========================================================
         // QUIZ ATTEMPT
         // =========================================================
@@ -140,8 +143,57 @@ namespace WinFormsApp1
             studentUserId = studentId;
             selectedQuizId = quizId;
 
+            // Look up the student's full name ONCE so we can persist it
+            // in quiz_attempts and student_answers.
+            studentName = LoadStudentName(studentId);
+
             InitializeUI();
             LoadQuiz(quizId);
+        }
+
+        // =========================================================
+        // LOAD STUDENT NAME
+        // =========================================================
+
+        private string LoadStudentName(int studentId)
+        {
+            string connStr = SettingsManager.Current.GetConnectionString();
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    using (var cmd = new MySqlCommand(
+                        @"SELECT lastname, firstname, middlename
+                          FROM user_information
+                          WHERE user_id = @id", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", studentId);
+
+                        using (var r = cmd.ExecuteReader())
+                        {
+                            if (r.Read())
+                            {
+                                string ln = r["lastname"] == DBNull.Value ? "" : r["lastname"].ToString();
+                                string fn = r["firstname"] == DBNull.Value ? "" : r["firstname"].ToString();
+                                string mn = r["middlename"] == DBNull.Value ? "" : r["middlename"].ToString();
+
+                                string joined = string.Join("_",
+                                    new[] { ln, fn, mn }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+                                return string.IsNullOrWhiteSpace(joined) ? "Unknown" : joined;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("LoadStudentName error: " + ex.Message);
+            }
+
+            return "Unknown";
         }
 
         // =========================================================
@@ -286,8 +338,6 @@ namespace WinFormsApp1
                     label.Height - 3);
             }
         }
-
-
 
         private void StudentQuizForm_FormClosed(object sender, FormClosedEventArgs e)
         {
@@ -590,10 +640,6 @@ namespace WinFormsApp1
         // =========================================================
         // CREATE OR RESUME QUIZ ATTEMPT
         // =========================================================
-        // If there's an existing TAKING or DISCONNECTED attempt for
-        // this user+quiz, REUSE it so saved answers are preserved.
-        // Otherwise create a fresh one.
-        // =========================================================
 
         private bool CreateOrResumeAttempt()
         {
@@ -644,15 +690,18 @@ namespace WinFormsApp1
                         }
                     }
 
-                    // 2. Reactivate if found
+                    // 2. Reactivate + backfill student_name if found
                     if (currentAttemptId > 0)
                     {
                         using (var reactivateCmd = new MySqlCommand(
                             @"UPDATE quiz_attempts
-                              SET status = 'TAKING', last_seen = NOW()
+                              SET status = 'TAKING',
+                                  last_seen = NOW(),
+                                  student_name = COALESCE(student_name, @student_name)
                               WHERE attempt_id = @id", conn))
                         {
                             reactivateCmd.Parameters.AddWithValue("@id", currentAttemptId);
+                            reactivateCmd.Parameters.AddWithValue("@student_name", studentName);
                             reactivateCmd.ExecuteNonQuery();
                         }
 
@@ -662,16 +711,17 @@ namespace WinFormsApp1
                     // 3. Otherwise create a fresh attempt
                     string insertQuery = @"
                         INSERT INTO quiz_attempts
-                        (quiz_id, user_id, score, total_questions, percentage,
+                        (quiz_id, user_id, student_name, score, total_questions, percentage,
                          status, started_at, last_seen, remaining_seconds)
                         VALUES
-                        (@quiz_id, @user_id, 0, @total_questions, 0,
+                        (@quiz_id, @user_id, @student_name, 0, @total_questions, 0,
                          'TAKING', NOW(), NOW(), @remaining_seconds)";
 
                     using (var insertCmd = new MySqlCommand(insertQuery, conn))
                     {
                         insertCmd.Parameters.AddWithValue("@quiz_id", selectedQuizId);
                         insertCmd.Parameters.AddWithValue("@user_id", studentUserId);
+                        insertCmd.Parameters.AddWithValue("@student_name", studentName);
                         insertCmd.Parameters.AddWithValue("@total_questions", questions.Count);
                         insertCmd.Parameters.AddWithValue("@remaining_seconds", ExamDurationSeconds);
 
@@ -681,7 +731,7 @@ namespace WinFormsApp1
 
                     remainingSeconds = ExamDurationSeconds;
 
-                    Console.WriteLine($"[QuizAttempt] CREATED new attempt {currentAttemptId}");
+                    Console.WriteLine($"[QuizAttempt] CREATED new attempt {currentAttemptId} for {studentName}");
 
                     return true;
                 }
@@ -873,7 +923,7 @@ namespace WinFormsApp1
             lblTimer.Text = $"TIME: {minutes:00}:{seconds:00}";
 
             lblTimer.BackColor = remainingSeconds <= 300
-                ? Color.FromArgb(185, 28, 28)   // red warning in last 5 minutes
+                ? Color.FromArgb(185, 28, 28)
                 : MaroonColor;
         }
 
@@ -1662,12 +1712,15 @@ namespace WinFormsApp1
                         {
                             using (var updateCmd = new MySqlCommand(
                                 @"UPDATE student_answers
-                                  SET student_answer = @student_answer, is_correct = @is_correct
+                                  SET student_answer = @student_answer,
+                                      is_correct = @is_correct,
+                                      student_name = @student_name
                                   WHERE attempt_id = @attempt_id AND question_id = @question_id",
                                 conn, tx))
                             {
                                 updateCmd.Parameters.AddWithValue("@student_answer", answer);
                                 updateCmd.Parameters.AddWithValue("@is_correct", isCorrect ? 1 : 0);
+                                updateCmd.Parameters.AddWithValue("@student_name", studentName);
                                 updateCmd.Parameters.AddWithValue("@attempt_id", currentAttemptId);
                                 updateCmd.Parameters.AddWithValue("@question_id", questionId);
                                 updateCmd.ExecuteNonQuery();
@@ -1677,12 +1730,13 @@ namespace WinFormsApp1
                         {
                             using (var insertCmd = new MySqlCommand(
                                 @"INSERT INTO student_answers
-                                  (attempt_id, question_id, student_answer, is_correct)
-                                  VALUES (@attempt_id, @question_id, @student_answer, @is_correct)",
+                                  (attempt_id, question_id, student_name, student_answer, is_correct)
+                                  VALUES (@attempt_id, @question_id, @student_name, @student_answer, @is_correct)",
                                 conn, tx))
                             {
                                 insertCmd.Parameters.AddWithValue("@attempt_id", currentAttemptId);
                                 insertCmd.Parameters.AddWithValue("@question_id", questionId);
+                                insertCmd.Parameters.AddWithValue("@student_name", studentName);
                                 insertCmd.Parameters.AddWithValue("@student_answer", answer);
                                 insertCmd.Parameters.AddWithValue("@is_correct", isCorrect ? 1 : 0);
                                 insertCmd.ExecuteNonQuery();
@@ -1808,7 +1862,8 @@ namespace WinFormsApp1
                             percentage = @percentage,
                             status = 'SUBMITTED',
                             last_seen = NOW(),
-                            remaining_seconds = @remaining_seconds
+                            remaining_seconds = @remaining_seconds,
+                            student_name = @student_name
                         WHERE attempt_id = @attempt_id";
 
                     using (var cmd = new MySqlCommand(attemptQuery, conn, tx))
@@ -1817,6 +1872,7 @@ namespace WinFormsApp1
                         cmd.Parameters.AddWithValue("@total_questions", totalQuestions);
                         cmd.Parameters.AddWithValue("@percentage", percentage);
                         cmd.Parameters.AddWithValue("@remaining_seconds", Math.Max(0, remainingSeconds));
+                        cmd.Parameters.AddWithValue("@student_name", studentName);
                         cmd.Parameters.AddWithValue("@attempt_id", currentAttemptId);
 
                         int affectedRows = cmd.ExecuteNonQuery();

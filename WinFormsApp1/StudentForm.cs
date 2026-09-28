@@ -296,6 +296,13 @@ namespace WinFormsApp1
             pnlQuizExam.Visible = false;
             lblhometitle.Text = "Home";
 
+            btnHome.Checked = true;
+            btnQuizExam.Checked = false;
+            btnActivities.Checked = false;
+            btnAccount.Checked = false;
+            btnGrades.Checked = false;
+            btnSubject.Checked = false;
+
             try { LoadAssessments(); } catch { }
         }
 
@@ -308,6 +315,13 @@ namespace WinFormsApp1
             pnlSetting.Visible = false;
             pnlQuizExam.Visible = false;
             lblhometitle.Text = "Activity";
+
+            btnHome.Checked = false;
+            btnQuizExam.Checked = false;
+            btnActivities.Checked = true;
+            btnAccount.Checked = false;
+            btnSubject.Checked = false;
+            btnGrades.Checked = false;
         }
 
         private void btnSubject_Click(object sender, EventArgs e)
@@ -319,6 +333,13 @@ namespace WinFormsApp1
             pnlSetting.Visible = false;
             pnlQuizExam.Visible = false;
             lblhometitle.Text = "Subject";
+
+            btnHome.Checked = false;
+            btnQuizExam.Checked = false;
+            btnActivities.Checked = false;
+            btnAccount.Checked = false;
+            btnSubject.Checked = true;
+            btnGrades.Checked = false;
         }
 
         private void btnGrades_Click(object sender, EventArgs e)
@@ -330,6 +351,13 @@ namespace WinFormsApp1
             pnlSetting.Visible = false;
             pnlQuizExam.Visible = false;
             lblhometitle.Text = "Grade";
+
+            btnHome.Checked = false;
+            btnQuizExam.Checked = false;
+            btnActivities.Checked = false;
+            btnAccount.Checked = false;
+            btnSubject.Checked = false;
+            btnGrades.Checked = true;
         }
 
         private void btnAccount_Click(object sender, EventArgs e)
@@ -341,6 +369,13 @@ namespace WinFormsApp1
             pnlSetting.Visible = true;
             lblhometitle.Text = "Settings";
             pnlQuizExam.Visible = false;
+
+            btnHome.Checked = false;
+            btnQuizExam.Checked = false;
+            btnActivities.Checked = false;
+            btnAccount.Checked = true;
+            btnSubject.Checked = false;
+            btnGrades.Checked = false;
         }
 
         private void btnQuizExam_Click(object sender, EventArgs e)
@@ -350,7 +385,16 @@ namespace WinFormsApp1
             pnlSubject.Visible = false;
             pnlGrades.Visible = false;
             pnlQuizExam.Visible = true;
+            pnlSetting.Visible = false;
+            lblhometitle.Text = "Grade";
             InitializeQuizExam();
+
+            btnHome.Checked = false;
+            btnQuizExam.Checked = true;
+            btnActivities.Checked = false;
+            btnAccount.Checked = false;
+            btnSubject.Checked = false;
+            btnGrades.Checked = false;
         }
 
         // =========================================================
@@ -1398,8 +1442,8 @@ namespace WinFormsApp1
         private void btnSettingProfileExpand_Click(object sender, EventArgs e)
         {
             if (pnlSettingProfile.Height <= 350)
-                pnlSettingProfile.Height = 668;
-            else if (pnlSettingProfile.Height >= 668)
+                pnlSettingProfile.Height = 670;
+            else if (pnlSettingProfile.Height >= 670)
                 pnlSettingProfile.Height = 350;
         }
 
@@ -1825,14 +1869,14 @@ namespace WinFormsApp1
 
             assessmentsPanel = new Guna.UI2.WinForms.Guna2Panel
             {
-                Size = new Size(234, 150),
-                Location = new Point(954, 315),
+                Size = new Size(307, 390),
+                Location = new Point(977, 355),
                 FillColor = Color.White,
                 BackColor = Color.Transparent,
-                BorderRadius = 12,
+                BorderRadius = 10,
                 BorderColor = Color.FromArgb(220, 220, 220),
                 BorderThickness = 1,
-                ShadowDecoration = { BorderRadius = 10, Enabled = true, Depth = 6, Color = Color.FromArgb(60, 0, 0, 0) },
+                ShadowDecoration = { BorderRadius = 10, Enabled = true, Depth = 30, Color = Color.FromArgb(60, 0, 0, 0)},
                 AutoScroll = false
             };
 
@@ -1856,7 +1900,7 @@ namespace WinFormsApp1
                 Text = "Assessments",
                 Font = new Font("Segoe UI", 13F, FontStyle.Bold),
                 ForeColor = Color.FromArgb(30, 30, 30),
-                Location = new Point(42, 10),
+                Location = new Point(45, 10),
                 AutoSize = true
             };
 

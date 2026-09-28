@@ -123,6 +123,26 @@ namespace WinFormsApp1.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Activity_white {
+            get {
+                object obj = ResourceManager.GetObject("Activity white", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ActivityBlack {
+            get {
+                object obj = ResourceManager.GetObject("ActivityBlack", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Activitylogs {
             get {
                 object obj = ResourceManager.GetObject("Activitylogs", resourceCulture);
@@ -196,6 +216,16 @@ namespace WinFormsApp1.Properties {
         internal static System.Drawing.Bitmap Attendance {
             get {
                 object obj = ResourceManager.GetObject("Attendance", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Attendance_White {
+            get {
+                object obj = ResourceManager.GetObject("Attendance White", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -423,6 +453,16 @@ namespace WinFormsApp1.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap file_white {
+            get {
+                object obj = ResourceManager.GetObject("file white", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap filter {
             get {
                 object obj = ResourceManager.GetObject("filter", resourceCulture);
@@ -476,6 +516,16 @@ namespace WinFormsApp1.Properties {
         internal static System.Drawing.Bitmap Grades {
             get {
                 object obj = ResourceManager.GetObject("Grades", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap grades_white {
+            get {
+                object obj = ResourceManager.GetObject("grades white", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -546,6 +596,16 @@ namespace WinFormsApp1.Properties {
         internal static System.Drawing.Bitmap homeComputer {
             get {
                 object obj = ResourceManager.GetObject("homeComputer", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap HomeWhite {
+            get {
+                object obj = ResourceManager.GetObject("HomeWhite", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -943,6 +1003,16 @@ namespace WinFormsApp1.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Student_White {
+            get {
+                object obj = ResourceManager.GetObject("Student White", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Subject {
             get {
                 object obj = ResourceManager.GetObject("Subject", resourceCulture);
@@ -953,9 +1023,29 @@ namespace WinFormsApp1.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap subject_white {
+            get {
+                object obj = ResourceManager.GetObject("subject white", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Submitted {
             get {
                 object obj = ResourceManager.GetObject("Submitted", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Top_Icon {
+            get {
+                object obj = ResourceManager.GetObject("Top Icon", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -1116,6 +1206,16 @@ namespace WinFormsApp1.Properties {
         internal static System.Drawing.Bitmap white_ekis {
             get {
                 object obj = ResourceManager.GetObject("white ekis", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Workstation_White {
+            get {
+                object obj = ResourceManager.GetObject("Workstation White", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

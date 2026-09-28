@@ -48,6 +48,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1370, 749);
             Controls.Add(pictureBoxBroadcast);
+            MaximizeBox = false;
             MinimizeBox = false;
             Name = "BroadcastViewerForm";
             Text = "BroadcastViewerForm";
