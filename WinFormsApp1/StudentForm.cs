@@ -886,11 +886,11 @@ namespace WinFormsApp1
 
                     string query;
                     if (activityId > 0)
-                        query = @"SELECT activity_file, activity_filename FROM professor_activity WHERE activity_id = @activity_id";
+                        query = @"SELECT activity_file FROM professor_activity WHERE activity_id = @activity_id";
                     else
-                        query = @"SELECT activity_file, activity_filename FROM professor_activity 
-                                  WHERE professor_id = @professor_id AND title = @title 
-                                    AND section = @section AND activity_subject = @activity_subject LIMIT 1";
+                        query = @"SELECT activity_file FROM professor_activity 
+                          WHERE professor_id = @professor_id AND title = @title 
+                            AND section = @section AND activity_subject = @activity_subject LIMIT 1";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -904,22 +904,24 @@ namespace WinFormsApp1
                             cmd.Parameters.AddWithValue("@activity_subject", className);
                         }
 
-                        using (var reader = cmd.ExecuteReader())
+                        object result = cmd.ExecuteScalar();
+                        if (result == null || result == DBNull.Value) return null;
+
+                        // activity_file now stores a UNC path string
+                        if (result is string s && !string.IsNullOrWhiteSpace(s))
+                            return s.Trim();
+
+                        // Backward compat: if it's still a byte[] (old rows), save to temp
+                        if (result is byte[] bytes && bytes.Length > 0)
                         {
-                            if (!reader.Read()) return null;
-                            if (reader.IsDBNull(reader.GetOrdinal("activity_file"))) return null;
-
-                            byte[] pdfBytes = (byte[])reader["activity_file"];
-                            string pdfName = reader["activity_filename"] as string ?? "activity.pdf";
-
                             string tempFolder = Path.Combine(Path.GetTempPath(), "cdsga_activities", userId);
                             Directory.CreateDirectory(tempFolder);
-
-                            string tempPath = Path.Combine(tempFolder, pdfName);
-                            File.WriteAllBytes(tempPath, pdfBytes);
-
+                            string tempPath = Path.Combine(tempFolder, $"activity_{activityId}.pdf");
+                            File.WriteAllBytes(tempPath, bytes);
                             return tempPath;
                         }
+
+                        return null;
                     }
                 }
             }

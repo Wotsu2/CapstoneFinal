@@ -191,17 +191,35 @@ namespace WinFormsApp1
                 bool sent = await SendAuthenticationPhotoToAdmin(imageBytes, fileName);
                 if (!sent) return;
 
-                // Build the network path (UNC) that any PC on the network can read
-                string sharedFolderName = new DirectoryInfo(SettingsManager.Current.SaveFolder).Name;
-                string uncPath = $@"\\{SettingsManager.Current.ServerIp}\{sharedFolderName}\{SettingsManager.Current.AuthPhotoSubfolder}\{fileName}";
+                // Build the UNC path that the ADMIN saved to
+                string saveRoot = SettingsManager.Current.SaveFolder;
+                string authSub = SettingsManager.Current.AuthPhotoSubfolder ?? "";
+                string uncPath;
+
+                if (!string.IsNullOrEmpty(saveRoot) && saveRoot.StartsWith(@"\\"))
+                {
+                    // SaveFolder is already UNC — just append
+                    uncPath = Path.Combine(saveRoot, authSub, fileName);
+                }
+                else
+                {
+                    // SaveFolder is local — build UNC from sanitized ServerIp
+                    string ip = CleanIp(SettingsManager.Current.ServerIp);
+                    string shared = !string.IsNullOrEmpty(saveRoot)
+                                    ? new DirectoryInfo(saveRoot).Name
+                                    : "SharedFolder";
+                    uncPath = $@"\\{ip}\{shared}\{authSub}\{fileName}";
+                }
+
+                Console.WriteLine("authPhoto uncPath = " + uncPath);
 
                 string connStr = SettingsManager.Current.GetConnectionString();
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
                     string query = @"UPDATE user_credential 
-                                     SET authentication_photo = @path 
-                                     WHERE username = @username";
+                             SET authentication_photo = @path 
+                             WHERE username = @username";
                     using (var cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@path", uncPath);
@@ -219,13 +237,32 @@ namespace WinFormsApp1
             }
         }
 
+        // Strip "\\", trailing \, and junk like "(null)" from the ServerIp string
+        private string CleanIp(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return "localhost";
+
+            string s = raw.Trim()
+                          .Replace("(null)", "")
+                          .Replace(" ", "")
+                          .TrimStart('\\')
+                          .TrimEnd('\\');
+
+            // If it's like "192.168.100.4\SharedFolder" — take only the IP part
+            int slash = s.IndexOf('\\');
+            if (slash > 0) s = s.Substring(0, slash);
+
+            return s;
+        }
+
         private async Task<bool> SendAuthenticationPhotoToAdmin(byte[] imageBytes, string fileName)
         {
             try
             {
-                // Use the SAME ServerIp and FileTransferPort
-                string adminIp = SettingsManager.Current.ServerIp;
+                string adminIp = CleanIp(SettingsManager.Current.ServerIp);
                 int adminPort = SettingsManager.Current.FileTransferPort;
+
+                Console.WriteLine($"[AUTH SEND] {adminIp}:{adminPort}, file={fileName}, bytes={imageBytes.Length}");
 
                 using (TcpClient client = new TcpClient())
                 {
@@ -250,7 +287,7 @@ namespace WinFormsApp1
                     using (NetworkStream stream = client.GetStream())
                     using (BinaryWriter writer = new BinaryWriter(stream))
                     {
-                        writer.Write(fileName);
+                        writer.Write(fileName);          // <- admin treats 1st string as filename
                         writer.Write(imageBytes.Length);
                         writer.Write(imageBytes);
                         writer.Flush();
