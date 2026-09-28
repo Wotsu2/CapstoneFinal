@@ -140,7 +140,7 @@ namespace WinFormsApp1
                 {
                     string firstToken = reader.ReadString();
 
-                    // ---------- ACTIVITY FILE (professor → admin) ----------
+                    // ---------- ACTIVITY FILE ----------
                     // [ACTIVITY_FILE][professorFolder][section][fileName][length][bytes]
                     if (firstToken == "ACTIVITY_FILE")
                     {
@@ -164,11 +164,11 @@ namespace WinFormsApp1
                         string savePath = Path.Combine(folder, fileName);
                         await File.WriteAllBytesAsync(savePath, bytes);
 
-                        Console.WriteLine("[Admin] Activity file saved → " + savePath);
+                        Console.WriteLine("[Admin] Activity file saved → " + ToUnc(savePath));
                         return;
                     }
 
-                    // ---------- STUDENT SUBMISSION (student → admin) ----------
+                    // ---------- STUDENT SUBMISSION ----------
                     // [STUDENT_SUBMISSION][professorFolder][section][studentName][title][fileName][length][bytes]
                     if (firstToken == "STUDENT_SUBMISSION")
                     {
@@ -193,45 +193,45 @@ namespace WinFormsApp1
                         string folder = Path.Combine(root, professorFolder, section, "Submissions");
                         Directory.CreateDirectory(folder);
 
-                        // Prefix filename with student + activity so duplicates don't collide
                         string finalName = SanitizeFolderName($"{studentName}_{title}_{fileName}");
-                        string savePath = Path.Combine(folder, finalName);
+                        string localPath = Path.Combine(folder, finalName);
 
-                        await File.WriteAllBytesAsync(savePath, bytes);
+                        await File.WriteAllBytesAsync(localPath, bytes);
 
-                        // Tell the student where it went (send back the UNC path)
+                        string uncPath = ToUnc(localPath);
+                        Console.WriteLine("[Admin] Student submission saved → " + localPath);
+                        Console.WriteLine("[Admin] Returning UNC to student → " + uncPath);
+
                         try
                         {
-                            using (var writer = new BinaryWriter(stream))
+                            using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
                             {
-                                writer.Write(savePath);
+                                writer.Write(uncPath);
                                 writer.Flush();
                             }
                         }
-                        catch { /* student may have closed */ }
-
-                        Console.WriteLine("[Admin] Student submission saved → " + savePath);
-
-                        // Also update DB if you want (optional — student also updates DB)
+                        catch { }
                         return;
                     }
 
                     // ---------- AUTH PHOTO ----------
+                    // [fileName][length][bytes]
                     string authFileName = SanitizeFolderName(firstToken);
                     int authLength = reader.ReadInt32();
+
                     if (authLength <= 0 || authLength > 20 * 1024 * 1024) return;
 
                     byte[] authBytes = reader.ReadBytes(authLength);
 
                     string authRoot = SettingsManager.Current.SaveFolder;
-                    string authSub = SettingsManager.Current.AuthPhotoSubfolder;
+                    string authSub = SettingsManager.Current.AuthPhotoSubfolder ?? "";
                     string authFolder = Path.Combine(authRoot, authSub);
                     Directory.CreateDirectory(authFolder);
 
                     string authPath = Path.Combine(authFolder, authFileName);
                     await File.WriteAllBytesAsync(authPath, authBytes);
 
-                    Console.WriteLine("[Admin] Auth photo saved → " + authPath);
+                    Console.WriteLine("[Admin] Auth photo saved → " + ToUnc(authPath));
                 }
             }
             catch (Exception ex)
@@ -239,7 +239,64 @@ namespace WinFormsApp1
                 Console.WriteLine("HandleIncomingFile error: " + ex.Message);
             }
         }
+        // Convert  C:\SharedFolder\sub\file.pdf  →  \\192.168.100.4\SharedFolder\sub\file.pdf
+        // If already UNC, returns unchanged.
+        private string ToUnc(string path)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(path)) return path;
+                if (path.StartsWith(@"\\")) return path;
 
+                string localRoot = SettingsManager.Current.SaveFolder ?? "";
+                string sharedName = new DirectoryInfo(localRoot).Name;      // "SharedFolder"
+                string ip = CleanIp(SettingsManager.Current.ServerIp);
+
+                string relative = path;
+                if (!string.IsNullOrEmpty(localRoot) &&
+                    path.StartsWith(localRoot, StringComparison.OrdinalIgnoreCase))
+                {
+                    relative = path.Substring(localRoot.Length).TrimStart('\\', '/');
+                }
+
+                return $@"\\{ip}\{sharedName}\{relative}";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("ToUnc error: " + ex.Message);
+                return path;
+            }
+        }
+
+        private string CleanIp(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return GetLocalLanIp();
+
+            string s = raw.Trim()
+                          .Replace("(null)", "")
+                          .TrimStart('\\')
+                          .TrimEnd('\\');
+
+            int slash = s.IndexOf('\\');
+            if (slash > 0) s = s.Substring(0, slash);
+
+            return string.IsNullOrWhiteSpace(s) ? GetLocalLanIp() : s;
+        }
+
+        private string GetLocalLanIp()
+        {
+            try
+            {
+                var host = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName());
+                foreach (var addr in host.AddressList)
+                {
+                    if (addr.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                        return addr.ToString();
+                }
+            }
+            catch { }
+            return "127.0.0.1";
+        }
         private string SanitizeFolderName(string name)
         {
             if (string.IsNullOrWhiteSpace(name)) return "Unknown";
