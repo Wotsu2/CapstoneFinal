@@ -64,6 +64,7 @@ namespace WinFormsApp1
         private string SaveAuthenticationPhoto;
         private string ProfessorName;
 
+
         private Image cachedProfileImage;
         private bool profileImageLoaded = false;
 
@@ -1118,12 +1119,18 @@ namespace WinFormsApp1
             string uncPath = null;
             string section = SanitizeFolderName(cmbActivitySection.Text.Trim());
 
-            // DEBUG — check these values
-            Console.WriteLine("=== POST ACTIVITY ===");
-            Console.WriteLine("ServerIp   = " + SettingsManager.Current.ServerIp);
-            Console.WriteLine("SaveFolder = " + SettingsManager.Current.SaveFolder);
+            // Make sure we have the professor folder name
+            if (string.IsNullOrEmpty(ProfessorName))
+                NameGet();
 
-            // ---------- 1) Read the file (NO local save) ----------
+            string professorFolder = SanitizeFolderName(ProfessorName);
+
+            Console.WriteLine("=== POST ACTIVITY ===");
+            Console.WriteLine("ServerIp        = " + SettingsManager.Current.ServerIp);
+            Console.WriteLine("SaveFolder      = " + SettingsManager.Current.SaveFolder);
+            Console.WriteLine("ProfessorFolder = " + professorFolder);
+
+            // ---------- 1) Read the file ----------
             if (!string.IsNullOrEmpty(selectedFilePath) && File.Exists(selectedFilePath))
             {
                 try
@@ -1141,30 +1148,28 @@ namespace WinFormsApp1
             // ---------- 2) Send bytes to the SERVER ----------
             if (fileBytes != null && !string.IsNullOrEmpty(pdfName))
             {
-                bool sent = await SendActivityFileToServer(section, pdfName, fileBytes);
+                bool sent = await SendActivityFileToServer(professorFolder, section, pdfName, fileBytes);
                 if (!sent)
                 {
                     MessageBox.Show("Failed to send activity file to server. Activity not posted.");
                     return;
                 }
 
-                // ---------- 3) Build UNC path (NO doubling) ----------
+                // ---------- 3) Build UNC path the admin just wrote to ----------
                 string saveRoot = SettingsManager.Current.SaveFolder;
 
                 if (saveRoot.StartsWith(@"\\"))
                 {
-                    // SaveFolder is already a UNC root like \\192.168.100.4\SharedFolder
-                    uncPath = Path.Combine(saveRoot, section, "ActivityFiles", pdfName);
+                    uncPath = Path.Combine(saveRoot, professorFolder, section, "ActivityFiles", pdfName);
                 }
                 else
                 {
-                    // SaveFolder is local (C:\...), build a UNC from ServerIp + folder name
                     string shared = new DirectoryInfo(saveRoot).Name;
                     string ip = SettingsManager.Current.ServerIp.TrimStart('\\').TrimEnd('\\');
-                    uncPath = $@"\\{ip}\{shared}\{section}\ActivityFiles\{pdfName}";
+                    uncPath = $@"\\{ip}\{shared}\{professorFolder}\{section}\ActivityFiles\{pdfName}";
                 }
 
-                Console.WriteLine("uncPath = " + uncPath);
+                Console.WriteLine("uncPath         = " + uncPath);
             }
 
             // ---------- 4) Insert into DB ----------
@@ -1214,14 +1219,15 @@ namespace WinFormsApp1
             }
         }
 
-        private async Task<bool> SendActivityFileToServer(string section, string fileName, byte[] fileBytes)
+        private async Task<bool> SendActivityFileToServer(
+    string professorFolder, string section, string fileName, byte[] fileBytes)
         {
             try
             {
                 string serverIp = SettingsManager.Current.ServerIp.TrimStart('\\').TrimEnd('\\');
                 int serverPort = SettingsManager.Current.FileTransferPort;
 
-                Console.WriteLine($"[SEND] Connecting to {serverIp}:{serverPort}, file={fileName}, bytes={fileBytes.Length}");
+                Console.WriteLine($"[SEND] {serverIp}:{serverPort} prof={professorFolder} section={section} file={fileName}");
 
                 using (TcpClient client = new TcpClient())
                 {
@@ -1245,8 +1251,9 @@ namespace WinFormsApp1
                     using (NetworkStream stream = client.GetStream())
                     using (BinaryWriter writer = new BinaryWriter(stream))
                     {
-                        writer.Write("ACTIVITY_FILE");   // message type tag
-                        writer.Write(section);           // subfolder
+                        writer.Write("ACTIVITY_FILE");
+                        writer.Write(professorFolder);   // <-- professor folder name
+                        writer.Write(section);
                         writer.Write(fileName);
                         writer.Write(fileBytes.Length);
                         writer.Write(fileBytes);

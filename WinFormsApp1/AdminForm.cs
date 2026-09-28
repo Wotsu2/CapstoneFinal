@@ -142,9 +142,10 @@ namespace WinFormsApp1
                     string firstToken = reader.ReadString();
 
                     // ---------- ACTIVITY FILE ----------
-                    // Format: [ACTIVITY_FILE][section][fileName][length][bytes]
+                    // Format: [ACTIVITY_FILE][professorFolder][section][fileName][length][bytes]
                     if (firstToken == "ACTIVITY_FILE")
                     {
+                        string professorFolder = reader.ReadString();
                         string section = reader.ReadString();
                         string fileName = reader.ReadString();
                         int length = reader.ReadInt32();
@@ -157,11 +158,13 @@ namespace WinFormsApp1
 
                         byte[] bytes = reader.ReadBytes(length);
 
+                        professorFolder = SanitizeFolderName(professorFolder);
                         section = SanitizeFolderName(section);
                         fileName = SanitizeFolderName(fileName);
 
+                        // Save inside:  SaveFolder\ProfessorName\Section\ActivityFiles\
                         string root = SettingsManager.Current.SaveFolder;
-                        string folder = Path.Combine(root, section, "ActivityFiles");
+                        string folder = Path.Combine(root, professorFolder, section, "ActivityFiles");
 
                         if (!Directory.Exists(folder))
                             Directory.CreateDirectory(folder);
