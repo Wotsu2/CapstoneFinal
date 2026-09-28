@@ -1115,8 +1115,13 @@ namespace WinFormsApp1
 
             string pdfName = null;
             byte[] fileBytes = null;
-            string uncPath = null;                    // <-- path stored in DB (shared)
+            string uncPath = null;
             string section = SanitizeFolderName(cmbActivitySection.Text.Trim());
+
+            // DEBUG — check these values
+            Console.WriteLine("=== POST ACTIVITY ===");
+            Console.WriteLine("ServerIp   = " + SettingsManager.Current.ServerIp);
+            Console.WriteLine("SaveFolder = " + SettingsManager.Current.SaveFolder);
 
             // ---------- 1) Read the file (NO local save) ----------
             if (!string.IsNullOrEmpty(selectedFilePath) && File.Exists(selectedFilePath))
@@ -1133,7 +1138,7 @@ namespace WinFormsApp1
                 }
             }
 
-            // ---------- 2) Send bytes to the SERVER (server writes to shared folder) ----------
+            // ---------- 2) Send bytes to the SERVER ----------
             if (fileBytes != null && !string.IsNullOrEmpty(pdfName))
             {
                 bool sent = await SendActivityFileToServer(section, pdfName, fileBytes);
@@ -1143,12 +1148,26 @@ namespace WinFormsApp1
                     return;
                 }
 
-                // Build the UNC path the SERVER wrote to (so all PCs can read it)
-                string sharedFolderName = new DirectoryInfo(SettingsManager.Current.SaveFolder).Name;
-                uncPath = $@"\\{SettingsManager.Current.ServerIp}\{sharedFolderName}\{section}\ActivityFiles\{pdfName}";
+                // ---------- 3) Build UNC path (NO doubling) ----------
+                string saveRoot = SettingsManager.Current.SaveFolder;
+
+                if (saveRoot.StartsWith(@"\\"))
+                {
+                    // SaveFolder is already a UNC root like \\192.168.100.4\SharedFolder
+                    uncPath = Path.Combine(saveRoot, section, "ActivityFiles", pdfName);
+                }
+                else
+                {
+                    // SaveFolder is local (C:\...), build a UNC from ServerIp + folder name
+                    string shared = new DirectoryInfo(saveRoot).Name;
+                    string ip = SettingsManager.Current.ServerIp.TrimStart('\\').TrimEnd('\\');
+                    uncPath = $@"\\{ip}\{shared}\{section}\ActivityFiles\{pdfName}";
+                }
+
+                Console.WriteLine("uncPath = " + uncPath);
             }
 
-            // ---------- 3) Insert into DB ----------
+            // ---------- 4) Insert into DB ----------
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -1199,8 +1218,10 @@ namespace WinFormsApp1
         {
             try
             {
-                string serverIp = SettingsManager.Current.ServerIp;
+                string serverIp = SettingsManager.Current.ServerIp.TrimStart('\\').TrimEnd('\\');
                 int serverPort = SettingsManager.Current.FileTransferPort;
+
+                Console.WriteLine($"[SEND] Connecting to {serverIp}:{serverPort}, file={fileName}, bytes={fileBytes.Length}");
 
                 using (TcpClient client = new TcpClient())
                 {
@@ -1224,7 +1245,7 @@ namespace WinFormsApp1
                     using (NetworkStream stream = client.GetStream())
                     using (BinaryWriter writer = new BinaryWriter(stream))
                     {
-                        writer.Write("ACTIVITY_FILE");   // message type
+                        writer.Write("ACTIVITY_FILE");   // message type tag
                         writer.Write(section);           // subfolder
                         writer.Write(fileName);
                         writer.Write(fileBytes.Length);
@@ -1237,6 +1258,7 @@ namespace WinFormsApp1
             catch (Exception ex)
             {
                 Console.WriteLine("SendActivityFileToServer error: " + ex.Message);
+                MessageBox.Show("Send error: " + ex.Message);
                 return false;
             }
         }

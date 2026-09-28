@@ -55,7 +55,7 @@ namespace WinFormsApp1
         private string selectedWorkstationId = "";
         private volatile bool isRunning = false;
 
-        // AUTH PHOTO LISTENER
+        // AUTH PHOTO / FILE TRANSFER LISTENER
         private TcpListener authPhotoListener;
         private volatile bool adminIsRunning = true;
 
@@ -93,12 +93,10 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        //  AUTH PHOTO RECEIVER
+        //  FILE RECEIVER  (handles BOTH auth photos and activity files)
         // =========================================================
-        // Replace the existing StartAuthPhotoListener / HandleAuthPhotoReceive
         private async Task StartAuthPhotoListener()
         {
-            // Same port as file transfer — no new port
             int port = SettingsManager.Current.FileTransferPort;
 
             try
@@ -107,12 +105,12 @@ namespace WinFormsApp1
                 authPhotoListener.Server.SetSocketOption(
                     SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 authPhotoListener.Start();
-                Console.WriteLine($"[Admin] AuthPhoto listener started on {port} (same as FileTransfer)");
+                Console.WriteLine($"[Admin] FileTransfer listener started on {port}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine("[Admin] AuthPhoto bind FAILED: " + ex.Message);
-                MessageBox.Show("Failed to start auth photo listener: " + ex.Message);
+                Console.WriteLine("[Admin] FileTransfer bind FAILED: " + ex.Message);
+                MessageBox.Show("Failed to start file listener: " + ex.Message);
                 return;
             }
 
@@ -121,18 +119,18 @@ namespace WinFormsApp1
                 try
                 {
                     TcpClient client = await authPhotoListener.AcceptTcpClientAsync();
-                    _ = HandleAuthPhotoReceive(client);
+                    _ = HandleIncomingFile(client);
                 }
                 catch (ObjectDisposedException) { break; }
                 catch (Exception ex)
                 {
                     if (!adminIsRunning) break;
-                    Console.WriteLine("[Admin] AuthPhoto accept error: " + ex.Message);
+                    Console.WriteLine("[Admin] FileTransfer accept error: " + ex.Message);
                 }
             }
         }
 
-        private async Task HandleAuthPhotoReceive(TcpClient client)
+        private async Task HandleIncomingFile(TcpClient client)
         {
             try
             {
@@ -140,38 +138,84 @@ namespace WinFormsApp1
                 using (NetworkStream stream = client.GetStream())
                 using (BinaryReader reader = new BinaryReader(stream))
                 {
-                    string fileName = reader.ReadString();
-                    int length = reader.ReadInt32();
+                    // First token tells us the message type
+                    string firstToken = reader.ReadString();
 
-                    if (length <= 0 || length > 20 * 1024 * 1024)
+                    // ---------- ACTIVITY FILE ----------
+                    // Format: [ACTIVITY_FILE][section][fileName][length][bytes]
+                    if (firstToken == "ACTIVITY_FILE")
                     {
-                        Console.WriteLine("[Admin] Invalid auth photo length: " + length);
+                        string section = reader.ReadString();
+                        string fileName = reader.ReadString();
+                        int length = reader.ReadInt32();
+
+                        if (length <= 0 || length > 200 * 1024 * 1024)
+                        {
+                            Console.WriteLine("[Admin] Invalid activity file length: " + length);
+                            return;
+                        }
+
+                        byte[] bytes = reader.ReadBytes(length);
+
+                        section = SanitizeFolderName(section);
+                        fileName = SanitizeFolderName(fileName);
+
+                        string root = SettingsManager.Current.SaveFolder;
+                        string folder = Path.Combine(root, section, "ActivityFiles");
+
+                        if (!Directory.Exists(folder))
+                            Directory.CreateDirectory(folder);
+
+                        string savePath = Path.Combine(folder, fileName);
+                        await File.WriteAllBytesAsync(savePath, bytes);
+
+                        Console.WriteLine("[Admin] Activity file saved → " + savePath);
                         return;
                     }
 
-                    byte[] bytes = reader.ReadBytes(length);
+                    // ---------- AUTH PHOTO ----------
+                    // Format: [fileName][length][bytes]
+                    string authFileName = SanitizeFolderName(firstToken);
+                    int authLength = reader.ReadInt32();
 
-                    foreach (char c in Path.GetInvalidFileNameChars())
-                        fileName = fileName.Replace(c, '_');
+                    if (authLength <= 0 || authLength > 20 * 1024 * 1024)
+                    {
+                        Console.WriteLine("[Admin] Invalid auth photo length: " + authLength);
+                        return;
+                    }
 
-                    // Root = existing SaveFolder, subfolder = AuthenticationPhotos
-                    string root = SettingsManager.Current.SaveFolder;
-                    string subfolder = SettingsManager.Current.AuthPhotoSubfolder;
+                    byte[] authBytes = reader.ReadBytes(authLength);
 
-                    string folder = Path.Combine(root, subfolder);
-                    if (!Directory.Exists(folder))
-                        Directory.CreateDirectory(folder);
+                    string authRoot = SettingsManager.Current.SaveFolder;
+                    string authSub = SettingsManager.Current.AuthPhotoSubfolder;
+                    string authFolder = Path.Combine(authRoot, authSub);
 
-                    string savePath = Path.Combine(folder, fileName);
-                    await File.WriteAllBytesAsync(savePath, bytes);
+                    if (!Directory.Exists(authFolder))
+                        Directory.CreateDirectory(authFolder);
 
-                    Console.WriteLine("[Admin] Auth photo saved → " + savePath);
+                    string authPath = Path.Combine(authFolder, authFileName);
+                    await File.WriteAllBytesAsync(authPath, authBytes);
+
+                    Console.WriteLine("[Admin] Auth photo saved → " + authPath);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("HandleAuthPhotoReceive error: " + ex.Message);
+                Console.WriteLine("HandleIncomingFile error: " + ex.Message);
             }
+        }
+
+        private string SanitizeFolderName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "Unknown";
+
+            foreach (char c in Path.GetInvalidFileNameChars())
+                name = name.Replace(c, '_');
+
+            name = name.Trim().TrimEnd('.');
+            if (string.IsNullOrWhiteSpace(name)) return "Unknown";
+
+            return name;
         }
 
         // =========================================================
@@ -1342,19 +1386,6 @@ namespace WinFormsApp1
             {
                 MessageBox.Show("Error: " + ex.Message);
             }
-        }
-
-        private string SanitizeFolderName(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name)) return "Unknown";
-
-            foreach (char c in Path.GetInvalidFileNameChars())
-                name = name.Replace(c, '_');
-
-            name = name.Trim().TrimEnd('.');
-            if (string.IsNullOrWhiteSpace(name)) return "Unknown";
-
-            return name;
         }
 
         private void ClearText()
