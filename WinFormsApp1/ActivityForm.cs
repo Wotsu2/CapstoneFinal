@@ -26,6 +26,7 @@ namespace WinFormsApp1
         private string PathAnswer;
         private string studentname;
         private string activitySubject;
+        public event Action ActivitySubmitted;
 
         // Set this when the form opens — the professor's folder name
         private string professorFolder;
@@ -161,7 +162,6 @@ namespace WinFormsApp1
                 return;
             }
 
-            // Make sure we know the professor folder
             if (string.IsNullOrEmpty(professorFolder))
                 professorFolder = GetProfessorFolder(profId);
 
@@ -183,10 +183,12 @@ namespace WinFormsApp1
                 return;
             }
 
-            // Store the UNC path returned by the server
             SaveSubmissionPath(savedPath);
 
             MessageBox.Show("File Submitted Successfully");
+
+            ActivitySubmitted?.Invoke();       // <-- notify parent
+
             PathAnswer = "";
             btnUploadActivity.Text = "Upload File";
         }

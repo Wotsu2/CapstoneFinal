@@ -61,6 +61,7 @@ namespace WinFormsApp1
         private List<Image> slideshowImages = new List<Image>();
         private int slideshowIndex = 0;
         private FileSystemWatcher bannersWatcher;
+        private ToolTip navToolTip;
 
         public StudentForm(int UserId, string Section, string Username)
         {
@@ -70,7 +71,7 @@ namespace WinFormsApp1
             StudentUsername = Username;
 
             initializeShowReminderForm();
-
+            InitializeNavTooltips();
             this.Shown += StudentForm_Shown;
         }
 
@@ -304,6 +305,7 @@ namespace WinFormsApp1
             btnSubject.Checked = false;
 
             try { LoadAssessments(); } catch { }
+            InitializeCreateButtonActivity();
         }
 
         private void btnActivities_Click(object sender, EventArgs e)
@@ -671,24 +673,33 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
-                    Console.WriteLine("[Activities] Loading for section = '" + StudentSection + "'");
+                    Console.WriteLine("[Activities] Loading for user = " + userId + ", section = '" + StudentSection + "'");
 
-                    string query;
-                    if (string.IsNullOrEmpty(StudentSection))
-                    {
-                        query = @"SELECT activity_id, title, start_time, due_date, activity_subject, activity_status 
-                          FROM professor_activity";
-                    }
-                    else
-                    {
-                        query = @"SELECT activity_id, title, start_time, due_date, activity_subject, activity_status 
-                          FROM professor_activity WHERE section = @section";
-                    }
+                    string query = @"
+                SELECT pa.activity_id,
+                       pa.title,
+                       pa.start_time,
+                       pa.due_date,
+                       pa.activity_subject,
+                       pa.activity_status,
+                       pa.section
+                FROM professor_activity pa
+                INNER JOIN student_class sc
+                    ON  sc.user_id    = @user_id
+                    AND LOWER(TRIM(sc.section))    = LOWER(TRIM(pa.section))
+                    AND LOWER(TRIM(sc.class_name)) = LOWER(TRIM(pa.activity_subject))
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM submitted_activity sa
+                    WHERE sa.user_id = @user_id
+                      AND sa.prof_id = pa.professor_id
+                      AND sa.title   = pa.title
+                      AND sa.section = pa.section
+                )
+                ORDER BY pa.due_date ASC";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
-                        if (!string.IsNullOrEmpty(StudentSection))
-                            cmd.Parameters.AddWithValue("@section", StudentSection);
+                        cmd.Parameters.AddWithValue("@user_id", userId);
 
                         int count = 0;
 
@@ -716,6 +727,7 @@ namespace WinFormsApp1
                                 card.BorderThickness = 2;
                                 card.BorderRadius = 14;
                                 card.Cursor = Cursors.Hand;
+                                card.Tag = activityId;                       // <-- useful for debugging
 
                                 int capturedId = activityId;
                                 card.Click += (s, e) => InitializeHomeActivityButton(capturedId);
@@ -795,7 +807,7 @@ namespace WinFormsApp1
                             }
                         }
 
-                        Console.WriteLine($"[Activities] Loaded {count} activities.");
+                        Console.WriteLine($"[Activities] Loaded {count} pending activities.");
                     }
                 }
             }
@@ -831,11 +843,17 @@ namespace WinFormsApp1
                                 string description = reader.GetString("description");
 
                                 string tempPdfPath = FetchActivityPdf(ActivityId, profId, title, StudentSection, activity_subject);
+
                                 ActivityForm activityForm = new ActivityForm(
                                     profId, userId, studentname, title, due_date, description,
                                     StudentSection, activity_subject, activity_status, tempPdfPath);
 
-                                activityForm.Show();
+                                activityForm.ActivitySubmitted += () => RefreshPendingActivities();
+
+                                activityForm.ShowDialog(this);
+
+                                // Always refresh after the dialog closes — cheap and safe
+                                RefreshPendingActivities();
                             }
                         }
                     }
@@ -844,6 +862,20 @@ namespace WinFormsApp1
             catch (Exception ex)
             {
                 Console.WriteLine("InitializeHomeActivityButton error: " + ex.Message);
+            }
+        }
+
+        private void RefreshPendingActivities()
+        {
+            try
+            {
+                flpPendingActivities.Controls.Clear();
+                InitializeCreateButtonActivity();
+                InitializeDataGridViewActivities();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("RefreshPendingActivities error: " + ex.Message);
             }
         }
 
@@ -861,18 +893,60 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
-                    string query = "SELECT activity_id, title, start_time, due_date, activity_subject, activity_status, description, professor_id " +
-                                   "FROM professor_activity WHERE section = @section";
+                    string query = @"
+                SELECT pa.activity_id, pa.title, pa.start_time, pa.due_date,
+                       pa.activity_subject, pa.activity_status,
+                       pa.description, pa.professor_id
+                FROM professor_activity pa
+                INNER JOIN student_class sc
+                    ON  sc.user_id    = @user_id
+                    AND LOWER(TRIM(sc.section))    = LOWER(TRIM(pa.section))
+                    AND LOWER(TRIM(sc.class_name)) = LOWER(TRIM(pa.activity_subject))
+                WHERE 1 = 1";
 
-                    if (!string.IsNullOrEmpty(selectedActivitiesCategory))
-                        query += " AND activity_status = @activity_status";
+                    // Pending / no filter → hide already-submitted
+                    if (string.IsNullOrEmpty(selectedActivitiesCategory) ||
+                        selectedActivitiesCategory == "Pending")
+                    {
+                        query += @"
+                    AND NOT EXISTS (
+                        SELECT 1 FROM submitted_activity sa
+                        WHERE sa.user_id = @user_id
+                          AND sa.prof_id = pa.professor_id
+                          AND sa.title   = pa.title
+                          AND sa.section = pa.section
+                    )";
+                    }
+                    else if (selectedActivitiesCategory == "Submitted")
+                    {
+                        query += @"
+                    AND EXISTS (
+                        SELECT 1 FROM submitted_activity sa
+                        WHERE sa.user_id = @user_id
+                          AND sa.prof_id = pa.professor_id
+                          AND sa.title   = pa.title
+                          AND sa.section = pa.section
+                    )";
+                    }
+                    else if (selectedActivitiesCategory == "Incomplete")
+                    {
+                        // Anything past due and NOT submitted
+                        query += @"
+                    AND pa.due_date < NOW()
+                    AND NOT EXISTS (
+                        SELECT 1 FROM submitted_activity sa
+                        WHERE sa.user_id = @user_id
+                          AND sa.prof_id = pa.professor_id
+                          AND sa.title   = pa.title
+                          AND sa.section = pa.section
+                    )";
+                    }
+
+                    query += " ORDER BY pa.due_date ASC";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@section", StudentSection);
-
-                        if (!string.IsNullOrEmpty(selectedActivitiesCategory))
-                            cmd.Parameters.AddWithValue("@activity_status", selectedActivitiesCategory);
+                        cmd.Parameters.AddWithValue("@user_id", userId);
 
                         MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
                         DataTable dt = new DataTable();
@@ -912,11 +986,16 @@ namespace WinFormsApp1
             string className = GetSafeValue(row, "activity_subject");
 
             string tempPdfPath = FetchActivityPdf(int.Parse(activityId), int.Parse(profId), Title, StudentSection, className);
+
             ActivityForm activityForm = new ActivityForm(
                 int.Parse(profId), userId, studentname, Title, DueDate, Description,
-                StudentSection, activitySubject, ActivityStatus, tempPdfPath);
+                StudentSection, className, ActivityStatus, tempPdfPath);
 
-            activityForm.Show();
+            activityForm.ActivitySubmitted += () => RefreshPendingActivities();
+
+            activityForm.ShowDialog(this);
+
+            RefreshPendingActivities();
         }
 
         private string FetchActivityPdf(int activityId, int profId, string title, string section, string className)
@@ -2338,6 +2417,28 @@ namespace WinFormsApp1
             slideshowImages.Clear();
 
             base.OnFormClosing(e);
+        }
+
+
+        private void InitializeNavTooltips()
+        {
+            navToolTip = new ToolTip
+            {
+                AutoPopDelay = 5000,
+                InitialDelay = 350,
+                ReshowDelay = 100,
+                ShowAlways = true,
+                IsBalloon = false,
+                UseFading = true,
+                UseAnimation = true
+            };
+
+            navToolTip.SetToolTip(btnHome, "Home");
+            navToolTip.SetToolTip(btnActivities, "Activities");
+            navToolTip.SetToolTip(btnSubject, "Subjects");
+            navToolTip.SetToolTip(btnGrades, "Grades");
+            navToolTip.SetToolTip(btnQuizExam, "Quiz / Exam");
+            navToolTip.SetToolTip(btnAccount, "Settings");
         }
     }
 }

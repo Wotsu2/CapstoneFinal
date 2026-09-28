@@ -39,6 +39,7 @@ namespace WinFormsApp1
         private Dictionary<string, PictureBox> screenViewers = new Dictionary<string, PictureBox>();
         private Dictionary<string, TcpClient> broadcastClients = new Dictionary<string, TcpClient>();
         private Dictionary<string, DateTime> lastThumbnailUpdate = new Dictionary<string, DateTime>();
+        private ToolTip navToolTip;
 
         private readonly object screenViewersLock = new object();
 
@@ -110,6 +111,8 @@ namespace WinFormsApp1
                 LoadServerFolder(saveFolder);
 
             NameGet();
+            InitializeComboBoxes();
+            InitializeNavTooltips();
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
@@ -208,18 +211,16 @@ namespace WinFormsApp1
         // HOME PAGE
         // =========================================================
         private void linkLblWorkstations_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            pnlWorkstation.BringToFront();
-        }
+            => ShowPage(pnlWorkstation, "Workstations", btnWorkstation);
 
         private void btnHomeCreateSubject_Click(object sender, EventArgs e)
-        {
-            pnlSubject.BringToFront();
-        }
+            => ShowPage(pnlSubject, "Subjects", btnSubject);
 
         private void btnHomeCreateActivity_Click(object sender, EventArgs e)
         {
-            pnlActivity.BringToFront();
+            ShowPage(pnlActivity, "Activities", btnActivities);
+            ActivitySectionSubject();
+            RecentActivity();
         }
 
         // =========================================================
@@ -2972,5 +2973,69 @@ namespace WinFormsApp1
                     "Delete Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+        private void InitializeComboBoxes()
+        {
+            // Section filter (My Students)
+            ConfigureCombo(cmbSection, "Select Section", "Section");
+
+            // Year filter (My Students)
+            ConfigureCombo(cmbYear, "Select Year", "Year");
+
+            // Semester filter (My Students)
+            ConfigureCombo(cmbSemester, "Select Semester", "Semester");
+
+            // Attendance section
+            ConfigureCombo(guna2ComboBox11, "Section", "Section");
+
+            // Class day
+            ConfigureCombo(cmbClassDate, "Select Day", "Day");
+
+            // Activity section/subject
+            ConfigureCombo(cmbActivityTitle, "Select Title", "Title");
+            ConfigureCombo(cmbActivitySection, "Select Section", "Section");
+            ConfigureCombo(cmbActivitySubject, "Select Subject", "Subject");
+
+        }
+
+        private void ConfigureCombo(Guna.UI2.WinForms.Guna2ComboBox cmb, string placeholder, string fieldName)
+        {
+            if (cmb == null) return;
+
+            cmb.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmb.Tag = fieldName;
+
+            if (!cmb.Items.Contains(placeholder))
+                cmb.Items.Insert(0, placeholder);
+
+            cmb.SelectedIndex = 0;
+        }
+        private void InitializeNavTooltips()
+        {
+            navToolTip = new ToolTip();
+
+            // Look & feel
+            navToolTip.AutoPopDelay = 5000;      // how long it stays visible (ms)
+            navToolTip.InitialDelay = 350;       // delay before it appears (ms)
+            navToolTip.ReshowDelay = 100;       // delay before it reappears
+            navToolTip.ShowAlways = true;      // show even if form is inactive
+            navToolTip.IsBalloon = false;     // true = speech-bubble style
+            navToolTip.ToolTipTitle = "";        // optional bold header
+            navToolTip.UseFading = true;
+            navToolTip.UseAnimation = true;
+
+            // Attach names to the nav buttons
+            navToolTip.SetToolTip(btnHome, "Home");
+            navToolTip.SetToolTip(btnWorkstation, "Workstations");
+            navToolTip.SetToolTip(btnStudent, "My Students");
+            navToolTip.SetToolTip(btnActivities, "Activities");
+            navToolTip.SetToolTip(btnGrades, "Activities Grades");
+            navToolTip.SetToolTip(btnAttendance, "Attendance");
+            navToolTip.SetToolTip(btnSubject, "Subjects");
+            navToolTip.SetToolTip(btnFile, "Files");
+            navToolTip.SetToolTip(btnAccount, "Settings");
+            navToolTip.SetToolTip(btnQuizExam, "Quiz Exam Grades");
+        }
+
     }
 }

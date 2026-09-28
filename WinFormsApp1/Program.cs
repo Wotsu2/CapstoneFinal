@@ -21,22 +21,22 @@ namespace WinFormsApp1
             splash.Show();
             splash.Refresh();
 
-            // Give the user ~2.5 seconds to see the splash
             DateTime start = DateTime.Now;
             while ((DateTime.Now - start).TotalMilliseconds < 2500)
             {
-                Application.DoEvents();      // keep the splash responsive
+                Application.DoEvents();
                 System.Threading.Thread.Sleep(20);
             }
 
-            // Close splash
             splash.Close();
             splash.Dispose();
 
-            // ---- Then show Login ----
-            var login = new Login();
-            var context = new ApplicationContext(login);
+            // ---- Then show Login once ----
+            var context = new ApplicationContext();
             Application.Run(context);
+
+            var login = new Login();
+            login.Show();
         }
     }
 }

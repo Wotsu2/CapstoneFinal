@@ -33,10 +33,10 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges20 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges1 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges2 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges3 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges4 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges5 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges6 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges3 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges4 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges7 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges8 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges9 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -358,9 +358,6 @@
             label38 = new Label();
             guna2Panel26 = new Guna.UI2.WinForms.Guna2Panel();
             label37 = new Label();
-            lblSection = new Label();
-            lblYear = new Label();
-            lblSemester = new Label();
             btnSearch = new Guna.UI2.WinForms.Guna2Button();
             btnArchive = new Guna.UI2.WinForms.Guna2Button();
             cmbSection = new Guna.UI2.WinForms.Guna2ComboBox();
@@ -373,16 +370,13 @@
             label25 = new Label();
             txtActivityScore = new Guna.UI2.WinForms.Guna2TextBox();
             dtpActivityDeadline = new Guna.UI2.WinForms.Guna2DateTimePicker();
-            lblActivitySection = new Label();
             cmbActivitySection = new Guna.UI2.WinForms.Guna2ComboBox();
             txtActivityPostDetails = new Guna.UI2.WinForms.Guna2TextBox();
             btnActivityUploadFile = new Guna.UI2.WinForms.Guna2Button();
             label22 = new Label();
             label18 = new Label();
             label17 = new Label();
-            lblActivitySubject = new Label();
             cmbActivitySubject = new Guna.UI2.WinForms.Guna2ComboBox();
-            lblActivitytTitle = new Label();
             cmbActivityTitle = new Guna.UI2.WinForms.Guna2ComboBox();
             guna2Panel28 = new Guna.UI2.WinForms.Guna2Panel();
             dgvRecentActivity = new Guna.UI2.WinForms.Guna2DataGridView();
@@ -420,7 +414,6 @@
             btnAddAttendance = new Guna.UI2.WinForms.Guna2Button();
             label46 = new Label();
             btnExportAttendance = new Guna.UI2.WinForms.Guna2Button();
-            label47 = new Label();
             guna2ComboBox11 = new Guna.UI2.WinForms.Guna2ComboBox();
             pnlSubject = new Panel();
             btnShowPnlCreateClass = new Guna.UI2.WinForms.Guna2Button();
@@ -544,8 +537,8 @@
             // 
             guna2Panel1.BackColor = Color.White;
             guna2Panel1.Controls.Add(btnQuizExam);
-            guna2Panel1.Controls.Add(btnFile);
             guna2Panel1.Controls.Add(btnSubject);
+            guna2Panel1.Controls.Add(btnFile);
             guna2Panel1.Controls.Add(btnAttendance);
             guna2Panel1.Controls.Add(btnGrades);
             guna2Panel1.Controls.Add(btnActivities);
@@ -591,7 +584,7 @@
             btnFile.BorderRadius = 10;
             btnFile.CheckedState.FillColor = Color.Black;
             btnFile.CheckedState.Image = Properties.Resources.file_white;
-            btnFile.CustomizableEdges = customizableEdges3;
+            btnFile.CustomizableEdges = customizableEdges5;
             btnFile.DisabledState.BorderColor = Color.DarkGray;
             btnFile.DisabledState.CustomBorderColor = Color.DarkGray;
             btnFile.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -602,7 +595,7 @@
             btnFile.Image = Properties.Resources.File;
             btnFile.Location = new Point(12, 453);
             btnFile.Name = "btnFile";
-            btnFile.ShadowDecoration.CustomizableEdges = customizableEdges4;
+            btnFile.ShadowDecoration.CustomizableEdges = customizableEdges6;
             btnFile.Size = new Size(52, 43);
             btnFile.TabIndex = 9;
             btnFile.Click += btnFile_Click;
@@ -614,7 +607,7 @@
             btnSubject.BorderRadius = 10;
             btnSubject.CheckedState.FillColor = Color.Black;
             btnSubject.CheckedState.Image = Properties.Resources.subject_white;
-            btnSubject.CustomizableEdges = customizableEdges5;
+            btnSubject.CustomizableEdges = customizableEdges3;
             btnSubject.DisabledState.BorderColor = Color.DarkGray;
             btnSubject.DisabledState.CustomBorderColor = Color.DarkGray;
             btnSubject.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -625,7 +618,7 @@
             btnSubject.Image = Properties.Resources.Subject;
             btnSubject.Location = new Point(12, 393);
             btnSubject.Name = "btnSubject";
-            btnSubject.ShadowDecoration.CustomizableEdges = customizableEdges6;
+            btnSubject.ShadowDecoration.CustomizableEdges = customizableEdges4;
             btnSubject.Size = new Size(52, 43);
             btnSubject.TabIndex = 8;
             btnSubject.Click += btnSubject_Click;
@@ -1637,9 +1630,6 @@
             guna2Panel23.Controls.Add(guna2Panel29);
             guna2Panel23.Controls.Add(guna2Panel27);
             guna2Panel23.Controls.Add(guna2Panel26);
-            guna2Panel23.Controls.Add(lblSection);
-            guna2Panel23.Controls.Add(lblYear);
-            guna2Panel23.Controls.Add(lblSemester);
             guna2Panel23.Controls.Add(btnSearch);
             guna2Panel23.Controls.Add(btnArchive);
             guna2Panel23.Controls.Add(cmbSection);
@@ -1864,39 +1854,6 @@
             label37.TabIndex = 179;
             label37.Text = "Student Number";
             // 
-            // lblSection
-            // 
-            lblSection.AutoSize = true;
-            lblSection.BackColor = Color.LightGray;
-            lblSection.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblSection.Location = new Point(678, 80);
-            lblSection.Name = "lblSection";
-            lblSection.Size = new Size(56, 19);
-            lblSection.TabIndex = 30;
-            lblSection.Text = "Section";
-            // 
-            // lblYear
-            // 
-            lblYear.AutoSize = true;
-            lblYear.BackColor = Color.LightGray;
-            lblYear.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblYear.Location = new Point(531, 80);
-            lblYear.Name = "lblYear";
-            lblYear.Size = new Size(35, 19);
-            lblYear.TabIndex = 29;
-            lblYear.Text = "Year";
-            // 
-            // lblSemester
-            // 
-            lblSemester.AutoSize = true;
-            lblSemester.BackColor = Color.LightGray;
-            lblSemester.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblSemester.Location = new Point(356, 80);
-            lblSemester.Name = "lblSemester";
-            lblSemester.Size = new Size(66, 19);
-            lblSemester.TabIndex = 28;
-            lblSemester.Text = "Semester";
-            // 
             // btnSearch
             // 
             btnSearch.Animated = true;
@@ -1948,7 +1905,7 @@
             cmbSection.FillColor = Color.LightGray;
             cmbSection.FocusedColor = Color.FromArgb(94, 148, 255);
             cmbSection.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
-            cmbSection.Font = new Font("Segoe UI", 10F);
+            cmbSection.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold);
             cmbSection.ForeColor = Color.FromArgb(68, 88, 112);
             cmbSection.ItemHeight = 30;
             cmbSection.Items.AddRange(new object[] { "1-1", "1-2", "1-3", "2-1", "2-2", "2-3", "3-1", "3-2", "3-3", "4-1", "4-2", "4-3" });
@@ -1960,7 +1917,6 @@
             cmbSection.ShadowDecoration.Shadow = new Padding(0, 0, 5, 5);
             cmbSection.Size = new Size(140, 36);
             cmbSection.TabIndex = 24;
-            cmbSection.TextOffset = new Point(45, 0);
             cmbSection.SelectedIndexChanged += cmbSection_SelectedIndexChanged;
             // 
             // cmbYear
@@ -1973,7 +1929,7 @@
             cmbYear.FillColor = Color.LightGray;
             cmbYear.FocusedColor = Color.FromArgb(94, 148, 255);
             cmbYear.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
-            cmbYear.Font = new Font("Segoe UI", 10F);
+            cmbYear.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold);
             cmbYear.ForeColor = Color.FromArgb(68, 88, 112);
             cmbYear.ItemHeight = 30;
             cmbYear.Items.AddRange(new object[] { "1st Year", "2nd Year", "3rd Year", "4th Year" });
@@ -1985,7 +1941,6 @@
             cmbYear.ShadowDecoration.Shadow = new Padding(0, 0, 5, 5);
             cmbYear.Size = new Size(140, 36);
             cmbYear.TabIndex = 23;
-            cmbYear.TextOffset = new Point(30, 0);
             cmbYear.SelectedIndexChanged += cmbYear_SelectedIndexChanged;
             // 
             // cmbSemester
@@ -1998,7 +1953,7 @@
             cmbSemester.FillColor = Color.LightGray;
             cmbSemester.FocusedColor = Color.FromArgb(94, 148, 255);
             cmbSemester.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
-            cmbSemester.Font = new Font("Segoe UI", 10F);
+            cmbSemester.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold);
             cmbSemester.ForeColor = Color.FromArgb(68, 88, 112);
             cmbSemester.ItemHeight = 30;
             cmbSemester.Items.AddRange(new object[] { "1st Semester", "2nd Semester" });
@@ -2010,7 +1965,6 @@
             cmbSemester.ShadowDecoration.Shadow = new Padding(0, 0, 5, 5);
             cmbSemester.Size = new Size(140, 36);
             cmbSemester.TabIndex = 22;
-            cmbSemester.TextOffset = new Point(20, 0);
             cmbSemester.SelectedIndexChanged += cmbSemester_SelectedIndexChanged;
             // 
             // txtBoxSearch
@@ -2049,14 +2003,14 @@
             dgvStudents.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
             dgvStudents.CellBorderStyle = DataGridViewCellBorderStyle.None;
             dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = Color.Maroon;
+            dataGridViewCellStyle2.BackColor = Color.White;
             dataGridViewCellStyle2.Font = new Font("Segoe UI", 9F);
             dataGridViewCellStyle2.ForeColor = Color.White;
-            dataGridViewCellStyle2.SelectionBackColor = Color.Maroon;
+            dataGridViewCellStyle2.SelectionBackColor = Color.White;
             dataGridViewCellStyle2.SelectionForeColor = SystemColors.HighlightText;
             dataGridViewCellStyle2.WrapMode = DataGridViewTriState.True;
             dgvStudents.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle2;
-            dgvStudents.ColumnHeadersHeight = 40;
+            dgvStudents.ColumnHeadersHeight = 5;
             dgvStudents.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.EnableResizing;
             dataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle3.BackColor = Color.White;
@@ -2069,6 +2023,7 @@
             dgvStudents.GridColor = Color.FromArgb(231, 229, 255);
             dgvStudents.Location = new Point(21, 167);
             dgvStudents.Name = "dgvStudents";
+            dgvStudents.ReadOnly = true;
             dgvStudents.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
             dataGridViewCellStyle4.Alignment = DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle4.BackColor = Color.White;
@@ -2088,9 +2043,10 @@
             dgvStudents.ThemeStyle.AlternatingRowsStyle.ForeColor = SystemColors.ControlText;
             dgvStudents.ThemeStyle.AlternatingRowsStyle.SelectionBackColor = Color.FromArgb(231, 229, 255);
             dgvStudents.ThemeStyle.AlternatingRowsStyle.SelectionForeColor = Color.FromArgb(71, 69, 94);
-            dgvStudents.ThemeStyle.HeaderStyle.BackColor = Color.Maroon;
+            dgvStudents.ThemeStyle.HeaderStyle.BackColor = Color.White;
             dgvStudents.ThemeStyle.HeaderStyle.Font = new Font("Segoe UI", 9F);
-            dgvStudents.ThemeStyle.HeaderStyle.Height = 40;
+            dgvStudents.ThemeStyle.HeaderStyle.Height = 5;
+            dgvStudents.ThemeStyle.ReadOnly = true;
             dgvStudents.ThemeStyle.RowsStyle.BorderStyle = DataGridViewCellBorderStyle.None;
             dgvStudents.ThemeStyle.RowsStyle.Font = new Font("Segoe UI", 9F);
             dgvStudents.ThemeStyle.RowsStyle.Height = 37;
@@ -2116,16 +2072,13 @@
             pnlActivity.Controls.Add(label25);
             pnlActivity.Controls.Add(txtActivityScore);
             pnlActivity.Controls.Add(dtpActivityDeadline);
-            pnlActivity.Controls.Add(lblActivitySection);
             pnlActivity.Controls.Add(cmbActivitySection);
             pnlActivity.Controls.Add(txtActivityPostDetails);
             pnlActivity.Controls.Add(btnActivityUploadFile);
             pnlActivity.Controls.Add(label22);
             pnlActivity.Controls.Add(label18);
             pnlActivity.Controls.Add(label17);
-            pnlActivity.Controls.Add(lblActivitySubject);
             pnlActivity.Controls.Add(cmbActivitySubject);
-            pnlActivity.Controls.Add(lblActivitytTitle);
             pnlActivity.Controls.Add(cmbActivityTitle);
             pnlActivity.Controls.Add(guna2Panel28);
             pnlActivity.Controls.Add(btnPostActivity);
@@ -2187,17 +2140,6 @@
             dtpActivityDeadline.TextAlign = HorizontalAlignment.Center;
             dtpActivityDeadline.Value = new DateTime(2026, 8, 30, 12, 57, 54, 954);
             // 
-            // lblActivitySection
-            // 
-            lblActivitySection.AutoSize = true;
-            lblActivitySection.BackColor = Color.White;
-            lblActivitySection.Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblActivitySection.Location = new Point(692, 126);
-            lblActivitySection.Name = "lblActivitySection";
-            lblActivitySection.Size = new Size(82, 28);
-            lblActivitySection.TabIndex = 24;
-            lblActivitySection.Text = "Section";
-            // 
             // cmbActivitySection
             // 
             cmbActivitySection.BackColor = Color.Transparent;
@@ -2207,7 +2149,7 @@
             cmbActivitySection.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbActivitySection.FocusedColor = Color.FromArgb(94, 148, 255);
             cmbActivitySection.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
-            cmbActivitySection.Font = new Font("Segoe UI", 10F);
+            cmbActivitySection.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
             cmbActivitySection.ForeColor = Color.FromArgb(68, 88, 112);
             cmbActivitySection.ItemHeight = 70;
             cmbActivitySection.Location = new Point(507, 103);
@@ -2303,17 +2245,6 @@
             label17.TabIndex = 16;
             label17.Text = "Post Details";
             // 
-            // lblActivitySubject
-            // 
-            lblActivitySubject.AutoSize = true;
-            lblActivitySubject.BackColor = Color.White;
-            lblActivitySubject.Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblActivitySubject.Location = new Point(217, 220);
-            lblActivitySubject.Name = "lblActivitySubject";
-            lblActivitySubject.Size = new Size(82, 28);
-            lblActivitySubject.TabIndex = 17;
-            lblActivitySubject.Text = "Subject";
-            // 
             // cmbActivitySubject
             // 
             cmbActivitySubject.BackColor = Color.Transparent;
@@ -2323,7 +2254,7 @@
             cmbActivitySubject.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbActivitySubject.FocusedColor = Color.FromArgb(94, 148, 255);
             cmbActivitySubject.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
-            cmbActivitySubject.Font = new Font("Segoe UI", 10F);
+            cmbActivitySubject.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
             cmbActivitySubject.ForeColor = Color.FromArgb(68, 88, 112);
             cmbActivitySubject.ItemHeight = 70;
             cmbActivitySubject.Location = new Point(21, 195);
@@ -2336,17 +2267,6 @@
             cmbActivitySubject.TabIndex = 16;
             cmbActivitySubject.TextAlign = HorizontalAlignment.Center;
             // 
-            // lblActivitytTitle
-            // 
-            lblActivitytTitle.AutoSize = true;
-            lblActivitytTitle.BackColor = Color.White;
-            lblActivitytTitle.Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblActivitytTitle.Location = new Point(228, 126);
-            lblActivitytTitle.Name = "lblActivitytTitle";
-            lblActivitytTitle.Size = new Size(55, 28);
-            lblActivitytTitle.TabIndex = 15;
-            lblActivitytTitle.Text = "Title";
-            // 
             // cmbActivityTitle
             // 
             cmbActivityTitle.BackColor = Color.Transparent;
@@ -2356,7 +2276,7 @@
             cmbActivityTitle.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbActivityTitle.FocusedColor = Color.FromArgb(94, 148, 255);
             cmbActivityTitle.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
-            cmbActivityTitle.Font = new Font("Segoe UI", 10F);
+            cmbActivityTitle.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
             cmbActivityTitle.ForeColor = Color.FromArgb(68, 88, 112);
             cmbActivityTitle.ItemHeight = 70;
             cmbActivityTitle.Items.AddRange(new object[] { "Activity", "Performance Task" });
@@ -2418,6 +2338,7 @@
             dgvRecentActivity.Location = new Point(11, 126);
             dgvRecentActivity.MultiSelect = false;
             dgvRecentActivity.Name = "dgvRecentActivity";
+            dgvRecentActivity.ReadOnly = true;
             dgvRecentActivity.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
             dataGridViewCellStyle8.Alignment = DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle8.BackColor = Color.White;
@@ -2439,6 +2360,7 @@
             dgvRecentActivity.ThemeStyle.HeaderStyle.BackColor = Color.Maroon;
             dgvRecentActivity.ThemeStyle.HeaderStyle.Font = new Font("Segoe UI", 9F);
             dgvRecentActivity.ThemeStyle.HeaderStyle.Height = 40;
+            dgvRecentActivity.ThemeStyle.ReadOnly = true;
             dgvRecentActivity.ThemeStyle.RowsStyle.BorderStyle = DataGridViewCellBorderStyle.None;
             dgvRecentActivity.ThemeStyle.RowsStyle.Font = new Font("Segoe UI", 9F);
             dgvRecentActivity.ThemeStyle.RowsStyle.Height = 37;
@@ -2539,7 +2461,7 @@
             btnGradesClearFilter.Image = Properties.Resources.filter;
             btnGradesClearFilter.ImageOffset = new Point(1, 0);
             btnGradesClearFilter.ImageSize = new Size(16, 16);
-            btnGradesClearFilter.Location = new Point(1211, 91);
+            btnGradesClearFilter.Location = new Point(1231, 59);
             btnGradesClearFilter.Name = "btnGradesClearFilter";
             btnGradesClearFilter.ShadowDecoration.CustomizableEdges = customizableEdges122;
             btnGradesClearFilter.Size = new Size(45, 42);
@@ -2551,7 +2473,7 @@
             lblGradesActivity.AutoSize = true;
             lblGradesActivity.BackColor = Color.White;
             lblGradesActivity.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblGradesActivity.Location = new Point(555, 99);
+            lblGradesActivity.Location = new Point(575, 67);
             lblGradesActivity.Name = "lblGradesActivity";
             lblGradesActivity.Size = new Size(77, 21);
             lblGradesActivity.TabIndex = 31;
@@ -2562,7 +2484,7 @@
             lblGradesSection.AutoSize = true;
             lblGradesSection.BackColor = Color.White;
             lblGradesSection.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblGradesSection.Location = new Point(312, 99);
+            lblGradesSection.Location = new Point(332, 67);
             lblGradesSection.Name = "lblGradesSection";
             lblGradesSection.Size = new Size(65, 21);
             lblGradesSection.TabIndex = 30;
@@ -2573,7 +2495,7 @@
             lblGradesSubject.AutoSize = true;
             lblGradesSubject.BackColor = Color.White;
             lblGradesSubject.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblGradesSubject.Location = new Point(67, 99);
+            lblGradesSubject.Location = new Point(87, 67);
             lblGradesSubject.Name = "lblGradesSubject";
             lblGradesSubject.Size = new Size(65, 21);
             lblGradesSubject.TabIndex = 15;
@@ -2608,7 +2530,7 @@
             dataGridViewCellStyle11.WrapMode = DataGridViewTriState.False;
             dgvStudentActivitySubmitted.DefaultCellStyle = dataGridViewCellStyle11;
             dgvStudentActivitySubmitted.GridColor = Color.FromArgb(231, 229, 255);
-            dgvStudentActivitySubmitted.Location = new Point(55, 309);
+            dgvStudentActivitySubmitted.Location = new Point(75, 226);
             dgvStudentActivitySubmitted.Name = "dgvStudentActivitySubmitted";
             dgvStudentActivitySubmitted.ReadOnly = true;
             dgvStudentActivitySubmitted.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
@@ -2622,7 +2544,7 @@
             dgvStudentActivitySubmitted.RowHeadersDefaultCellStyle = dataGridViewCellStyle12;
             dgvStudentActivitySubmitted.RowHeadersVisible = false;
             dgvStudentActivitySubmitted.RowTemplate.Height = 37;
-            dgvStudentActivitySubmitted.Size = new Size(1220, 374);
+            dgvStudentActivitySubmitted.Size = new Size(1220, 455);
             dgvStudentActivitySubmitted.TabIndex = 29;
             dgvStudentActivitySubmitted.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White;
             dgvStudentActivitySubmitted.ThemeStyle.AlternatingRowsStyle.Font = new Font("Segoe UI", 9F);
@@ -2650,8 +2572,8 @@
             cmbActivityGrades.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
             cmbActivityGrades.ForeColor = Color.FromArgb(68, 88, 112);
             cmbActivityGrades.ItemHeight = 40;
-            cmbActivityGrades.Items.AddRange(new object[] { "Exam", "Activity", "Performance Task", "Quiz" });
-            cmbActivityGrades.Location = new Point(546, 87);
+            cmbActivityGrades.Items.AddRange(new object[] { "Activity", "Performance Task" });
+            cmbActivityGrades.Location = new Point(566, 55);
             cmbActivityGrades.Name = "cmbActivityGrades";
             cmbActivityGrades.ShadowDecoration.CustomizableEdges = customizableEdges124;
             cmbActivityGrades.Size = new Size(216, 46);
@@ -2666,7 +2588,7 @@
             guna2Panel25.Controls.Add(pictureBox12);
             guna2Panel25.CustomizableEdges = customizableEdges125;
             guna2Panel25.FillColor = Color.FromArgb(203, 15, 15);
-            guna2Panel25.Location = new Point(895, 171);
+            guna2Panel25.Location = new Point(914, 115);
             guna2Panel25.Name = "guna2Panel25";
             guna2Panel25.ShadowDecoration.CustomizableEdges = customizableEdges126;
             guna2Panel25.Size = new Size(380, 96);
@@ -2712,7 +2634,7 @@
             guna2Panel24.Controls.Add(pictureBox11);
             guna2Panel24.CustomizableEdges = customizableEdges127;
             guna2Panel24.FillColor = Color.FromArgb(10, 143, 30);
-            guna2Panel24.Location = new Point(471, 171);
+            guna2Panel24.Location = new Point(490, 115);
             guna2Panel24.Name = "guna2Panel24";
             guna2Panel24.ShadowDecoration.CustomizableEdges = customizableEdges128;
             guna2Panel24.Size = new Size(385, 96);
@@ -2758,7 +2680,7 @@
             guna2Panel22.Controls.Add(pictureBox10);
             guna2Panel22.CustomizableEdges = customizableEdges129;
             guna2Panel22.FillColor = Color.FromArgb(10, 143, 30);
-            guna2Panel22.Location = new Point(55, 171);
+            guna2Panel22.Location = new Point(74, 115);
             guna2Panel22.Name = "guna2Panel22";
             guna2Panel22.ShadowDecoration.CustomizableEdges = customizableEdges130;
             guna2Panel22.Size = new Size(380, 96);
@@ -2808,7 +2730,7 @@
             txtSearchGrades.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
             txtSearchGrades.Font = new Font("Segoe UI", 9F);
             txtSearchGrades.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtSearchGrades.Location = new Point(788, 87);
+            txtSearchGrades.Location = new Point(808, 55);
             txtSearchGrades.Name = "txtSearchGrades";
             txtSearchGrades.PlaceholderText = "Search";
             txtSearchGrades.SelectedText = "";
@@ -2830,7 +2752,7 @@
             cmbSectionGrades.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
             cmbSectionGrades.ForeColor = Color.FromArgb(68, 88, 112);
             cmbSectionGrades.ItemHeight = 40;
-            cmbSectionGrades.Location = new Point(300, 87);
+            cmbSectionGrades.Location = new Point(320, 55);
             cmbSectionGrades.Name = "cmbSectionGrades";
             cmbSectionGrades.ShadowDecoration.CustomizableEdges = customizableEdges134;
             cmbSectionGrades.Size = new Size(216, 46);
@@ -2849,7 +2771,7 @@
             cmbSubjectGrades.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
             cmbSubjectGrades.ForeColor = Color.FromArgb(68, 88, 112);
             cmbSubjectGrades.ItemHeight = 40;
-            cmbSubjectGrades.Location = new Point(55, 87);
+            cmbSubjectGrades.Location = new Point(75, 55);
             cmbSubjectGrades.Name = "cmbSubjectGrades";
             cmbSubjectGrades.ShadowDecoration.CustomizableEdges = customizableEdges136;
             cmbSubjectGrades.Size = new Size(216, 46);
@@ -2877,7 +2799,6 @@
             guna2Panel30.Controls.Add(btnAddAttendance);
             guna2Panel30.Controls.Add(label46);
             guna2Panel30.Controls.Add(btnExportAttendance);
-            guna2Panel30.Controls.Add(label47);
             guna2Panel30.Controls.Add(guna2ComboBox11);
             guna2Panel30.CustomizableEdges = customizableEdges145;
             guna2Panel30.FillColor = Color.White;
@@ -2947,6 +2868,7 @@
             ViewStudentAttendance.GridColor = Color.FromArgb(231, 229, 255);
             ViewStudentAttendance.Location = new Point(87, 152);
             ViewStudentAttendance.Name = "ViewStudentAttendance";
+            ViewStudentAttendance.ReadOnly = true;
             ViewStudentAttendance.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
             dataGridViewCellStyle16.Alignment = DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle16.BackColor = Color.White;
@@ -2968,6 +2890,7 @@
             ViewStudentAttendance.ThemeStyle.HeaderStyle.BackColor = Color.Maroon;
             ViewStudentAttendance.ThemeStyle.HeaderStyle.Font = new Font("Segoe UI", 9F);
             ViewStudentAttendance.ThemeStyle.HeaderStyle.Height = 40;
+            ViewStudentAttendance.ThemeStyle.ReadOnly = true;
             ViewStudentAttendance.ThemeStyle.RowsStyle.BorderStyle = DataGridViewCellBorderStyle.None;
             ViewStudentAttendance.ThemeStyle.RowsStyle.Font = new Font("Segoe UI", 9F);
             ViewStudentAttendance.ThemeStyle.RowsStyle.Height = 37;
@@ -3023,17 +2946,6 @@
             btnExportAttendance.TabIndex = 32;
             btnExportAttendance.Text = "Export";
             btnExportAttendance.Click += btnExportAttendance_Click;
-            // 
-            // label47
-            // 
-            label47.AutoSize = true;
-            label47.BackColor = Color.White;
-            label47.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label47.Location = new Point(1104, 105);
-            label47.Name = "label47";
-            label47.Size = new Size(65, 21);
-            label47.TabIndex = 30;
-            label47.Text = "Section";
             // 
             // guna2ComboBox11
             // 
@@ -4153,17 +4065,17 @@
             AutoScaleMode = AutoScaleMode.None;
             BackColor = Color.FromArgb(244, 243, 246);
             ClientSize = new Size(1447, 805);
-            Controls.Add(pnlFile);
-            Controls.Add(pnlStudent);
-            Controls.Add(guna2Panel1);
-            Controls.Add(pnlHome);
-            Controls.Add(guna2Panel2);
             Controls.Add(pnlActivity);
-            Controls.Add(pnlSubject);
-            Controls.Add(pnlAttendance);
             Controls.Add(pnlGrades);
+            Controls.Add(pnlAttendance);
+            Controls.Add(guna2Panel1);
+            Controls.Add(pnlStudent);
+            Controls.Add(guna2Panel2);
+            Controls.Add(pnlSubject);
             Controls.Add(pnlSetting);
             Controls.Add(pnlWorkstation);
+            Controls.Add(pnlFile);
+            Controls.Add(pnlHome);
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "ProfessorForm";
@@ -4323,9 +4235,7 @@
         private Guna.UI2.WinForms.Guna2Button btnPostActivity;
         private Label label16;
         private Guna.UI2.WinForms.Guna2ComboBox cmbActivityTitle;
-        private Label lblActivitySubject;
         private Guna.UI2.WinForms.Guna2ComboBox cmbActivitySubject;
-        private Label lblActivitytTitle;
         private Guna.UI2.WinForms.Guna2Button btnActivityUploadFile;
         private Label label22;
         private Label label18;
@@ -4339,12 +4249,8 @@
         private Guna.UI2.WinForms.Guna2TextBox txtBoxSearch;
         private Guna.UI2.WinForms.Guna2Button btnArchive;
         private Guna.UI2.WinForms.Guna2Button btnSearch;
-        private Label lblSection;
-        private Label lblYear;
-        private Label lblSemester;
         private Guna.UI2.WinForms.Guna2DataGridView dgvRecentActivity;
         private Guna.UI2.WinForms.Guna2ComboBox cmbActivitySection;
-        private Label lblActivitySection;
         private Panel pnlGrades;
         private Guna.UI2.WinForms.Guna2TextBox txtSearchGrades;
         private Guna.UI2.WinForms.Guna2ComboBox cmbSectionGrades;
@@ -4394,7 +4300,6 @@
         private Guna.UI2.WinForms.Guna2ComboBox guna2ComboBox8;
         private Guna.UI2.WinForms.Guna2ComboBox guna2ComboBox9;
         private Panel pnlAttendance;
-        private Label label47;
         private Guna.UI2.WinForms.Guna2ComboBox guna2ComboBox11;
         private Guna.UI2.WinForms.Guna2Button btnExportAttendance;
         private Label label46;
