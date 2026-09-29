@@ -71,6 +71,16 @@ namespace WinFormsApp1
         int ProfessorID;
         string ProfessorUsername;
 
+        // Banner colors for class cards (Google Classroom style)
+        private static readonly Color[] BannerColors = new Color[]
+        {
+            Color.FromArgb(46, 125, 90),   // green
+            Color.FromArgb(55, 65, 79),    // dark slate
+            Color.FromArgb(90, 90, 100),   // gray
+            Color.FromArgb(196, 106, 74)   // orange/terracotta
+        };
+        private int _colorIndex = 0;
+
         public ProfessorForm(int UserId, string Username)
         {
             InitializeComponent();
@@ -900,6 +910,17 @@ namespace WinFormsApp1
 
         private void btnCreateClass_Click(object sender, EventArgs e)
         {
+            // Validation
+            if (string.IsNullOrWhiteSpace(txtClassCode.Text) ||
+                string.IsNullOrWhiteSpace(txtClassName.Text) ||
+                string.IsNullOrWhiteSpace(txtClassSection.Text) ||
+                string.IsNullOrWhiteSpace(txtClassTime.Text) ||
+                string.IsNullOrWhiteSpace(cmbClassDate.Text))
+            {
+                MessageBox.Show("Please fill in all fields.");
+                return;
+            }
+
             string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
@@ -907,8 +928,8 @@ namespace WinFormsApp1
                 {
                     conn.Open();
                     string query = @"INSERT INTO professor_class 
-                                    (professor_id, class_code, class_name, class_section, class_time, class_date) 
-                                    VALUE (@professor_id, @class_code, @class_name, @class_section, @class_time, @class_date)";
+                            (professor_id, class_code, class_name, class_section, class_time, class_date) 
+                            VALUES (@professor_id, @class_code, @class_name, @class_section, @class_time, @class_date)";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -920,18 +941,32 @@ namespace WinFormsApp1
                         cmd.Parameters.AddWithValue("@class_date", cmbClassDate.Text.Trim());
                         cmd.ExecuteNonQuery();
                     }
-
-                    string folderName = txtClassSection.Text.Trim();
-                    AutoCreateClassBtn();
-                    CreateFolderForSection(folderName);
-                    MessageBox.Show("Created Succesfuly");
                 }
+
+                string folderName = txtClassSection.Text.Trim();
+                AutoCreateClassBtn();
+                CreateFolderForSection(folderName);
+
+                MessageBox.Show("Class created successfully!");
+
+                // Clear fields and close panel
+                txtClassCode.Clear();
+                txtClassName.Clear();
+                txtClassSection.Clear();
+                txtClassTime.Clear();
+                cmbClassDate.SelectedIndex = -1;
+                pnlCreateClass.Visible = false;
+                pnlCreateClass.SendToBack();
             }
             catch (Exception ex)
             {
                 Console.WriteLine("btnCreateClass_Click error: " + ex.Message);
+                MessageBox.Show("Error: " + ex.Message);
             }
         }
+
+
+
 
         private void CreateFolderForSection(string folderName)
         {
@@ -956,6 +991,20 @@ namespace WinFormsApp1
         private void AutoCreateClassBtn()
         {
             flpSubjectClass.Controls.Clear();
+            _colorIndex = 0;
+
+            // 2 cards per row, next cards go below
+            flpSubjectClass.FlowDirection = FlowDirection.LeftToRight;
+            flpSubjectClass.WrapContents = true;
+            flpSubjectClass.AutoScroll = true;
+
+            if (!_classResizeHooked)
+            {
+                _classResizeHooked = true;
+                flpSubjectClass.SizeChanged += (s, e) => ResizeClassCards();
+                if (flpSubjectClass.Parent != null)
+                    flpSubjectClass.Parent.SizeChanged += (s, e) => ResizeClassCards();
+            }
             string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
@@ -973,78 +1022,15 @@ namespace WinFormsApp1
                         {
                             while (reader.Read())
                             {
-                                Panel cardPanel = new Panel
-                                {
-                                    Size = new Size(350, 250),
-                                    BackColor = Color.White,
-                                    BorderStyle = BorderStyle.FixedSingle,
-                                    Margin = new Padding(10),
-                                    Tag = reader["class_id"].ToString()
-                                };
-
-                                Label lblMenu = new Label
-                                {
-                                    Text = "•••",
-                                    Font = new Font("Segoe UI", 12F, FontStyle.Bold),
-                                    Location = new Point(300, 10),
-                                    AutoSize = true,
-                                    Cursor = Cursors.Hand
-                                };
-                                cardPanel.Controls.Add(lblMenu);
-
-                                Label lblTitle = new Label
-                                {
-                                    Text = reader["class_name"].ToString(),
-                                    Font = new Font("Segoe UI", 20F, FontStyle.Bold),
-                                    Location = new Point(20, 50),
-                                    AutoSize = true
-                                };
-                                cardPanel.Controls.Add(lblTitle);
-
-                                Label lblProfName = new Label
-                                {
-                                    Text = "Prof. " + ProfessorID,
-                                    Font = new Font("Segoe UI", 14F, FontStyle.Bold),
-                                    Location = new Point(20, 100),
-                                    AutoSize = true
-                                };
-                                cardPanel.Controls.Add(lblProfName);
-
-                                Label lblDay = new Label
-                                {
-                                    Text = reader["class_date"].ToString(),
-                                    Font = new Font("Segoe UI", 14F, FontStyle.Bold),
-                                    Location = new Point(50, 150),
-                                    AutoSize = true
-                                };
-                                cardPanel.Controls.Add(lblDay);
-
-                                Label lblTime = new Label
-                                {
-                                    Text = reader["class_time"].ToString(),
-                                    Font = new Font("Segoe UI", 10F, FontStyle.Regular),
-                                    Location = new Point(50, 180),
-                                    AutoSize = true
-                                };
-                                cardPanel.Controls.Add(lblTime);
-
-                                Label lblSection = new Label
-                                {
-                                    Text = reader["class_section"].ToString(),
-                                    Font = new Font("Segoe UI", 12F, FontStyle.Bold),
-                                    Location = new Point(200, 210),
-                                    AutoSize = true,
-                                    TextAlign = ContentAlignment.MiddleRight
-                                };
-                                cardPanel.Controls.Add(lblSection);
-
-                                ContextMenuStrip rightClickMenu = new ContextMenuStrip();
-                                ToolStripMenuItem deleteMenuItem = new ToolStripMenuItem("Delete Class");
-                                deleteMenuItem.Click += DeleteClass_Click;
-                                rightClickMenu.Items.Add(deleteMenuItem);
-                                cardPanel.ContextMenuStrip = rightClickMenu;
-
-                                flpSubjectClass.Controls.Add(cardPanel);
+                                ClassCardPanel card = CreateClassCard(
+                                    reader["class_id"].ToString(),
+                                    reader["class_name"].ToString(),
+                                    reader["class_section"].ToString(),
+                                    reader["class_date"].ToString(),
+                                    reader["class_time"].ToString(),
+                                    "Prof. " + ProfessorID
+                                );
+                                flpSubjectClass.Controls.Add(card);
                             }
                         }
                     }
@@ -1054,6 +1040,67 @@ namespace WinFormsApp1
             {
                 Console.WriteLine("AutoCreateClassBtn error: " + ex.Message);
             }
+        }
+
+        private bool _classResizeHooked = false;
+
+        // Width so that exactly 2 cards fit per row
+        private int GetClassCardWidth()
+        {
+            // use the smaller of: the flow panel's width or the space left inside its parent
+            int panelWidth = flpSubjectClass.ClientSize.Width;
+            if (flpSubjectClass.Parent != null)
+            {
+                int parentSpace = flpSubjectClass.Parent.ClientSize.Width - flpSubjectClass.Left;
+                panelWidth = Math.Min(panelWidth, parentSpace);
+            }
+
+            int available = panelWidth
+                            - flpSubjectClass.Padding.Horizontal
+                            - SystemInformation.VerticalScrollBarWidth
+                            - 20;                    // extra safety buffer
+            int width = (available - 40) / 2;        // 40 = margins (10 left + 10 right) x 2 cards
+
+            return Math.Max(280, Math.Min(width, 420));   // not too small, not too wide
+        }
+
+        private void ResizeClassCards()
+        {
+            int w = GetClassCardWidth();
+            flpSubjectClass.SuspendLayout();
+            foreach (Control c in flpSubjectClass.Controls)
+            {
+                if (c is ClassCardPanel card)
+                    card.Width = w;
+            }
+            flpSubjectClass.ResumeLayout();
+        }
+
+        private ClassCardPanel CreateClassCard(string classId, string title, string section,
+            string day, string time, string professorName)
+        {
+            var card = new ClassCardPanel
+            {
+                Size = new Size(GetClassCardWidth(), 210),
+                Margin = new Padding(10),
+                Cursor = Cursors.Hand,
+                BannerColor = BannerColors[_colorIndex % BannerColors.Length],
+                Title = title,
+                Subtitle = section,
+                Section = professorName,
+                Day = day,
+                Time = time,
+                Tag = classId
+            };
+            _colorIndex++;
+
+            ContextMenuStrip rightClickMenu = new ContextMenuStrip();
+            ToolStripMenuItem deleteMenuItem = new ToolStripMenuItem("Delete Class");
+            deleteMenuItem.Click += DeleteClass_Click;
+            rightClickMenu.Items.Add(deleteMenuItem);
+            card.ContextMenuStrip = rightClickMenu;
+
+            return card;
         }
 
         private void DeleteClass_Click(object sender, EventArgs e)
@@ -3090,6 +3137,148 @@ namespace WinFormsApp1
             navToolTip.SetToolTip(btnFile, "Files");
             navToolTip.SetToolTip(btnAccount, "Settings");
             navToolTip.SetToolTip(btnQuizExam, "Quiz Exam Grades");
+        }
+    }
+
+    // =========================================================
+    // CUSTOM CLASS CARD (Google Classroom style)
+    // Nasa labas ng ProfessorForm para hindi mag-warning ang Designer
+    // =========================================================
+    public class ClassCardPanel : Panel
+    {
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public Color BannerColor { get; set; } = Color.SeaGreen;
+
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public string Title { get; set; } = "";
+
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public string Subtitle { get; set; } = "";
+
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public string Section { get; set; } = "";
+
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public string Day { get; set; } = "";
+
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public string Time { get; set; } = "";
+
+        private int _bannerHeight = 100;
+        private const int CornerRadius = 16;
+        private const int MinBannerHeight = 90;
+        private const int MaxBannerHeight = 130;
+
+        public ClassCardPanel()
+        {
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint |
+                     ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
+            BackColor = Color.White;
+        }
+
+        private GraphicsPath GetRoundedRect(RectangleF rect, int radius)
+        {
+            var path = new GraphicsPath();
+            float d = radius * 2;
+            path.AddArc(rect.X, rect.Y, d, d, 180, 90);
+            path.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
+            path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90);
+            path.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
+            path.CloseFigure();
+            return path;
+        }
+
+        protected override void OnSizeChanged(EventArgs e)
+        {
+            base.OnSizeChanged(e);
+            if (Width > 0 && Height > 0)
+            {
+                using (var path = GetRoundedRect(new RectangleF(0, 0, Width, Height), CornerRadius))
+                {
+                    Region?.Dispose();
+                    Region = new Region(path);
+                }
+            }
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+
+            float titleAreaWidth = Width - 16 - 30;
+
+            Font titleFont = new Font("Segoe UI", 16F, FontStyle.Bold);
+            SizeF measured = g.MeasureString(Title, titleFont, (int)titleAreaWidth);
+
+            float size = 16F;
+            while (measured.Height > 46 && size > 10F)
+            {
+                titleFont.Dispose();
+                size -= 1F;
+                titleFont = new Font("Segoe UI", size, FontStyle.Bold);
+                measured = g.MeasureString(Title, titleFont, (int)titleAreaWidth);
+            }
+
+            int neededBannerHeight = (int)(14 + measured.Height + 6 + 18 + 14);
+            _bannerHeight = Math.Max(MinBannerHeight, Math.Min(MaxBannerHeight, neededBannerHeight));
+
+            var fullRect = new RectangleF(0, 0, Width - 1, Height - 1);
+            using (var cardPath = GetRoundedRect(fullRect, CornerRadius))
+            {
+                using (var bg = new SolidBrush(Color.White))
+                    g.FillPath(bg, cardPath);
+
+                var bannerRect = new RectangleF(0, 0, Width, _bannerHeight);
+                g.SetClip(cardPath);
+                using (var gradBrush = new LinearGradientBrush(
+                    bannerRect,
+                    ControlPaint.Light(BannerColor, 0.15f),
+                    ControlPaint.Dark(BannerColor, 0.05f),
+                    LinearGradientMode.ForwardDiagonal))
+                {
+                    g.FillRectangle(gradBrush, bannerRect);
+                }
+                g.ResetClip();
+
+                using (var pen = new Pen(Color.FromArgb(230, 230, 230), 1))
+                    g.DrawPath(pen, cardPath);
+            }
+
+            // title (wrapped)
+            var titleRect = new RectangleF(16, 14, titleAreaWidth, measured.Height + 2);
+            using (var whiteBrush = new SolidBrush(Color.White))
+                g.DrawString(Title, titleFont, whiteBrush, titleRect);
+            titleFont.Dispose();
+
+            // subtitle
+            float subtitleY = 14 + measured.Height + 6;
+            using (var subFont = new Font("Segoe UI", 10F, FontStyle.Regular))
+            using (var whiteBrush = new SolidBrush(Color.White))
+                g.DrawString(Subtitle, subFont, whiteBrush, new PointF(16, subtitleY));
+
+            // menu dots
+            using (var dotsFont = new Font("Segoe UI", 12F, FontStyle.Bold))
+            using (var whiteBrush = new SolidBrush(Color.White))
+            {
+                var sz = g.MeasureString("⋮", dotsFont);
+                g.DrawString("⋮", dotsFont, whiteBrush, new PointF(Width - sz.Width - 12, 10));
+            }
+
+            // day + time
+            using (var profFont = new Font("Segoe UI", 9F, FontStyle.Regular))
+            using (var grayBrush = new SolidBrush(Color.FromArgb(90, 90, 90)))
+                g.DrawString($"{Day}   {Time}", profFont, grayBrush, new PointF(16, _bannerHeight + 14));
+
+            // professor label (bottom-right)
+            using (var sectionFont = new Font("Segoe UI", 10F, FontStyle.Bold))
+            using (var sectionBrush = new SolidBrush(Color.FromArgb(60, 60, 60)))
+            {
+                var sz = g.MeasureString(Section, sectionFont);
+                g.DrawString(Section, sectionFont, sectionBrush,
+                    new PointF(Width - sz.Width - 16, Height - sz.Height - 12));
+            }
         }
     }
 }

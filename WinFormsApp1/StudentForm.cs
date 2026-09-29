@@ -1305,9 +1305,15 @@ namespace WinFormsApp1
         }
 
         private void InitializeCreadeClass(string classname = "", string classSection = "",
-                                   string classTime = "", string classDate = "")
+                           string classTime = "", string classDate = "")
         {
             string connStr = SettingsManager.Current.GetConnectionString();
+            Color maroon = Color.FromArgb(123, 15, 23);
+            Color softPink = Color.FromArgb(253, 236, 238);
+            Color borderIdle = Color.FromArgb(230, 225, 225);
+
+            flpSubjectClass.BackColor = Color.FromArgb(255, 245, 240);
+            flpSubjectClass.Padding = new Padding(10);
 
             try
             {
@@ -1316,17 +1322,17 @@ namespace WinFormsApp1
                     conn.Open();
 
                     string query = @"
-                SELECT sc.class_id, 
-                       sc.class_name, 
-                       sc.class_date, 
-                       sc.class_time, 
-                       sc.section,
-                       ui.lastname, 
-                       ui.firstname, 
-                       ui.middlename
-                FROM student_class sc
-                LEFT JOIN user_information ui ON ui.user_id = sc.professor_id
-                WHERE sc.user_id = @user_id";
+        SELECT sc.class_id, 
+               sc.class_name, 
+               sc.class_date, 
+               sc.class_time, 
+               sc.section,
+               ui.lastname, 
+               ui.firstname, 
+               ui.middlename
+        FROM student_class sc
+        LEFT JOIN user_information ui ON ui.user_id = sc.professor_id
+        WHERE sc.user_id = @user_id";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -1354,73 +1360,153 @@ namespace WinFormsApp1
                                 if (string.IsNullOrEmpty(profFullName))
                                     profFullName = "Unknown Professor";
 
-                                Panel cardPanel = new Panel
+                                // ===== CARD =====
+                                var cardPanel = new Guna.UI2.WinForms.Guna2Panel
                                 {
                                     Size = new Size(350, 250),
-                                    BackColor = Color.White,
-                                    BorderStyle = BorderStyle.FixedSingle,
-                                    Margin = new Padding(10),
-                                    Tag = classId
+                                    FillColor = Color.White,
+                                    BackColor = Color.Transparent,
+                                    BorderRadius = 16,
+                                    BorderColor = borderIdle,
+                                    BorderThickness = 1,
+                                    Margin = new Padding(12),
+                                    Tag = classId,
+                                    ShadowDecoration = { Enabled = true, Depth = 8, BorderRadius = 16, Color = Color.FromArgb(60, 0, 0, 0) }
                                 };
 
-                                Label lblMenu = new Label
+                                // ===== HEADER =====
+                                var header = new Guna.UI2.WinForms.Guna2Panel
+                                {
+                                    Size = new Size(350, 80),
+                                    Location = new Point(0, 0),
+                                    FillColor = maroon,
+                                    BorderRadius = 16,
+                                    CustomizableEdges = { BottomLeft = false, BottomRight = false }
+                                };
+                                cardPanel.Controls.Add(header);
+
+                                var lblTitle = new Label
+                                {
+                                    Text = rClassName,
+                                    Font = new Font("Segoe UI", 16F, FontStyle.Bold),
+                                    ForeColor = Color.White,
+                                    BackColor = Color.Transparent,
+                                    AutoSize = false,
+                                    AutoEllipsis = true,
+                                    Size = new Size(275, 34),
+                                    Location = new Point(20, 22),
+                                    TextAlign = ContentAlignment.MiddleLeft
+                                };
+                                header.Controls.Add(lblTitle);
+
+                                var lblMenu = new Label
                                 {
                                     Text = "•••",
                                     Font = new Font("Segoe UI", 12F, FontStyle.Bold),
-                                    Location = new Point(300, 10),
+                                    ForeColor = Color.White,
+                                    BackColor = Color.Transparent,
                                     AutoSize = true,
+                                    Location = new Point(305, 10),
                                     Cursor = Cursors.Hand
                                 };
-                                cardPanel.Controls.Add(lblMenu);
+                                header.Controls.Add(lblMenu);
 
-                                Label lblTitle = new Label
+                                // ===== AVATAR =====
+                                string initials = "";
+                                if (!string.IsNullOrWhiteSpace(profFirst)) initials += char.ToUpper(profFirst.Trim()[0]);
+                                if (!string.IsNullOrWhiteSpace(profLast)) initials += char.ToUpper(profLast.Trim()[0]);
+                                if (initials == "") initials = "?";
+
+                                var avatar = new Guna.UI2.WinForms.Guna2Panel
                                 {
-                                    Text = rClassName,
-                                    Font = new Font("Segoe UI", 20F, FontStyle.Bold),
-                                    Location = new Point(20, 50),
-                                    AutoSize = true
+                                    Size = new Size(44, 44),
+                                    Location = new Point(20, 98),
+                                    FillColor = softPink,
+                                    BorderRadius = 22
                                 };
-                                cardPanel.Controls.Add(lblTitle);
-
-                                Label lblProfName = new Label
+                                avatar.Controls.Add(new Label
                                 {
-                                    Text = "Prof. " + profFullName,
-                                    Font = new Font("Segoe UI", 14F, FontStyle.Bold),
-                                    Location = new Point(20, 100),
+                                    Text = initials,
+                                    Font = new Font("Segoe UI", 11F, FontStyle.Bold),
+                                    ForeColor = maroon,
+                                    BackColor = Color.Transparent,
+                                    Dock = DockStyle.Fill,
+                                    TextAlign = ContentAlignment.MiddleCenter
+                                });
+                                cardPanel.Controls.Add(avatar);
+
+                                cardPanel.Controls.Add(new Label
+                                {
+                                    Text = "PROFESSOR",
+                                    Font = new Font("Segoe UI", 7.5F, FontStyle.Bold),
+                                    ForeColor = Color.FromArgb(150, 150, 150),
+                                    BackColor = Color.Transparent,
                                     AutoSize = true,
-                                    ForeColor = Color.FromArgb(123, 15, 23)
-                                };
-                                cardPanel.Controls.Add(lblProfName);
+                                    Location = new Point(74, 98)
+                                });
 
-                                Label lblDay = new Label
+                                cardPanel.Controls.Add(new Label
                                 {
-                                    Text = rClassDate,
-                                    Font = new Font("Segoe UI", 14F, FontStyle.Bold),
-                                    Location = new Point(50, 150),
-                                    AutoSize = true
-                                };
-                                cardPanel.Controls.Add(lblDay);
+                                    Text = profFullName,
+                                    Font = new Font("Segoe UI", 10.5F, FontStyle.Bold),
+                                    ForeColor = maroon,
+                                    BackColor = Color.Transparent,
+                                    AutoSize = false,
+                                    AutoEllipsis = true,
+                                    Size = new Size(260, 24),
+                                    Location = new Point(74, 114),
+                                    TextAlign = ContentAlignment.MiddleLeft
+                                });
 
-                                Label lblTime = new Label
+                                // ===== DIVIDER =====
+                                cardPanel.Controls.Add(new Panel
                                 {
-                                    Text = rClassTime,
-                                    Font = new Font("Segoe UI", 10F, FontStyle.Regular),
-                                    Location = new Point(50, 180),
-                                    AutoSize = true
-                                };
-                                cardPanel.Controls.Add(lblTime);
+                                    Size = new Size(310, 1),
+                                    Location = new Point(20, 158),
+                                    BackColor = Color.FromArgb(235, 235, 235)
+                                });
 
-                                Label lblSection = new Label
+                                // ===== SCHEDULE =====
+                                cardPanel.Controls.Add(new Label
+                                {
+                                    Text = "📅  " + rClassDate,
+                                    Font = new Font("Segoe UI Emoji", 11F, FontStyle.Bold),
+                                    ForeColor = Color.FromArgb(40, 40, 40),
+                                    BackColor = Color.Transparent,
+                                    AutoSize = true,
+                                    Location = new Point(20, 172)
+                                });
+
+                                cardPanel.Controls.Add(new Label
+                                {
+                                    Text = "🕒  " + rClassTime,
+                                    Font = new Font("Segoe UI Emoji", 10F, FontStyle.Regular),
+                                    ForeColor = Color.FromArgb(110, 110, 110),
+                                    BackColor = Color.Transparent,
+                                    AutoSize = true,
+                                    Location = new Point(20, 202)
+                                });
+
+                                // ===== SECTION PILL =====
+                                var sectionPill = new Guna.UI2.WinForms.Guna2Panel
+                                {
+                                    Size = new Size(80, 32),
+                                    Location = new Point(250, 190),
+                                    FillColor = softPink,
+                                    BorderRadius = 16
+                                };
+                                sectionPill.Controls.Add(new Label
                                 {
                                     Text = rClassSection,
-                                    Font = new Font("Segoe UI", 12F, FontStyle.Bold),
-                                    Location = new Point(200, 210),
-                                    AutoSize = true,
-                                    TextAlign = ContentAlignment.MiddleRight
-                                };
-                                cardPanel.Controls.Add(lblSection);
+                                    Font = new Font("Segoe UI", 10.5F, FontStyle.Bold),
+                                    ForeColor = maroon,
+                                    BackColor = Color.Transparent,
+                                    Dock = DockStyle.Fill,
+                                    TextAlign = ContentAlignment.MiddleCenter
+                                });
+                                cardPanel.Controls.Add(sectionPill);
 
-                                ContextMenuStrip menu = new ContextMenuStrip();
+                                // ===== UNJOIN =====
                                 lblMenu.Click += (s, e) =>
                                 {
                                     DialogResult result = MessageBox.Show(
@@ -1439,13 +1525,9 @@ namespace WinFormsApp1
                                     try { RefreshPendingActivities(); } catch { }
                                 };
 
-                                cardPanel.ContextMenuStrip = menu;
-                                lblMenu.ContextMenuStrip = menu;
-                                lblTitle.ContextMenuStrip = menu;
-                                lblProfName.ContextMenuStrip = menu;
-                                lblSection.ContextMenuStrip = menu;
-                                lblTime.ContextMenuStrip = menu;
-                                lblDay.ContextMenuStrip = menu;
+                                // ===== HOVER EFFECT =====
+                                cardPanel.MouseEnter += (s, e) => cardPanel.BorderColor = maroon;
+                                cardPanel.MouseLeave += (s, e) => cardPanel.BorderColor = borderIdle;
 
                                 flpSubjectClass.Controls.Add(cardPanel);
                             }
