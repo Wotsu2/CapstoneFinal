@@ -2807,12 +2807,12 @@ namespace WinFormsApp1
             expandedCal.ShowOn(pnlHome);
         }
 
-<<<<<<< HEAD
+
         private void guna2Panel1_Paint(object sender, PaintEventArgs e)
         {
            
         }
-=======
+
         private void BuildNotificationsUi()
         {
             if (btnNotifications != null) return;
@@ -3382,6 +3382,6 @@ namespace WinFormsApp1
         }
 
 
->>>>>>> 8b05e2974c34386077fec2c9b40ebf33bfc3690b
+
     }
 }

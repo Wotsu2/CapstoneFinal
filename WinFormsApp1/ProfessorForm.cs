@@ -1811,30 +1811,339 @@ namespace WinFormsApp1
                 folderHistory.Push(currentFolder);
 
             currentFolder = path;
-            FolderListView.Items.Clear();
-            imageList1.Images.Clear();
-            int imageIndex = 0;
 
-            foreach (string dir in Directory.GetDirectories(path).OrderBy(d => d))
+            FolderListView.BeginUpdate();
+
+            try
             {
-                imageList1.Images.Add(Properties.Resources.Folder);
-                ListViewItem item = new ListViewItem(Path.GetFileName(dir), imageIndex);
-                item.Tag = dir;
-                FolderListView.Items.Add(item);
-                imageIndex++;
+                FolderListView.Items.Clear();
+                imageList1.Images.Clear();
+
+                // Use large, high-quality Windows Shell icons.
+                imageList1.ColorDepth = ColorDepth.Depth32Bit;
+                imageList1.ImageSize = new Size(64, 64);
+                imageList1.TransparentColor = Color.Transparent;
+
+                int imageIndex = 0;
+
+                // -------------------------------------------------
+                // FOLDERS - real Windows folder icon
+                // -------------------------------------------------
+                foreach (string dir in Directory.GetDirectories(path).OrderBy(d => d))
+                {
+                    Image folderIcon = GetRealFolderIcon();
+                    imageList1.Images.Add(folderIcon);
+
+                    ListViewItem item = new ListViewItem(
+                        Path.GetFileName(dir),
+                        imageIndex
+                    );
+
+                    item.Tag = dir;
+                    item.ToolTipText = dir;
+                    FolderListView.Items.Add(item);
+                    imageIndex++;
+                }
+
+                // -------------------------------------------------
+                // FILES - real Windows registered file icon
+                // -------------------------------------------------
+                foreach (string file in Directory.GetFiles(path).OrderBy(f => f))
+                {
+                    Image fileIcon = GetRealFileIcon(file);
+                    imageList1.Images.Add(fileIcon);
+
+                    ListViewItem item = new ListViewItem(
+                        Path.GetFileName(file),
+                        imageIndex
+                    );
+
+                    item.Tag = file;
+                    item.ToolTipText = file;
+                    FolderListView.Items.Add(item);
+                    imageIndex++;
+                }
+
+                BtnBack.Enabled = folderHistory.Count > 0;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Unable to load files:\n\n" + ex.Message,
+                    "File Browser",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+            }
+            finally
+            {
+                FolderListView.EndUpdate();
+            }
+        }
+
+        // =========================================================
+        // PROGRAMMATIC FILE/FOLDER ICONS
+        // No image files and no Resources are required.
+        // Icons are drawn directly by C# into Bitmap objects.
+        // =========================================================
+
+        private Image GetRealFolderIcon()
+        {
+            return CreateProgrammaticFolderIcon();
+        }
+
+        private Image GetRealFileIcon(string filePath)
+        {
+            return CreateProgrammaticFileIcon(filePath);
+        }
+
+        private Image CreateProgrammaticFolderIcon()
+        {
+            Bitmap bmp = new Bitmap(64, 64);
+
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Soft shadow
+                using (SolidBrush shadow = new SolidBrush(Color.FromArgb(35, 0, 0, 0)))
+                {
+                    using (GraphicsPath shadowPath = CreateRoundedRectanglePath(new Rectangle(7, 20, 51, 35), 6))
+                    {
+                        g.FillPath(shadow, shadowPath);
+                    }
+                }
+
+                // Folder tab
+                using (SolidBrush tabBrush = new SolidBrush(Color.FromArgb(255, 211, 79)))
+                using (GraphicsPath tabPath = CreateRoundedRectanglePath(new Rectangle(8, 11, 27, 16), 4))
+                {
+                    g.FillPath(tabBrush, tabPath);
+                }
+
+                // Main folder body
+                using (LinearGradientBrush folderBrush =
+                    new LinearGradientBrush(
+                        new Rectangle(6, 19, 52, 36),
+                        Color.FromArgb(255, 235, 176),
+                        Color.FromArgb(255, 184, 134),
+                        LinearGradientMode.Vertical))
+                using (GraphicsPath folderPath = CreateRoundedRectanglePath(new Rectangle(6, 18, 52, 37), 6))
+                {
+                    g.FillPath(folderBrush, folderPath);
+                }
+
+                // Folder upper highlight
+                using (Pen highlight = new Pen(Color.FromArgb(150, 255, 255, 255), 1.5f))
+                {
+                    g.DrawLine(highlight, 10, 23, 52, 23);
+                }
+
+                // Folder border
+                using (Pen border = new Pen(Color.FromArgb(120, 155, 105, 40), 1.2f))
+                using (GraphicsPath borderPath = CreateRoundedRectanglePath(new Rectangle(6, 18, 52, 37), 6))
+                {
+                    g.DrawPath(border, borderPath);
+                }
             }
 
-            foreach (string file in Directory.GetFiles(path).OrderBy(f => f))
-            {
-                imageList1.Images.Add(Properties.Resources.Item);
+            return bmp;
+        }
 
-                ListViewItem item = new ListViewItem(Path.GetFileName(file), imageIndex);
-                item.Tag = file;
-                FolderListView.Items.Add(item);
-                imageIndex++;
+        private Image CreateProgrammaticFileIcon(string filePath)
+        {
+            Bitmap bmp = new Bitmap(64, 64);
+            string extension = Path.GetExtension(filePath ?? string.Empty).ToLowerInvariant();
+
+            string badgeText = "FILE";
+            Color badgeColor = Color.FromArgb(88, 101, 116);
+
+            switch (extension)
+            {
+                case ".doc":
+                case ".docx":
+                    badgeText = "W";
+                    badgeColor = Color.FromArgb(43, 87, 154);
+                    break;
+
+                case ".pdf":
+                    badgeText = "PDF";
+                    badgeColor = Color.FromArgb(190, 45, 45);
+                    break;
+
+                case ".xls":
+                case ".xlsx":
+                case ".csv":
+                    badgeText = "X";
+                    badgeColor = Color.FromArgb(33, 115, 70);
+                    break;
+
+                case ".ppt":
+                case ".pptx":
+                    badgeText = "P";
+                    badgeColor = Color.FromArgb(194, 91, 40);
+                    break;
+
+                case ".txt":
+                case ".log":
+                    badgeText = "TXT";
+                    badgeColor = Color.FromArgb(90, 99, 109);
+                    break;
+
+                case ".jpg":
+                case ".jpeg":
+                case ".png":
+                case ".gif":
+                case ".bmp":
+                case ".webp":
+                    badgeText = "IMG";
+                    badgeColor = Color.FromArgb(92, 92, 180);
+                    break;
+
+                case ".zip":
+                case ".rar":
+                case ".7z":
+                    badgeText = "ZIP";
+                    badgeColor = Color.FromArgb(133, 91, 52);
+                    break;
+
+                case ".cs":
+                    badgeText = "C#";
+                    badgeColor = Color.FromArgb(104, 62, 143);
+                    break;
+
+                case ".html":
+                case ".htm":
+                    badgeText = "< >";
+                    badgeColor = Color.FromArgb(220, 92, 42);
+                    break;
+
+                case ".sql":
+                    badgeText = "SQL";
+                    badgeColor = Color.FromArgb(45, 102, 150);
+                    break;
+
+                case ".exe":
+                    badgeText = "APP";
+                    badgeColor = Color.FromArgb(70, 80, 92);
+                    break;
             }
 
-            BtnBack.Enabled = folderHistory.Count > 0;
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.Clear(Color.Transparent);
+
+                // Soft shadow behind the document
+                using (SolidBrush shadow = new SolidBrush(Color.FromArgb(30, 0, 0, 0)))
+                using (GraphicsPath shadowPath = CreateRoundedRectanglePath(new Rectangle(11, 7, 43, 51), 5))
+                {
+                    g.FillPath(shadow, shadowPath);
+                }
+
+                // Document body
+                Point[] document =
+                {
+                    new Point(13, 5),
+                    new Point(39, 5),
+                    new Point(52, 18),
+                    new Point(52, 57),
+                    new Point(13, 57)
+                };
+
+                using (SolidBrush paper = new SolidBrush(Color.FromArgb(248, 250, 252)))
+                {
+                    g.FillPolygon(paper, document);
+                }
+
+                using (Pen paperBorder = new Pen(Color.FromArgb(145, 155, 165), 1.2f))
+                {
+                    g.DrawPolygon(paperBorder, document);
+                }
+
+                // Folded corner
+                Point[] fold =
+                {
+                    new Point(39, 5),
+                    new Point(39, 18),
+                    new Point(52, 18)
+                };
+
+                using (SolidBrush foldBrush = new SolidBrush(Color.FromArgb(220, 228, 236)))
+                {
+                    g.FillPolygon(foldBrush, fold);
+                }
+
+                using (Pen foldPen = new Pen(Color.FromArgb(150, 160, 170), 1f))
+                {
+                    g.DrawLine(foldPen, 39, 5, 39, 18);
+                    g.DrawLine(foldPen, 39, 18, 52, 18);
+                }
+
+                // Text lines on document
+                using (Pen linePen = new Pen(Color.FromArgb(175, 185, 195), 1.4f))
+                {
+                    g.DrawLine(linePen, 19, 25, 45, 25);
+                    g.DrawLine(linePen, 19, 31, 45, 31);
+                    g.DrawLine(linePen, 19, 37, 40, 37);
+                }
+
+                // Type badge
+                Rectangle badge = new Rectangle(17, 40, 31, 14);
+                using (GraphicsPath badgePath = CreateRoundedRectanglePath(badge, 4))
+                using (SolidBrush badgeBrush = new SolidBrush(badgeColor))
+                {
+                    g.FillPath(badgeBrush, badgePath);
+                }
+
+                using (Font badgeFont = new Font("Segoe UI", badgeText.Length > 3 ? 5.5f : 8f, FontStyle.Bold))
+                using (SolidBrush badgeTextBrush = new SolidBrush(Color.White))
+                using (StringFormat format = new StringFormat())
+                {
+                    format.Alignment = StringAlignment.Center;
+                    format.LineAlignment = StringAlignment.Center;
+
+                    g.DrawString(
+                        badgeText,
+                        badgeFont,
+                        badgeTextBrush,
+                        badge,
+                        format
+                    );
+                }
+            }
+
+            return bmp;
+        }
+
+        private GraphicsPath CreateRoundedRectanglePath(Rectangle rectangle, int radius)
+        {
+            GraphicsPath path = new GraphicsPath();
+            int diameter = radius * 2;
+
+            if (diameter > rectangle.Width)
+                diameter = rectangle.Width;
+
+            if (diameter > rectangle.Height)
+                diameter = rectangle.Height;
+
+            Rectangle arc = new Rectangle(rectangle.X, rectangle.Y, diameter, diameter);
+
+            path.AddArc(arc, 180, 90);
+            arc.X = rectangle.Right - diameter;
+            path.AddArc(arc, 270, 90);
+            arc.Y = rectangle.Bottom - diameter;
+            path.AddArc(arc, 0, 90);
+            arc.X = rectangle.X;
+            path.AddArc(arc, 90, 90);
+            path.CloseFigure();
+
+            return path;
         }
 
         private void btnBack()
