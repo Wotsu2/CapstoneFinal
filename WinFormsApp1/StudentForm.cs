@@ -413,6 +413,7 @@ namespace WinFormsApp1
         // =========================================================
         // TCP CLIENT HELPERS
         // =========================================================
+
         private async Task RunClientForever(
             string name,
             Func<TcpClient> connect,
@@ -2625,22 +2626,147 @@ namespace WinFormsApp1
         // =========================================================
         // UTILITIES
         // =========================================================
-        private string SanitizeFolderName(string name)
+
+
+        // =========================================================
+        // UTILITIES
+        // =========================================================
+
+        private static string SanitizeFolderName(string name)
+
         {
-            if (string.IsNullOrWhiteSpace(name)) return "Unknown";
+            if (string.IsNullOrWhiteSpace(name)) return "Untitled";
 
             foreach (char c in Path.GetInvalidFileNameChars())
-                name = name.Replace(c, '_');
+                name = name.Replace(c.ToString(), "");
 
-            name = name.Trim().TrimEnd('.');
-            if (string.IsNullOrWhiteSpace(name)) return "Unknown";
+            return name.Trim().TrimEnd('.');
+        }
 
-            return name;
+        // =========================================================
+        // EXPANDED CALENDAR
+        // =========================================================
+
+        private ExpandedCalendar expandedCal;
+
+        private static bool TryParseCalDate(string s, out DateTime dt)
+        {
+            dt = default(DateTime);
+            if (string.IsNullOrWhiteSpace(s)) return false;
+
+            return DateTime.TryParse(s, System.Globalization.CultureInfo.CurrentCulture,
+                                     System.Globalization.DateTimeStyles.None, out dt)
+                || DateTime.TryParse(s, System.Globalization.CultureInfo.InvariantCulture,
+                                     System.Globalization.DateTimeStyles.None, out dt);
+        }
+
+        private List<CalEvent> LoadCalendarEvents()
+        {
+            var list = new List<CalEvent>();
+            string connStr = SettingsManager.Current.GetConnectionString();
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    // ---- ACTIVITIES (sa mga section na sinalihan ng student) ----
+                    const string qAct = @"
+                        SELECT pa.title, pa.activity_subject, pa.due_date,
+                               EXISTS (SELECT 1 FROM submitted_activity sa
+                                       WHERE sa.user_id = @user_id
+                                         AND sa.prof_id = pa.professor_id
+                                         AND sa.title   = pa.title
+                                         AND sa.section = pa.section) AS submitted
+                        FROM professor_activity pa
+                        INNER JOIN student_class sc
+                            ON  sc.user_id      = @user_id
+                            AND sc.professor_id = pa.professor_id
+                            AND LOWER(TRIM(sc.section)) = LOWER(TRIM(pa.section))";
+
+                    using (var cmd = new MySqlCommand(qAct, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@user_id", userId);
+                        using (var r = cmd.ExecuteReader())
+                        {
+                            while (r.Read())
+                            {
+                                string dueRaw = r["due_date"].ToString();
+                                if (!TryParseCalDate(dueRaw, out DateTime due))
+                                {
+                                    Console.WriteLine("[Calendar] Can't parse due_date: '" + dueRaw + "'");
+                                    continue;
+                                }
+
+                                string title = r["title"].ToString();
+                                string subject = r["activity_subject"].ToString();
+
+                                list.Add(new CalEvent
+                                {
+                                    Date = due.Date,
+                                    Kind = "Activity",
+                                    Text = string.IsNullOrEmpty(subject) ? title : title + " (" + subject + ")",
+                                    Done = Convert.ToInt32(r["submitted"]) > 0
+                                });
+                            }
+                        }
+                    }
+
+                    // ---- QUIZZES / EXAMS ----
+                    const string qQuiz = @"
+                        SELECT q.quiz_title, q.subject, q.assessment_type, q.created_at,
+                               EXISTS (SELECT 1 FROM quiz_attempts qa
+                                       WHERE qa.quiz_id = q.quiz_id
+                                         AND qa.user_id = @user_id
+                                         AND qa.status  = 'SUBMITTED') AS submitted
+                        FROM quizzes q";
+
+                    using (var cmd = new MySqlCommand(qQuiz, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@user_id", userId);
+                        using (var r = cmd.ExecuteReader())
+                        {
+                            while (r.Read())
+                            {
+                                bool isExam = r["assessment_type"].ToString()
+                                               .Equals("exam", StringComparison.OrdinalIgnoreCase);
+                                string subject = r["subject"].ToString();
+                                string title = r["quiz_title"].ToString();
+
+                                list.Add(new CalEvent
+                                {
+                                    Date = Convert.ToDateTime(r["created_at"]).Date,
+                                    Kind = isExam ? "Exam" : "Quiz",
+                                    Text = string.IsNullOrEmpty(subject) ? title : subject + " " + title,
+                                    Done = Convert.ToInt32(r["submitted"]) > 0
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("LoadCalendarEvents error: " + ex.Message);
+            }
+
+            return list;
         }
 
         private void btnCalendarExpand_Click(object sender, EventArgs e)
         {
-            new CalendarViewForm(int.Parse(userId), StudentSection).ShowDialog(this);
+            if (expandedCal == null)
+            {
+                expandedCal = new ExpandedCalendar();
+                expandedCal.CloseRequested += (s, a) => expandedCal.Visible = false;
+            }
+
+            expandedCal.SetEvents(LoadCalendarEvents());   // laging bago ang data pag binuksan
+            expandedCal.ShowOn(pnlHome);
         }
+
+
+
     }
 }
