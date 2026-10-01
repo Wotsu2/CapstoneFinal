@@ -32,11 +32,13 @@ namespace WinFormsApp1
         // =========================================================
         // EXAM COUNTDOWN
         // =========================================================
+        // CHANGED: No longer const. Loaded from the database per quiz.
+        // =========================================================
 
-        private const int ExamDurationMinutes = 60;
-        private const int ExamDurationSeconds = ExamDurationMinutes * 60;
+        private int ExamDurationMinutes = 60;
+        private int ExamDurationSeconds = 60 * 60;
 
-        private int remainingSeconds = ExamDurationSeconds;
+        private int remainingSeconds = 60 * 60;
 
         private Label lblTimer;
         private System.Windows.Forms.Timer examTimer;
@@ -461,8 +463,9 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
+                    // CHANGED: Also fetch duration_minutes from the quizzes table
                     string query = @"
-                        SELECT quiz_id, quiz_title, subject, exam_period, assessment_type
+                        SELECT quiz_id, quiz_title, subject, exam_period, assessment_type, duration_minutes
                         FROM quizzes
                         WHERE quiz_id = @quiz_id
                         LIMIT 1";
@@ -482,6 +485,29 @@ namespace WinFormsApp1
                             }
 
                             selectedQuizId = Convert.ToInt32(reader["quiz_id"]);
+
+                            // =====================================================
+                            // CHANGED: Read duration_minutes from the database
+                            // and set the exam timer values dynamically
+                            // =====================================================
+                            int dbDuration = 60; // default fallback
+                            if (reader["duration_minutes"] != DBNull.Value)
+                            {
+                                dbDuration = Convert.ToInt32(reader["duration_minutes"]);
+                            }
+
+                            if (dbDuration < 1) dbDuration = 1;
+                            if (dbDuration > 1440) dbDuration = 1440; // max 24 hours
+
+                            ExamDurationMinutes = dbDuration;
+                            ExamDurationSeconds = ExamDurationMinutes * 60;
+                            remainingSeconds = ExamDurationSeconds;
+
+                            // Update the timer label to reflect the correct duration immediately
+                            if (lblTimer != null)
+                            {
+                                lblTimer.Text = $"TIME: {ExamDurationMinutes:00}:00";
+                            }
 
                             string examPeriod = reader["exam_period"] == DBNull.Value
                                 ? "PRELIM"

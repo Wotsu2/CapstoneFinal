@@ -1912,8 +1912,8 @@ namespace WinFormsApp1
                     conn.Open();
 
                     string Insertquery2 = @"
-                        INSERT INTO user_credential (username, p_word, roles, user_status, authentication_condition)
-                        VALUES (@Uname, @Password, @UserRole, @Status, @authentication_condition);
+                        INSERT INTO user_credential (username, p_word, roles, user_status, authentication_condition, remaining_limit)
+                        VALUES (@Uname, @Password, @UserRole, @Status, @authentication_condition, @remaining_limit);
                         SELECT LAST_INSERT_ID();";
 
                     using (MySqlCommand cmd2 = new MySqlCommand(Insertquery2, conn))
@@ -1923,6 +1923,7 @@ namespace WinFormsApp1
                         cmd2.Parameters.AddWithValue("@UserRole", ContextRoleText.Text.Trim());
                         cmd2.Parameters.AddWithValue("@Status", "Active");
                         cmd2.Parameters.AddWithValue("@authentication_condition", "Disabled");
+                        cmd2.Parameters.AddWithValue("@remaining_limit", 20);
                         userId = Convert.ToInt64(cmd2.ExecuteScalar());
                     }
 

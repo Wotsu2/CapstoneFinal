@@ -3741,7 +3741,7 @@ namespace WinFormsApp1
             btnNotifications = new Guna2Button
             {
                 Size = new Size(46, 46),
-                Location = new Point(this.ClientSize.Width - 160, 22),
+                Location = new Point(this.ClientSize.Width - 180, 22),
                 Anchor = AnchorStyles.Top | AnchorStyles.Right,
                 BorderRadius = 23,
                 BackColor = Color.White,
