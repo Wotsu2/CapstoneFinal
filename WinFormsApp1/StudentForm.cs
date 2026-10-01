@@ -155,12 +155,19 @@ namespace WinFormsApp1
                     }
                 };
                 activitiesRefreshTimer.Start();
+
+                CustomMessageBox.Show(
+            $"Welcome back, {StudentUsername}!\n\n" +
+            $"Your dashboard is ready.\n" +
+            $"Section: {StudentSection}\n" +
+            $"Pending activities and assessments have been loaded.",
+            "Login Successful",
+            CustomMessageBoxButtons.OK,
+            CustomMessageBoxIcon.Information);  
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    "StudentForm failed to load:\n\n" + ex.Message + "\n\n" + ex.StackTrace,
-                    "Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Console.WriteLine("StudentForm_Load error: " + ex.Message);
             }
         }
 
@@ -1287,7 +1294,7 @@ namespace WinFormsApp1
                         int count = Convert.ToInt32(checkCmd.ExecuteScalar());
                         if (count > 0)
                         {
-                            MessageBox.Show("This class information already exists.");
+                            CustomMessageBox.Show("This class information already exists.", "Duplicate Class", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                             return;
                         }
                     }
@@ -1306,7 +1313,7 @@ namespace WinFormsApp1
                     }
 
                     LoadJoinedClasses();
-                    MessageBox.Show("Successfully Joined Class!");
+                    CustomMessageBox.Show("Successfully Joined Class!", "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
 
                     try { RefreshPendingActivities(); } catch { }
                 }
@@ -1548,13 +1555,13 @@ namespace WinFormsApp1
 
                                 lblMenu.Click += (s, e) =>
                                 {
-                                    DialogResult result = MessageBox.Show(
+                                    var result = CustomMessageBox.Show(
                                         $"Are you sure you want to unjoin '{capturedClassName}'?",
                                         "Confirm Unjoin",
-                                        MessageBoxButtons.YesNo,
-                                        MessageBoxIcon.Warning);
+                                        CustomMessageBoxButtons.YesNo,
+                                        CustomMessageBoxIcon.Warning);
 
-                                    if (result != DialogResult.Yes) return;
+                                    if (result != CustomMessageBoxResult.Yes) return;
 
                                     UnjoinClass(capturedClassName, capturedSection, capturedTime, capturedDate);
 
@@ -1583,7 +1590,7 @@ namespace WinFormsApp1
                                     }
                                     catch (Exception ex)
                                     {
-                                        MessageBox.Show("Unable to open classroom:\n" + ex.Message);
+                                        Console.WriteLine("Open classroom error: " + ex.Message);
                                     }
                                 };
 
@@ -1605,10 +1612,6 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Failed to load classes: " + ex.Message,
-                                "Load Error",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
                 Console.WriteLine("LoadJoinedClasses error: " + ex);
             }
         }
@@ -1634,9 +1637,9 @@ namespace WinFormsApp1
 
                         int rows = cmd.ExecuteNonQuery();
                         if (rows > 0)
-                            MessageBox.Show("Successfully unjoined class.");
+                            CustomMessageBox.Show("Successfully unjoined class.", "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                         else
-                            MessageBox.Show("No matching class found to unjoin.");
+                            CustomMessageBox.Show("No matching class found to unjoin.", "Notice", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                     }
                 }
             }
@@ -1713,15 +1716,15 @@ namespace WinFormsApp1
             try { activitiesRefreshTimer?.Dispose(); } catch { }
             activitiesRefreshTimer = null;
 
-            MessageBox.Show("Signed out successfully.");
+            CustomMessageBox.Show("Signed out successfully.", "Sign Out", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
         }
 
         private void Logout()
         {
-            DialogResult result = MessageBox.Show("Are you sure you want to logout?",
-                "Logout Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var result = CustomMessageBox.Show("Are you sure you want to logout?",
+                "Logout Confirmation", CustomMessageBoxButtons.YesNo, CustomMessageBoxIcon.Question);
 
-            if (result != DialogResult.Yes) return;
+            if (result != CustomMessageBoxResult.Yes) return;
 
             try { StopServer(); } catch { }
             try { ClearAllFormData(); } catch { }
@@ -1761,13 +1764,13 @@ namespace WinFormsApp1
 
             if (string.IsNullOrEmpty(txtCurrentUsername.Text) || string.IsNullOrEmpty(txtNewUsername.Text))
             {
-                MessageBox.Show("Please enter both the current and new usernames.");
+                CustomMessageBox.Show("Please enter both the current and new usernames.", "Validation", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
             if (txtCurrentUsername.Text != StudentUsername)
             {
-                MessageBox.Show("Please enter the Correct usernames.");
+                CustomMessageBox.Show("Please enter the Correct usernames.", "Validation", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -1783,7 +1786,7 @@ namespace WinFormsApp1
                         cmd.ExecuteNonQuery();
                     }
                     ClearTextSettings();
-                    MessageBox.Show("Username updated successfully.");
+                    CustomMessageBox.Show("Username updated successfully.", "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 }
             }
             catch (Exception ex)
@@ -1807,12 +1810,12 @@ namespace WinFormsApp1
 
             if (string.IsNullOrEmpty(txtCurrentPassword.Text) || string.IsNullOrEmpty(txtNewPassword.Text) || string.IsNullOrEmpty(txtConfirmPassword.Text))
             {
-                MessageBox.Show("Please fill in all fields.");
+                CustomMessageBox.Show("Please fill in all fields.", "Validation", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
             if (txtNewPassword.Text != txtConfirmPassword.Text)
             {
-                MessageBox.Show("New password and confirm password do not match.");
+                CustomMessageBox.Show("New password and confirm password do not match.", "Validation", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -1828,7 +1831,7 @@ namespace WinFormsApp1
                         cmd.ExecuteNonQuery();
                     }
                     ClearTextSettings();
-                    MessageBox.Show("Password updated successfully.");
+                    CustomMessageBox.Show("Password updated successfully.", "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 }
             }
             catch (Exception ex)
@@ -1887,13 +1890,13 @@ namespace WinFormsApp1
         {
             if (string.IsNullOrEmpty(CurrentProfilePath))
             {
-                MessageBox.Show("Upload an image first!");
+                CustomMessageBox.Show("Upload an image first!", "Validation", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
             if (!File.Exists(CurrentProfilePath))
             {
-                MessageBox.Show("The selected file no longer exists.");
+                CustomMessageBox.Show("The selected file no longer exists.", "File Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -1909,7 +1912,7 @@ namespace WinFormsApp1
 
                 if (string.IsNullOrEmpty(uncPath))
                 {
-                    MessageBox.Show("Failed to send profile picture to server.");
+                    CustomMessageBox.Show("Failed to send profile picture to server.", "Server Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                     return;
                 }
 
@@ -1926,7 +1929,7 @@ namespace WinFormsApp1
                         int rows = cmd.ExecuteNonQuery();
                         if (rows == 0)
                         {
-                            MessageBox.Show("No user row was updated. Check the username.");
+                            CustomMessageBox.Show("No user row was updated. Check the username.", "Database Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                             return;
                         }
                     }
@@ -1939,12 +1942,11 @@ namespace WinFormsApp1
                 btnAccount.Image = null;
 
                 InitializeChangingPicture();
-                MessageBox.Show("Profile picture updated successfully.");
+                CustomMessageBox.Show("Profile picture updated successfully.", "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
                 Console.WriteLine("btnSubmitChangePhoto_Click error: " + ex);
-                MessageBox.Show("Error: " + ex.Message);
             }
         }
 
@@ -1963,14 +1965,14 @@ namespace WinFormsApp1
 
                     if (completed == timeoutTask)
                     {
-                        MessageBox.Show($"Server ({adminIp}:{adminPort}) not reachable (timeout).");
+                        Console.WriteLine($"Server ({adminIp}:{adminPort}) not reachable (timeout).");
                         return null;
                     }
 
                     await connectTask;
                     if (!client.Connected)
                     {
-                        MessageBox.Show($"Server ({adminIp}:{adminPort}) refused the connection.");
+                        Console.WriteLine($"Server ({adminIp}:{adminPort}) refused the connection.");
                         return null;
                     }
 
@@ -2003,7 +2005,6 @@ namespace WinFormsApp1
             catch (Exception ex)
             {
                 Console.WriteLine("SendProfilePhotoToAdmin error: " + ex.Message);
-                MessageBox.Show("Send error: " + ex.Message);
                 return null;
             }
         }
@@ -2090,7 +2091,7 @@ namespace WinFormsApp1
 
                     if (completed == timeoutTask)
                     {
-                        MessageBox.Show($"Admin ({adminIp}:{adminPort}) not reachable (timeout).");
+                        Console.WriteLine($"Admin ({adminIp}:{adminPort}) not reachable (timeout).");
                         return false;
                     }
 
@@ -2098,7 +2099,7 @@ namespace WinFormsApp1
 
                     if (!client.Connected)
                     {
-                        MessageBox.Show($"Admin ({adminIp}:{adminPort}) refused the connection.");
+                        Console.WriteLine($"Admin ({adminIp}:{adminPort}) refused the connection.");
                         return false;
                     }
 
@@ -2115,13 +2116,12 @@ namespace WinFormsApp1
             }
             catch (SocketException sex)
             {
-                MessageBox.Show($"Network error: {sex.SocketErrorCode}\n{sex.Message}");
+                Console.WriteLine($"Network error: {sex.SocketErrorCode}\n{sex.Message}");
                 return false;
             }
             catch (Exception ex)
             {
                 Console.WriteLine("SendAuthenticationPhotoToAdmin error: " + ex.Message);
-                MessageBox.Show("Failed to send photo to admin: " + ex.Message);
                 return false;
             }
         }
@@ -2130,7 +2130,7 @@ namespace WinFormsApp1
         {
             if (string.IsNullOrEmpty(AuthenticationPhoto))
             {
-                MessageBox.Show("Upload an image first!");
+                CustomMessageBox.Show("Upload an image first!", "Validation", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -2162,13 +2162,12 @@ namespace WinFormsApp1
 
                 Isauthentication_photoEmpty = uncPath;
 
-                MessageBox.Show("Authentication photo sent to admin successfully.");
+                CustomMessageBox.Show("Authentication photo sent to admin successfully.", "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 pnlSettingAuthenticationPhoto.Visible = false;
             }
             catch (Exception ex)
             {
                 Console.WriteLine("btnSubmitAuthenticationPhoto_Click error: " + ex.Message);
-                MessageBox.Show("Error: " + ex.Message);
             }
         }
 
@@ -2469,8 +2468,6 @@ namespace WinFormsApp1
             catch (Exception ex)
             {
                 Console.WriteLine("OpenAssessment error: " + ex.Message);
-                MessageBox.Show("Unable to open the assessment:\n\n" + ex.Message,
-                    "Open Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -2527,8 +2524,7 @@ namespace WinFormsApp1
                 string.IsNullOrWhiteSpace(secondAnswer) ||
                 string.IsNullOrWhiteSpace(thirdAnswer))
             {
-                MessageBox.Show("Please answer all three security questions.",
-                    "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CustomMessageBox.Show("Please answer all three security questions.", "Validation", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -2536,8 +2532,7 @@ namespace WinFormsApp1
                 cmbFirstQuestion.Text == cmbThirdQuestion.Text ||
                 cmbSecondQuestion.Text == cmbThirdQuestion.Text)
             {
-                MessageBox.Show("Please choose three different questions.",
-                    "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CustomMessageBox.Show("Please choose three different questions.", "Validation", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -2579,26 +2574,22 @@ namespace WinFormsApp1
                     }
                 }
 
-                MessageBox.Show("Security questions saved successfully.",
-                    "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CustomMessageBox.Show("Security questions saved successfully.", "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
             }
             catch (MySqlException ex)
             {
                 if (ex.Number == 1062)
                 {
-                    MessageBox.Show("You already saved these security questions.",
-                        "Duplicate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    CustomMessageBox.Show("You already saved these security questions.", "Duplicate", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 }
                 else
                 {
-                    MessageBox.Show("Database error: " + ex.Message,
-                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Console.WriteLine("Database error: " + ex.Message);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Unexpected error: " + ex.Message,
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Console.WriteLine("Unexpected error: " + ex.Message);
             }
         }
 
@@ -2807,12 +2798,6 @@ namespace WinFormsApp1
             expandedCal.ShowOn(pnlHome);
         }
 
-<<<<<<< HEAD
-        private void guna2Panel1_Paint(object sender, PaintEventArgs e)
-        {
-           
-        }
-=======
         private void BuildNotificationsUi()
         {
             if (btnNotifications != null) return;
@@ -3361,7 +3346,6 @@ namespace WinFormsApp1
             catch (Exception ex)
             {
                 Console.WriteLine("OpenNotificationActivity error: " + ex.Message);
-                MessageBox.Show("Unable to open activity:\n" + ex.Message);
             }
         }
 
@@ -3377,11 +3361,7 @@ namespace WinFormsApp1
             catch (Exception ex)
             {
                 Console.WriteLine("OpenNotificationQuiz error: " + ex.Message);
-                MessageBox.Show("Unable to open quiz:\n" + ex.Message);
             }
         }
-
-
->>>>>>> 8b05e2974c34386077fec2c9b40ebf33bfc3690b
     }
 }

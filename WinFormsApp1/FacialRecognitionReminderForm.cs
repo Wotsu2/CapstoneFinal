@@ -111,11 +111,13 @@ namespace WinFormsApp1
                         int rowsAffected = cmd.ExecuteNonQuery();
                         if (rowsAffected > 0)
                         {
-                            MessageBox.Show("Remaining limit updated successfully.");
+                            CustomMessageBox.Show("Remaining limit updated successfully.",
+                                "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                         }
                         else
                         {
-                            MessageBox.Show("No rows were updated. Please check the user ID.");
+                            CustomMessageBox.Show("No rows were updated. Please check the user ID.",
+                                "Update Failed", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                         }
                     }
                     this.Close();
@@ -123,7 +125,8 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred while updating the remaining limit." + ex.Message);
+                CustomMessageBox.Show("An error occurred while updating the remaining limit.\n\n" + ex.Message,
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 
@@ -142,11 +145,13 @@ namespace WinFormsApp1
                         int rowsAffected = cmd.ExecuteNonQuery();
                         if (rowsAffected > 0)
                         {
-                            MessageBox.Show("Remaining limit updated successfully.");
+                            CustomMessageBox.Show("Remaining limit updated successfully.",
+                                "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                         }
                         else
                         {
-                            MessageBox.Show("No rows were updated. Please check the user ID.");
+                            CustomMessageBox.Show("No rows were updated. Please check the user ID.",
+                                "Update Failed", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                         }
                     }
                     this.Close();
@@ -154,7 +159,8 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred while updating the remaining limit." + ex.Message);
+                CustomMessageBox.Show("An error occurred while updating the remaining limit.\n\n" + ex.Message,
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 
@@ -177,7 +183,8 @@ namespace WinFormsApp1
         {
             if (string.IsNullOrEmpty(AuthenticationPhoto))
             {
-                MessageBox.Show("Upload an image first!");
+                CustomMessageBox.Show("Upload an image first!",
+                    "Validation", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -228,12 +235,14 @@ namespace WinFormsApp1
                     }
                 }
 
-                MessageBox.Show("Authentication photo sent to admin successfully.");
+                CustomMessageBox.Show("Authentication photo sent to admin successfully.",
+                    "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 this.Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error sending authentication photo: " + ex.Message);
+                CustomMessageBox.Show("Error sending authentication photo:\n\n" + ex.Message,
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 
@@ -272,7 +281,7 @@ namespace WinFormsApp1
 
                     if (completed == timeoutTask)
                     {
-                        MessageBox.Show($"Admin ({adminIp}:{adminPort}) not reachable (timeout).");
+                        Console.WriteLine($"Admin ({adminIp}:{adminPort}) not reachable (timeout).");
                         return false;
                     }
 
@@ -280,7 +289,7 @@ namespace WinFormsApp1
 
                     if (!client.Connected)
                     {
-                        MessageBox.Show($"Admin ({adminIp}:{adminPort}) refused the connection.");
+                        Console.WriteLine($"Admin ({adminIp}:{adminPort}) refused the connection.");
                         return false;
                     }
 
@@ -297,13 +306,12 @@ namespace WinFormsApp1
             }
             catch (SocketException sex)
             {
-                MessageBox.Show($"Network error: {sex.SocketErrorCode}\n{sex.Message}");
+                Console.WriteLine($"Network error: {sex.SocketErrorCode} — {sex.Message}");
                 return false;
             }
             catch (Exception ex)
             {
                 Console.WriteLine("SendAuthenticationPhotoToAdmin error: " + ex.Message);
-                MessageBox.Show("Failed to send photo to admin: " + ex.Message);
                 return false;
             }
         }

@@ -303,8 +303,8 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Failed to load table list:\n" + ex.Message,
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CustomMessageBox.Show("Failed to load table list:\n" + ex.Message,
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 
@@ -374,8 +374,8 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Failed to load table:\n" + ex.Message,
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CustomMessageBox.Show("Failed to load table:\n" + ex.Message,
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 
@@ -401,8 +401,8 @@ namespace WinFormsApp1
 
             if (string.IsNullOrEmpty(pkColumn))
             {
-                MessageBox.Show("Cannot identify a primary key column (expected something like `*_id`).",
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CustomMessageBox.Show("Cannot identify a primary key column (expected something like `*_id`).",
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -435,15 +435,16 @@ namespace WinFormsApp1
                         }
                         else
                         {
-                            MessageBox.Show("No row was updated.");
+                            CustomMessageBox.Show("No row was updated.", "Notice",
+                                CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Update failed:\n" + ex.Message,
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CustomMessageBox.Show("Update failed:\n" + ex.Message,
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 
@@ -468,7 +469,8 @@ namespace WinFormsApp1
         {
             if (dgvDatabase.SelectedRows.Count != 1)
             {
-                MessageBox.Show("Please select exactly one row to edit.");
+                CustomMessageBox.Show("Please select exactly one row to edit.", "Notice",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 return;
             }
 
@@ -477,7 +479,8 @@ namespace WinFormsApp1
 
             if (string.IsNullOrEmpty(pkColumn))
             {
-                MessageBox.Show("Cannot identify a primary key column.");
+                CustomMessageBox.Show("Cannot identify a primary key column.", "Notice",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 return;
             }
 
@@ -597,15 +600,16 @@ namespace WinFormsApp1
                             }
                             else
                             {
-                                MessageBox.Show("No row was updated.");
+                                CustomMessageBox.Show("No row was updated.", "Notice",
+                                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                             }
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Update failed:\n" + ex.Message,
-                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    CustomMessageBox.Show("Update failed:\n" + ex.Message,
+                        "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
                 }
             }
         }
@@ -617,7 +621,8 @@ namespace WinFormsApp1
         {
             if (string.IsNullOrEmpty(currentDbTable))
             {
-                MessageBox.Show("Select a table first.");
+                CustomMessageBox.Show("Select a table first.", "Notice",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 return;
             }
 
@@ -726,8 +731,8 @@ namespace WinFormsApp1
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Insert failed:\n" + ex.Message,
-                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    CustomMessageBox.Show("Insert failed:\n" + ex.Message,
+                        "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
                 }
             }
         }
@@ -739,25 +744,27 @@ namespace WinFormsApp1
         {
             if (dgvDatabase.SelectedRows.Count == 0)
             {
-                MessageBox.Show("Select one or more rows first.");
+                CustomMessageBox.Show("Select one or more rows first.", "Notice",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 return;
             }
 
             string pkColumn = FindPrimaryKeyColumn();
             if (string.IsNullOrEmpty(pkColumn))
             {
-                MessageBox.Show("Cannot identify a primary key column.");
+                CustomMessageBox.Show("Cannot identify a primary key column.", "Notice",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 return;
             }
 
             int count = dgvDatabase.SelectedRows.Count;
-            var confirm = MessageBox.Show(
+            var confirm = CustomMessageBox.Show(
                 $"Delete {count} row(s) from `{currentDbTable}`?\n\nThis cannot be undone.",
                 "Confirm Delete",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning);
+                CustomMessageBoxButtons.YesNo,
+                CustomMessageBoxIcon.Warning);
 
-            if (confirm != DialogResult.Yes) return;
+            if (confirm != CustomMessageBoxResult.Yes) return;
 
             try
             {
@@ -782,15 +789,16 @@ namespace WinFormsApp1
                         }
                     }
 
-                    MessageBox.Show($"Deleted {deleted} row(s) from `{currentDbTable}`.");
+                    CustomMessageBox.Show($"Deleted {deleted} row(s) from `{currentDbTable}`.",
+                        "Deleted", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                     lblDbStatus.Text = $"Deleted {deleted} row(s) from `{currentDbTable}`.";
                     LoadTable(currentDbTable);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Delete failed:\n" + ex.Message,
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CustomMessageBox.Show("Delete failed:\n" + ex.Message,
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 
@@ -803,13 +811,15 @@ namespace WinFormsApp1
 
             if (string.IsNullOrEmpty(sql))
             {
-                MessageBox.Show("Enter a query first.");
+                CustomMessageBox.Show("Enter a query first.", "Notice",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 return;
             }
 
             if (!sql.TrimStart().StartsWith("SELECT", StringComparison.OrdinalIgnoreCase))
             {
-                MessageBox.Show("Only SELECT queries are allowed here for safety.");
+                CustomMessageBox.Show("Only SELECT queries are allowed here for safety.",
+                    "Not Allowed", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -831,8 +841,8 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Query failed:\n" + ex.Message,
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CustomMessageBox.Show("Query failed:\n" + ex.Message,
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 
@@ -843,7 +853,8 @@ namespace WinFormsApp1
         {
             if (string.IsNullOrEmpty(currentDbTable))
             {
-                MessageBox.Show("Select a table first.");
+                CustomMessageBox.Show("Select a table first.", "Notice",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 return;
             }
 
@@ -864,12 +875,12 @@ namespace WinFormsApp1
 
             if (!allowed.Contains(currentDbTable))
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     $"`{currentDbTable}` is not on the whitelist for truncation.\n\n" +
                     "Add it inside `ResetTableNumbering()` if you really need to reset it.",
                     "Not Allowed",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -901,21 +912,22 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Failed to inspect table:\n" + ex.Message);
+                CustomMessageBox.Show("Failed to inspect table:\n" + ex.Message,
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
                 return;
             }
 
-            var step1 = MessageBox.Show(
+            var step1 = CustomMessageBox.Show(
                 $"⚠️  You are about to TRUNCATE `{currentDbTable}`.\n\n" +
                 $"• Current rows: {rowCount}\n" +
                 $"• Highest {pkColumn ?? "ID"}: {maxId}\n" +
                 $"• After truncation: 0 rows, auto-increment resets to 1\n\n" +
                 $"This CANNOT be undone.\n\nContinue?",
                 "Confirm TRUNCATE",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning);
+                CustomMessageBoxButtons.YesNo,
+                CustomMessageBoxIcon.Warning);
 
-            if (step1 != DialogResult.Yes) return;
+            if (step1 != CustomMessageBoxResult.Yes) return;
 
             string typed = Prompt(
                 $"To confirm, type the exact table name:\n\n    {currentDbTable}\n\n" +
@@ -925,11 +937,11 @@ namespace WinFormsApp1
             if (typed == null) return;
             if (typed.Trim() != currentDbTable)
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     "The name you typed does not match. Truncation cancelled.",
                     "Cancelled",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Information);
                 return;
             }
 
@@ -965,22 +977,22 @@ namespace WinFormsApp1
 
                 lblDbStatus.Text = $"✔ `{currentDbTable}` truncated. Auto-increment reset to 1.";
 
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     $"`{currentDbTable}` has been truncated.\n\n" +
                     "All rows deleted. Next insert will start at ID = 1.",
                     "TRUNCATE Complete",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Information);
 
                 LoadTable(currentDbTable);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     "TRUNCATE failed:\n\n" + ex.Message,
                     "Error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Error);
             }
         }
 
@@ -1050,8 +1062,8 @@ namespace WinFormsApp1
 
             if (dt == null || dt.Rows.Count == 0)
             {
-                MessageBox.Show("Nothing to export for this report.", "Empty",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CustomMessageBox.Show("Nothing to export for this report.", "Empty",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 return;
             }
 
@@ -1081,18 +1093,18 @@ namespace WinFormsApp1
                         wb.SaveAs(sfd.FileName);
                     }
 
-                    MessageBox.Show(
+                    CustomMessageBox.Show(
                         $"Exported successfully.\n\n{dt.Rows.Count} row(s) →\n{sfd.FileName}",
                         "Export Complete",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information);
+                        CustomMessageBoxButtons.OK,
+                        CustomMessageBoxIcon.Information);
 
                     lblDbStatus.Text = $"Exported {dt.Rows.Count} row(s) to {Path.GetFileName(sfd.FileName)}.";
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Export failed:\n" + ex.Message, "Error",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    CustomMessageBox.Show("Export failed:\n" + ex.Message, "Error",
+                        CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
                 }
             }
         }
@@ -1310,8 +1322,8 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Report failed:\n\n" + ex.Message,
-                    "Report Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CustomMessageBox.Show("Report failed:\n\n" + ex.Message,
+                    "Report Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
                 return null;
             }
         }
@@ -1320,7 +1332,8 @@ namespace WinFormsApp1
         {
             if (dgvDatabase.DataSource == null || dgvDatabase.Rows.Count == 0)
             {
-                MessageBox.Show("Nothing to export.");
+                CustomMessageBox.Show("Nothing to export.", "Notice",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 return;
             }
 
@@ -1342,11 +1355,13 @@ namespace WinFormsApp1
                         wb.SaveAs(sfd.FileName);
                     }
 
-                    MessageBox.Show("Exported successfully.");
+                    CustomMessageBox.Show("Exported successfully.", "Export Complete",
+                        CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Export failed:\n" + ex.Message);
+                    CustomMessageBox.Show("Export failed:\n" + ex.Message,
+                        "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
                 }
             }
         }
@@ -1401,18 +1416,18 @@ namespace WinFormsApp1
                         wb.SaveAs(sfd.FileName);
                     }
 
-                    MessageBox.Show(
+                    CustomMessageBox.Show(
                         $"Complete export saved.\n\n{sfd.FileName}",
                         "Export Complete",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information);
+                        CustomMessageBoxButtons.OK,
+                        CustomMessageBoxIcon.Information);
 
                     lblDbStatus.Text = $"Exported everything to {Path.GetFileName(sfd.FileName)}.";
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Export failed:\n" + ex.Message, "Error",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    CustomMessageBox.Show("Export failed:\n" + ex.Message, "Error",
+                        CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
                 }
             }
         }

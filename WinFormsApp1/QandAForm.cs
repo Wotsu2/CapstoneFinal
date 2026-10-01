@@ -77,7 +77,8 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred while fetching the question and answer." + ex.Message);
+                CustomMessageBox.Show("An error occurred while fetching the question and answer.\n\n" + ex.Message,
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 
@@ -101,7 +102,8 @@ namespace WinFormsApp1
 
                                 if (string.IsNullOrEmpty(txtFirstAnswer.Text) || string.IsNullOrEmpty(txtSecondAnswer.Text) || string.IsNullOrEmpty(txtThirdAnswer.Text))
                                 {
-                                    MessageBox.Show("Please Fill the Blank");
+                                    CustomMessageBox.Show("Please Fill the Blank",
+                                        "Validation", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                                     return;
                                 }
 
@@ -114,11 +116,11 @@ namespace WinFormsApp1
                                     studentForm.Show();
                                     studentForm.Refresh();
                                     Application.DoEvents();
-
                                 }
                                 else
                                 {
-                                    MessageBox.Show("Please Enter The Correct Answer");
+                                    CustomMessageBox.Show("Please Enter The Correct Answer",
+                                        "Incorrect Answer", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                                 }
                             }
                         }
@@ -127,7 +129,8 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred while fetching the remaining limit." + ex.Message);
+                CustomMessageBox.Show("An error occurred while fetching the remaining limit.\n\n" + ex.Message,
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
     }

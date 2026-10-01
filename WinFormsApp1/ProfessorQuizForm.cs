@@ -256,9 +256,6 @@ namespace WinFormsApp1
 
             Controls.Add(leftCard);
 
-            // Card is decorative only (siblings sit on top of it,
-            // not inside it) — push it behind everything else so
-            // it doesn't paint over the title/inputs/list/buttons.
             leftCard.SendToBack();
 
             // =====================================================
@@ -1205,8 +1202,6 @@ namespace WinFormsApp1
             monitoringTimer.Tick +=
                 MonitoringTimer_Tick;
 
-            // Re-assert z-order once every control has been added,
-            // so the decorative card always stays behind its content.
             leftCard.SendToBack();
         }
 
@@ -1536,11 +1531,11 @@ namespace WinFormsApp1
 
                     if (result == null)
                     {
-                        MessageBox.Show(
+                        CustomMessageBox.Show(
                             "Unable to import the DOCX.",
                             "Import Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
+                            CustomMessageBoxButtons.OK,
+                            CustomMessageBoxIcon.Error);
 
                         return;
                     }
@@ -1548,11 +1543,11 @@ namespace WinFormsApp1
                     if (result.Questions == null ||
                         result.Questions.Count == 0)
                     {
-                        MessageBox.Show(
+                        CustomMessageBox.Show(
                             "No questions were found in the DOCX.",
                             "No Questions",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Warning);
+                            CustomMessageBoxButtons.OK,
+                            CustomMessageBoxIcon.Warning);
 
                         return;
                     }
@@ -1585,7 +1580,7 @@ namespace WinFormsApp1
 
                     RefreshQuestionList();
 
-                    MessageBox.Show(
+                    CustomMessageBox.Show(
                         "DOCX imported successfully!\n\n" +
                         "Questions found: " +
                         importedQuestions.Count +
@@ -1593,17 +1588,17 @@ namespace WinFormsApp1
                         "The original DOCX order will be preserved when saved.\n" +
                         "Question scrambling will happen on the student side by section.",
                         "Import Successful",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information);
+                        CustomMessageBoxButtons.OK,
+                        CustomMessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(
+                    CustomMessageBox.Show(
                         "Error importing DOCX:\n\n" +
                         ex.Message,
                         "Import Error",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Error);
+                        CustomMessageBoxButtons.OK,
+                        CustomMessageBoxIcon.Error);
                 }
             }
         }
@@ -1639,16 +1634,16 @@ namespace WinFormsApp1
                     ExampleTemplateGenerator.Generate(
                         dialog.FileName);
 
-                    DialogResult open =
-                        MessageBox.Show(
+                    var open =
+                        CustomMessageBox.Show(
                             "Example template saved!\n\n" +
                             "Open it now?",
                             "Saved",
-                            MessageBoxButtons.YesNo,
-                            MessageBoxIcon.Information);
+                            CustomMessageBoxButtons.YesNo,
+                            CustomMessageBoxIcon.Question);
 
                     if (open ==
-                        DialogResult.Yes)
+                        CustomMessageBoxResult.Yes)
                     {
                         System.Diagnostics.Process.Start(
                             new System.Diagnostics.ProcessStartInfo
@@ -1660,12 +1655,12 @@ namespace WinFormsApp1
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(
+                    CustomMessageBox.Show(
                         "Could not create the example file:\n\n" +
                         ex.Message,
                         "Error",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Error);
+                        CustomMessageBoxButtons.OK,
+                        CustomMessageBoxIcon.Error);
                 }
             }
         }
@@ -1835,23 +1830,23 @@ namespace WinFormsApp1
         {
             if (cmbAssessmentType.SelectedItem == null)
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     "Please select Quiz or Exam.",
                     "Missing Type",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Warning);
 
                 return;
             }
 
             if (cmbExamPeriod.SelectedItem == null)
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     "Please select the Exam Period.\n\n" +
                     "Choose PRELIM, MIDTERM, SEMIFINALS, or FINALS.",
                     "Missing Exam Period",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Warning);
 
                 cmbExamPeriod.Focus();
 
@@ -1863,11 +1858,11 @@ namespace WinFormsApp1
 
             if (string.IsNullOrWhiteSpace(title))
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     "Please enter the title.",
                     "Missing Title",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Warning);
 
                 txtQuizTitle.Focus();
 
@@ -1879,11 +1874,11 @@ namespace WinFormsApp1
 
             if (string.IsNullOrWhiteSpace(subject))
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     "Please enter the subject.",
                     "Missing Subject",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Warning);
 
                 txtSubject.Focus();
 
@@ -1900,11 +1895,11 @@ namespace WinFormsApp1
 
             if (durationMinutes < 1)
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     "Time limit must be at least 1 minute.",
                     "Invalid Time Limit",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Warning);
 
                 numHours.Focus();
 
@@ -1913,11 +1908,11 @@ namespace WinFormsApp1
 
             if (durationMinutes > 1440)
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     "Time limit cannot exceed 24 hours (1440 minutes).",
                     "Invalid Time Limit",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Warning);
 
                 numHours.Focus();
 
@@ -1927,11 +1922,11 @@ namespace WinFormsApp1
             if (importedQuestions == null ||
                 importedQuestions.Count == 0)
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     "Please import a DOCX containing questions first.",
                     "No Questions",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Warning);
 
                 return;
             }
@@ -1946,11 +1941,11 @@ namespace WinFormsApp1
             if (!string.IsNullOrWhiteSpace(
                 validationError))
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     validationError,
                     "Question Validation Error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Warning);
 
                 return;
             }
@@ -1981,8 +1976,8 @@ namespace WinFormsApp1
                 CountQuestionsByType(
                     "essay");
 
-            DialogResult confirm =
-                MessageBox.Show(
+            var confirm =
+                CustomMessageBox.Show(
                     "Submit this " +
                     assessmentType.ToUpper() +
                     "?\n\n" +
@@ -2014,11 +2009,11 @@ namespace WinFormsApp1
                     "Total Questions: " +
                     importedQuestions.Count,
                     "Confirm Submit",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Question);
+                    CustomMessageBoxButtons.YesNo,
+                    CustomMessageBoxIcon.Question);
 
             if (confirm !=
-                DialogResult.Yes)
+                CustomMessageBoxResult.Yes)
             {
                 return;
             }
@@ -2343,7 +2338,7 @@ namespace WinFormsApp1
                     StartMonitoring(
                         monitoredQuizId);
 
-                    MessageBox.Show(
+                    CustomMessageBox.Show(
                         assessmentType.ToUpper() +
                         " submitted successfully!\n\n" +
                         "Quiz ID: " +
@@ -2373,8 +2368,8 @@ namespace WinFormsApp1
                         "\n\n" +
                         "Student monitoring is now active.",
                         "Submit Successful",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information);
+                        CustomMessageBoxButtons.OK,
+                        CustomMessageBoxIcon.Information);
 
                     ClearForm(
                         false);
@@ -2392,14 +2387,14 @@ namespace WinFormsApp1
                     {
                     }
 
-                    MessageBox.Show(
+                    CustomMessageBox.Show(
                         "The " +
                         assessmentType.ToUpper() +
                         " was not submitted.\n\n" +
                         ex.Message,
                         "Database Error",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Error);
+                        CustomMessageBoxButtons.OK,
+                        CustomMessageBoxIcon.Error);
                 }
             }
         }
@@ -2439,11 +2434,11 @@ namespace WinFormsApp1
         {
             if (monitoredQuizId <= 0)
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     "No quiz is currently selected for monitoring.",
                     "Monitoring",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Information);
 
                 return;
             }
@@ -2560,10 +2555,7 @@ namespace WinFormsApp1
             }
             catch
             {
-                // Do not continuously show database/LAN errors
-                // to the professor while the timer is refreshing.
-                //
-                // The next refresh will try again.
+                // Silent — the next refresh will try again.
             }
         }
 
@@ -2580,14 +2572,12 @@ namespace WinFormsApp1
                     ? ""
                     : dbStatus.Trim().ToUpper();
 
-            // Submitted always remains Submitted.
             if (status ==
                 "SUBMITTED")
             {
                 return "Submitted";
             }
 
-            // Taking + recent heartbeat.
             if (status ==
                     "TAKING" &&
                 lastSeen.HasValue)
@@ -2605,9 +2595,6 @@ namespace WinFormsApp1
                 return "Disconnected";
             }
 
-            // If TAKING but last_seen is missing,
-            // treat it as disconnected rather than
-            // incorrectly showing the student as active.
             if (status ==
                 "TAKING")
             {
@@ -2705,10 +2692,6 @@ namespace WinFormsApp1
                         ex.Message;
                 }
 
-                // =====================================================
-                // MULTIPLE CHOICE
-                // =====================================================
-
                 if (questionType ==
                     "multiple_choice")
                 {
@@ -2773,11 +2756,6 @@ namespace WinFormsApp1
                             q.Question;
                     }
                 }
-
-                // =====================================================
-                // TRUE / FALSE
-                // =====================================================
-
                 else if (questionType ==
                          "true_false")
                 {
@@ -2802,11 +2780,6 @@ namespace WinFormsApp1
                             q.Question;
                     }
                 }
-
-                // =====================================================
-                // IDENTIFICATION
-                // =====================================================
-
                 else if (questionType ==
                          "identification")
                 {
@@ -2821,11 +2794,6 @@ namespace WinFormsApp1
                             q.Question;
                     }
                 }
-
-                // =====================================================
-                // ESSAY
-                // =====================================================
-
                 else if (questionType ==
                          "essay")
                 {
@@ -2861,10 +2829,6 @@ namespace WinFormsApp1
                 .Replace("-", "_")
                 .Replace("/", "_");
 
-            // =====================================================
-            // MULTIPLE CHOICE
-            // =====================================================
-
             if (normalized ==
                     "multiple_choice" ||
                 normalized ==
@@ -2876,10 +2840,6 @@ namespace WinFormsApp1
             {
                 return "multiple_choice";
             }
-
-            // =====================================================
-            // TRUE / FALSE
-            // =====================================================
 
             if (normalized ==
                     "true_false" ||
@@ -2896,10 +2856,6 @@ namespace WinFormsApp1
             {
                 return "true_false";
             }
-
-            // =====================================================
-            // IDENTIFICATION
-            // =====================================================
 
             if (normalized ==
                     "identification" ||
@@ -2921,10 +2877,6 @@ namespace WinFormsApp1
                 return "identification";
             }
 
-            // =====================================================
-            // ESSAY
-            // =====================================================
-
             if (normalized ==
                     "essay" ||
                 normalized ==
@@ -2934,10 +2886,6 @@ namespace WinFormsApp1
             {
                 return "essay";
             }
-
-            // =====================================================
-            // UNKNOWN
-            // =====================================================
 
             if (throwOnUnknown)
             {
@@ -3039,15 +2987,15 @@ namespace WinFormsApp1
             object sender,
             EventArgs e)
         {
-            DialogResult result =
-                MessageBox.Show(
+            var result =
+                CustomMessageBox.Show(
                     "Clear the current quiz/exam?",
                     "Clear",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Question);
+                    CustomMessageBoxButtons.YesNo,
+                    CustomMessageBoxIcon.Question);
 
             if (result ==
-                DialogResult.Yes)
+                CustomMessageBoxResult.Yes)
             {
                 ClearForm();
             }
@@ -3070,7 +3018,6 @@ namespace WinFormsApp1
             cmbExamPeriod.SelectedIndex =
                 0;
 
-            // Reset time limit to default (1 hour 0 minutes).
             if (numHours != null)
             {
                 numHours.Value = 1;

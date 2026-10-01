@@ -529,7 +529,6 @@
             guna2Panel1.ShadowDecoration.Enabled = true;
             guna2Panel1.Size = new Size(80, 834);
             guna2Panel1.TabIndex = 2;
-            guna2Panel1.Paint += guna2Panel1_Paint;
             // 
             // guna2PictureBox1
             // 

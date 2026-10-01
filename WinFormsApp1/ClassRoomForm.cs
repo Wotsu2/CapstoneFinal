@@ -455,7 +455,8 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Unable to open activity: " + ex.Message);
+                CustomMessageBox.Show("Unable to open activity: " + ex.Message,
+                    "Open Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 
@@ -537,7 +538,8 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Unable to open quiz: " + ex.Message);
+                CustomMessageBox.Show("Unable to open quiz: " + ex.Message,
+                    "Open Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 

@@ -80,6 +80,17 @@ namespace WinFormsApp1
         };
         private int _colorIndex = 0;
 
+        // =========================================================
+        // NOTIFICATIONS
+        // =========================================================
+        private Guna2Button btnNotifications;
+        private Label lblNotificationBadge;
+        private Guna2Panel notificationPanel;
+        private FlowLayoutPanel notificationList;
+        private System.Windows.Forms.Timer notificationsRefreshTimer;
+        private HashSet<string> readNotificationKeys = new HashSet<string>();
+        private bool notificationPanelOpen = false;
+
         public ProfessorForm(int UserId, string Username)
         {
             InitializeComponent();
@@ -122,11 +133,29 @@ namespace WinFormsApp1
             InitializeNavTooltips();
 
             try { BuildAttendanceUi(); }
-            catch (Exception ex) { MessageBox.Show("BuildAttendanceUi error: " + ex.Message); }
+            catch (Exception ex) { Console.WriteLine("BuildAttendanceUi error: " + ex.Message); }
+
+            // ---------- NOTIFICATIONS ----------
+            try { BuildNotificationsUi(); }
+            catch (Exception ex) { Console.WriteLine("BuildNotificationsUi: " + ex.Message); }
+
+            try { LoadNotifications(); }
+            catch (Exception ex) { Console.WriteLine("LoadNotifications: " + ex.Message); }
+
+            notificationsRefreshTimer = new System.Windows.Forms.Timer { Interval = 60000 };
+            notificationsRefreshTimer.Tick += (s, ev) =>
+            {
+                try { LoadNotifications(); } catch { }
+            };
+            notificationsRefreshTimer.Start();
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
+            try { notificationsRefreshTimer?.Stop(); } catch { }
+            try { notificationsRefreshTimer?.Dispose(); } catch { }
+            notificationsRefreshTimer = null;
+
             StopServer();
             base.OnFormClosing(e);
         }
@@ -198,7 +227,8 @@ namespace WinFormsApp1
             if (!string.IsNullOrEmpty(saveFolder) && saveFolder != "Null" && Directory.Exists(saveFolder))
                 LoadServerFolder(saveFolder);
             else
-                MessageBox.Show("Save folder is not configured for this account.");
+                CustomMessageBox.Show("Save folder is not configured for this account.",
+                    "Notice", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
         }
 
         private void btnAccount_Click(object sender, EventArgs e)
@@ -814,9 +844,6 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // ENROLLED STUDENTS (via student_class) — used by attendance
-        // =========================================================
         private List<(int StudentId, string StudentName)> GetStudentsInSection(string sectionFilter)
         {
             List<(int, string)> list = new List<(int, string)>();
@@ -826,7 +853,6 @@ namespace WinFormsApp1
             {
                 conn.Open();
 
-                // Only students who joined one of the professor's classes in this section
                 string query = @"SELECT DISTINCT
                                      ui.user_id AS student_id,
                                      CONCAT(ui.lastname, ' ', ui.firstname, ' ', ui.middlename) AS student_name
@@ -861,8 +887,8 @@ namespace WinFormsApp1
         {
             if (attSectionCombo == null || string.IsNullOrEmpty(attSectionCombo.Text))
             {
-                MessageBox.Show("Please select a section first.", "No Section",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CustomMessageBox.Show("Please select a section first.", "No Section",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -872,14 +898,13 @@ namespace WinFormsApp1
 
             if (students.Count == 0)
             {
-                MessageBox.Show($"No enrolled students found in section {section}.",
-                    "No Students", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CustomMessageBox.Show($"No enrolled students found in section {section}.",
+                    "No Students", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 return;
             }
 
             EnsureTodayAttendanceColumn();
 
-            // Clean up old cards and free memory
             attListPanel.SuspendLayout();
             for (int i = attListPanel.Controls.Count - 1; i >= 0; i--)
             {
@@ -906,8 +931,8 @@ namespace WinFormsApp1
         {
             if (attListPanel == null || attListPanel.Controls.Count == 0)
             {
-                MessageBox.Show("Nothing to update. Load the attendance list first.",
-                    "Nothing to Update", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CustomMessageBox.Show("Nothing to update. Load the attendance list first.",
+                    "Nothing to Update", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 return;
             }
 
@@ -950,8 +975,8 @@ namespace WinFormsApp1
 
             if (selections.Count == 0)
             {
-                MessageBox.Show("No statuses selected yet.",
-                    "Nothing to Update", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CustomMessageBox.Show("No statuses selected yet.",
+                    "Nothing to Update", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 return;
             }
 
@@ -967,7 +992,6 @@ namespace WinFormsApp1
                                    : s.Status == "Absent" ? "absent"
                                    : "late";
 
-                        // Ensure row exists in professor_attendance before updating
                         string insertIfMissing = @"INSERT INTO professor_attendance 
                                                      (student_id, student_name, present, absent, late)
                                                    SELECT @student_id, @name, 0, 0, 0
@@ -997,16 +1021,16 @@ namespace WinFormsApp1
                     }
                 }
 
-                MessageBox.Show($"{selections.Count} attendance record(s) saved.",
-                    "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CustomMessageBox.Show($"{selections.Count} attendance record(s) saved.",
+                    "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
 
                 RefreshAttendanceGrid(attSectionCombo.Text);
             }
             catch (Exception ex)
             {
                 Console.WriteLine("SaveAttendanceSession error: " + ex.Message);
-                MessageBox.Show("Error saving attendance: " + ex.Message,
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CustomMessageBox.Show("Error saving attendance: " + ex.Message,
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 
@@ -1158,7 +1182,6 @@ namespace WinFormsApp1
         {
             if (attListPanel == null) return;
 
-            // Don't wipe existing student cards
             bool hasCards = false;
             foreach (Control c in attListPanel.Controls)
             {
@@ -1245,8 +1268,8 @@ namespace WinFormsApp1
 
                 if (dt.Rows.Count == 0)
                 {
-                    MessageBox.Show("No data to export.", "Empty",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    CustomMessageBox.Show("No data to export.", "Empty",
+                        CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                     return;
                 }
 
@@ -1263,16 +1286,16 @@ namespace WinFormsApp1
                             worksheet.Columns().AdjustToContents();
                             workbook.SaveAs(sfd.FileName);
                         }
-                        MessageBox.Show("Exported successfully!", "Exported",
-                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        CustomMessageBox.Show("Exported successfully!", "Exported",
+                            CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                     }
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine("ExportAttendanceToExcel error: " + ex.Message);
-                MessageBox.Show("Export failed: " + ex.Message,
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CustomMessageBox.Show("Export failed: " + ex.Message,
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 
@@ -1339,7 +1362,8 @@ namespace WinFormsApp1
                 string.IsNullOrWhiteSpace(txtClassTime.Text) ||
                 string.IsNullOrWhiteSpace(cmbClassDate.Text))
             {
-                MessageBox.Show("Please fill in all fields.");
+                CustomMessageBox.Show("Please fill in all fields.", "Validation",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -1369,7 +1393,8 @@ namespace WinFormsApp1
                 AutoCreateClassBtn();
                 CreateFolderForSection(folderName);
 
-                MessageBox.Show("Class created successfully!");
+                CustomMessageBox.Show("Class created successfully!", "Success",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
 
                 txtClassCode.Clear();
                 txtClassName.Clear();
@@ -1384,7 +1409,8 @@ namespace WinFormsApp1
             catch (Exception ex)
             {
                 Console.WriteLine("btnCreateClass_Click error: " + ex.Message);
-                MessageBox.Show("Error: " + ex.Message);
+                CustomMessageBox.Show("Error: " + ex.Message,
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 
@@ -1392,7 +1418,8 @@ namespace WinFormsApp1
         {
             if (string.IsNullOrWhiteSpace(folderName) || string.IsNullOrEmpty(saveFolder) || saveFolder == "Null")
             {
-                MessageBox.Show("Save folder is not set up correctly.");
+                CustomMessageBox.Show("Save folder is not set up correctly.", "Notice",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -1404,7 +1431,8 @@ namespace WinFormsApp1
             }
             else
             {
-                MessageBox.Show("Folder already exists.");
+                CustomMessageBox.Show("Folder already exists.", "Notice",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
             }
         }
 
@@ -1534,12 +1562,10 @@ namespace WinFormsApp1
             string classId = clickedCard.Tag?.ToString();
             if (string.IsNullOrEmpty(classId)) return;
 
-            DialogResult result = MessageBox.Show("Are you sure you want to delete this class?",
-                                                  "Confirm Delete",
-                                                  MessageBoxButtons.YesNo,
-                                                  MessageBoxIcon.Warning);
+            var result = CustomMessageBox.Show("Are you sure you want to delete this class?",
+                "Confirm Delete", CustomMessageBoxButtons.YesNo, CustomMessageBoxIcon.Warning);
 
-            if (result == DialogResult.Yes)
+            if (result == CustomMessageBoxResult.Yes)
             {
                 string connStr = SettingsManager.Current.GetConnectionString();
                 try
@@ -1607,7 +1633,8 @@ namespace WinFormsApp1
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Could not read the selected file: " + ex.Message);
+                    CustomMessageBox.Show("Could not read the selected file: " + ex.Message,
+                        "File Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
                     return;
                 }
             }
@@ -1617,7 +1644,8 @@ namespace WinFormsApp1
                 bool sent = await SendActivityFileToServer(professorFolder, section, pdfName, fileBytes);
                 if (!sent)
                 {
-                    MessageBox.Show("Failed to send activity file to server. Activity not posted.");
+                    CustomMessageBox.Show("Failed to send activity file to server. Activity not posted.",
+                        "Send Failed", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
                     return;
                 }
 
@@ -1665,7 +1693,8 @@ namespace WinFormsApp1
                     }
                 }
 
-                MessageBox.Show("Activity Posted Successfully");
+                CustomMessageBox.Show("Activity Posted Successfully", "Success",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
 
                 selectedFilePath = "";
                 btnActivityUploadFile.Text = "Upload File";
@@ -1677,7 +1706,8 @@ namespace WinFormsApp1
             catch (Exception ex)
             {
                 Console.WriteLine("btnPostActivity_Click error: " + ex.Message);
-                MessageBox.Show("Error posting activity: " + ex.Message);
+                CustomMessageBox.Show("Error posting activity: " + ex.Message,
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 
@@ -1697,14 +1727,14 @@ namespace WinFormsApp1
 
                     if (completed == timeoutTask)
                     {
-                        MessageBox.Show($"Server ({serverIp}:{serverPort}) not reachable (timeout).");
+                        Console.WriteLine($"Server ({serverIp}:{serverPort}) not reachable (timeout).");
                         return false;
                     }
 
                     await connectTask;
                     if (!client.Connected)
                     {
-                        MessageBox.Show($"Server ({serverIp}:{serverPort}) refused the connection.");
+                        Console.WriteLine($"Server ({serverIp}:{serverPort}) refused the connection.");
                         return false;
                     }
 
@@ -1725,7 +1755,6 @@ namespace WinFormsApp1
             catch (Exception ex)
             {
                 Console.WriteLine("SendActivityFileToServer error: " + ex.Message);
-                MessageBox.Show("Send error: " + ex.Message);
                 return false;
             }
         }
@@ -1948,13 +1977,15 @@ namespace WinFormsApp1
 
                 if (string.IsNullOrWhiteSpace(folderName))
                 {
-                    MessageBox.Show("Please enter a folder name.");
+                    CustomMessageBox.Show("Please enter a folder name.",
+                        "Validation", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                     return;
                 }
 
                 if (folderName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
                 {
-                    MessageBox.Show("Folder name contains invalid characters.");
+                    CustomMessageBox.Show("Folder name contains invalid characters.",
+                        "Validation", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                     return;
                 }
 
@@ -1994,7 +2025,8 @@ namespace WinFormsApp1
         {
             if (string.IsNullOrEmpty(saveFolder) || saveFolder == "Null")
             {
-                MessageBox.Show("Save folder is not set up correctly.");
+                CustomMessageBox.Show("Save folder is not set up correctly.",
+                    "Notice", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return false;
             }
 
@@ -2006,20 +2038,23 @@ namespace WinFormsApp1
 
             if (Directory.Exists(newFolderPath))
             {
-                MessageBox.Show("Folder already exists.");
+                CustomMessageBox.Show("Folder already exists.",
+                    "Notice", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 return false;
             }
 
             try
             {
                 Directory.CreateDirectory(newFolderPath);
-                MessageBox.Show("Folder created!");
+                CustomMessageBox.Show("Folder created!", "Success",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 LoadServerFolder(basePath, addToHistory: false);
                 return true;
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error creating folder: " + ex.Message);
+                CustomMessageBox.Show("Error creating folder: " + ex.Message,
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
                 return false;
             }
         }
@@ -2067,10 +2102,10 @@ namespace WinFormsApp1
 
                     if (string.IsNullOrEmpty(rootPath))
                     {
-                        MessageBox.Show(
+                        CustomMessageBox.Show(
                             "Root folder has not been configured.\n" +
                             "Please ask your administrator to set it in Configuration → File Storage.",
-                            "Not Configured", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            "Not Configured", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                         return "Null";
                     }
 
@@ -2257,8 +2292,8 @@ namespace WinFormsApp1
             catch (Exception ex)
             {
                 Console.WriteLine("CreatePanelForSubmittedFiles error: " + ex.Message);
-                MessageBox.Show("Unable to open submission viewer:\n\n" + ex.Message,
-                    "Open Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CustomMessageBox.Show("Unable to open submission viewer:\n\n" + ex.Message,
+                    "Open Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 
@@ -2432,11 +2467,13 @@ namespace WinFormsApp1
                 byte[] data = Encoding.UTF8.GetBytes("SHUTDOWN");
                 stream.Write(data, 0, data.Length);
                 client.Close();
-                MessageBox.Show("Shutdown command sent!");
+                CustomMessageBox.Show("Shutdown command sent!", "Success",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
             }
             catch
             {
-                MessageBox.Show("Error: Client not reachable");
+                CustomMessageBox.Show("Error: Client not reachable",
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 
@@ -2451,11 +2488,13 @@ namespace WinFormsApp1
                 byte[] data = Encoding.UTF8.GetBytes("RESTART");
                 stream.Write(data, 0, data.Length);
                 client.Close();
-                MessageBox.Show("Restart command sent!");
+                CustomMessageBox.Show("Restart command sent!", "Success",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
             }
             catch
             {
-                MessageBox.Show("Error: Client not reachable");
+                CustomMessageBox.Show("Error: Client not reachable",
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 
@@ -2723,10 +2762,10 @@ namespace WinFormsApp1
 
         private void Logout()
         {
-            DialogResult result = MessageBox.Show("Are you sure you want to logout?",
-                "Logout Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var result = CustomMessageBox.Show("Are you sure you want to logout?",
+                "Logout Confirmation", CustomMessageBoxButtons.YesNo, CustomMessageBoxIcon.Question);
 
-            if (result == DialogResult.Yes)
+            if (result == CustomMessageBoxResult.Yes)
             {
                 StopServer();
                 ClearAllFormData();
@@ -2757,13 +2796,15 @@ namespace WinFormsApp1
 
             if (string.IsNullOrEmpty(txtCurrentUsername.Text) || string.IsNullOrEmpty(txtNewUsername.Text))
             {
-                MessageBox.Show("Please enter both the current and new usernames.");
+                CustomMessageBox.Show("Please enter both the current and new usernames.",
+                    "Validation", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
             if (txtCurrentUsername.Text != ProfessorUsername)
             {
-                MessageBox.Show("Please enter the Correct usernames.");
+                CustomMessageBox.Show("Please enter the Correct usernames.",
+                    "Validation", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -2781,7 +2822,8 @@ namespace WinFormsApp1
                     }
                     ProfessorUsername = txtNewUsername.Text.Trim();
                     ClearTextSettings();
-                    MessageBox.Show("Username updated successfully.");
+                    CustomMessageBox.Show("Username updated successfully.",
+                        "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 }
             }
             catch (Exception ex)
@@ -2805,12 +2847,14 @@ namespace WinFormsApp1
 
             if (string.IsNullOrEmpty(txtCurrentPassword.Text) || string.IsNullOrEmpty(txtNewPassword.Text) || string.IsNullOrEmpty(txtConfirmPassword.Text))
             {
-                MessageBox.Show("Please fill in all fields.");
+                CustomMessageBox.Show("Please fill in all fields.",
+                    "Validation", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
             if (txtNewPassword.Text != txtConfirmPassword.Text)
             {
-                MessageBox.Show("New password and confirm password do not match.");
+                CustomMessageBox.Show("New password and confirm password do not match.",
+                    "Validation", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -2827,7 +2871,8 @@ namespace WinFormsApp1
                         cmd.ExecuteNonQuery();
                     }
                     ClearTextSettings();
-                    MessageBox.Show("Password updated successfully.");
+                    CustomMessageBox.Show("Password updated successfully.",
+                        "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 }
             }
             catch (Exception ex)
@@ -2877,13 +2922,15 @@ namespace WinFormsApp1
         {
             if (string.IsNullOrEmpty(CurrentProfilePath))
             {
-                MessageBox.Show("Upload an image first!");
+                CustomMessageBox.Show("Upload an image first!",
+                    "Validation", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
             if (!File.Exists(CurrentProfilePath))
             {
-                MessageBox.Show("The selected file no longer exists.");
+                CustomMessageBox.Show("The selected file no longer exists.",
+                    "File Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -2899,7 +2946,8 @@ namespace WinFormsApp1
 
                 if (string.IsNullOrEmpty(uncPath))
                 {
-                    MessageBox.Show("Failed to send profile picture to server.");
+                    CustomMessageBox.Show("Failed to send profile picture to server.",
+                        "Server Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                     return;
                 }
 
@@ -2918,7 +2966,8 @@ namespace WinFormsApp1
                         int rows = cmd.ExecuteNonQuery();
                         if (rows == 0)
                         {
-                            MessageBox.Show("No user row was updated. Check the username.");
+                            CustomMessageBox.Show("No user row was updated. Check the username.",
+                                "Database Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                             return;
                         }
                     }
@@ -2929,12 +2978,14 @@ namespace WinFormsApp1
                 cachedProfileImage = null;
 
                 InitializeChangingPicture();
-                MessageBox.Show("Profile picture updated successfully.");
+                CustomMessageBox.Show("Profile picture updated successfully.",
+                    "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
                 Console.WriteLine("btnSubmitChangePhoto_Click error: " + ex);
-                MessageBox.Show("Error: " + ex.Message);
+                CustomMessageBox.Show("Error: " + ex.Message,
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 
@@ -2953,14 +3004,14 @@ namespace WinFormsApp1
 
                     if (completed == timeoutTask)
                     {
-                        MessageBox.Show($"Server ({adminIp}:{adminPort}) not reachable (timeout).");
+                        Console.WriteLine($"Server ({adminIp}:{adminPort}) not reachable (timeout).");
                         return null;
                     }
 
                     await connectTask;
                     if (!client.Connected)
                     {
-                        MessageBox.Show($"Server ({adminIp}:{adminPort}) refused the connection.");
+                        Console.WriteLine($"Server ({adminIp}:{adminPort}) refused the connection.");
                         return null;
                     }
 
@@ -2993,7 +3044,6 @@ namespace WinFormsApp1
             catch (Exception ex)
             {
                 Console.WriteLine("SendProfilePhotoToAdmin error: " + ex.Message);
-                MessageBox.Show("Send error: " + ex.Message);
                 return null;
             }
         }
@@ -3222,8 +3272,8 @@ namespace WinFormsApp1
         {
             if (FolderListView.SelectedItems.Count == 0)
             {
-                MessageBox.Show("Please select a file or folder first.",
-                    "Nothing Selected", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CustomMessageBox.Show("Please select a file or folder first.",
+                    "Nothing Selected", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 return;
             }
 
@@ -3231,7 +3281,8 @@ namespace WinFormsApp1
 
             if (string.IsNullOrEmpty(path))
             {
-                MessageBox.Show("Invalid selection.");
+                CustomMessageBox.Show("Invalid selection.",
+                    "Notice", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -3240,7 +3291,8 @@ namespace WinFormsApp1
 
             if (!isFolder && !isFile)
             {
-                MessageBox.Show("The selected item no longer exists.");
+                CustomMessageBox.Show("The selected item no longer exists.",
+                    "Notice", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -3249,8 +3301,8 @@ namespace WinFormsApp1
                               Path.GetFullPath(saveFolder).TrimEnd('\\'),
                               StringComparison.OrdinalIgnoreCase))
             {
-                MessageBox.Show("You cannot delete your root folder.",
-                    "Not Allowed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CustomMessageBox.Show("You cannot delete your root folder.",
+                    "Not Allowed", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -3260,13 +3312,13 @@ namespace WinFormsApp1
                 ? $"Delete folder '{itemName}' and ALL of its contents?\n\nThis cannot be undone."
                 : $"Delete file '{itemName}'?\n\nThis cannot be undone.";
 
-            DialogResult confirm = MessageBox.Show(
+            var confirm = CustomMessageBox.Show(
                 message,
                 "Confirm Delete",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning);
+                CustomMessageBoxButtons.YesNo,
+                CustomMessageBoxIcon.Warning);
 
-            if (confirm != DialogResult.Yes) return;
+            if (confirm != CustomMessageBoxResult.Yes) return;
 
             try
             {
@@ -3282,8 +3334,8 @@ namespace WinFormsApp1
                 else
                     File.Delete(path);
 
-                MessageBox.Show("Deleted successfully.",
-                    "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CustomMessageBox.Show("Deleted successfully.",
+                    "Deleted", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
 
                 if (!string.IsNullOrEmpty(currentFolder) && Directory.Exists(currentFolder))
                     LoadServerFolder(currentFolder, addToHistory: false);
@@ -3292,21 +3344,21 @@ namespace WinFormsApp1
             }
             catch (UnauthorizedAccessException)
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     "Access denied.\n\n" +
                     "The file/folder may be open in another program or you don't have permission.",
-                    "Delete Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    "Delete Failed", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
             catch (IOException ioEx)
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     "The file is in use or locked.\n\nDetails: " + ioEx.Message,
-                    "Delete Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    "Delete Failed", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error deleting: " + ex.Message,
-                    "Delete Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CustomMessageBox.Show("Error deleting: " + ex.Message,
+                    "Delete Failed", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 
@@ -3368,6 +3420,615 @@ namespace WinFormsApp1
         private void lblPanelName_Click(object sender, EventArgs e)
         {
 
+        }
+
+        // =========================================================
+        // NOTIFICATIONS — UI
+        // =========================================================
+        private void BuildNotificationsUi()
+        {
+            if (btnNotifications != null) return;
+
+            btnNotifications = new Guna2Button
+            {
+                Size = new Size(46, 46),
+                Location = new Point(this.ClientSize.Width - 160, 22),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BorderRadius = 23,
+                BackColor = Color.White,
+                FillColor = Color.White,
+                ForeColor = Color.Maroon,
+                Font = new Font("Segoe UI Emoji", 14F, FontStyle.Bold),
+                Text = "🔔",
+                Cursor = Cursors.Hand
+            };
+            btnNotifications.HoverState.FillColor = Color.FromArgb(250, 235, 235);
+            btnNotifications.Click += (s, e) => ToggleNotificationPanel();
+
+            guna2Panel2.Controls.Add(btnNotifications);
+            btnNotifications.BringToFront();
+
+            lblNotificationBadge = new Label
+            {
+                Size = new Size(22, 22),
+                Location = new Point(btnNotifications.Right - 26, btnNotifications.Top - 4),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BackColor = Color.FromArgb(220, 40, 40),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Text = "0",
+                Visible = false
+            };
+            lblNotificationBadge.Paint += (s, e) =>
+            {
+                var g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                using (var path = new GraphicsPath())
+                {
+                    path.AddEllipse(0, 0, lblNotificationBadge.Width - 1, lblNotificationBadge.Height - 1);
+                    lblNotificationBadge.Region = new Region(path);
+                }
+            };
+            this.Controls.Add(lblNotificationBadge);
+            lblNotificationBadge.BringToFront();
+
+            notificationPanel = new Guna2Panel
+            {
+                Size = new Size(420, 520),
+                Location = new Point(this.ClientSize.Width - 440, 78),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BorderRadius = 14,
+                FillColor = Color.White,
+                BorderColor = Color.FromArgb(230, 225, 225),
+                BorderThickness = 1,
+                ShadowDecoration = { Enabled = true, Depth = 16, Color = Color.FromArgb(60, 0, 0, 0) },
+                Visible = false,
+                AutoScroll = false
+            };
+
+            Guna2Panel panelHeader = new Guna2Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 55,
+                FillColor = Color.Maroon,
+                BorderRadius = 0
+            };
+            notificationPanel.Controls.Add(panelHeader);
+
+            Label lblPanelTitle = new Label
+            {
+                Text = "🔔  Notifications",
+                Font = new Font("Segoe UI Semibold", 13F, FontStyle.Bold),
+                ForeColor = Color.White,
+                BackColor = Color.Transparent,
+                AutoSize = false,
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(18, 0, 0, 0)
+            };
+            panelHeader.Controls.Add(lblPanelTitle);
+
+            Guna2Button btnMarkAllRead = new Guna2Button
+            {
+                Text = "Mark all read",
+                Size = new Size(120, 32),
+                Location = new Point(panelHeader.Width - 130, 12),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BorderRadius = 8,
+                FillColor = Color.FromArgb(60, 255, 255, 255),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold)
+            };
+            btnMarkAllRead.HoverState.FillColor = Color.FromArgb(120, 255, 255, 255);
+            btnMarkAllRead.Click += (s, e) =>
+            {
+                foreach (Control c in notificationList.Controls)
+                {
+                    if (c is Panel card && card.Tag is string key)
+                        readNotificationKeys.Add(key);
+                }
+                LoadNotifications();
+            };
+            panelHeader.Controls.Add(btnMarkAllRead);
+            btnMarkAllRead.BringToFront();
+
+            notificationList = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoScroll = true,
+                Padding = new Padding(10),
+                BackColor = Color.White
+            };
+            notificationPanel.Controls.Add(notificationList);
+            notificationList.BringToFront();
+
+            this.Controls.Add(notificationPanel);
+            notificationPanel.BringToFront();
+
+            this.Click += (s, e) => CloseNotificationPanel();
+            foreach (Control ctrl in this.Controls)
+            {
+                if (ctrl != notificationPanel && ctrl != btnNotifications && ctrl != lblNotificationBadge)
+                    ctrl.Click += (s, e) => CloseNotificationPanel();
+            }
+        }
+
+        private void ToggleNotificationPanel()
+        {
+            if (notificationPanel == null) return;
+
+            if (notificationPanelOpen)
+            {
+                CloseNotificationPanel();
+            }
+            else
+            {
+                notificationPanelOpen = true;
+                notificationPanel.Visible = true;
+                notificationPanel.BringToFront();
+                LoadNotifications();
+            }
+        }
+
+        private void CloseNotificationPanel()
+        {
+            if (notificationPanel == null) return;
+            notificationPanel.Visible = false;
+            notificationPanelOpen = false;
+        }
+
+        // =========================================================
+        // NOTIFICATIONS — DATA
+        // =========================================================
+        private void LoadNotifications()
+        {
+            if (notificationList == null) return;
+
+            notificationList.Controls.Clear();
+
+            int unreadCount = 0;
+            var items = new List<ProfessorNotificationItem>();
+
+            foreach (var s in LoadNotificationSubmissions())
+            {
+                string key = "S|" + s.Id;
+                bool unread = !readNotificationKeys.Contains(key);
+                if (unread) unreadCount++;
+
+                items.Add(new ProfessorNotificationItem
+                {
+                    Key = key,
+                    Icon = "📄",
+                    Title = s.Title,
+                    Subtitle = $"{s.StudentName}  •  {s.Section}",
+                    Time = s.PostedAt,
+                    Type = "submission",
+                    Id = s.Id,
+                    Unread = unread
+                });
+            }
+
+            foreach (var q in LoadNotificationQuizAttempts())
+            {
+                string key = "Q|" + q.Id;
+                bool unread = !readNotificationKeys.Contains(key);
+                if (unread) unreadCount++;
+
+                items.Add(new ProfessorNotificationItem
+                {
+                    Key = key,
+                    Icon = q.Type == "exam" ? "📝" : "📋",
+                    Title = q.Title,
+                    Subtitle = $"{q.StudentName}  •  {q.Subject}",
+                    Time = q.PostedAt,
+                    Type = "quiz",
+                    Id = q.Id,
+                    Unread = unread
+                });
+            }
+
+            foreach (var j in LoadNotificationJoinedClasses())
+            {
+                string key = "J|" + j.Id;
+                bool unread = !readNotificationKeys.Contains(key);
+                if (unread) unreadCount++;
+
+                items.Add(new ProfessorNotificationItem
+                {
+                    Key = key,
+                    Icon = "🎓",
+                    Title = "New student joined",
+                    Subtitle = $"{j.StudentName}  •  {j.Subject}",
+                    Time = j.PostedAt,
+                    Type = "join",
+                    Id = j.Id,
+                    Unread = unread
+                });
+            }
+
+            items.Sort((a, b) =>
+            {
+                if (a.Time.HasValue && b.Time.HasValue) return b.Time.Value.CompareTo(a.Time.Value);
+                if (a.Time.HasValue) return -1;
+                if (b.Time.HasValue) return 1;
+                return 0;
+            });
+
+            if (items.Count == 0)
+            {
+                Label lblEmpty = new Label
+                {
+                    Text = "🔕  No new notifications",
+                    Font = new Font("Segoe UI", 10F, FontStyle.Italic),
+                    ForeColor = Color.FromArgb(140, 140, 140),
+                    AutoSize = false,
+                    Size = new Size(notificationList.Width - 30, 80),
+                    TextAlign = ContentAlignment.MiddleCenter
+                };
+                notificationList.Controls.Add(lblEmpty);
+            }
+            else
+            {
+                foreach (var item in items)
+                    notificationList.Controls.Add(BuildNotificationCard(item));
+            }
+
+            if (unreadCount > 0)
+            {
+                lblNotificationBadge.Text = unreadCount > 99 ? "99+" : unreadCount.ToString();
+                lblNotificationBadge.Visible = true;
+                lblNotificationBadge.BringToFront();
+            }
+            else
+            {
+                lblNotificationBadge.Visible = false;
+            }
+        }
+
+        private class ProfessorNotificationItem
+        {
+            public string Key;
+            public string Icon;
+            public string Title;
+            public string Subtitle;
+            public DateTime? Time;
+            public string Type;
+            public int Id;
+            public bool Unread;
+        }
+
+        private class SimpleProfNotification
+        {
+            public int Id;
+            public string Title;
+            public string Subject;
+            public string StudentName;
+            public string Section;
+            public string Type;
+            public DateTime? PostedAt;
+        }
+
+        private List<SimpleProfNotification> LoadNotificationSubmissions()
+        {
+            var list = new List<SimpleProfNotification>();
+            string connStr = SettingsManager.Current.GetConnectionString();
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    string query = @"
+                        SELECT sa.submitted_id, sa.title, sa.student_name,
+                               sa.section, sa.class_name, sa.activity_status,
+                               sa.submitted_at
+                        FROM submitted_activity sa
+                        WHERE sa.prof_id = @prof_id
+                          AND sa.activity_status IN ('Submitted', 'Incomplete')
+                        ORDER BY sa.submitted_at DESC
+                        LIMIT 30";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@prof_id", ProfessorID);
+
+                        using (var r = cmd.ExecuteReader())
+                        {
+                            while (r.Read())
+                            {
+                                DateTime? posted = null;
+                                try
+                                {
+                                    object raw = r["submitted_at"];
+                                    if (raw != null && raw != DBNull.Value &&
+                                        DateTime.TryParse(raw.ToString(), out DateTime dt))
+                                        posted = dt;
+                                }
+                                catch { }
+
+                                list.Add(new SimpleProfNotification
+                                {
+                                    Id = Convert.ToInt32(r["submitted_id"]),
+                                    Title = r["title"]?.ToString() ?? "",
+                                    StudentName = r["student_name"]?.ToString() ?? "",
+                                    Section = r["section"]?.ToString() ?? "",
+                                    Subject = r["class_name"]?.ToString() ?? "",
+                                    Type = "submission",
+                                    PostedAt = posted
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("LoadNotificationSubmissions error: " + ex.Message);
+            }
+
+            return list;
+        }
+
+        private List<SimpleProfNotification> LoadNotificationQuizAttempts()
+        {
+            var list = new List<SimpleProfNotification>();
+            string connStr = SettingsManager.Current.GetConnectionString();
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    string query = @"
+                        SELECT qa.attempt_id, q.quiz_title, q.subject,
+                               q.assessment_type,
+                               CONCAT(ui.lastname, ', ', ui.firstname) AS student_name,
+                               qa.started_at
+                        FROM quiz_attempts qa
+                        INNER JOIN quizzes q ON q.quiz_id = qa.quiz_id
+                        LEFT JOIN user_information ui ON ui.user_id = qa.user_id
+                        WHERE q.created_by = @prof_id
+                          AND qa.status = 'SUBMITTED'
+                        ORDER BY qa.started_at DESC
+                        LIMIT 30";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@prof_id", ProfessorID);
+
+                        using (var r = cmd.ExecuteReader())
+                        {
+                            while (r.Read())
+                            {
+                                DateTime? posted = null;
+                                try
+                                {
+                                    object raw = r["started_at"];
+                                    if (raw != null && raw != DBNull.Value &&
+                                        DateTime.TryParse(raw.ToString(), out DateTime dt))
+                                        posted = dt;
+                                }
+                                catch { }
+
+                                list.Add(new SimpleProfNotification
+                                {
+                                    Id = Convert.ToInt32(r["attempt_id"]),
+                                    Title = r["quiz_title"]?.ToString() ?? "",
+                                    Subject = r["subject"]?.ToString() ?? "",
+                                    StudentName = r["student_name"]?.ToString() ?? "",
+                                    Type = r["assessment_type"]?.ToString() ?? "quiz",
+                                    PostedAt = posted
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("LoadNotificationQuizAttempts error: " + ex.Message);
+            }
+
+            return list;
+        }
+
+        private List<SimpleProfNotification> LoadNotificationJoinedClasses()
+        {
+            var list = new List<SimpleProfNotification>();
+            string connStr = SettingsManager.Current.GetConnectionString();
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    string query = @"
+                        SELECT sc.class_id, sc.class_name, sc.section,
+                               CONCAT(ui.lastname, ', ', ui.firstname) AS student_name
+                        FROM student_class sc
+                        LEFT JOIN user_information ui ON ui.user_id = sc.user_id
+                        WHERE sc.professor_id = @prof_id
+                        ORDER BY sc.class_id DESC
+                        LIMIT 20";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@prof_id", ProfessorID);
+
+                        using (var r = cmd.ExecuteReader())
+                        {
+                            while (r.Read())
+                            {
+                                list.Add(new SimpleProfNotification
+                                {
+                                    Id = Convert.ToInt32(r["class_id"]),
+                                    Title = "Class joined",
+                                    Subject = r["class_name"]?.ToString() ?? "",
+                                    Section = r["section"]?.ToString() ?? "",
+                                    StudentName = r["student_name"]?.ToString() ?? "",
+                                    Type = "join",
+                                    PostedAt = null
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("LoadNotificationJoinedClasses error: " + ex.Message);
+            }
+
+            return list;
+        }
+
+        private Panel BuildNotificationCard(ProfessorNotificationItem item)
+        {
+            var card = new Panel
+            {
+                Width = notificationList.ClientSize.Width - 28,
+                Height = 74,
+                Margin = new Padding(0, 0, 0, 8),
+                BackColor = item.Unread ? Color.FromArgb(255, 248, 248) : Color.White,
+                Cursor = Cursors.Hand,
+                Tag = item.Key
+            };
+
+            card.Paint += (s, e) =>
+            {
+                var g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+
+                using (var path = new GraphicsPath())
+                {
+                    int r = 10;
+                    var rect = new Rectangle(0, 0, card.Width - 1, card.Height - 1);
+                    path.AddArc(rect.X, rect.Y, r * 2, r * 2, 180, 90);
+                    path.AddArc(rect.Right - r * 2, rect.Y, r * 2, r * 2, 270, 90);
+                    path.AddArc(rect.Right - r * 2, rect.Bottom - r * 2, r * 2, r * 2, 0, 90);
+                    path.AddArc(rect.X, rect.Bottom - r * 2, r * 2, r * 2, 90, 90);
+                    path.CloseFigure();
+                    card.Region = new Region(path);
+                }
+
+                using (var border = new Pen(Color.FromArgb(235, 230, 230), 1))
+                    e.Graphics.DrawRectangle(border, 0, 0, card.Width - 1, card.Height - 1);
+
+                if (item.Unread)
+                {
+                    using (var dot = new SolidBrush(Color.FromArgb(220, 40, 40)))
+                        e.Graphics.FillEllipse(dot, 8, 10, 8, 8);
+                }
+            };
+
+            var icon = new Label
+            {
+                Text = item.Icon,
+                Font = new Font("Segoe UI Emoji", 18F),
+                ForeColor = Color.FromArgb(60, 60, 60),
+                BackColor = Color.Transparent,
+                AutoSize = false,
+                Size = new Size(42, 42),
+                Location = new Point(24, 14),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Cursor = Cursors.Hand
+            };
+            card.Controls.Add(icon);
+
+            var lblTitle = new Label
+            {
+                Text = item.Title,
+                Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(35, 35, 35),
+                BackColor = Color.Transparent,
+                AutoSize = false,
+                AutoEllipsis = true,
+                Size = new Size(card.Width - 100, 20),
+                Location = new Point(74, 12),
+                Cursor = Cursors.Hand
+            };
+            card.Controls.Add(lblTitle);
+
+            var lblSub = new Label
+            {
+                Text = item.Subtitle,
+                Font = new Font("Segoe UI", 8.5F),
+                ForeColor = Color.FromArgb(120, 120, 120),
+                BackColor = Color.Transparent,
+                AutoSize = false,
+                AutoEllipsis = true,
+                Size = new Size(card.Width - 100, 18),
+                Location = new Point(74, 34),
+                Cursor = Cursors.Hand
+            };
+            card.Controls.Add(lblSub);
+
+            if (item.Time.HasValue)
+            {
+                var lblTime = new Label
+                {
+                    Text = GetRelativeTime(item.Time.Value),
+                    Font = new Font("Segoe UI", 8F, FontStyle.Italic),
+                    ForeColor = Color.FromArgb(160, 160, 160),
+                    BackColor = Color.Transparent,
+                    AutoSize = false,
+                    Size = new Size(card.Width - 100, 16),
+                    Location = new Point(74, 52),
+                    Cursor = Cursors.Hand
+                };
+                card.Controls.Add(lblTime);
+            }
+
+            Action openItem = () =>
+            {
+                readNotificationKeys.Add(item.Key);
+                CloseNotificationPanel();
+
+                if (item.Type == "submission")
+                {
+                    try { ActivityStatus(); ShowPage(pnlGrades, "Grades", btnGrades); } catch { }
+                }
+                else if (item.Type == "quiz")
+                {
+                    try
+                    {
+                        var form = new ProfessorGradesForm();
+                        form.ShowDialog(this);
+                    }
+                    catch { }
+                }
+                else if (item.Type == "join")
+                {
+                    try { ShowPage(pnlStudent, "My Students", btnStudent); LoadAllStudent(); } catch { }
+                }
+            };
+
+            card.Click += (s, e) => openItem();
+            icon.Click += (s, e) => openItem();
+            lblTitle.Click += (s, e) => openItem();
+            lblSub.Click += (s, e) => openItem();
+
+            foreach (Control c in card.Controls)
+                c.Click += (s, e) => openItem();
+
+            return card;
+        }
+
+        private string GetRelativeTime(DateTime dt)
+        {
+            var span = DateTime.Now - dt;
+
+            if (span.TotalMinutes < 1) return "just now";
+            if (span.TotalMinutes < 60) return (int)span.TotalMinutes + "m ago";
+            if (span.TotalHours < 24) return (int)span.TotalHours + "h ago";
+            if (span.TotalDays < 7) return (int)span.TotalDays + "d ago";
+            return dt.ToString("MMM dd, yyyy");
         }
     }
 

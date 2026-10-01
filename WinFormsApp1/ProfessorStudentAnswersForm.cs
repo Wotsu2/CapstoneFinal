@@ -310,12 +310,12 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     "Unable to load student information.\n\n" +
                     ex.Message,
                     "Database Error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Error);
             }
         }
 
@@ -422,12 +422,12 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     "Unable to load student answers.\n\n" +
                     ex.Message,
                     "Database Error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Error);
             }
         }
 

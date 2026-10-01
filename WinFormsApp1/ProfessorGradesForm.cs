@@ -415,12 +415,12 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     "Unable to load assessments.\n\n" +
                     ex.Message,
                     "Database Error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Error);
             }
         }
 
@@ -496,12 +496,12 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     "Unable to load student grades.\n\n" +
                     ex.Message,
                     "Database Error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Error);
             }
         }
 
@@ -545,11 +545,11 @@ namespace WinFormsApp1
         {
             if (dgvGrades.SelectedRows.Count == 0)
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     "Please select a student result first.",
                     "No Selection",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Information);
 
                 return;
             }

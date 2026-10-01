@@ -444,8 +444,7 @@ namespace WinFormsApp1
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Could not open file:\n" + ex.Message,
-                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Console.WriteLine("Could not open file: " + ex.Message);
                 }
             };
             overlay.Controls.Add(btnOpen);
@@ -493,8 +492,8 @@ namespace WinFormsApp1
         {
             if (string.IsNullOrEmpty(PathAnswer) || !File.Exists(PathAnswer))
             {
-                MessageBox.Show("Please select a file first.", "Validation",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CustomMessageBox.Show("Please select a file first.", "Validation",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -503,8 +502,8 @@ namespace WinFormsApp1
 
             if (string.IsNullOrEmpty(professorFolder))
             {
-                MessageBox.Show("Could not determine the professor's folder. Ask the admin to check the share setup.",
-                    "Missing Folder", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CustomMessageBox.Show("Could not determine the professor's folder. Ask the admin to check the share setup.",
+                    "Missing Folder", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -522,15 +521,15 @@ namespace WinFormsApp1
 
             if (string.IsNullOrEmpty(savedPath))
             {
-                MessageBox.Show("Failed to submit. Please try again.",
-                    "Submit Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CustomMessageBox.Show("Failed to submit. Please try again.",
+                    "Submit Failed", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
             SaveSubmissionPath(savedPath);
 
-            MessageBox.Show("File submitted successfully!",
-                "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            CustomMessageBox.Show("File submitted successfully!",
+                "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
 
             ActivitySubmitted?.Invoke();
 
@@ -558,14 +557,14 @@ namespace WinFormsApp1
 
                     if (completed == timeoutTask)
                     {
-                        MessageBox.Show($"Server ({serverIp}:{serverPort}) not reachable (timeout).");
+                        Console.WriteLine($"Server ({serverIp}:{serverPort}) not reachable (timeout).");
                         return null;
                     }
 
                     await connectTask;
                     if (!client.Connected)
                     {
-                        MessageBox.Show($"Server ({serverIp}:{serverPort}) refused the connection.");
+                        Console.WriteLine($"Server ({serverIp}:{serverPort}) refused the connection.");
                         return null;
                     }
 
@@ -600,7 +599,6 @@ namespace WinFormsApp1
             catch (Exception ex)
             {
                 Console.WriteLine("SendSubmissionToServer error: " + ex.Message);
-                MessageBox.Show("Send error: " + ex.Message);
                 return null;
             }
         }
@@ -653,7 +651,7 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error saving submission: " + ex.Message);
+                Console.WriteLine("Error saving submission: " + ex.Message);
             }
         }
 

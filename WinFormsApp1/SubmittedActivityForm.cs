@@ -296,8 +296,8 @@ namespace WinFormsApp1
         {
             if (string.IsNullOrWhiteSpace(txtScore.Text))
             {
-                MessageBox.Show("Please enter a score.", "Validation",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CustomMessageBox.Show("Please enter a score.", "Validation",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -327,14 +327,14 @@ namespace WinFormsApp1
                         int rows = cmd.ExecuteNonQuery();
                         if (rows > 0)
                         {
-                            MessageBox.Show("Score saved successfully.", "Saved",
-                                MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            CustomMessageBox.Show("Score saved successfully.", "Saved",
+                                CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                             this.Close();
                         }
                         else
                         {
-                            MessageBox.Show("No matching submission found to update.",
-                                "Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            CustomMessageBox.Show("No matching submission found to update.",
+                                "Not Found", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                         }
                     }
                 }
@@ -342,7 +342,8 @@ namespace WinFormsApp1
             catch (Exception ex)
             {
                 Console.WriteLine("SaveScore error: " + ex.Message);
-                MessageBox.Show("Error saving score: " + ex.Message);
+                CustomMessageBox.Show("Error saving score: " + ex.Message,
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
     }

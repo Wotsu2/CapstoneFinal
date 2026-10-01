@@ -475,22 +475,22 @@ namespace WinFormsApp1
 
             if (string.IsNullOrEmpty(title))
             {
-                MessageBox.Show("Please enter a title.", "Validation",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CustomMessageBox.Show("Please enter a title.", "Validation",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
             if (string.IsNullOrEmpty(body))
             {
-                MessageBox.Show("Please enter a message.", "Validation",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CustomMessageBox.Show("Please enter a message.", "Validation",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
             if (target == "Specific Section" && string.IsNullOrEmpty(sectionFilter))
             {
-                MessageBox.Show("Please enter a section.", "Validation",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CustomMessageBox.Show("Please enter a section.", "Validation",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -521,8 +521,8 @@ namespace WinFormsApp1
                     }
                 }
 
-                MessageBox.Show("Announcement posted!", "Success",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CustomMessageBox.Show("Announcement posted!", "Success",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
 
                 txtAnnTitle.Clear();
                 txtAnnBody.Clear();
@@ -534,8 +534,7 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Failed to post announcement:\n" + ex.Message,
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Console.WriteLine("PostAnnouncement error: " + ex.Message);
             }
         }
 
@@ -717,12 +716,12 @@ namespace WinFormsApp1
             btnDelete.HoverState.FillColor = Color.FromArgb(255, 240, 240);
             btnDelete.Click += (s, e) =>
             {
-                var confirm = MessageBox.Show(
+                var confirm = CustomMessageBox.Show(
                     $"Delete announcement \"{title}\"?",
                     "Confirm Delete",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Warning);
-                if (confirm != DialogResult.Yes) return;
+                    CustomMessageBoxButtons.YesNo,
+                    CustomMessageBoxIcon.Warning);
+                if (confirm != CustomMessageBoxResult.Yes) return;
 
                 try
                 {
@@ -741,7 +740,7 @@ namespace WinFormsApp1
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Delete failed:\n" + ex.Message);
+                    Console.WriteLine("Delete announcement error: " + ex.Message);
                 }
             };
             card.Controls.Add(btnDelete);
@@ -1010,8 +1009,8 @@ namespace WinFormsApp1
             string folder = BannerHelper.GetBannersFolder();
             if (string.IsNullOrEmpty(folder))
             {
-                MessageBox.Show("The Banners folder could not be located.", "Root Folder Not Set",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CustomMessageBox.Show("The Banners folder could not be located.", "Root Folder Not Set",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -1043,13 +1042,13 @@ namespace WinFormsApp1
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show("Failed: " + ex.Message);
+                        Console.WriteLine("Banner copy error: " + ex.Message);
                     }
                 }
 
                 if (copied > 0)
-                    MessageBox.Show($"{copied} banner(s) uploaded.", "Upload Complete",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    CustomMessageBox.Show($"{copied} banner(s) uploaded.", "Upload Complete",
+                        CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
             }
         }
 
@@ -1058,13 +1057,13 @@ namespace WinFormsApp1
             string folder = BannerHelper.GetBannersFolder();
             if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
             {
-                MessageBox.Show("The Banners folder does not exist yet.", "Folder Not Found",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CustomMessageBox.Show("The Banners folder does not exist yet.", "Folder Not Found",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
             try { System.Diagnostics.Process.Start("explorer.exe", "\"" + folder + "\""); }
-            catch (Exception ex) { MessageBox.Show("Could not open folder:\n" + ex.Message); }
+            catch (Exception ex) { Console.WriteLine("Open banners folder error: " + ex.Message); }
         }
 
         // =========================================================
@@ -1106,8 +1105,8 @@ namespace WinFormsApp1
             string root = SettingsManager.Current.SaveFolder;
             if (!Directory.Exists(root))
             {
-                MessageBox.Show("Root save folder is not configured or does not exist:\n" + root,
-                    "Folder Missing", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CustomMessageBox.Show("Root save folder is not configured or does not exist:\n" + root,
+                    "Folder Missing", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -1543,7 +1542,7 @@ namespace WinFormsApp1
 
         private void ContextEdit_Click(object sender, EventArgs e)
         {
-            if (contextUserId < 0) { MessageBox.Show("No user selected."); return; }
+            if (contextUserId < 0) { CustomMessageBox.Show("No user selected.", "Notice", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning); return; }
 
             string lastName = "", firstName = "", middleName = "",
                    email = "", year = "", section = "", course = "", username = "";
@@ -1579,7 +1578,7 @@ namespace WinFormsApp1
                     }
                 }
             }
-            catch (Exception ex) { MessageBox.Show("Error loading user: " + ex.Message); return; }
+            catch (Exception ex) { Console.WriteLine("Error loading user: " + ex.Message); return; }
 
             using (var dlg = new Form())
             {
@@ -1647,20 +1646,20 @@ namespace WinFormsApp1
                             cmd.ExecuteNonQuery();
                         }
                     }
-                    MessageBox.Show("User info updated.");
+                    CustomMessageBox.Show("User info updated.", "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                     LoadUserData();
                 }
-                catch (Exception ex) { MessageBox.Show("Error updating user: " + ex.Message); }
+                catch (Exception ex) { Console.WriteLine("Error updating user: " + ex.Message); }
             }
         }
 
         private void ContextDelete_Click(object sender, EventArgs e)
         {
-            if (contextUserId < 0) { MessageBox.Show("No user selected."); return; }
+            if (contextUserId < 0) { CustomMessageBox.Show("No user selected.", "Notice", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning); return; }
 
-            var confirm = MessageBox.Show("Are you sure you want to delete this user?",
-                "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-            if (confirm != DialogResult.Yes) return;
+            var confirm = CustomMessageBox.Show("Are you sure you want to delete this user?",
+                "Confirm Delete", CustomMessageBoxButtons.YesNo, CustomMessageBoxIcon.Warning);
+            if (confirm != CustomMessageBoxResult.Yes) return;
 
             string connStr = SettingsManager.Current.GetConnectionString();
             try
@@ -1684,19 +1683,19 @@ namespace WinFormsApp1
                         }
                     }
                 }
-                MessageBox.Show("User deleted.");
+                CustomMessageBox.Show("User deleted.", "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 LoadUserData();
             }
-            catch (Exception ex) { MessageBox.Show("Error deleting user: " + ex.Message); }
+            catch (Exception ex) { Console.WriteLine("Error deleting user: " + ex.Message); }
         }
 
         private void ContextResetPassword_Click(object sender, EventArgs e)
         {
-            if (contextUserId < 0) { MessageBox.Show("No user selected."); return; }
+            if (contextUserId < 0) { CustomMessageBox.Show("No user selected.", "Notice", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning); return; }
 
-            var confirm = MessageBox.Show("Reset password to '12345678'?",
-                "Confirm Reset", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (confirm != DialogResult.Yes) return;
+            var confirm = CustomMessageBox.Show("Reset password to '12345678'?",
+                "Confirm Reset", CustomMessageBoxButtons.YesNo, CustomMessageBoxIcon.Question);
+            if (confirm != CustomMessageBoxResult.Yes) return;
 
             try
             {
@@ -1712,9 +1711,9 @@ namespace WinFormsApp1
                         cmd.ExecuteNonQuery();
                     }
                 }
-                MessageBox.Show("Password reset to default: 12345678");
+                CustomMessageBox.Show("Password reset to default: 12345678", "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
             }
-            catch (Exception ex) { MessageBox.Show("Error resetting password: " + ex.Message); }
+            catch (Exception ex) { Console.WriteLine("Error resetting password: " + ex.Message); }
         }
 
         // =========================================================
@@ -1734,7 +1733,8 @@ namespace WinFormsApp1
             var ids = GetSelectedUserIds();
             if (ids.Count == 0)
             {
-                MessageBox.Show("No rows selected. Hold Ctrl or Shift and click multiple rows first.");
+                CustomMessageBox.Show("No rows selected. Hold Ctrl or Shift and click multiple rows first.",
+                    "Notice", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 return;
             }
 
@@ -1743,10 +1743,10 @@ namespace WinFormsApp1
 
             newValue = newValue.Trim().ToUpper();
 
-            var confirm = MessageBox.Show(
+            var confirm = CustomMessageBox.Show(
                 $"Update {displayName} of {ids.Count} user(s) to \"{newValue}\"?",
-                "Confirm Bulk Update", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (confirm != DialogResult.Yes) return;
+                "Confirm Bulk Update", CustomMessageBoxButtons.YesNo, CustomMessageBoxIcon.Question);
+            if (confirm != CustomMessageBoxResult.Yes) return;
 
             try
             {
@@ -1768,12 +1768,12 @@ namespace WinFormsApp1
                             cmd.Parameters.AddWithValue(paramNames[i], ids[i]);
 
                         int rows = cmd.ExecuteNonQuery();
-                        MessageBox.Show($"{rows} user(s) updated.");
+                        CustomMessageBox.Show($"{rows} user(s) updated.", "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                     }
                 }
                 LoadUserData();
             }
-            catch (Exception ex) { MessageBox.Show("Error during bulk update: " + ex.Message); }
+            catch (Exception ex) { Console.WriteLine("Error during bulk update: " + ex.Message); }
         }
 
         private List<int> GetSelectedUserIds()
@@ -1873,7 +1873,7 @@ namespace WinFormsApp1
                     }
                 }
             }
-            catch (Exception ex) { MessageBox.Show("Error: " + ex.Message); }
+            catch (Exception ex) { Console.WriteLine("LoadUserData error: " + ex.Message); }
         }
 
         private static int TotalUsers()
@@ -1888,7 +1888,7 @@ namespace WinFormsApp1
                         return Convert.ToInt32(cmd.ExecuteScalar());
                 }
             }
-            catch (Exception ex) { MessageBox.Show(ex.Message); return 0; }
+            catch (Exception ex) { Console.WriteLine("TotalUsers error: " + ex.Message); return 0; }
         }
 
         // =========================================================
@@ -1905,7 +1905,8 @@ namespace WinFormsApp1
                 string.IsNullOrEmpty(ContextRoleText.Text) ||
                 string.IsNullOrEmpty(EmailText.Text))
             {
-                MessageBox.Show("Please fill in at least: Role, Last Name, First Name, and Email.");
+                CustomMessageBox.Show("Please fill in at least: Role, Last Name, First Name, and Email.",
+                    "Validation", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -1969,15 +1970,15 @@ namespace WinFormsApp1
                     string rootPath = SettingsManager.Current.SaveFolder;
                     if (string.IsNullOrEmpty(rootPath))
                     {
-                        MessageBox.Show("Root folder is not configured.",
-                            "Root Folder Missing", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        CustomMessageBox.Show("Root folder is not configured.",
+                            "Root Folder Missing", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                         return;
                     }
 
                     if (!Directory.Exists(rootPath))
                     {
                         try { Directory.CreateDirectory(rootPath); }
-                        catch (Exception ex) { MessageBox.Show("Could not create root folder:\n" + ex.Message); return; }
+                        catch (Exception ex) { Console.WriteLine("Could not create root folder: " + ex.Message); return; }
                     }
 
                     string folderName = SanitizeFolderName(
@@ -1989,7 +1990,7 @@ namespace WinFormsApp1
                         if (!Directory.Exists(userFolderPath))
                             Directory.CreateDirectory(userFolderPath);
                     }
-                    catch (Exception ex) { MessageBox.Show("Could not create user folder:\n" + ex.Message); return; }
+                    catch (Exception ex) { Console.WriteLine("Could not create user folder: " + ex.Message); return; }
 
                     using (var cmd4 = new MySqlCommand("INSERT INTO mainfolderpath (user_id, FolderPath) VALUES (@user_id, @FolderPath)", conn))
                     {
@@ -2006,16 +2007,16 @@ namespace WinFormsApp1
                 bool emailed = TrySendCredentialsEmail(email, fullName, username, defaultPassword, role);
 
                 if (emailed)
-                    MessageBox.Show($"Account created!\n\nUsername: {username}\nPassword: {defaultPassword}\n\nEmailed to {email}",
-                        "Account Created", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    CustomMessageBox.Show($"Account created!\n\nUsername: {username}\nPassword: {defaultPassword}\n\nEmailed to {email}",
+                        "Account Created", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 else
-                    MessageBox.Show($"Account created but email failed.\n\nUsername: {username}\nPassword: {defaultPassword}",
-                        "Account Created (Email Failed)", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    CustomMessageBox.Show($"Account created but email failed.\n\nUsername: {username}\nPassword: {defaultPassword}",
+                        "Account Created (Email Failed)", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
 
                 ClearText();
                 LoadUserData();
             }
-            catch (Exception ex) { MessageBox.Show("Error: " + ex.Message); }
+            catch (Exception ex) { Console.WriteLine("CreateUser error: " + ex.Message); }
         }
 
         private string GenerateUsername(string last, string first, string middle, string connStr)
@@ -2406,9 +2407,9 @@ namespace WinFormsApp1
         // =========================================================
         private void btnLogout_Click(object sender, EventArgs e)
         {
-            var result = MessageBox.Show("Log out?", "Logout Confirmation",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (result != DialogResult.Yes) return;
+            var result = CustomMessageBox.Show("Log out?", "Logout Confirmation",
+                CustomMessageBoxButtons.YesNo, CustomMessageBoxIcon.Question);
+            if (result != CustomMessageBoxResult.Yes) return;
 
             isRunning = false;
             adminIsRunning = false;
@@ -2489,15 +2490,15 @@ namespace WinFormsApp1
         {
             if (lvServerFolder.SelectedItems.Count == 0)
             {
-                MessageBox.Show("Please select a file or folder first.",
-                    "Nothing Selected", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CustomMessageBox.Show("Please select a file or folder first.",
+                    "Nothing Selected", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 return;
             }
 
             string path = lvServerFolder.SelectedItems[0].Tag?.ToString();
             if (string.IsNullOrEmpty(path))
             {
-                MessageBox.Show("Invalid selection.");
+                CustomMessageBox.Show("Invalid selection.", "Notice", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -2506,7 +2507,7 @@ namespace WinFormsApp1
 
             if (!isFolder && !isFile)
             {
-                MessageBox.Show("The selected item no longer exists.");
+                CustomMessageBox.Show("The selected item no longer exists.", "Notice", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -2516,8 +2517,8 @@ namespace WinFormsApp1
                               Path.GetFullPath(SettingsManager.Current.SaveFolder).TrimEnd('\\'),
                               StringComparison.OrdinalIgnoreCase))
             {
-                MessageBox.Show("You cannot delete the root folder.",
-                    "Not Allowed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CustomMessageBox.Show("You cannot delete the root folder.",
+                    "Not Allowed", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -2527,10 +2528,10 @@ namespace WinFormsApp1
                 ? $"Delete folder '{itemName}' and ALL of its contents?\n\nThis cannot be undone."
                 : $"Delete file '{itemName}'?\n\nThis cannot be undone.";
 
-            var confirm = MessageBox.Show(message, "Confirm Delete",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            var confirm = CustomMessageBox.Show(message, "Confirm Delete",
+                CustomMessageBoxButtons.YesNo, CustomMessageBoxIcon.Warning);
 
-            if (confirm != DialogResult.Yes) return;
+            if (confirm != CustomMessageBoxResult.Yes) return;
 
             try
             {
@@ -2546,8 +2547,8 @@ namespace WinFormsApp1
                 else
                     File.Delete(path);
 
-                MessageBox.Show("Deleted successfully.",
-                    "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CustomMessageBox.Show("Deleted successfully.",
+                    "Deleted", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
 
                 // Refresh the current folder view
                 if (!string.IsNullOrEmpty(currentFolder) && Directory.Exists(currentFolder))
@@ -2555,21 +2556,21 @@ namespace WinFormsApp1
             }
             catch (UnauthorizedAccessException)
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     "Access denied.\n\nThe file/folder may be open in another program, " +
                     "or you don't have permission.",
-                    "Delete Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    "Delete Failed", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
             catch (IOException ioEx)
             {
-                MessageBox.Show(
+                CustomMessageBox.Show(
                     "The file is in use or locked.\n\nDetails: " + ioEx.Message,
-                    "Delete Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    "Delete Failed", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error deleting: " + ex.Message,
-                    "Delete Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CustomMessageBox.Show("Error deleting: " + ex.Message,
+                    "Delete Failed", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
     }
