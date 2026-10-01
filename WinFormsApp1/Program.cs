@@ -1,5 +1,4 @@
 using System;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace WinFormsApp1
@@ -11,32 +10,18 @@ namespace WinFormsApp1
         {
             ApplicationConfiguration.Initialize();
             Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
 
             SettingsManager.Load();
 
-            Application.SetCompatibleTextRenderingDefault(false);
-
-            // ---- Show splash non-modally ----
-            SplashForm splash = new SplashForm();
-            splash.Show();
-            splash.Refresh();
-
-            DateTime start = DateTime.Now;
-            while ((DateTime.Now - start).TotalMilliseconds < 2500)
+            // 1) Splash — blocking hanggang matapos ang 5s animation + fade out
+            using (SplashForm splash = new SplashForm())
             {
-                Application.DoEvents();
-                System.Threading.Thread.Sleep(20);
+                splash.ShowDialog();
             }
 
-            splash.Close();
-            splash.Dispose();
-
-            // ---- Then show Login once ----
-            var context = new ApplicationContext();
-            Application.Run(context);
-
-            var login = new Login();
-            login.Show();
+            // 2) Login — main form ng app
+            Application.Run(new Login());
         }
     }
 }

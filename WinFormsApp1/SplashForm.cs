@@ -1,1709 +1,799 @@
-﻿using System;
+﻿// ============================================================================
+//  SplashForm.cs — Maroon Theme Edition
+//  Professional modern splash screen — pure GDI+, no external dependencies.
+// ============================================================================
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Drawing.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace WinFormsApp1
 {
     public partial class SplashForm : Form
     {
-        private readonly Stopwatch stopwatch = new Stopwatch();
-        private readonly Random random = new Random();
+        // ====================================================================
+        //  MAROON PALETTE
+        // ====================================================================
+        private static readonly Color BG_TOP = Color.FromArgb(0x1A, 0x05, 0x05); // #1A0505
+        private static readonly Color BG_BOTTOM = Color.FromArgb(0x2D, 0x0A, 0x0A); // #2D0A0A
+        private static readonly Color GLOW_CENTER = Color.FromArgb(38, 180, 40, 40);
+        private static readonly Color GLOW_OUTER = Color.FromArgb(0, 180, 40, 40);
+        private static readonly Color BORDER_COLOR = Color.FromArgb(70, 122, 30, 30);
+        private static readonly Color PARTICLE_CLR = Color.FromArgb(255, 155, 130);   // warm coral
 
-        private readonly List<Particle> particles = new List<Particle>();
+        // Logo glow
+        private static readonly Color LOGO_GLOW_IN = Color.FromArgb(120, 200, 60, 60);
+        private static readonly Color LOGO_GLOW_OUT = Color.FromArgb(0, 200, 60, 60);
+
+        // Progress bar gradient stops (maroon → crimson → bright red)
+        private static readonly Color PROG_A1 = Color.FromArgb(90, 15, 15); // deep maroon
+        private static readonly Color PROG_A2 = Color.FromArgb(140, 30, 30);
+        private static readonly Color PROG_B1 = Color.FromArgb(165, 42, 42); // brown red
+        private static readonly Color PROG_B2 = Color.FromArgb(200, 60, 50);
+        private static readonly Color PROG_C1 = Color.FromArgb(192, 57, 43); // crimson
+        private static readonly Color PROG_C2 = Color.FromArgb(231, 76, 60); // bright red
+
+        // Text colors
+        private static readonly Color TEXT_PRIMARY = Color.FromArgb(245, 230, 230);
+        private static readonly Color TEXT_SECONDARY = Color.FromArgb(210, 165, 165);
+        private static readonly Color TEXT_MUTED = Color.FromArgb(160, 110, 110);
+
+        // ====================================================================
+        //  CONSTANTS
+        // ====================================================================
+        private const int FORM_WIDTH = 520;
+        private const int FORM_HEIGHT = 340;
+        private const int CORNER_RADIUS = 22;
+        private const int TIMER_INTERVAL_MS = 15;
+        private const float TARGET_OPACITY = 0.95f;
+
+        private const float FADE_IN_DURATION = 0.40f;
+        private const float FADE_OUT_DURATION = 0.90f;
+        private const float LOGO_SCALE_DURATION = 0.60f;
+        private const float TEXT_SLIDE_DURATION = 0.50f;
+        private const float PROGRESS_DURATION = 5.00f;
+        private const float MESSAGE_INTERVAL = 0.50f;
+        private const float POST_PROGRESS_DELAY = 0.60f;
+
+        // ====================================================================
+        //  STATE
+        // ====================================================================
+        private readonly System.Windows.Forms.Timer animationTimer;
+        private readonly Stopwatch stopwatch;
+        private readonly Random random;
+        private readonly List<Particle> particles;
 
         private Image logoImage;
 
         private float elapsed;
-        private float finalTransition;
-        private float deltaSeconds;
         private float lastElapsed;
+        private float deltaTime;
 
-        private bool finalState;
-        private bool loginOpened;
+        private float fadeInProgress;
+        private float exitProgress;
+        private float exitStartTime;
+        private float logoScaleProgress;
+        private float textSlideProgress;
+        private float currentProgress;
+        private float shimmerPhase;
+        private float nextMessageTime;
 
-        // ============================================================
-        // TIMELINE
-        // ============================================================
+        private bool isExiting;
+        private bool loginLaunched;
 
-        private const float INITIALIZING_END = 3.0f;
+        private int animationFrame;
+        private string loadingMessage;
+        private int lastMessageIndex = -1;
 
-        private const float CORE_START = 3.0f;
-        private const float CORE_END = 4.25f;
+        private readonly string[] loadingMessages = new[]
+        {
+            "Initializing...",
+            "Loading modules...",
+            "Connecting...",
+            "Preparing UI...",
+            "Almost there...",
+            "Finalizing setup..."
+        };
 
-        private const float LOGO_START = 3.0f;
-        private const float LOGO_END = 4.25f;
-
-        private const float TITLE_START = 4.0f;
-
-        private const float LOADING_START = 0.0f;
-        private const float LOADING_DURATION = 8.0f;
-        private const float READY_START = 8.0f;
-
-        private const float FINAL_TRANSITION_START = 8.0f;
-        private const float FINAL_TRANSITION_DURATION = 0.65f;
-        private const float ACTIVE_DURATION = 5.0f;
-
-        // ============================================================
-        // CONSTRUCTOR
-        // ============================================================
-
+        // ====================================================================
+        //  CONSTRUCTOR
+        // ====================================================================
         public SplashForm()
         {
             InitializeComponent();
+
+            FormBorderStyle = FormBorderStyle.None;
+            StartPosition = FormStartPosition.CenterScreen;
+            ClientSize = new Size(FORM_WIDTH, FORM_HEIGHT);
+            BackColor = BG_TOP;
+            ShowInTaskbar = false;
+            KeyPreview = true;
 
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint |
                 ControlStyles.UserPaint |
                 ControlStyles.OptimizedDoubleBuffer |
                 ControlStyles.ResizeRedraw,
-                true
-            );
-
+                true);
             DoubleBuffered = true;
 
-            try
-            {
-                logoImage = Properties.Resources.CCSLogo;
-            }
-            catch
-            {
-                logoImage = null;
-            }
+            UpdateFormRegion();
 
-            CreateParticles();
+            try { logoImage = Properties.Resources.CCSLogo; }
+            catch { logoImage = null; }
 
-            enterButton.Visible = false;
-            enterButton.Enabled = false;
+            random = new Random();
+            stopwatch = new Stopwatch();
+            animationTimer = new System.Windows.Forms.Timer { Interval = TIMER_INTERVAL_MS };
+            animationTimer.Tick += AnimationTimer_Tick;
+            particles = new List<Particle>();
 
-            stopwatch.Start();
-            lastElapsed = 0f;
+            Opacity = 0.0;
+            loadingMessage = loadingMessages[0];
         }
 
-        // ============================================================
-        // FORM
-        // ============================================================
-
-        private void SplashForm_Load(object sender, EventArgs e)
+        // ====================================================================
+        //  NATIVE DROP SHADOW
+        // ====================================================================
+        protected override CreateParams CreateParams
         {
-            if (enterButton != null)
-                enterButton.Visible = false;
+            get
+            {
+                const int CS_DROPSHADOW = 0x00020000;
+                CreateParams cp = base.CreateParams;
+                cp.ClassStyle |= CS_DROPSHADOW;
+                return cp;
+            }
+        }
 
-            animationTimer.Interval = 16;
+        // ====================================================================
+        //  ROUNDED REGION
+        // ====================================================================
+        private void UpdateFormRegion()
+        {
+            using (GraphicsPath path = DrawRoundedRect(ClientRectangle, CORNER_RADIUS))
+            {
+                Region old = Region;
+                Region = new Region(path);
+                old?.Dispose();
+            }
+        }
+
+        // ====================================================================
+        //  LIFECYCLE
+        // ====================================================================
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            CreateParticles();
+            StartAnimations();
+            _ = SimulateAsyncLoadAsync();
+        }
+
+        private async Task SimulateAsyncLoadAsync()
+        {
+            await Task.Delay((int)(PROGRESS_DURATION * 1000));
+        }
+
+        // ====================================================================
+        //  START ANIMATIONS
+        // ====================================================================
+        public void StartAnimations()
+        {
+            stopwatch.Restart();
+            lastElapsed = 0f;
+            elapsed = 0f;
+            nextMessageTime = MESSAGE_INTERVAL;
             animationTimer.Start();
         }
 
-        private void SplashForm_Resize(object sender, EventArgs e)
-        {
-            // Enter System button removed; no button positioning needed.
-        }
-
-        private void SplashForm_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            animationTimer.Stop();
-            stopwatch.Stop();
-
-            if (logoImage != null)
-            {
-                // Do not dispose resource image.
-            }
-        }
-
-        // ============================================================
-        // BUTTON
-        // ============================================================
-
-        private void CenterEnterButton()
-        {
-            if (enterButton == null)
-                return;
-
-            enterButton.Left =
-                (ClientSize.Width - enterButton.Width) / 2;
-
-            enterButton.Top =
-                (int)(ClientSize.Height * 0.79f);
-        }
-
-        private void animationTimer_Tick(object sender, EventArgs e)
+        // ====================================================================
+        //  MAIN TICK
+        // ====================================================================
+        private void AnimationTimer_Tick(object sender, EventArgs e)
         {
             float now = (float)stopwatch.Elapsed.TotalSeconds;
-
-            // Real frame time keeps movement consistent if a frame is delayed.
-            deltaSeconds = Clamp(now - lastElapsed, 0f, 0.05f);
+            deltaTime = Math.Max(0f, Math.Min(0.05f, now - lastElapsed));
             lastElapsed = now;
             elapsed = now;
+            animationFrame++;
 
-            if (elapsed >= FINAL_TRANSITION_START)
-            {
-                finalState = true;
-
-                finalTransition =
-                    Clamp(
-                        (elapsed - FINAL_TRANSITION_START) /
-                        FINAL_TRANSITION_DURATION,
-                        0f,
-                        1f
-                    );
-
-                // After the 8-second loading sequence, show SYSTEM ACTIVE
-                // for 5 seconds, then automatically open Login.cs.
-                if (!loginOpened &&
-                    elapsed >= FINAL_TRANSITION_START + ACTIVE_DURATION)
-                {
-                    OpenLoginForm();
-                }
-            }
-
-            UpdateParticles(deltaSeconds);
+            AnimateProgress(deltaTime);
+            UpdateParticles(deltaTime);
             Invalidate();
         }
 
-        private void AnimateEnterButton()
+        // ====================================================================
+        //  ANIMATE PROGRESS
+        // ====================================================================
+        private void AnimateProgress(float dt)
         {
-            if (!enterButton.Visible)
-                return;
+            if (fadeInProgress < 1f)
+                fadeInProgress = Clamp(elapsed / FADE_IN_DURATION, 0f, 1f);
 
-            float t =
-                EaseOutCubic(
-                    Clamp(
-                        (finalTransition - 0.05f) / 0.95f,
-                        0f,
-                        1f
-                    )
-                );
+            if (logoScaleProgress < 1f)
+                logoScaleProgress = Clamp(elapsed / LOGO_SCALE_DURATION, 0f, 1f);
 
-            int centerX = ClientSize.Width / 2;
+            if (textSlideProgress < 1f)
+                textSlideProgress = Clamp(elapsed / TEXT_SLIDE_DURATION, 0f, 1f);
 
-            int startY =
-                (int)(ClientSize.Height * 0.87f);
-
-            int finalY =
-                (int)(ClientSize.Height * 0.79f);
-
-            enterButton.Left =
-                centerX - enterButton.Width / 2;
-
-            enterButton.Top =
-                (int)(
-                    startY +
-                    (finalY - startY) * t
-                );
-
-            int r =
-                (int)(35 + 105 * t);
-
-            int g =
-                (int)(4 + 8 * t);
-
-            int b =
-                (int)(4 + 8 * t);
-
-            enterButton.BackColor =
-                Color.FromArgb(
-                    r,
-                    g,
-                    b
-                );
-
-            int borderRed =
-                (int)(120 + 115 * t);
-
-            enterButton.FlatAppearance.BorderColor =
-                Color.FromArgb(
-                    borderRed,
-                    35,
-                    35
-                );
-        }
-
-        private void enterButton_Click(object sender, EventArgs e)
-        {
-            animationTimer.Stop();
-            stopwatch.Stop();
-
-            DialogResult = DialogResult.OK;
-            Close();
-        }
-
-        protected override void OnKeyDown(KeyEventArgs e)
-        {
-            base.OnKeyDown(e);
-
-            if (e.KeyCode == Keys.Enter &&
-                enterButton.Visible &&
-                enterButton.Enabled)
+            if (!isExiting)
             {
-                enterButton.PerformClick();
+                float rawTarget = Clamp(elapsed / PROGRESS_DURATION, 0f, 1f);
+                float eased = EaseOutCubic(rawTarget);
+
+                currentProgress += (eased - currentProgress) * Math.Min(1f, dt * 12f);
+                if (currentProgress > 0.999f) currentProgress = 1f;
+            }
+
+            shimmerPhase += dt * 0.8f;
+            if (shimmerPhase > 1.6f) shimmerPhase = -0.3f;
+
+            if (elapsed >= nextMessageTime && currentProgress < 0.97f)
+            {
+                nextMessageTime = elapsed + MESSAGE_INTERVAL;
+                PickRandomMessage();
+            }
+
+            if (!isExiting &&
+                currentProgress >= 1f &&
+                elapsed > PROGRESS_DURATION + POST_PROGRESS_DELAY)
+            {
+                FadeOut();
+            }
+
+            if (isExiting)
+            {
+                exitProgress = Clamp((elapsed - exitStartTime) / FADE_OUT_DURATION, 0f, 1f);
+
+                double targetOpacity = TARGET_OPACITY * (1.0 - exitProgress);
+                Opacity = Math.Max(0.0, Math.Min(1.0, targetOpacity));
+
+                if (exitProgress >= 1f && !loginLaunched)
+                {
+                    loginLaunched = true;
+                    animationTimer.Stop();
+                    stopwatch.Stop();
+                    LaunchLoginForm();
+                }
+            }
+            else
+            {
+                Opacity = Math.Max(0.0, Math.Min(1.0,
+                    TARGET_OPACITY * EaseOutCubic(fadeInProgress)));
             }
         }
 
-        // ============================================================
-        // PARTICLES
-        // ============================================================
+        // ====================================================================
+        //  FADE OUT
+        // ====================================================================
+        public void FadeOut()
+        {
+            if (isExiting) return;
+            isExiting = true;
+            exitStartTime = elapsed;
+        }
 
+        // ====================================================================
+        //  RANDOM MESSAGE
+        // ====================================================================
+        private void PickRandomMessage()
+        {
+            int idx;
+            do { idx = random.Next(loadingMessages.Length); }
+            while (idx == lastMessageIndex && loadingMessages.Length > 1);
+            lastMessageIndex = idx;
+            loadingMessage = loadingMessages[idx];
+        }
+
+        // ====================================================================
+        //  LAUNCH LOGIN FORM — direct reference
+        // ====================================================================
+        private void LaunchLoginForm()
+        {
+            // Huwag mag-Show ng Login dito — ang Program.cs na ang bahala.
+            Close();
+        }
+
+        // ====================================================================
+        //  PARTICLES
+        // ====================================================================
         private void CreateParticles()
         {
             particles.Clear();
-
-            for (int i = 0; i < 75; i++)
+            for (int i = 0; i < 42; i++)
             {
-                particles.Add(
-                    new Particle
-                    {
-                        X = random.Next(0, Math.Max(1, ClientSize.Width)),
-                        Y = random.Next(0, Math.Max(1, ClientSize.Height)),
-                        Speed = 4f + (float)random.NextDouble() * 12f,
-                        Size = 1f + (float)random.NextDouble() * 2.2f,
-                        Phase = (float)random.NextDouble() * 6.28f,
-                        Alpha = 30 + random.Next(70)
-                    }
-                );
+                particles.Add(new Particle
+                {
+                    X = (float)(random.NextDouble() * ClientSize.Width),
+                    Y = (float)(random.NextDouble() * ClientSize.Height),
+                    Radius = (float)(random.NextDouble() * 1.6 + 0.5),
+                    SpeedX = (float)((random.NextDouble() - 0.5) * 6),
+                    SpeedY = (float)(-6 - random.NextDouble() * 16),
+                    Alpha = random.Next(20, 70),
+                    Phase = (float)(random.NextDouble() * Math.PI * 2),
+                    PhaseSpeed = (float)(random.NextDouble() * 1.4 + 0.4)
+                });
             }
         }
 
         private void UpdateParticles(float dt)
         {
-            if (particles.Count == 0)
-                return;
-
-            foreach (Particle p in particles)
+            for (int i = 0; i < particles.Count; i++)
             {
-                p.Y -= p.Speed * dt;
+                Particle p = particles[i];
+                p.X += p.SpeedX * dt;
+                p.Y += p.SpeedY * dt;
+                p.Phase += p.PhaseSpeed * dt;
 
-                if (p.Y < -10)
+                if (p.Y < -12f)
                 {
-                    p.Y = ClientSize.Height + 10;
-                    p.X = random.Next(
-                        0,
-                        Math.Max(1, ClientSize.Width)
-                    );
+                    p.Y = ClientSize.Height + 12f;
+                    p.X = (float)(random.NextDouble() * ClientSize.Width);
                 }
+                if (p.X < -12f) p.X = ClientSize.Width + 12f;
+                if (p.X > ClientSize.Width + 12f) p.X = -12f;
             }
         }
 
         private void DrawParticles(Graphics g)
         {
-            if (elapsed < 0.4f)
-                return;
-
-            float appear =
-                Clamp(
-                    (elapsed - 0.25f) / 1.5f,
-                    0f,
-                    1f
-                );
-
             foreach (Particle p in particles)
             {
-                float pulse =
-                    0.55f +
-                    0.45f *
-                    (float)Math.Sin(
-                        elapsed * 1.8f + p.Phase
-                    );
+                float pulse = 0.55f + 0.45f * (float)Math.Sin(p.Phase);
+                int alpha = (int)(p.Alpha * pulse);
+                if (alpha <= 0) continue;
 
-                int alpha =
-                    (int)(
-                        p.Alpha *
-                        pulse *
-                        appear
-                    );
-
-                using SolidBrush brush =
-                    new SolidBrush(
-                        Color.FromArgb(
-                            alpha,
-                            255,
-                            35,
-                            35
-                        )
-                    );
-
-                g.FillEllipse(
-                    brush,
-                    p.X,
-                    p.Y,
-                    p.Size,
-                    p.Size
-                );
+                using (SolidBrush brush = new SolidBrush(
+                    Color.FromArgb(alpha, PARTICLE_CLR)))
+                {
+                    g.FillEllipse(brush,
+                        p.X - p.Radius, p.Y - p.Radius,
+                        p.Radius * 2f, p.Radius * 2f);
+                }
             }
         }
 
-        // ============================================================
-        // PAINT
-        // ============================================================
-
+        // ====================================================================
+        //  ONPAINT
+        // ====================================================================
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
 
             Graphics g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            g.CompositingQuality = CompositingQuality.HighQuality;
+            g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
 
-            g.SmoothingMode =
-                SmoothingMode.AntiAlias;
-
-            g.InterpolationMode =
-                InterpolationMode.HighQualityBicubic;
-
-            g.PixelOffsetMode =
-                PixelOffsetMode.HighQuality;
-
-            g.CompositingQuality =
-                CompositingQuality.HighQuality;
-
-            DrawBackground(g);
+            DrawGradientBackground(g);
             DrawParticles(g);
 
-            if (!finalState)
+            Matrix saved = g.Transform.Clone();
+            if (isExiting)
             {
-                DrawInitializing(g);
-                DrawCore(g);
-                DrawLogo(g);
-                DrawTitle(g);
-                DrawLoading(g);
-
-                return;
+                float scale = 1f - 0.05f * EaseOutCubic(exitProgress);
+                g.TranslateTransform(ClientSize.Width / 2f, ClientSize.Height / 2f);
+                g.ScaleTransform(scale, scale);
+                g.TranslateTransform(-ClientSize.Width / 2f, -ClientSize.Height / 2f);
             }
 
-            DrawTransitionLayer(g);
-            DrawFinalScreen(g);
+            DrawLogo(g);
+            DrawAppName(g);
+            DrawVersion(g);
+            DrawLoadingMessage(g);
+            DrawGradientBar(g);
+            DrawCopyright(g);
+
+            g.Transform = saved;
+            saved.Dispose();
         }
 
-        // ============================================================
-        // BACKGROUND
-        // ============================================================
-
-        private void DrawBackground(Graphics g)
+        // ====================================================================
+        //  BACKGROUND — maroon gradient + atmospheric glow
+        // ====================================================================
+        private void DrawGradientBackground(Graphics g)
         {
-            using LinearGradientBrush background =
-                new LinearGradientBrush(
-                    ClientRectangle,
-                    Color.Black,
-                    Color.FromArgb(11, 0, 0),
-                    90f
-                );
+            Rectangle rect = ClientRectangle;
 
-            g.FillRectangle(
-                background,
-                ClientRectangle
-            );
+            using (LinearGradientBrush bg = new LinearGradientBrush(
+                rect, BG_TOP, BG_BOTTOM, 135f))
+            {
+                g.FillRectangle(bg, rect);
+            }
 
-            int cx =
-                ClientSize.Width / 2;
+            // Radial maroon highlight behind logo area
+            using (GraphicsPath glow = new GraphicsPath())
+            {
+                int w = (int)(ClientSize.Width * 1.30f);
+                int h = (int)(ClientSize.Height * 1.50f);
+                glow.AddEllipse(
+                    ClientSize.Width / 2 - w / 2,
+                    (int)(ClientSize.Height * 0.38f) - h / 2,
+                    w, h);
 
-            int cy =
-                ClientSize.Height / 2;
-
-            // Main red atmospheric glow
-            int glowWidth =
-                (int)(
-                    ClientSize.Width * 0.72f
-                );
-
-            int glowHeight =
-                (int)(
-                    ClientSize.Height * 0.95f
-                );
-
-            using GraphicsPath glowPath =
-                new GraphicsPath();
-
-            glowPath.AddEllipse(
-                cx - glowWidth / 2,
-                cy - glowHeight / 2,
-                glowWidth,
-                glowHeight
-            );
-
-            using PathGradientBrush glow =
-                new PathGradientBrush(glowPath);
-
-            glow.CenterColor =
-                Color.FromArgb(
-                    38,
-                    120,
-                    0,
-                    0
-                );
-
-            glow.SurroundColors =
-                new[]
+                using (PathGradientBrush pg = new PathGradientBrush(glow))
                 {
-                    Color.FromArgb(
-                        0,
-                        0,
-                        0,
-                        0
-                    )
-                };
-
-            g.FillPath(
-                glow,
-                glowPath
-            );
-
-            // Subtle top red light
-            using LinearGradientBrush topGlow =
-                new LinearGradientBrush(
-                    new Rectangle(
-                        0,
-                        0,
-                        ClientSize.Width,
-                        260
-                    ),
-                    Color.FromArgb(
-                        22,
-                        150,
-                        0,
-                        0
-                    ),
-                    Color.FromArgb(
-                        0,
-                        150,
-                        0,
-                        0
-                    ),
-                    90f
-                );
-
-            g.FillRectangle(
-                topGlow,
-                0,
-                0,
-                ClientSize.Width,
-                260
-            );
-
-            // Subtle bottom shadow
-            using LinearGradientBrush bottom =
-                new LinearGradientBrush(
-                    new Rectangle(
-                        0,
-                        ClientSize.Height - 220,
-                        ClientSize.Width,
-                        220
-                    ),
-                    Color.FromArgb(
-                        0,
-                        0,
-                        0,
-                        0
-                    ),
-                    Color.FromArgb(
-                        90,
-                        0,
-                        0,
-                        0
-                    ),
-                    90f
-                );
-
-            g.FillRectangle(
-                bottom,
-                0,
-                ClientSize.Height - 220,
-                ClientSize.Width,
-                220
-            );
-        }
-
-        // ============================================================
-        // INITIALIZING
-        // ============================================================
-
-        private void DrawInitializing(Graphics g)
-        {
-            if (elapsed >= INITIALIZING_END)
-                return;
-
-            float fadeIn =
-                Clamp(
-                    elapsed / 0.45f,
-                    0f,
-                    1f
-                );
-
-            float fadeOut =
-                Clamp(
-                    (INITIALIZING_END - elapsed) / 0.45f,
-                    0f,
-                    1f
-                );
-
-            float alpha =
-                Math.Min(
-                    fadeIn,
-                    fadeOut
-                );
-
-            alpha =
-                EaseInOutCubic(alpha);
-
-            using Font font =
-                new Font(
-                    "Segoe UI",
-                    19,
-                    FontStyle.Bold,
-                    GraphicsUnit.Pixel
-                );
-
-            using SolidBrush brush =
-                new SolidBrush(
-                    Color.FromArgb(
-                        (int)(255 * alpha),
-                        255,
-                        65,
-                        70
-                    )
-                );
-
-            DrawCenteredString(
-                g,
-                "ANALYZING CDSGA HUB",
-                font,
-                brush,
-                ClientSize.Width / 2,
-                ClientSize.Height / 2 - 15
-            );
-
-            using Font small =
-                new Font(
-                    "Segoe UI",
-                    10,
-                    FontStyle.Regular,
-                    GraphicsUnit.Pixel
-                );
-
-            using SolidBrush smallBrush =
-                new SolidBrush(
-                    Color.FromArgb(
-                        (int)(130 * alpha),
-                        220,
-                        220,
-                        220
-                    )
-                );
-
-            DrawCenteredString(
-                g,
-                "Analyzing laboratory management environment",
-                small,
-                smallBrush,
-                ClientSize.Width / 2,
-                ClientSize.Height / 2 + 20
-            );
-        }
-
-        // ============================================================
-        // CENTRAL CORE
-        // ============================================================
-
-        private void DrawCore(Graphics g)
-        {
-            if (elapsed < CORE_START)
-                return;
-
-            float progress =
-                EaseOutCubic(
-                    Clamp(
-                        (elapsed - CORE_START) /
-                        (CORE_END - CORE_START),
-                        0f,
-                        1f
-                    )
-                );
-
-            int cx = ClientSize.Width / 2;
-            int cy = (int)(ClientSize.Height * 0.33f);
-
-            float pulse =
-                0.5f +
-                0.5f * (float)Math.Sin(elapsed * 2.2f);
-
-            // Soft red atmospheric glow behind the ring.
-            int glowSize = (int)((205 + pulse * 18) * progress);
-            if (glowSize > 2)
-            {
-                using GraphicsPath glowPath = new GraphicsPath();
-                glowPath.AddEllipse(
-                    cx - glowSize / 2,
-                    cy - glowSize / 2,
-                    glowSize,
-                    glowSize
-                );
-
-                using PathGradientBrush glowBrush =
-                    new PathGradientBrush(glowPath);
-
-                glowBrush.CenterColor =
-                    Color.FromArgb(
-                        (int)(38 * progress),
-                        255,
-                        35,
-                        25
-                    );
-
-                glowBrush.SurroundColors = new[]
-                {
-                    Color.FromArgb(0, 0, 0, 0)
-                };
-
-                g.FillPath(glowBrush, glowPath);
+                    pg.CenterColor = GLOW_CENTER;
+                    pg.SurroundColors = new[] { GLOW_OUTER };
+                    g.FillPath(pg, glow);
+                }
             }
 
-            // Main circular HUD ring.
-            float rotation = elapsed * 24f;
-
-            int ringSize = (int)(158 * progress);
-            int ringLeft = cx - ringSize / 2;
-            int ringTop = cy - ringSize / 2;
-
-            using Pen outerRing = new Pen(
-                Color.FromArgb((int)(215 * progress), 255, 176, 45),
-                2.2f
-            );
-
-            using Pen innerRing = new Pen(
-                Color.FromArgb((int)(150 * progress), 214, 104, 25),
-                1.2f
-            );
-
-            using Pen softRing = new Pen(
-                Color.FromArgb((int)(90 * progress), 255, 75, 35),
-                1f
-            );
-
-            g.DrawEllipse(outerRing, ringLeft, ringTop, ringSize, ringSize);
-            g.DrawEllipse(
-                innerRing,
-                ringLeft + 10,
-                ringTop + 10,
-                ringSize - 20,
-                ringSize - 20
-            );
-            g.DrawEllipse(
-                softRing,
-                ringLeft + 18,
-                ringTop + 18,
-                ringSize - 36,
-                ringSize - 36
-            );
-
-            // Rotating HUD arcs.
-            Rectangle arcRect = new Rectangle(
-                ringLeft - 4,
-                ringTop - 4,
-                ringSize + 8,
-                ringSize + 8
-            );
-
-            using Pen arcPen = new Pen(
-                Color.FromArgb((int)(230 * progress), 255, 190, 55),
-                3f
-            );
-
-            g.DrawArc(arcPen, arcRect, rotation, 55f);
-            g.DrawArc(arcPen, arcRect, rotation + 180f, 55f);
-
-            using Pen tickPen = new Pen(
-                Color.FromArgb((int)(180 * progress), 245, 160, 40),
-                1f
-            );
-
-            // Small technical ticks around the circle.
-            for (int i = 0; i < 24; i++)
+            // Subtle rounded border
+            using (Pen border = new Pen(BORDER_COLOR, 1f))
+            using (GraphicsPath path = DrawRoundedRect(
+                new Rectangle(0, 0, ClientSize.Width - 1, ClientSize.Height - 1),
+                CORNER_RADIUS))
             {
-                double a = (Math.PI * 2.0 * i / 24.0) + elapsed * 0.18;
-                float outer = ringSize / 2f - 1f;
-                float inner = outer - (i % 3 == 0 ? 9f : 5f);
-
-                float x1 = cx + (float)Math.Cos(a) * inner;
-                float y1 = cy + (float)Math.Sin(a) * inner;
-                float x2 = cx + (float)Math.Cos(a) * outer;
-                float y2 = cy + (float)Math.Sin(a) * outer;
-
-                g.DrawLine(tickPen, x1, y1, x2, y2);
-            }
-
-            // Four bright locator points.
-            using SolidBrush pointBrush = new SolidBrush(
-                Color.FromArgb((int)(235 * progress), 255, 190, 60)
-            );
-
-            float pointRadius = ringSize / 2f;
-            for (int i = 0; i < 4; i++)
-            {
-                double a = i * Math.PI / 2.0;
-                float px = cx + (float)Math.Cos(a) * pointRadius;
-                float py = cy + (float)Math.Sin(a) * pointRadius;
-
-                g.FillEllipse(pointBrush, px - 3.5f, py - 3.5f, 7f, 7f);
+                g.DrawPath(border, path);
             }
         }
 
-        // ============================================================
-        // LOGO
-        // ============================================================
-
+        // ====================================================================
+        //  LOGO
+        // ====================================================================
         private void DrawLogo(Graphics g)
         {
-            if (logoImage == null || elapsed < LOGO_START)
-                return;
-
-            float progress =
-                EaseOutBack(
-                    Clamp(
-                        (elapsed - LOGO_START) / 1.15f,
-                        0f,
-                        1f
-                    )
-                );
-
-            float fade =
-                EaseOutCubic(
-                    Clamp(
-                        (elapsed - LOGO_START) / 0.7f,
-                        0f,
-                        1f
-                    )
-                );
+            float scale = 0.80f + 0.20f * EaseOutCubic(logoScaleProgress);
+            const int baseSize = 96;
+            int size = (int)(baseSize * scale);
 
             int cx = ClientSize.Width / 2;
-            int cy = (int)(ClientSize.Height * 0.33f);
+            int cy = (int)(ClientSize.Height * 0.32f);
 
-            int maxSize =
-                (int)(Math.Min(ClientSize.Width, ClientSize.Height) * 0.155f);
+            Rectangle dest = new Rectangle(cx - size / 2, cy - size / 2, size, size);
 
-            int size = Math.Max(1, (int)(maxSize * progress));
+            DrawGlow(g, cx, cy, size,
+                0.85f + 0.15f * (float)Math.Sin(elapsed * 2.4f));
 
-            // Keep the logo safely inside the circular HUD.
-            DrawLogoGlow(g, cx, cy, size, fade);
-
-            Rectangle destination = new Rectangle(
-                cx - size / 2,
-                cy - size / 2,
-                size,
-                size
-            );
-
-            DrawImageWithOpacity(
-                g,
-                logoImage,
-                destination,
-                fade
-            );
-        }
-
-        private void DrawLogoGlow(
-            Graphics g,
-            int cx,
-            int cy,
-            int size,
-            float intensity)
-        {
-            int glowSize =
-                (int)(
-                    size * 1.15f
-                );
-
-            for (int i = 5; i >= 1; i--)
-            {
-                int current =
-                    glowSize +
-                    i * 9;
-
-                int alpha =
-                    (int)(
-                        intensity *
-                        18
-                    );
-
-                using SolidBrush brush =
-                    new SolidBrush(
-                        Color.FromArgb(
-                            alpha,
-                            255,
-                            30,
-                            20
-                        )
-                    );
-
-                g.FillEllipse(
-                    brush,
-                    cx - current / 2,
-                    cy - current / 2,
-                    current,
-                    current
-                );
-            }
-        }
-
-        private void DrawImageWithOpacity(
-            Graphics g,
-            Image image,
-            Rectangle destination,
-            float opacity)
-        {
-            using ImageAttributes attributes =
-                new ImageAttributes();
-
-            ColorMatrix matrix =
-                new ColorMatrix();
-
-            matrix.Matrix33 =
-                Clamp(
-                    opacity,
-                    0f,
-                    1f
-                );
-
-            attributes.SetColorMatrix(
-                matrix,
-                ColorMatrixFlag.Default,
-                ColorAdjustType.Bitmap
-            );
-
-            g.DrawImage(
-                image,
-                destination,
-                0,
-                0,
-                image.Width,
-                image.Height,
-                GraphicsUnit.Pixel,
-                attributes
-            );
-        }
-
-        // ============================================================
-        // TITLE
-        // ============================================================
-
-        private void DrawTitle(Graphics g)
-        {
-            if (elapsed < TITLE_START)
-                return;
-
-            float fade =
-                EaseOutCubic(
-                    Clamp(
-                        (elapsed - TITLE_START) /
-                        0.8f,
-                        0f,
-                        1f
-                    )
-                );
-
-            float slide =
-                18f *
-                (1f - fade);
-
-            int cx =
-                ClientSize.Width / 2;
-
-            int y =
-                (int)(
-                    ClientSize.Height * 0.61f +
-                    slide
-                );
-
-            using Font titleFont =
-                new Font(
-                    "Segoe UI Semibold",
-                    38,
-                    FontStyle.Bold,
-                    GraphicsUnit.Pixel
-                );
-
-            using Font subtitleFont =
-                new Font(
-                    "Segoe UI",
-                    13,
-                    FontStyle.Regular,
-                    GraphicsUnit.Pixel
-                );
-
-            using SolidBrush titleBrush =
-                new SolidBrush(
-                    Color.FromArgb(
-                        (int)(255 * fade),
-                        248,
-                        248,
-                        248
-                    )
-                );
-
-            using SolidBrush subtitleBrush =
-                new SolidBrush(
-                    Color.FromArgb(
-                        (int)(220 * fade),
-                        220,
-                        220,
-                        220
-                    )
-                );
-
-            DrawCenteredString(
-                g,
-                "CDSGA Hub",
-                titleFont,
-                titleBrush,
-                cx,
-                y
-            );
-
-            DrawCenteredString(
-                g,
-                "An Integrated Laboratory Management System",
-                subtitleFont,
-                subtitleBrush,
-                cx,
-                y + 55
-            );
-
-            DrawCenteredString(
-                g,
-                "for the College of Computer Studies (CCS)",
-                subtitleFont,
-                subtitleBrush,
-                cx,
-                y + 77
-            );
-        }
-
-        // ============================================================
-        // LOADING
-        // ============================================================
-
-        private void DrawLoading(Graphics g)
-        {
-            if (elapsed < LOADING_START)
-                return;
-
-            float progress =
-                Clamp(
-                    (elapsed - LOADING_START) /
-                    LOADING_DURATION,
-                    0f,
-                    1f
-                );
-
-            progress =
-                EaseOutCubic(progress);
-
-            int width = 300;
-            int height = 7;
-
-            int x =
-                (ClientSize.Width - width) / 2;
-
-            int y =
-                (int)(
-                    ClientSize.Height * 0.76f
-                );
-
-            // glow
-            if (progress > 0.05f)
-            {
-                using SolidBrush glow =
-                    new SolidBrush(
-                        Color.FromArgb(
-                            35,
-                            255,
-                            25,
-                            25
-                        )
-                    );
-
-                g.FillRectangle(
-                    glow,
-                    x - 8,
-                    y - 8,
-                    width + 16,
-                    height + 16
-                );
-            }
-
-            Rectangle bar =
-                new Rectangle(
-                    x,
-                    y,
-                    width,
-                    height
-                );
-
-            using SolidBrush background =
-                new SolidBrush(
-                    Color.FromArgb(
-                        75,
-                        80,
-                        10,
-                        10
-                    )
-                );
-
-            g.FillRoundedRectangle(
-                background,
-                bar,
-                4
-            );
-
-            int fillWidth =
-                (int)(
-                    width *
-                    progress
-                );
-
-            if (fillWidth > 0)
-            {
-                Rectangle fill =
-                    new Rectangle(
-                        x,
-                        y,
-                        fillWidth,
-                        height
-                    );
-
-                using LinearGradientBrush fillBrush =
-                    new LinearGradientBrush(
-                        fill,
-                        Color.FromArgb(
-                            190,
-                            20,
-                            20
-                        ),
-                        Color.FromArgb(
-                            255,
-                            60,
-                            45
-                        ),
-                        0f
-                    );
-
-                g.FillRoundedRectangle(
-                    fillBrush,
-                    fill,
-                    4
-                );
-            }
-
-            using Font font =
-                new Font(
-                    "Segoe UI",
-                    10,
-                    FontStyle.Regular,
-                    GraphicsUnit.Pixel
-                );
-
-            using SolidBrush textBrush =
-                new SolidBrush(
-                    Color.FromArgb(
-                        180,
-                        220,
-                        220,
-                        220
-                    )
-                );
-
-            DrawCenteredString(
-                g,
-                progress >= 1f
-                    ? "SYSTEM READY"
-                    : "INITIALIZING SYSTEM",
-                font,
-                textBrush,
-                ClientSize.Width / 2,
-                y + 24
-            );
-        }
-
-        // ============================================================
-        // TRANSITION
-        // ============================================================
-
-        private void DrawTransitionLayer(Graphics g)
-        {
-            // No off-screen Bitmap is created per frame. This avoids GC spikes
-            // and makes the splash-to-main transition visibly smoother.
-            float fadeOut =
-                1f -
-                EaseInOutCubic(
-                    Clamp(
-                        finalTransition / 0.78f,
-                        0f,
-                        1f
-                    )
-                );
-
-            if (fadeOut <= 0.01f)
-                return;
-
-            int alpha = (int)(255f * (1f - fadeOut));
-
-            using SolidBrush fadeBrush =
-                new SolidBrush(
-                    Color.FromArgb(
-                        alpha,
-                        0,
-                        0,
-                        0
-                    )
-                );
-
-            g.FillRectangle(fadeBrush, ClientRectangle);
-        }
-
-        // ============================================================
-        // FINAL SCREEN
-        // ============================================================
-
-        private void DrawFinalScreen(Graphics g)
-        {
-            float transitionT =
-                EaseOutCubic(
-                    Clamp(finalTransition, 0f, 1f)
-                );
-
-            int cx = ClientSize.Width / 2;
-            int cy = (int)(ClientSize.Height * 0.31f);
-
-            // Background red glow.
-            float pulse =
-                0.5f +
-                0.5f * (float)Math.Sin(elapsed * 2.5f);
-
-            int glowSize = (int)(260 + pulse * 18);
-
-            using GraphicsPath glowPath = new GraphicsPath();
-            glowPath.AddEllipse(
-                cx - glowSize / 2,
-                cy - glowSize / 2,
-                glowSize,
-                glowSize
-            );
-
-            using PathGradientBrush glowBrush =
-                new PathGradientBrush(glowPath);
-
-            glowBrush.CenterColor = Color.FromArgb(
-                (int)(42 * transitionT),
-                240,
-                35,
-                25
-            );
-
-            glowBrush.SurroundColors = new[]
-            {
-                Color.FromArgb(0, 0, 0, 0)
-            };
-
-            g.FillPath(glowBrush, glowPath);
-
-            // Circular HUD around the real logo.
-            int ringSize = 168;
-            int left = cx - ringSize / 2;
-            int top = cy - ringSize / 2;
-
-            using Pen ring = new Pen(
-                Color.FromArgb((int)(230 * transitionT), 255, 177, 45),
-                2.4f
-            );
-
-            using Pen ring2 = new Pen(
-                Color.FromArgb((int)(135 * transitionT), 220, 104, 25),
-                1.2f
-            );
-
-            g.DrawEllipse(ring, left, top, ringSize, ringSize);
-            g.DrawEllipse(ring2, left + 11, top + 11, ringSize - 22, ringSize - 22);
-
-            Rectangle arcRect = new Rectangle(left - 5, top - 5, ringSize + 10, ringSize + 10);
-            using Pen arcPen = new Pen(
-                Color.FromArgb((int)(225 * transitionT), 255, 185, 50),
-                3f
-            );
-
-            float rotation = elapsed * 26f;
-            g.DrawArc(arcPen, arcRect, rotation, 52f);
-            g.DrawArc(arcPen, arcRect, rotation + 180f, 52f);
-
-            using Pen tickPen = new Pen(
-                Color.FromArgb((int)(155 * transitionT), 245, 160, 40),
-                1f
-            );
-
-            for (int i = 0; i < 24; i++)
-            {
-                double a = Math.PI * 2.0 * i / 24.0;
-                float outer = ringSize / 2f - 1f;
-                float inner = outer - (i % 3 == 0 ? 9f : 5f);
-
-                g.DrawLine(
-                    tickPen,
-                    cx + (float)Math.Cos(a) * inner,
-                    cy + (float)Math.Sin(a) * inner,
-                    cx + (float)Math.Cos(a) * outer,
-                    cy + (float)Math.Sin(a) * outer
-                );
-            }
-
-            // Real CCS logo centered inside the ring.
             if (logoImage != null)
             {
-                int logoSize = 104;
-                DrawLogoGlow(g, cx, cy, logoSize, transitionT);
-
-                Rectangle logoRect = new Rectangle(
-                    cx - logoSize / 2,
-                    cy - logoSize / 2,
-                    logoSize,
-                    logoSize
-                );
-
-                DrawImageWithOpacity(
-                    g,
-                    logoImage,
-                    logoRect,
-                    transitionT
-                );
+                float alpha = EaseOutCubic(fadeInProgress);
+                using (ImageAttributes ia = new ImageAttributes())
+                {
+                    ColorMatrix cm = new ColorMatrix();
+                    cm.Matrix33 = alpha;
+                    ia.SetColorMatrix(cm);
+                    g.DrawImage(logoImage, dest, 0, 0,
+                        logoImage.Width, logoImage.Height,
+                        GraphicsUnit.Pixel, ia);
+                }
             }
-
-            // Main title.
-            using Font titleFont = new Font(
-                "Segoe UI Semibold",
-                42,
-                FontStyle.Bold,
-                GraphicsUnit.Pixel
-            );
-
-            using SolidBrush titleBrush = new SolidBrush(
-                Color.FromArgb(
-                    (int)(255 * transitionT),
-                    248,
-                    248,
-                    248
-                )
-            );
-
-            DrawCenteredString(
-                g,
-                "CDSGA Hub",
-                titleFont,
-                titleBrush,
-                cx,
-                (int)(ClientSize.Height * 0.60f)
-            );
-
-            using Font subtitleFont = new Font(
-                "Segoe UI",
-                14,
-                FontStyle.Regular,
-                GraphicsUnit.Pixel
-            );
-
-            using SolidBrush subtitleBrush = new SolidBrush(
-                Color.FromArgb(
-                    (int)(205 * transitionT),
-                    220,
-                    220,
-                    220
-                )
-            );
-
-            DrawCenteredString(
-                g,
-                "COLLEGE OF COMPUTER STUDIES",
-                subtitleFont,
-                subtitleBrush,
-                cx,
-                (int)(ClientSize.Height * 0.655f)
-            );
-
-            // Green active status pill.
-            float activeElapsed = Math.Max(0f, elapsed - FINAL_TRANSITION_START);
-
-            int secondsLeft = Math.Max(
-                0,
-                (int)Math.Ceiling(ACTIVE_DURATION - activeElapsed)
-            );
-
-            int pillWidth = 190;
-            int pillHeight = 38;
-            int pillX = cx - pillWidth / 2;
-            int pillY = (int)(ClientSize.Height * 0.735f);
-
-            using GraphicsPath pillPath = RoundedRect(
-                new Rectangle(pillX, pillY, pillWidth, pillHeight),
-                19
-            );
-
-            using SolidBrush pillBrush = new SolidBrush(
-                Color.FromArgb(
-                    (int)(120 * transitionT),
-                    10,
-                    18,
-                    13
-                )
-            );
-
-            using Pen pillPen = new Pen(
-                Color.FromArgb(
-                    (int)(190 * transitionT),
-                    65,
-                    165,
-                    75
-                ),
-                1.3f
-            );
-
-            g.FillPath(pillBrush, pillPath);
-            g.DrawPath(pillPen, pillPath);
-
-            int dotSize = 9;
-            using SolidBrush dotBrush = new SolidBrush(
-                Color.FromArgb(
-                    (int)(245 * transitionT),
-                    45,
-                    220,
-                    105
-                )
-            );
-
-            g.FillEllipse(
-                dotBrush,
-                pillX + 20,
-                pillY + pillHeight / 2 - dotSize / 2,
-                dotSize,
-                dotSize
-            );
-
-            using Font statusFont = new Font(
-                "Segoe UI Semibold",
-                12,
-                FontStyle.Bold,
-                GraphicsUnit.Pixel
-            );
-
-            using SolidBrush statusBrush = new SolidBrush(
-                Color.FromArgb(
-                    (int)(240 * transitionT),
-                    205,
-                    245,
-                    215
-                )
-            );
-
-            DrawCenteredString(
-                g,
-                "SYSTEM ACTIVE",
-                statusFont,
-                statusBrush,
-                cx + 10,
-                pillY + pillHeight / 2f
-            );
-
-            using Font countdownFont = new Font(
-                "Segoe UI",
-                12,
-                FontStyle.Regular,
-                GraphicsUnit.Pixel
-            );
-
-            using SolidBrush countdownBrush = new SolidBrush(
-                Color.FromArgb(
-                    (int)(190 * transitionT),
-                    190,
-                    220,
-                    198
-                )
-            );
-
-            DrawCenteredString(
-                g,
-                secondsLeft > 0
-                    ? "Opening Login in " + secondsLeft
-                    : "OPENING LOGIN...",
-                countdownFont,
-                countdownBrush,
-                cx,
-                pillY + 57
-            );
+            else
+            {
+                DrawFallbackLogo(g, dest, fadeInProgress);
+            }
         }
 
-        private static GraphicsPath RoundedRect(Rectangle rect, int radius)
+        private void DrawGlow(Graphics g, int cx, int cy, int size, float intensity)
+        {
+            int glowSize = (int)(size * 1.9f);
+            using (GraphicsPath path = new GraphicsPath())
+            {
+                path.AddEllipse(cx - glowSize / 2, cy - glowSize / 2, glowSize, glowSize);
+                using (PathGradientBrush pg = new PathGradientBrush(path))
+                {
+                    int a = (int)(120 * intensity);
+                    pg.CenterColor = Color.FromArgb(a, LOGO_GLOW_IN.R, LOGO_GLOW_IN.G, LOGO_GLOW_IN.B);
+                    pg.SurroundColors = new[] { LOGO_GLOW_OUT };
+                    g.FillPath(pg, path);
+                }
+            }
+        }
+
+        private void DrawFallbackLogo(Graphics g, Rectangle rect, float alpha)
+        {
+            int a = (int)(255 * EaseOutCubic(alpha));
+
+            using (GraphicsPath path = DrawRoundedRect(rect, rect.Width / 4))
+            using (LinearGradientBrush brush = new LinearGradientBrush(
+                rect,
+                Color.FromArgb(a, 140, 30, 30),
+                Color.FromArgb(a, 220, 80, 60),
+                45f))
+            {
+                g.FillPath(brush, path);
+            }
+
+            using (Font f = new Font("Segoe UI", rect.Width * 0.55f,
+                FontStyle.Bold, GraphicsUnit.Pixel))
+            using (SolidBrush b = new SolidBrush(Color.FromArgb(a, 255, 240, 235)))
+            using (StringFormat sf = new StringFormat
+            {
+                Alignment = StringAlignment.Center,
+                LineAlignment = StringAlignment.Center
+            })
+            {
+                g.DrawString("S", f, b, rect, sf);
+            }
+        }
+
+        // ====================================================================
+        //  APP NAME
+        // ====================================================================
+        private void DrawAppName(Graphics g)
+        {
+            float t = EaseOutCubic(textSlideProgress);
+            float slide = (1f - t) * 20f;
+            float alpha = t;
+
+            using (Font f = new Font("Segoe UI Semibold", 24f,
+                FontStyle.Bold, GraphicsUnit.Pixel))
+            using (SolidBrush b = new SolidBrush(
+                Color.FromArgb((int)(255 * alpha), TEXT_PRIMARY)))
+            using (StringFormat sf = new StringFormat
+            {
+                Alignment = StringAlignment.Center,
+                LineAlignment = StringAlignment.Center
+            })
+            {
+                RectangleF rect = new RectangleF(
+                    0,
+                    ClientSize.Height * 0.55f + slide,
+                    ClientSize.Width,
+                    30);
+                g.DrawString("CCS LABORATORY STYTEM", f, b, rect, sf);
+            }
+        }
+
+        // ====================================================================
+        //  VERSION
+        // ====================================================================
+        private void DrawVersion(Graphics g)
+        {
+            float t = EaseOutCubic(Clamp((elapsed - 0.10f) / TEXT_SLIDE_DURATION, 0f, 1f));
+            float slide = (1f - t) * 20f;
+            float alpha = t;
+
+            using (Font f = new Font("Segoe UI", 11f, FontStyle.Regular, GraphicsUnit.Pixel))
+            using (SolidBrush b = new SolidBrush(
+                Color.FromArgb((int)(180 * alpha), TEXT_SECONDARY)))
+            using (StringFormat sf = new StringFormat
+            {
+                Alignment = StringAlignment.Center,
+                LineAlignment = StringAlignment.Center
+            })
+            {
+                RectangleF rect = new RectangleF(
+                    0,
+                    ClientSize.Height * 0.55f + 32 + slide,
+                    ClientSize.Width,
+                    18);
+                g.DrawString("Version 1.0.0", f, b, rect, sf);
+            }
+        }
+
+        // ====================================================================
+        //  LOADING MESSAGE
+        // ====================================================================
+        private void DrawLoadingMessage(Graphics g)
+        {
+            if (loadingMessage == null) return;
+
+            float alpha = EaseOutCubic(fadeInProgress);
+
+            using (Font f = new Font("Segoe UI", 11f, FontStyle.Regular, GraphicsUnit.Pixel))
+            using (SolidBrush b = new SolidBrush(
+                Color.FromArgb((int)(230 * alpha), TEXT_SECONDARY)))
+            using (StringFormat sf = new StringFormat
+            {
+                Alignment = StringAlignment.Center,
+                LineAlignment = StringAlignment.Center
+            })
+            {
+                RectangleF rect = new RectangleF(
+                    0,
+                    ClientSize.Height * 0.74f,
+                    ClientSize.Width,
+                    18);
+                string msg = currentProgress >= 1f ? "Ready!" : loadingMessage;
+                g.DrawString(msg, f, b, rect, sf);
+            }
+        }
+
+        // ====================================================================
+        //  PROGRESS BAR — maroon → crimson → bright red
+        // ====================================================================
+        private void DrawGradientBar(Graphics g)
+        {
+            int barWidth = (int)(ClientSize.Width * 0.72f);
+            int barHeight = 8;
+            int x = (ClientSize.Width - barWidth) / 2;
+            int y = (int)(ClientSize.Height * 0.82f);
+
+            Rectangle trackRect = new Rectangle(x, y, barWidth, barHeight);
+
+            using (GraphicsPath trackPath = DrawRoundedRect(trackRect, barHeight / 2))
+            using (SolidBrush trackBrush = new SolidBrush(Color.FromArgb(70, 90, 30, 30)))
+            {
+                g.FillPath(trackBrush, trackPath);
+            }
+
+            int fillWidth = (int)(barWidth * currentProgress);
+            if (fillWidth > 1)
+            {
+                Rectangle fillRect = new Rectangle(x, y, fillWidth, barHeight);
+                using (GraphicsPath fillPath = DrawRoundedRect(fillRect, barHeight / 2))
+                using (LinearGradientBrush fillBrush = CreateProgressGradient(fillRect))
+                {
+                    g.SetClip(fillPath);
+                    g.FillRectangle(fillBrush, fillRect);
+                    DrawShimmerBand(g, fillRect);
+                    g.ResetClip();
+                }
+            }
+
+            string pct = ((int)Math.Round(currentProgress * 100)).ToString() + "%";
+            using (Font f = new Font("Segoe UI Semibold", 11f,
+                FontStyle.Bold, GraphicsUnit.Pixel))
+            using (SolidBrush b = new SolidBrush(
+                Color.FromArgb(235, TEXT_PRIMARY)))
+            {
+                SizeF size = g.MeasureString(pct, f);
+                g.DrawString(pct, f, b,
+                    ClientSize.Width / 2f - size.Width / 2f,
+                    y + barHeight + 7);
+            }
+        }
+
+        // Maroon → crimson → bright red, driven by current progress.
+        private LinearGradientBrush CreateProgressGradient(Rectangle rect)
+        {
+            float p = currentProgress;
+            Color c1, c2;
+
+            if (p < 0.5f)
+            {
+                float k = p / 0.5f;
+                c1 = Lerp(PROG_A1, PROG_B1, k);
+                c2 = Lerp(PROG_A2, PROG_B2, k);
+            }
+            else
+            {
+                float k = (p - 0.5f) / 0.5f;
+                c1 = Lerp(PROG_B1, PROG_C1, k);
+                c2 = Lerp(PROG_B2, PROG_C2, k);
+            }
+
+            return new LinearGradientBrush(rect, c1, c2, 0f);
+        }
+
+        private void DrawShimmerBand(Graphics g, Rectangle fillRect)
+        {
+            float centerX = fillRect.X + shimmerPhase * fillRect.Width * 1.4f
+                          - fillRect.Width * 0.2f;
+            const int shimmerWidth = 90;
+
+            Rectangle band = new Rectangle(
+                (int)(centerX - shimmerWidth / 2f),
+                fillRect.Y - 2,
+                shimmerWidth,
+                fillRect.Height + 4);
+
+            using (LinearGradientBrush bandBrush =
+                new LinearGradientBrush(band,
+                    Color.FromArgb(0, 255, 230, 220),
+                    Color.FromArgb(0, 255, 230, 220),
+                    0f))
+            {
+                ColorBlend blend = new ColorBlend(3)
+                {
+                    Colors = new[]
+                    {
+                        Color.FromArgb(  0, 255, 230, 220),
+                        Color.FromArgb(180, 255, 230, 220),
+                        Color.FromArgb(  0, 255, 230, 220)
+                    },
+                    Positions = new[] { 0f, 0.5f, 1f }
+                };
+                bandBrush.InterpolationColors = blend;
+                g.FillRectangle(bandBrush, band);
+            }
+        }
+
+        // ====================================================================
+        //  COPYRIGHT
+        // ====================================================================
+        private void DrawCopyright(Graphics g)
+        {
+            float alpha = EaseOutCubic(fadeInProgress);
+            const string text = "© 2026 CDSGA";
+
+            using (Font f = new Font("Segoe UI", 9f, FontStyle.Regular, GraphicsUnit.Pixel))
+            using (SolidBrush b = new SolidBrush(
+                Color.FromArgb((int)(160 * alpha), TEXT_MUTED)))
+            {
+                SizeF size = g.MeasureString(text, f);
+                g.DrawString(text, f, b,
+                    20,
+                    ClientSize.Height - size.Height - 14);
+            }
+        }
+
+        // ====================================================================
+        //  HELPERS
+        // ====================================================================
+        public static GraphicsPath DrawRoundedRect(Rectangle rect, int radius)
         {
             GraphicsPath path = new GraphicsPath();
             int d = radius * 2;
+            if (d > rect.Width) d = rect.Width;
+            if (d > rect.Height) d = rect.Height;
 
             path.AddArc(rect.X, rect.Y, d, d, 180, 90);
             path.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
             path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90);
             path.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
             path.CloseFigure();
-
             return path;
         }
 
-        // ============================================================
-        // AUTOMATIC LOGIN
-        // ============================================================
-
-        private void OpenLoginForm()
+        public static float EaseOutCubic(float t)
         {
-            if (loginOpened)
-                return;
+            t = Clamp(t, 0f, 1f);
+            return 1f - (float)Math.Pow(1f - t, 3);
+        }
 
-            loginOpened = true;
-            animationTimer.Stop();
-            stopwatch.Stop();
+        private static float Clamp(float v, float min, float max)
+            => Math.Max(min, Math.Min(max, v));
 
-            try
+        private static Color Lerp(Color a, Color b, float t)
+        {
+            t = Clamp(t, 0f, 1f);
+            return Color.FromArgb(
+                (int)(a.A + (b.A - a.A) * t),
+                (int)(a.R + (b.R - a.R) * t),
+                (int)(a.G + (b.G - a.G) * t),
+                (int)(a.B + (b.B - a.B) * t));
+        }
+
+        // ====================================================================
+        //  ESC TO SKIP
+        // ====================================================================
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            base.OnKeyDown(e);
+            if (e.KeyCode == Keys.Escape)
             {
-                Login loginForm = new Login();
-
-                loginForm.FormClosed += (s, e) =>
-                {
-                    if (!IsDisposed)
-                        Close();
-                };
-
-                loginForm.Show();
-                Hide();
-            }
-            catch
-            {
-                // If Login.cs is not available or cannot be created,
-                // keep the splash closed cleanly instead of crashing.
+                animationTimer.Stop();
+                stopwatch.Stop();
                 Close();
             }
         }
 
-        // ============================================================
-        // HELPERS
-        // ============================================================
-
-        private static void DrawCenteredString(
-            Graphics g,
-            string text,
-            Font font,
-            Brush brush,
-            float centerX,
-            float centerY)
+        // ====================================================================
+        //  CLEANUP
+        // ====================================================================
+        protected override void OnFormClosed(FormClosedEventArgs e)
         {
-            SizeF size =
-                g.MeasureString(
-                    text,
-                    font
-                );
-
-            g.DrawString(
-                text,
-                font,
-                brush,
-                centerX - size.Width / 2f,
-                centerY - size.Height / 2f
-            );
+            base.OnFormClosed(e);
+            animationTimer.Stop();
+            animationTimer.Dispose();
+            stopwatch.Stop();
         }
 
-        private static float Clamp(
-            float value,
-            float min,
-            float max)
-        {
-            return Math.Max(
-                min,
-                Math.Min(
-                    max,
-                    value
-                )
-            );
-        }
-
-        private static float EaseOutCubic(float t)
-        {
-            t =
-                Clamp(
-                    t,
-                    0f,
-                    1f
-                );
-
-            return
-                1f -
-                (float)Math.Pow(
-                    1f - t,
-                    3
-                );
-        }
-
-        private static float EaseOutBack(float t)
-        {
-            t =
-                Clamp(
-                    t,
-                    0f,
-                    1f
-                );
-
-            const float c1 = 1.70158f;
-            const float c3 = c1 + 1f;
-
-            return
-                1f +
-                c3 *
-                (float)Math.Pow(
-                    t - 1f,
-                    3
-                ) +
-                c1 *
-                (float)Math.Pow(
-                    t - 1f,
-                    2
-                );
-        }
-
-        private static float EaseInOutCubic(float t)
-        {
-            t =
-                Clamp(
-                    t,
-                    0f,
-                    1f
-                );
-
-            return
-                t < 0.5f
-                    ? 4f * t * t * t
-                    : 1f -
-                      (float)Math.Pow(
-                          -2f * t + 2f,
-                          3
-                      ) / 2f;
-        }
-
-        // ============================================================
-        // PARTICLE CLASS
-        // ============================================================
-
+        // ====================================================================
+        //  PARTICLE
+        // ====================================================================
         private class Particle
         {
             public float X;
             public float Y;
-            public float Speed;
-            public float Size;
-            public float Phase;
+            public float Radius;
+            public float SpeedX;
+            public float SpeedY;
             public int Alpha;
-        }
-    }
-
-    // ================================================================
-    // GRAPHICS EXTENSIONS
-    // ================================================================
-
-    public static class GraphicsExtensions
-    {
-        public static void DrawRoundedRectangle(
-            this Graphics graphics,
-            Pen pen,
-            Rectangle rectangle,
-            int radius)
-        {
-            using GraphicsPath path =
-                CreateRoundedPath(
-                    rectangle,
-                    radius
-                );
-
-            graphics.DrawPath(
-                pen,
-                path
-            );
-        }
-
-        public static void FillRoundedRectangle(
-            this Graphics graphics,
-            Brush brush,
-            Rectangle rectangle,
-            int radius)
-        {
-            using GraphicsPath path =
-                CreateRoundedPath(
-                    rectangle,
-                    radius
-                );
-
-            graphics.FillPath(
-                brush,
-                path
-            );
-        }
-
-        private static GraphicsPath CreateRoundedPath(
-            Rectangle rectangle,
-            int radius)
-        {
-            GraphicsPath path =
-                new GraphicsPath();
-
-            int diameter =
-                radius * 2;
-
-            if (diameter > rectangle.Width)
-                diameter = rectangle.Width;
-
-            if (diameter > rectangle.Height)
-                diameter = rectangle.Height;
-
-            Rectangle arc =
-                new Rectangle(
-                    rectangle.X,
-                    rectangle.Y,
-                    diameter,
-                    diameter
-                );
-
-            path.AddArc(
-                arc,
-                180,
-                90
-            );
-
-            arc.X =
-                rectangle.Right -
-                diameter;
-
-            path.AddArc(
-                arc,
-                270,
-                90
-            );
-
-            arc.Y =
-                rectangle.Bottom -
-                diameter;
-
-            path.AddArc(
-                arc,
-                0,
-                90
-            );
-
-            arc.X =
-                rectangle.Left;
-
-            path.AddArc(
-                arc,
-                90,
-                90
-            );
-
-            path.CloseFigure();
-
-            return path;
+            public float Phase;
+            public float PhaseSpeed;
         }
     }
 }
