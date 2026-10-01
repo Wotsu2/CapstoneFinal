@@ -1650,111 +1650,116 @@ namespace WinFormsApp1
         // =========================================================
 
         private bool SaveAnswersToDatabase()
+{
+    if (currentAttemptId <= 0) return false;
+
+    SaveAllAnswers();
+
+    string connStr = SettingsManager.Current.GetConnectionString();
+
+    using (var conn = new MySqlConnection(connStr))
+    {
+        MySqlTransaction tx = null;
+
+        try
         {
-            if (currentAttemptId <= 0) return false;
+            conn.Open();
+            tx = conn.BeginTransaction();
 
-            SaveAllAnswers();
-
-            string connStr = SettingsManager.Current.GetConnectionString();
-
-            using (var conn = new MySqlConnection(connStr))
+            for (int i = 0; i < questions.Count; i++)
             {
-                MySqlTransaction tx = null;
+                QuizQuestion q = questions[i];
+                int questionId = q.QuestionId;
 
-                try
+                string answer = studentAnswers.ContainsKey(i) ? studentAnswers[i] : "";
+                string type = NormalizeQuestionType(q.QuestionType);
+
+                bool isCorrect = false;
+
+                if (type != "essay" &&
+                    !string.IsNullOrWhiteSpace(answer) &&
+                    !string.IsNullOrWhiteSpace(q.CorrectAnswer))
                 {
-                    conn.Open();
-                    tx = conn.BeginTransaction();
-
-                    for (int i = 0; i < questions.Count; i++)
-                    {
-                        QuizQuestion q = questions[i];
-                        int questionId = q.QuestionId;
-
-                        string answer = studentAnswers.ContainsKey(i) ? studentAnswers[i] : "";
-                        string type = NormalizeQuestionType(q.QuestionType);
-
-                        bool isCorrect = false;
-
-                        if (type != "essay" &&
-                            !string.IsNullOrWhiteSpace(answer) &&
-                            !string.IsNullOrWhiteSpace(q.CorrectAnswer))
-                        {
-                            isCorrect = answer.Trim().ToUpper() == q.CorrectAnswer.Trim().ToUpper();
-                        }
-
-                        if (string.IsNullOrWhiteSpace(answer))
-                        {
-                            using (var deleteCmd = new MySqlCommand(
-                                @"DELETE FROM student_answers
-                                  WHERE attempt_id = @attempt_id AND question_id = @question_id",
-                                conn, tx))
-                            {
-                                deleteCmd.Parameters.AddWithValue("@attempt_id", currentAttemptId);
-                                deleteCmd.Parameters.AddWithValue("@question_id", questionId);
-                                deleteCmd.ExecuteNonQuery();
-                            }
-                            continue;
-                        }
-
-                        bool exists = false;
-                        using (var checkCmd = new MySqlCommand(
-                            @"SELECT COUNT(*) FROM student_answers
-                              WHERE attempt_id = @attempt_id AND question_id = @question_id",
-                            conn, tx))
-                        {
-                            checkCmd.Parameters.AddWithValue("@attempt_id", currentAttemptId);
-                            checkCmd.Parameters.AddWithValue("@question_id", questionId);
-                            exists = Convert.ToInt32(checkCmd.ExecuteScalar()) > 0;
-                        }
-
-                        if (exists)
-                        {
-                            using (var updateCmd = new MySqlCommand(
-                                @"UPDATE student_answers
-                                  SET student_answer = @student_answer,
-                                      is_correct = @is_correct,
-                                      student_name = @student_name
-                                  WHERE attempt_id = @attempt_id AND question_id = @question_id",
-                                conn, tx))
-                            {
-                                updateCmd.Parameters.AddWithValue("@student_answer", answer);
-                                updateCmd.Parameters.AddWithValue("@is_correct", isCorrect ? 1 : 0);
-                                updateCmd.Parameters.AddWithValue("@student_name", studentName);
-                                updateCmd.Parameters.AddWithValue("@attempt_id", currentAttemptId);
-                                updateCmd.Parameters.AddWithValue("@question_id", questionId);
-                                updateCmd.ExecuteNonQuery();
-                            }
-                        }
-                        else
-                        {
-                            using (var insertCmd = new MySqlCommand(
-                                @"INSERT INTO student_answers
-                                  (attempt_id, question_id, student_name, student_answer, is_correct)
-                                  VALUES (@attempt_id, @question_id, @student_name, @student_answer, @is_correct)",
-                                conn, tx))
-                            {
-                                insertCmd.Parameters.AddWithValue("@attempt_id", currentAttemptId);
-                                insertCmd.Parameters.AddWithValue("@question_id", questionId);
-                                insertCmd.Parameters.AddWithValue("@student_name", studentName);
-                                insertCmd.Parameters.AddWithValue("@student_answer", answer);
-                                insertCmd.Parameters.AddWithValue("@is_correct", isCorrect ? 1 : 0);
-                                insertCmd.ExecuteNonQuery();
-                            }
-                        }
-                    }
-
-                    tx.Commit();
-                    return true;
+                    isCorrect = answer.Trim().ToUpper() == q.CorrectAnswer.Trim().ToUpper();
                 }
-                catch (Exception ex)
+
+                if (string.IsNullOrWhiteSpace(answer))
                 {
-                    try { tx?.Rollback(); } catch { }
-                    Console.WriteLine("SaveAnswersToDatabase error: " + ex.Message);
-                    return false;
+                    using (var deleteCmd = new MySqlCommand(
+                        @"DELETE FROM student_answers
+                          WHERE attempt_id = @attempt_id AND question_id = @question_id",
+                        conn, tx))
+                    {
+                        deleteCmd.Parameters.AddWithValue("@attempt_id", currentAttemptId);
+                        deleteCmd.Parameters.AddWithValue("@question_id", questionId);
+                        deleteCmd.ExecuteNonQuery();
+                    }
+                    continue;
+                }
+
+                bool exists = false;
+                using (var checkCmd = new MySqlCommand(
+                    @"SELECT COUNT(*) FROM student_answers
+                      WHERE attempt_id = @attempt_id AND question_id = @question_id",
+                    conn, tx))
+                {
+                    checkCmd.Parameters.AddWithValue("@attempt_id", currentAttemptId);
+                    checkCmd.Parameters.AddWithValue("@question_id", questionId);
+                    exists = Convert.ToInt32(checkCmd.ExecuteScalar()) > 0;
+                }
+
+                if (exists)
+                {
+                    using (var updateCmd = new MySqlCommand(
+                        @"UPDATE student_answers
+                          SET student_answer = @student_answer,
+                              is_correct     = @is_correct
+                          WHERE attempt_id = @attempt_id AND question_id = @question_id",
+                        conn, tx))
+                    {
+                        updateCmd.Parameters.AddWithValue("@student_answer", answer);
+                        updateCmd.Parameters.AddWithValue("@is_correct", isCorrect ? 1 : 0);
+                        updateCmd.Parameters.AddWithValue("@attempt_id", currentAttemptId);
+                        updateCmd.Parameters.AddWithValue("@question_id", questionId);
+                        updateCmd.ExecuteNonQuery();
+                    }
+                }
+                else
+                {
+                    using (var insertCmd = new MySqlCommand(
+                        @"INSERT INTO student_answers
+                              (attempt_id, question_id, student_answer, is_correct)
+                          VALUES 
+                              (@attempt_id, @question_id, @student_answer, @is_correct)",
+                        conn, tx))
+                    {
+                        insertCmd.Parameters.AddWithValue("@attempt_id", currentAttemptId);
+                        insertCmd.Parameters.AddWithValue("@question_id", questionId);
+                        insertCmd.Parameters.AddWithValue("@student_answer", answer);
+                        insertCmd.Parameters.AddWithValue("@is_correct", isCorrect ? 1 : 0);
+                        insertCmd.ExecuteNonQuery();
+                    }
                 }
             }
+
+            tx.Commit();
+            return true;
         }
+        catch (Exception ex)
+        {
+            try { tx?.Rollback(); } catch { }
+
+            MessageBox.Show(
+                "Unable to save answers.\n\n" +
+                "Attempt ID: " + currentAttemptId + "\n\n" +
+                "Error:\n" + ex.Message,
+                "Save Error",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+            return false;
+        }
+    }
+}
 
         // =========================================================
         // MANUAL SUBMIT

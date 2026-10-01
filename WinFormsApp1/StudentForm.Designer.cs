@@ -51,6 +51,8 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(StudentForm));
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges21 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges22 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges19 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges20 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges39 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges40 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges27 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -202,8 +204,6 @@
             DataGridViewCellStyle dataGridViewCellStyle10 = new DataGridViewCellStyle();
             DataGridViewCellStyle dataGridViewCellStyle11 = new DataGridViewCellStyle();
             DataGridViewCellStyle dataGridViewCellStyle12 = new DataGridViewCellStyle();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges19 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges20 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             guna2Panel2 = new Guna.UI2.WinForms.Guna2Panel();
             btnAccount = new Guna.UI2.WinForms.Guna2Button();
             label7 = new Label();
@@ -221,6 +221,7 @@
             label5 = new Label();
             flpPendingActivities = new FlowLayoutPanel();
             guna2Panel9 = new Guna.UI2.WinForms.Guna2Panel();
+            btnCalendarExpand = new Guna.UI2.WinForms.Guna2Button();
             monthCalendar1 = new MonthCalendar();
             label4 = new Label();
             pictureBox2 = new PictureBox();
@@ -335,7 +336,6 @@
             txtCurrentUsername = new Guna.UI2.WinForms.Guna2TextBox();
             pnlQuizExam = new Guna.UI2.WinForms.Guna2Panel();
             QuizExamScore = new Guna.UI2.WinForms.Guna2DataGridView();
-            btnCalendarExpand = new Guna.UI2.WinForms.Guna2Button();
             guna2Panel2.SuspendLayout();
             guna2Panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)guna2PictureBox1).BeginInit();
@@ -386,7 +386,7 @@
             guna2Panel2.Location = new Point(0, 0);
             guna2Panel2.Name = "guna2Panel2";
             guna2Panel2.ShadowDecoration.CustomizableEdges = customizableEdges4;
-            guna2Panel2.Size = new Size(1384, 83);
+            guna2Panel2.Size = new Size(1370, 83);
             guna2Panel2.TabIndex = 3;
             // 
             // btnAccount
@@ -681,6 +681,24 @@
             guna2Panel9.ShadowDecoration.Shadow = new Padding(0, 0, 5, 5);
             guna2Panel9.Size = new Size(307, 293);
             guna2Panel9.TabIndex = 18;
+            // 
+            // btnCalendarExpand
+            // 
+            btnCalendarExpand.CustomizableEdges = customizableEdges19;
+            btnCalendarExpand.DisabledState.BorderColor = Color.DarkGray;
+            btnCalendarExpand.DisabledState.CustomBorderColor = Color.DarkGray;
+            btnCalendarExpand.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
+            btnCalendarExpand.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
+            btnCalendarExpand.FillColor = Color.Transparent;
+            btnCalendarExpand.Font = new Font("Segoe UI", 9F);
+            btnCalendarExpand.ForeColor = Color.White;
+            btnCalendarExpand.Image = Properties.Resources.Expand;
+            btnCalendarExpand.Location = new Point(247, 16);
+            btnCalendarExpand.Name = "btnCalendarExpand";
+            btnCalendarExpand.ShadowDecoration.CustomizableEdges = customizableEdges20;
+            btnCalendarExpand.Size = new Size(40, 33);
+            btnCalendarExpand.TabIndex = 12;
+            btnCalendarExpand.Click += btnCalendarExpand_Click;
             // 
             // monthCalendar1
             // 
@@ -2704,36 +2722,18 @@
             QuizExamScore.ThemeStyle.RowsStyle.Font = new Font("Segoe UI", 9F);
             QuizExamScore.ThemeStyle.RowsStyle.Height = 45;
             // 
-            // btnCalendarExpand
-            // 
-            btnCalendarExpand.CustomizableEdges = customizableEdges19;
-            btnCalendarExpand.DisabledState.BorderColor = Color.DarkGray;
-            btnCalendarExpand.DisabledState.CustomBorderColor = Color.DarkGray;
-            btnCalendarExpand.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
-            btnCalendarExpand.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnCalendarExpand.FillColor = Color.Transparent;
-            btnCalendarExpand.Font = new Font("Segoe UI", 9F);
-            btnCalendarExpand.ForeColor = Color.White;
-            btnCalendarExpand.Image = Properties.Resources.Expand;
-            btnCalendarExpand.Location = new Point(247, 16);
-            btnCalendarExpand.Name = "btnCalendarExpand";
-            btnCalendarExpand.ShadowDecoration.CustomizableEdges = customizableEdges20;
-            btnCalendarExpand.Size = new Size(40, 33);
-            btnCalendarExpand.TabIndex = 12;
-            btnCalendarExpand.Click += btnCalendarExpand_Click;
-            // 
             // StudentForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1384, 831);
+            ClientSize = new Size(1370, 749);
+            Controls.Add(pnlQuizExam);
             Controls.Add(guna2Panel1);
             Controls.Add(guna2Panel2);
             Controls.Add(pnlHome);
             Controls.Add(pnlSetting);
             Controls.Add(pnlGrades);
             Controls.Add(pnlActivity);
-            Controls.Add(pnlQuizExam);
             Controls.Add(pnlSubject);
             Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
@@ -2930,9 +2930,9 @@
         private Guna.UI2.WinForms.Guna2Button btnQuizExam;
         private Guna.UI2.WinForms.Guna2Panel pnlQuizExam;
         private Guna.UI2.WinForms.Guna2Panel guna2Panel13;
-        private Guna.UI2.WinForms.Guna2DataGridView QuizExamScore;
         private Guna.UI2.WinForms.Guna2PictureBox guna2PictureBox1;
         private MonthCalendar monthCalendar1;
         private Guna.UI2.WinForms.Guna2Button btnCalendarExpand;
+        private Guna.UI2.WinForms.Guna2DataGridView QuizExamScore;
     }
 }

@@ -103,9 +103,6 @@ namespace WinFormsApp1
                 try { LoadJoinedClasses(); }
                 catch (Exception ex) { Console.WriteLine("LoadJoinedClasses: " + ex.Message); }
 
-                try { InitializeQuizExam(); }
-                catch (Exception ex) { Console.WriteLine("InitQuizExam: " + ex.Message); }
-
                 lblStudentName.Text = studentname;
 
                 pnlHome.Visible = true;
@@ -202,7 +199,6 @@ namespace WinFormsApp1
         // =========================================================
         // BANNER SLIDESHOW
         // =========================================================
-
         private void StartSlideshow()
         {
             try
@@ -301,7 +297,6 @@ namespace WinFormsApp1
         // =========================================================
         // NAVIGATION
         // =========================================================
-
         private void btnHome_Click(object sender, EventArgs e)
         {
             pnlHome.Visible = true;
@@ -406,7 +401,6 @@ namespace WinFormsApp1
             pnlQuizExam.Visible = true;
             pnlSetting.Visible = false;
             lblhometitle.Text = "Grade";
-            InitializeQuizExam();
 
             btnHome.Checked = false;
             btnQuizExam.Checked = true;
@@ -419,7 +413,6 @@ namespace WinFormsApp1
         // =========================================================
         // TCP CLIENT HELPERS
         // =========================================================
-
         private async Task RunClientForever(
             string name,
             Func<TcpClient> connect,
@@ -679,7 +672,6 @@ namespace WinFormsApp1
         // =========================================================
         // HOME — Activities
         // =========================================================
-
         private void InitializeCreateButtonActivity()
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -690,29 +682,27 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
-                    Console.WriteLine("[Activities] Loading for user = " + userId + ", section = '" + StudentSection + "'");
-
                     string query = @"
-                SELECT pa.activity_id,
-                       pa.title,
-                       pa.start_time,
-                       pa.due_date,
-                       pa.activity_subject,
-                       pa.activity_status,
-                       pa.section
-                FROM professor_activity pa
-                INNER JOIN student_class sc
-                    ON  sc.user_id      = @user_id
-                    AND sc.professor_id = pa.professor_id
-                    AND LOWER(TRIM(sc.section)) = LOWER(TRIM(pa.section))
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM submitted_activity sa
-                    WHERE sa.user_id = @user_id
-                      AND sa.prof_id = pa.professor_id
-                      AND sa.title   = pa.title
-                      AND sa.section = pa.section
-                )
-                ORDER BY pa.due_date ASC";
+                        SELECT pa.activity_id,
+                               pa.title,
+                               pa.start_time,
+                               pa.due_date,
+                               pa.activity_subject,
+                               pa.activity_status,
+                               pa.section
+                        FROM professor_activity pa
+                        INNER JOIN student_class sc
+                            ON  sc.user_id      = @user_id
+                            AND sc.professor_id = pa.professor_id
+                            AND LOWER(TRIM(sc.section)) = LOWER(TRIM(pa.section))
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM submitted_activity sa
+                            WHERE sa.user_id = @user_id
+                              AND sa.prof_id = pa.professor_id
+                              AND sa.title   = pa.title
+                              AND sa.section = pa.section
+                        )
+                        ORDER BY pa.due_date ASC";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -898,7 +888,6 @@ namespace WinFormsApp1
         // =========================================================
         // Activities
         // =========================================================
-
         private void InitializeDataGridViewActivities()
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -910,50 +899,50 @@ namespace WinFormsApp1
                     conn.Open();
 
                     string query = @"
-                SELECT pa.activity_id, pa.title, pa.start_time, pa.due_date,
-                       pa.activity_subject, pa.activity_status,
-                       pa.description, pa.professor_id
-                FROM professor_activity pa
-                INNER JOIN student_class sc
-                    ON  sc.user_id      = @user_id
-                    AND sc.professor_id = pa.professor_id
-                    AND LOWER(TRIM(sc.section)) = LOWER(TRIM(pa.section))
-                WHERE 1 = 1";
+                        SELECT pa.activity_id, pa.title, pa.start_time, pa.due_date,
+                               pa.activity_subject, pa.activity_status,
+                               pa.description, pa.professor_id
+                        FROM professor_activity pa
+                        INNER JOIN student_class sc
+                            ON  sc.user_id      = @user_id
+                            AND sc.professor_id = pa.professor_id
+                            AND LOWER(TRIM(sc.section)) = LOWER(TRIM(pa.section))
+                        WHERE 1 = 1";
 
                     if (string.IsNullOrEmpty(selectedActivitiesCategory) ||
                         selectedActivitiesCategory == "Pending")
                     {
                         query += @"
-                    AND NOT EXISTS (
-                        SELECT 1 FROM submitted_activity sa
-                        WHERE sa.user_id = @user_id
-                          AND sa.prof_id = pa.professor_id
-                          AND sa.title   = pa.title
-                          AND sa.section = pa.section
-                    )";
+                            AND NOT EXISTS (
+                                SELECT 1 FROM submitted_activity sa
+                                WHERE sa.user_id = @user_id
+                                  AND sa.prof_id = pa.professor_id
+                                  AND sa.title   = pa.title
+                                  AND sa.section = pa.section
+                            )";
                     }
                     else if (selectedActivitiesCategory == "Submitted")
                     {
                         query += @"
-                    AND EXISTS (
-                        SELECT 1 FROM submitted_activity sa
-                        WHERE sa.user_id = @user_id
-                          AND sa.prof_id = pa.professor_id
-                          AND sa.title   = pa.title
-                          AND sa.section = pa.section
-                    )";
+                            AND EXISTS (
+                                SELECT 1 FROM submitted_activity sa
+                                WHERE sa.user_id = @user_id
+                                  AND sa.prof_id = pa.professor_id
+                                  AND sa.title   = pa.title
+                                  AND sa.section = pa.section
+                            )";
                     }
                     else if (selectedActivitiesCategory == "Incomplete")
                     {
                         query += @"
-                    AND pa.due_date < NOW()
-                    AND NOT EXISTS (
-                        SELECT 1 FROM submitted_activity sa
-                        WHERE sa.user_id = @user_id
-                          AND sa.prof_id = pa.professor_id
-                          AND sa.title   = pa.title
-                          AND sa.section = pa.section
-                    )";
+                            AND pa.due_date < NOW()
+                            AND NOT EXISTS (
+                                SELECT 1 FROM submitted_activity sa
+                                WHERE sa.user_id = @user_id
+                                  AND sa.prof_id = pa.professor_id
+                                  AND sa.title   = pa.title
+                                  AND sa.section = pa.section
+                            )";
                     }
 
                     query += " ORDER BY pa.due_date ASC";
@@ -1026,8 +1015,8 @@ namespace WinFormsApp1
                         query = @"SELECT activity_file FROM professor_activity WHERE activity_id = @activity_id";
                     else
                         query = @"SELECT activity_file FROM professor_activity 
-                          WHERE professor_id = @professor_id AND title = @title 
-                            AND section = @section AND activity_subject = @activity_subject LIMIT 1";
+                                  WHERE professor_id = @professor_id AND title = @title 
+                                    AND section = @section AND activity_subject = @activity_subject LIMIT 1";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -1146,7 +1135,6 @@ namespace WinFormsApp1
         // =========================================================
         // Grades
         // =========================================================
-
         private void InitializeDataGridViewGrades()
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -1210,7 +1198,6 @@ namespace WinFormsApp1
         // =========================================================
         // Subject
         // =========================================================
-
         private void btnJoinClass_Click(object sender, EventArgs e) => pnlCreateClass.Visible = true;
         private void btnCloseJointClassPanel_Click(object sender, EventArgs e) => pnlCreateClass.Visible = false;
 
@@ -1292,7 +1279,7 @@ namespace WinFormsApp1
                         cmd.ExecuteNonQuery();
                     }
 
-                    InitializeCreadeClass(className, classSection, classTime, classDate);
+                    LoadJoinedClasses();
                     MessageBox.Show("Successfully Joined Class!");
 
                     try { RefreshPendingActivities(); } catch { }
@@ -1307,32 +1294,39 @@ namespace WinFormsApp1
         private void InitializeCreadeClass(string classname = "", string classSection = "",
                            string classTime = "", string classDate = "")
         {
+            // Legacy stub — actual UI is built by LoadJoinedClasses()
+        }
+
+        private void LoadJoinedClasses()
+        {
             string connStr = SettingsManager.Current.GetConnectionString();
             Color maroon = Color.FromArgb(123, 15, 23);
             Color softPink = Color.FromArgb(253, 236, 238);
             Color borderIdle = Color.FromArgb(230, 225, 225);
 
-            flpSubjectClass.BackColor = Color.FromArgb(255, 245, 240);
-            flpSubjectClass.Padding = new Padding(10);
-
             try
             {
+                flpSubjectClass.Controls.Clear();
+                flpSubjectClass.BackColor = Color.FromArgb(255, 245, 240);
+                flpSubjectClass.Padding = new Padding(10);
+
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
 
                     string query = @"
-        SELECT sc.class_id, 
-               sc.class_name, 
-               sc.class_date, 
-               sc.class_time, 
-               sc.section,
-               ui.lastname, 
-               ui.firstname, 
-               ui.middlename
-        FROM student_class sc
-        LEFT JOIN user_information ui ON ui.user_id = sc.professor_id
-        WHERE sc.user_id = @user_id";
+                        SELECT sc.class_id, 
+                               sc.class_name, 
+                               sc.class_date, 
+                               sc.class_time, 
+                               sc.section,
+                               sc.professor_id,
+                               ui.lastname, 
+                               ui.firstname, 
+                               ui.middlename
+                        FROM student_class sc
+                        LEFT JOIN user_information ui ON ui.user_id = sc.professor_id
+                        WHERE sc.user_id = @user_id";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -1347,6 +1341,9 @@ namespace WinFormsApp1
                                 string rClassDate = reader["class_date"] != DBNull.Value ? reader["class_date"].ToString() : "";
                                 string rClassTime = reader["class_time"] != DBNull.Value ? reader["class_time"].ToString() : "";
                                 string rClassSection = reader["section"] != DBNull.Value ? reader["section"].ToString() : "";
+
+                                int rProfId = reader["professor_id"] != DBNull.Value
+                                    ? Convert.ToInt32(reader["professor_id"]) : 0;
 
                                 string profLast = reader["lastname"] != DBNull.Value ? reader["lastname"].ToString() : "";
                                 string profFirst = reader["firstname"] != DBNull.Value ? reader["firstname"].ToString() : "";
@@ -1371,6 +1368,7 @@ namespace WinFormsApp1
                                     BorderThickness = 1,
                                     Margin = new Padding(12),
                                     Tag = classId,
+                                    Cursor = Cursors.Hand,
                                     ShadowDecoration = { Enabled = true, Depth = 8, BorderRadius = 16, Color = Color.FromArgb(60, 0, 0, 0) }
                                 };
 
@@ -1381,7 +1379,8 @@ namespace WinFormsApp1
                                     Location = new Point(0, 0),
                                     FillColor = maroon,
                                     BorderRadius = 16,
-                                    CustomizableEdges = { BottomLeft = false, BottomRight = false }
+                                    CustomizableEdges = { BottomLeft = false, BottomRight = false },
+                                    Cursor = Cursors.Hand
                                 };
                                 cardPanel.Controls.Add(header);
 
@@ -1395,7 +1394,8 @@ namespace WinFormsApp1
                                     AutoEllipsis = true,
                                     Size = new Size(275, 34),
                                     Location = new Point(20, 22),
-                                    TextAlign = ContentAlignment.MiddleLeft
+                                    TextAlign = ContentAlignment.MiddleLeft,
+                                    Cursor = Cursors.Hand
                                 };
                                 header.Controls.Add(lblTitle);
 
@@ -1422,7 +1422,8 @@ namespace WinFormsApp1
                                     Size = new Size(44, 44),
                                     Location = new Point(20, 98),
                                     FillColor = softPink,
-                                    BorderRadius = 22
+                                    BorderRadius = 22,
+                                    Cursor = Cursors.Hand
                                 };
                                 avatar.Controls.Add(new Label
                                 {
@@ -1431,7 +1432,8 @@ namespace WinFormsApp1
                                     ForeColor = maroon,
                                     BackColor = Color.Transparent,
                                     Dock = DockStyle.Fill,
-                                    TextAlign = ContentAlignment.MiddleCenter
+                                    TextAlign = ContentAlignment.MiddleCenter,
+                                    Cursor = Cursors.Hand
                                 });
                                 cardPanel.Controls.Add(avatar);
 
@@ -1442,7 +1444,8 @@ namespace WinFormsApp1
                                     ForeColor = Color.FromArgb(150, 150, 150),
                                     BackColor = Color.Transparent,
                                     AutoSize = true,
-                                    Location = new Point(74, 98)
+                                    Location = new Point(74, 98),
+                                    Cursor = Cursors.Hand
                                 });
 
                                 cardPanel.Controls.Add(new Label
@@ -1455,7 +1458,8 @@ namespace WinFormsApp1
                                     AutoEllipsis = true,
                                     Size = new Size(260, 24),
                                     Location = new Point(74, 114),
-                                    TextAlign = ContentAlignment.MiddleLeft
+                                    TextAlign = ContentAlignment.MiddleLeft,
+                                    Cursor = Cursors.Hand
                                 });
 
                                 // ===== DIVIDER =====
@@ -1474,7 +1478,8 @@ namespace WinFormsApp1
                                     ForeColor = Color.FromArgb(40, 40, 40),
                                     BackColor = Color.Transparent,
                                     AutoSize = true,
-                                    Location = new Point(20, 172)
+                                    Location = new Point(20, 172),
+                                    Cursor = Cursors.Hand
                                 });
 
                                 cardPanel.Controls.Add(new Label
@@ -1484,7 +1489,8 @@ namespace WinFormsApp1
                                     ForeColor = Color.FromArgb(110, 110, 110),
                                     BackColor = Color.Transparent,
                                     AutoSize = true,
-                                    Location = new Point(20, 202)
+                                    Location = new Point(20, 202),
+                                    Cursor = Cursors.Hand
                                 });
 
                                 // ===== SECTION PILL =====
@@ -1493,7 +1499,8 @@ namespace WinFormsApp1
                                     Size = new Size(80, 32),
                                     Location = new Point(250, 190),
                                     FillColor = softPink,
-                                    BorderRadius = 16
+                                    BorderRadius = 16,
+                                    Cursor = Cursors.Hand
                                 };
                                 sectionPill.Controls.Add(new Label
                                 {
@@ -1502,22 +1509,28 @@ namespace WinFormsApp1
                                     ForeColor = maroon,
                                     BackColor = Color.Transparent,
                                     Dock = DockStyle.Fill,
-                                    TextAlign = ContentAlignment.MiddleCenter
+                                    TextAlign = ContentAlignment.MiddleCenter,
+                                    Cursor = Cursors.Hand
                                 });
                                 cardPanel.Controls.Add(sectionPill);
 
                                 // ===== UNJOIN =====
+                                string capturedClassName = rClassName;
+                                string capturedSection = rClassSection;
+                                string capturedTime = rClassTime;
+                                string capturedDate = rClassDate;
+
                                 lblMenu.Click += (s, e) =>
                                 {
                                     DialogResult result = MessageBox.Show(
-                                        $"Are you sure you want to unjoin '{rClassName}'?",
+                                        $"Are you sure you want to unjoin '{capturedClassName}'?",
                                         "Confirm Unjoin",
                                         MessageBoxButtons.YesNo,
                                         MessageBoxIcon.Warning);
 
                                     if (result != DialogResult.Yes) return;
 
-                                    UnjoinClass(rClassName, rClassSection, rClassTime, rClassDate);
+                                    UnjoinClass(capturedClassName, capturedSection, capturedTime, capturedDate);
 
                                     flpSubjectClass.Controls.Remove(cardPanel);
                                     cardPanel.Dispose();
@@ -1525,7 +1538,36 @@ namespace WinFormsApp1
                                     try { RefreshPendingActivities(); } catch { }
                                 };
 
-                                // ===== HOVER EFFECT =====
+                                // ===== OPEN CLASSROOM =====
+                                int capturedProfId = rProfId;
+                                Action openClassroom = () =>
+                                {
+                                    try
+                                    {
+                                        var form = new ClassRoomForm(
+                                            int.Parse(userId),
+                                            studentname,
+                                            capturedProfId,
+                                            rClassName,
+                                            rClassSection,
+                                            rClassTime,
+                                            rClassDate);
+
+                                        form.ShowDialog(this);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        MessageBox.Show("Unable to open classroom:\n" + ex.Message);
+                                    }
+                                };
+
+                                cardPanel.Click += (s, e) => openClassroom();
+                                header.Click += (s, e) => openClassroom();
+                                lblTitle.Click += (s, e) => openClassroom();
+                                avatar.Click += (s, e) => openClassroom();
+                                sectionPill.Click += (s, e) => openClassroom();
+
+                                // ===== HOVER =====
                                 cardPanel.MouseEnter += (s, e) => cardPanel.BorderColor = maroon;
                                 cardPanel.MouseLeave += (s, e) => cardPanel.BorderColor = borderIdle;
 
@@ -1541,41 +1583,7 @@ namespace WinFormsApp1
                                 "Load Error",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Error);
-                Console.WriteLine("InitializeCreadeClass error: " + ex);
-            }
-        }
-
-        private void LoadJoinedClasses()
-        {
-            string connStr = SettingsManager.Current.GetConnectionString();
-
-            try
-            {
-                flpSubjectClass.Controls.Clear();
-
-                using (var conn = new MySqlConnection(connStr))
-                {
-                    conn.Open();
-                    using (var cmd = new MySqlCommand(@"SELECT class_name, section, class_time, class_date FROM student_class WHERE user_id = @user_id", conn))
-                    {
-                        cmd.Parameters.AddWithValue("@user_id", userId);
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                string className = reader["class_name"].ToString();
-                                string classSection = reader["section"].ToString();
-                                string classTime = reader["class_time"].ToString();
-                                string classDate = reader["class_date"].ToString();
-                                InitializeCreadeClass(className, classSection, classTime, classDate);
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("LoadJoinedClasses error: " + ex.Message);
+                Console.WriteLine("LoadJoinedClasses error: " + ex);
             }
         }
 
@@ -1615,7 +1623,6 @@ namespace WinFormsApp1
         // =========================================================
         // Settings
         // =========================================================
-
         private void btnSettingProfileExpand_Click(object sender, EventArgs e)
         {
             if (pnlSettingProfile.Height <= 350)
@@ -1831,7 +1838,6 @@ namespace WinFormsApp1
                 {
                     CurrentProfilePath = ofd.FileName;
 
-                    // Load into memory so we don't lock the source file
                     byte[] bytes = File.ReadAllBytes(CurrentProfilePath);
                     using (var ms = new MemoryStream(bytes))
                     {
@@ -1849,7 +1855,7 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        // PROFILE PHOTO — SEND TO ADMIN (like auth photo)
+        // PROFILE PHOTO
         // =========================================================
         private async void btnSubmitChangePhoto_Click(object sender, EventArgs e)
         {
@@ -1881,8 +1887,6 @@ namespace WinFormsApp1
                     return;
                 }
 
-                Console.WriteLine("[ChangePhoto] Admin returned UNC: " + uncPath);
-
                 string connStr = SettingsManager.Current.GetConnectionString();
                 using (var conn = new MySqlConnection(connStr))
                 {
@@ -1902,7 +1906,6 @@ namespace WinFormsApp1
                     }
                 }
 
-                // Force reload
                 picboxSettingProfilePicture.Image?.Dispose();
                 picboxSettingProfilePicture.Image = null;
 
@@ -1925,8 +1928,6 @@ namespace WinFormsApp1
             {
                 string adminIp = SettingsManager.Current.ServerIp.TrimStart('\\').TrimEnd('\\');
                 int adminPort = SettingsManager.Current.FileTransferPort;
-
-                Console.WriteLine($"[PROFILE PHOTO] Sending {fileName} ({imageBytes.Length} bytes) to {adminIp}:{adminPort}");
 
                 using (var client = new TcpClient())
                 {
@@ -1997,13 +1998,7 @@ namespace WinFormsApp1
                         if (raw == null || raw == DBNull.Value) return;
 
                         string path = raw.ToString();
-                        Console.WriteLine("[ChangingPicture] Loading: " + path);
-
-                        if (!File.Exists(path))
-                        {
-                            Console.WriteLine("[ChangingPicture] File not found.");
-                            return;
-                        }
+                        if (!File.Exists(path)) return;
 
                         byte[] bytes = File.ReadAllBytes(path);
                         using (var ms = new MemoryStream(bytes))
@@ -2054,9 +2049,6 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // AUTH PHOTO — SEND TO ADMIN SHARED FOLDER
-        // =========================================================
         private async Task<bool> SendAuthenticationPhotoToAdmin(byte[] imageBytes, string fileName)
         {
             try
@@ -2157,7 +2149,6 @@ namespace WinFormsApp1
         // =========================================================
         // Assessment quiz exam — THREE STATES
         // =========================================================
-
         private void InitializeAssessmentsCard()
         {
             if (assessmentsPanel != null) return;
@@ -2241,8 +2232,8 @@ namespace WinFormsApp1
                     conn.Open();
 
                     string query = @"SELECT q.quiz_id, q.quiz_title, q.subject, q.assessment_type,
-                                    q.exam_period, q.created_at
-                             FROM quizzes q ORDER BY q.created_at DESC";
+                                            q.exam_period, q.created_at
+                                     FROM quizzes q ORDER BY q.created_at DESC";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -2260,7 +2251,6 @@ namespace WinFormsApp1
 
                                 bool submitted = HasSubmitted(quizId);
 
-                                // REMOVE from the list only if already SUBMITTED
                                 if (submitted)
                                     continue;
 
@@ -2445,7 +2435,6 @@ namespace WinFormsApp1
         {
             try
             {
-                Console.WriteLine($"[OpenAssessment] userId={userId}, quizId={quizId}");
                 StudentQuizForm quizForm = new StudentQuizForm(int.Parse(userId), quizId);
                 quizForm.ShowDialog();
 
@@ -2489,7 +2478,6 @@ namespace WinFormsApp1
         // =========================================================
         // Q&A Security
         // =========================================================
-
         private void btnQandA_Click(object sender, EventArgs e)
         {
             pnlSettingQandA.Visible = true;
@@ -2588,41 +2576,9 @@ namespace WinFormsApp1
             }
         }
 
-        private void InitializeQuizExam()
-        {
-            string connStr = SettingsManager.Current.GetConnectionString();
-
-            try
-            {
-                using (var conn = new MySqlConnection(connStr))
-                {
-                    conn.Open();
-
-                    string query = "SELECT score, total_questions, percentage, submitted_at " +
-                                   "FROM quiz_attempts WHERE user_id = @user_id AND status = 'SUBMITTED'";
-
-                    using (var cmd = new MySqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@user_id", userId);
-
-                        MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
-                        DataTable dt = new DataTable();
-                        adapter.Fill(dt);
-
-                        QuizExamScore.DataSource = dt;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("InitializeQuizExam error: " + ex.Message);
-            }
-        }
-
         // =========================================================
         // FORM CLOSING
         // =========================================================
-
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             try { assessmentsRefreshTimer?.Stop(); } catch { }
@@ -2669,7 +2625,6 @@ namespace WinFormsApp1
         // =========================================================
         // UTILITIES
         // =========================================================
-
         private string SanitizeFolderName(string name)
         {
             if (string.IsNullOrWhiteSpace(name)) return "Unknown";
