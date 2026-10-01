@@ -48,6 +48,17 @@ namespace WinFormsApp1
         private string SaveAuthenticationPhoto;
         private string Isauthentication_photoEmpty;
 
+        // =========================================================
+        // NOTIFICATIONS
+        // =========================================================
+        private Guna2Button btnNotifications;
+        private Label lblNotificationBadge;
+        private Guna2Panel notificationPanel;
+        private FlowLayoutPanel notificationList;
+        private System.Windows.Forms.Timer notificationsRefreshTimer;
+        private HashSet<string> readNotificationKeys = new HashSet<string>();
+        private bool notificationPanelOpen = false;
+
         private System.Windows.Forms.Timer assessmentsRefreshTimer;
         private System.Windows.Forms.Timer activitiesRefreshTimer;
 
@@ -114,6 +125,20 @@ namespace WinFormsApp1
                 flpPendingActivities.PerformLayout();
 
                 StartSlideshow();
+
+                // ---------- NOTIFICATIONS ----------
+                try { BuildNotificationsUi(); }
+                catch (Exception ex) { Console.WriteLine("BuildNotificationsUi: " + ex.Message); }
+
+                try { LoadNotifications(); }
+                catch (Exception ex) { Console.WriteLine("LoadNotifications: " + ex.Message); }
+
+                notificationsRefreshTimer = new System.Windows.Forms.Timer { Interval = 60000 };
+                notificationsRefreshTimer.Tick += (s, ev) =>
+                {
+                    try { LoadNotifications(); } catch { }
+                };
+                notificationsRefreshTimer.Start();
 
                 activitiesRefreshTimer = new System.Windows.Forms.Timer { Interval = 10000 };
                 activitiesRefreshTimer.Tick += (s, ev) =>
@@ -2764,6 +2789,574 @@ namespace WinFormsApp1
 
             expandedCal.SetEvents(LoadCalendarEvents());   // laging bago ang data pag binuksan
             expandedCal.ShowOn(pnlHome);
+        }
+
+        private void BuildNotificationsUi()
+        {
+            if (btnNotifications != null) return;
+
+            btnNotifications = new Guna2Button
+            {
+                Size = new Size(46, 46),
+                Location = new Point(this.ClientSize.Width - 160, 22),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BorderRadius = 23,
+                BackColor = Color.White,
+                FillColor = Color.White,
+                ForeColor = Color.Maroon,
+                Font = new Font("Segoe UI Emoji", 14F, FontStyle.Bold),
+                Text = "🔔",
+                Cursor = Cursors.Hand
+            };
+            btnNotifications.HoverState.FillColor = Color.FromArgb(250, 235, 235);
+            btnNotifications.HoverState.FillColor = Color.FromArgb(250, 235, 235);
+            btnNotifications.Click += (s, e) => ToggleNotificationPanel();
+
+            this.Controls.Add(btnNotifications);
+            btnNotifications.BringToFront();
+
+            lblNotificationBadge = new Label
+            {
+                Size = new Size(22, 22),
+                Location = new Point(
+                    btnNotifications.Right - 26,
+                    btnNotifications.Top - 4),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BackColor = Color.FromArgb(220, 40, 40),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Text = "0",
+                Visible = false
+            };
+            lblNotificationBadge.Paint += (s, e) =>
+            {
+                var g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                using (var path = new GraphicsPath())
+                {
+                    path.AddEllipse(0, 0, lblNotificationBadge.Width - 1, lblNotificationBadge.Height - 1);
+                    lblNotificationBadge.Region = new Region(path);
+                }
+            };
+
+            this.Controls.Add(lblNotificationBadge);
+            lblNotificationBadge.BringToFront();
+
+            notificationPanel = new Guna2Panel
+            {
+                Size = new Size(420, 520),
+                Location = new Point(
+                    this.ClientSize.Width - 440,
+                    78),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BorderRadius = 14,
+                FillColor = Color.White,
+                BorderColor = Color.FromArgb(230, 225, 225),
+                BorderThickness = 1,
+                ShadowDecoration = { Enabled = true, Depth = 16, Color = Color.FromArgb(60, 0, 0, 0) },
+                Visible = false,
+                AutoScroll = false
+            };
+
+            Guna2Panel panelHeader = new Guna2Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 55,
+                FillColor = Color.Maroon,
+                BorderRadius = 0
+            };
+            notificationPanel.Controls.Add(panelHeader);
+
+            Label lblPanelTitle = new Label
+            {
+                Text = "🔔  Notifications",
+                Font = new Font("Segoe UI Semibold", 13F, FontStyle.Bold),
+                ForeColor = Color.White,
+                BackColor = Color.Transparent,
+                AutoSize = false,
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(18, 0, 0, 0)
+            };
+            panelHeader.Controls.Add(lblPanelTitle);
+
+            Guna2Button btnMarkAllRead = new Guna2Button
+            {
+                Text = "Mark all read",
+                Size = new Size(120, 32),
+                Location = new Point(panelHeader.Width - 130, 12),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BorderRadius = 8,
+                FillColor = Color.FromArgb(60, 255, 255, 255),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold)
+            };
+            btnMarkAllRead.HoverState.FillColor = Color.FromArgb(120, 255, 255, 255);
+            btnMarkAllRead.Click += (s, e) =>
+            {
+                foreach (Control c in notificationList.Controls)
+                {
+                    if (c is Panel card && card.Tag is string key)
+                        readNotificationKeys.Add(key);
+                }
+                LoadNotifications();
+            };
+            panelHeader.Controls.Add(btnMarkAllRead);
+            btnMarkAllRead.BringToFront();
+
+            notificationList = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoScroll = true,
+                Padding = new Padding(10),
+                BackColor = Color.White
+            };
+            notificationPanel.Controls.Add(notificationList);
+            notificationList.BringToFront();
+
+            this.Controls.Add(notificationPanel);
+            notificationPanel.BringToFront();
+
+            // Close the panel when clicking anywhere outside it
+            this.Click += (s, e) => CloseNotificationPanel();
+            foreach (Control ctrl in this.Controls)
+            {
+                if (ctrl != notificationPanel && ctrl != btnNotifications && ctrl != lblNotificationBadge)
+                {
+                    ctrl.Click += (s, e) => CloseNotificationPanel();
+                }
+            }
+        }
+
+        private void ToggleNotificationPanel()
+        {
+            if (notificationPanel == null) return;
+
+            if (notificationPanelOpen)
+            {
+                CloseNotificationPanel();
+            }
+            else
+            {
+                notificationPanelOpen = true;
+                notificationPanel.Visible = true;
+                notificationPanel.BringToFront();
+                LoadNotifications();
+            }
+        }
+
+        private void CloseNotificationPanel()
+        {
+            if (notificationPanel == null) return;
+            notificationPanel.Visible = false;
+            notificationPanelOpen = false;
+        }
+
+        // =========================================================
+        // NOTIFICATIONS — LOAD + BUILD
+        // =========================================================
+        private void LoadNotifications()
+        {
+            if (notificationList == null) return;
+
+            notificationList.Controls.Clear();
+
+            int unreadCount = 0;
+            var items = new List<NotificationItem>();
+
+            foreach (var a in LoadNotificationActivities())
+            {
+                string key = "A|" + a.Id;
+                bool unread = !readNotificationKeys.Contains(key);
+                if (unread) unreadCount++;
+
+                items.Add(new NotificationItem
+                {
+                    Key = key,
+                    Icon = "📄",
+                    Title = a.Title,
+                    Subtitle = a.Subject + "  •  Due " + a.DueDate,
+                    Time = a.PostedAt,
+                    Type = "activity",
+                    Id = a.Id,
+                    Unread = unread
+                });
+            }
+
+            foreach (var q in LoadNotificationQuizzes())
+            {
+                string key = "Q|" + q.Id;
+                bool unread = !readNotificationKeys.Contains(key);
+                if (unread) unreadCount++;
+
+                items.Add(new NotificationItem
+                {
+                    Key = key,
+                    Icon = q.Type == "exam" ? "📝" : "📋",
+                    Title = q.Title,
+                    Subtitle = q.Subject + "  •  " + q.Type,
+                    Time = q.PostedAt,
+                    Type = "quiz",
+                    Id = q.Id,
+                    Unread = unread
+                });
+            }
+
+            items.Sort((a, b) =>
+            {
+                if (a.Time.HasValue && b.Time.HasValue) return b.Time.Value.CompareTo(a.Time.Value);
+                if (a.Time.HasValue) return -1;
+                if (b.Time.HasValue) return 1;
+                return 0;
+            });
+
+            if (items.Count == 0)
+            {
+                Label lblEmpty = new Label
+                {
+                    Text = "🔕  No new notifications",
+                    Font = new Font("Segoe UI", 10F, FontStyle.Italic),
+                    ForeColor = Color.FromArgb(140, 140, 140),
+                    AutoSize = false,
+                    Size = new Size(notificationList.Width - 30, 80),
+                    TextAlign = ContentAlignment.MiddleCenter
+                };
+                notificationList.Controls.Add(lblEmpty);
+            }
+            else
+            {
+                foreach (var item in items)
+                {
+                    notificationList.Controls.Add(BuildNotificationCard(item));
+                }
+            }
+
+            if (unreadCount > 0)
+            {
+                lblNotificationBadge.Text = unreadCount > 99 ? "99+" : unreadCount.ToString();
+                lblNotificationBadge.Visible = true;
+                lblNotificationBadge.BringToFront();
+            }
+            else
+            {
+                lblNotificationBadge.Visible = false;
+            }
+        }
+
+        private class NotificationItem
+        {
+            public string Key;
+            public string Icon;
+            public string Title;
+            public string Subtitle;
+            public DateTime? Time;
+            public string Type;
+            public int Id;
+            public bool Unread;
+        }
+
+        private Panel BuildNotificationCard(NotificationItem item)
+        {
+            var card = new Panel
+            {
+                Width = notificationList.ClientSize.Width - 28,
+                Height = 74,
+                Margin = new Padding(0, 0, 0, 8),
+                BackColor = item.Unread ? Color.FromArgb(255, 248, 248) : Color.White,
+                Cursor = Cursors.Hand,
+                Tag = item.Key
+            };
+
+            card.Paint += (s, e) =>
+            {
+                var g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+
+                using (var path = new GraphicsPath())
+                {
+                    int r = 10;
+                    var rect = new Rectangle(0, 0, card.Width - 1, card.Height - 1);
+                    path.AddArc(rect.X, rect.Y, r * 2, r * 2, 180, 90);
+                    path.AddArc(rect.Right - r * 2, rect.Y, r * 2, r * 2, 270, 90);
+                    path.AddArc(rect.Right - r * 2, rect.Bottom - r * 2, r * 2, r * 2, 0, 90);
+                    path.AddArc(rect.X, rect.Bottom - r * 2, r * 2, r * 2, 90, 90);
+                    path.CloseFigure();
+                    card.Region = new Region(path);
+                }
+
+                using (var border = new Pen(Color.FromArgb(235, 230, 230), 1))
+                    e.Graphics.DrawRectangle(border, 0, 0, card.Width - 1, card.Height - 1);
+
+                if (item.Unread)
+                {
+                    using (var dot = new SolidBrush(Color.FromArgb(220, 40, 40)))
+                        e.Graphics.FillEllipse(dot, 8, 10, 8, 8);
+                }
+            };
+
+            var icon = new Label
+            {
+                Text = item.Icon,
+                Font = new Font("Segoe UI Emoji", 18F),
+                ForeColor = Color.FromArgb(60, 60, 60),
+                BackColor = Color.Transparent,
+                AutoSize = false,
+                Size = new Size(42, 42),
+                Location = new Point(24, 14),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Cursor = Cursors.Hand
+            };
+            card.Controls.Add(icon);
+
+            var lblTitle = new Label
+            {
+                Text = item.Title,
+                Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(35, 35, 35),
+                BackColor = Color.Transparent,
+                AutoSize = false,
+                AutoEllipsis = true,
+                Size = new Size(card.Width - 100, 20),
+                Location = new Point(74, 12),
+                Cursor = Cursors.Hand
+            };
+            card.Controls.Add(lblTitle);
+
+            var lblSub = new Label
+            {
+                Text = item.Subtitle,
+                Font = new Font("Segoe UI", 8.5F),
+                ForeColor = Color.FromArgb(120, 120, 120),
+                BackColor = Color.Transparent,
+                AutoSize = false,
+                AutoEllipsis = true,
+                Size = new Size(card.Width - 100, 18),
+                Location = new Point(74, 34),
+                Cursor = Cursors.Hand
+            };
+            card.Controls.Add(lblSub);
+
+            if (item.Time.HasValue)
+            {
+                var lblTime = new Label
+                {
+                    Text = GetRelativeTime(item.Time.Value),
+                    Font = new Font("Segoe UI", 8F, FontStyle.Italic),
+                    ForeColor = Color.FromArgb(160, 160, 160),
+                    BackColor = Color.Transparent,
+                    AutoSize = false,
+                    Size = new Size(card.Width - 100, 16),
+                    Location = new Point(74, 52),
+                    Cursor = Cursors.Hand
+                };
+                card.Controls.Add(lblTime);
+            }
+
+            // ---------- CLICK HANDLER ----------
+            Action openItem = () =>
+            {
+                readNotificationKeys.Add(item.Key);
+                CloseNotificationPanel();
+
+                if (item.Type == "activity")
+                    OpenNotificationActivity(item.Id);
+                else if (item.Type == "quiz")
+                    OpenNotificationQuiz(item.Id);
+            };
+
+            card.Click += (s, e) => openItem();
+            icon.Click += (s, e) => openItem();
+            lblTitle.Click += (s, e) => openItem();
+            lblSub.Click += (s, e) => openItem();
+
+            foreach (Control c in card.Controls)
+                c.Click += (s, e) => openItem();
+
+            return card;
+        }
+
+        private string GetRelativeTime(DateTime dt)
+        {
+            var span = DateTime.Now - dt;
+
+            if (span.TotalMinutes < 1) return "just now";
+            if (span.TotalMinutes < 60) return (int)span.TotalMinutes + "m ago";
+            if (span.TotalHours < 24) return (int)span.TotalHours + "h ago";
+            if (span.TotalDays < 7) return (int)span.TotalDays + "d ago";
+            return dt.ToString("MMM dd, yyyy");
+        }
+
+        private List<SimpleNotification> LoadNotificationActivities()
+        {
+            var list = new List<SimpleNotification>();
+            string connStr = SettingsManager.Current.GetConnectionString();
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    string query = @"
+                        SELECT pa.activity_id, pa.title, pa.activity_subject,
+                               pa.due_date, pa.start_time
+                        FROM professor_activity pa
+                        INNER JOIN student_class sc
+                            ON  sc.user_id      = @user_id
+                            AND sc.professor_id = pa.professor_id
+                            AND LOWER(TRIM(sc.section)) = LOWER(TRIM(pa.section))
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM submitted_activity sa
+                            WHERE sa.user_id = @user_id
+                              AND sa.prof_id = pa.professor_id
+                              AND sa.title   = pa.title
+                              AND sa.section = pa.section
+                        )
+                        ORDER BY pa.start_time DESC
+                        LIMIT 20";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@user_id", userId);
+
+                        using (var r = cmd.ExecuteReader())
+                        {
+                            while (r.Read())
+                            {
+                                DateTime? posted = null;
+                                try
+                                {
+                                    object raw = r["start_time"];
+                                    if (raw != null && raw != DBNull.Value)
+                                    {
+                                        if (DateTime.TryParse(raw.ToString(), out DateTime dt))
+                                            posted = dt;
+                                    }
+                                }
+                                catch { }
+
+                                list.Add(new SimpleNotification
+                                {
+                                    Id = Convert.ToInt32(r["activity_id"]),
+                                    Title = r["title"]?.ToString() ?? "",
+                                    Subject = r["activity_subject"]?.ToString() ?? "",
+                                    DueDate = r["due_date"]?.ToString() ?? "",
+                                    PostedAt = posted
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("LoadNotificationActivities error: " + ex.Message);
+            }
+
+            return list;
+        }
+
+        private List<SimpleNotification> LoadNotificationQuizzes()
+        {
+            var list = new List<SimpleNotification>();
+            string connStr = SettingsManager.Current.GetConnectionString();
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    string query = @"
+                        SELECT q.quiz_id, q.quiz_title, q.subject,
+                               q.assessment_type, q.created_at
+                        FROM quizzes q
+                        ORDER BY q.created_at DESC
+                        LIMIT 20";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        using (var r = cmd.ExecuteReader())
+                        {
+                            while (r.Read())
+                            {
+                                int quizId = Convert.ToInt32(r["quiz_id"]);
+
+                                if (HasSubmitted(quizId)) continue;
+
+                                DateTime? posted = null;
+                                try
+                                {
+                                    object raw = r["created_at"];
+                                    if (raw != null && raw != DBNull.Value)
+                                    {
+                                        if (DateTime.TryParse(raw.ToString(), out DateTime dt))
+                                            posted = dt;
+                                    }
+                                }
+                                catch { }
+
+                                list.Add(new SimpleNotification
+                                {
+                                    Id = quizId,
+                                    Title = r["quiz_title"]?.ToString() ?? "",
+                                    Subject = r["subject"]?.ToString() ?? "",
+                                    Type = r["assessment_type"]?.ToString() ?? "quiz",
+                                    PostedAt = posted
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("LoadNotificationQuizzes error: " + ex.Message);
+            }
+
+            return list;
+        }
+
+        private class SimpleNotification
+        {
+            public int Id;
+            public string Title;
+            public string Subject;
+            public string DueDate;
+            public string Type;
+            public DateTime? PostedAt;
+        }
+
+        private void OpenNotificationActivity(int activityId)
+        {
+            try
+            {
+                InitializeHomeActivityButton(activityId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("OpenNotificationActivity error: " + ex.Message);
+                MessageBox.Show("Unable to open activity:\n" + ex.Message);
+            }
+        }
+
+        private void OpenNotificationQuiz(int quizId)
+        {
+            try
+            {
+                var form = new StudentQuizForm(int.Parse(userId), quizId);
+                form.ShowDialog(this);
+                LoadNotifications();
+                LoadAssessments();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("OpenNotificationQuiz error: " + ex.Message);
+                MessageBox.Show("Unable to open quiz:\n" + ex.Message);
+            }
         }
 
 
