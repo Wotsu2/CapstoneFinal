@@ -2241,8 +2241,8 @@ namespace WinFormsApp1
                     conn.Open();
 
                     string query = @"SELECT q.quiz_id, q.quiz_title, q.subject, q.assessment_type,
-                                            q.exam_period, q.created_at
-                                     FROM quizzes q ORDER BY q.created_at DESC";
+                                    q.exam_period, q.created_at
+                             FROM quizzes q ORDER BY q.created_at DESC";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -2252,7 +2252,6 @@ namespace WinFormsApp1
 
                             while (reader.Read())
                             {
-                                any = true;
                                 int quizId = reader.GetInt32("quiz_id");
                                 string title = reader["quiz_title"].ToString();
                                 string subject = reader["subject"]?.ToString() ?? "";
@@ -2260,6 +2259,12 @@ namespace WinFormsApp1
                                 string period = reader["exam_period"]?.ToString() ?? "";
 
                                 bool submitted = HasSubmitted(quizId);
+
+                                // REMOVE from the list only if already SUBMITTED
+                                if (submitted)
+                                    continue;
+
+                                any = true;
                                 AddAssessmentRow(quizId, title, subject, type, period, submitted);
                             }
 
@@ -2676,6 +2681,11 @@ namespace WinFormsApp1
             if (string.IsNullOrWhiteSpace(name)) return "Unknown";
 
             return name;
+        }
+
+        private void btnCalendarExpand_Click(object sender, EventArgs e)
+        {
+            new CalendarViewForm(int.Parse(userId), StudentSection).ShowDialog(this);
         }
     }
 }

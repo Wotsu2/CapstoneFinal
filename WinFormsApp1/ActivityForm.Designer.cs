@@ -41,7 +41,6 @@
             lblActivityStatus = new Label();
             label4 = new Label();
             lblActivityDescription = new Label();
-            btnUploadActivity = new Guna.UI2.WinForms.Guna2Button();
             btnPostActivity = new Guna.UI2.WinForms.Guna2Button();
             guna2Panel1.SuspendLayout();
             SuspendLayout();
@@ -114,30 +113,6 @@
             lblActivityDescription.Text = "Description of Activity";
             lblActivityDescription.TextAlign = ContentAlignment.MiddleRight;
             // 
-            // btnUploadActivity
-            // 
-            btnUploadActivity.BorderRadius = 20;
-            btnUploadActivity.BorderThickness = 1;
-            btnUploadActivity.CustomizableEdges = customizableEdges9;
-            btnUploadActivity.DisabledState.BorderColor = Color.DarkGray;
-            btnUploadActivity.DisabledState.CustomBorderColor = Color.DarkGray;
-            btnUploadActivity.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
-            btnUploadActivity.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnUploadActivity.FillColor = Color.FromArgb(217, 217, 217);
-            btnUploadActivity.Font = new Font("Segoe UI", 9F);
-            btnUploadActivity.ForeColor = Color.Black;
-            btnUploadActivity.Image = Properties.Resources.Upload;
-            btnUploadActivity.ImageOffset = new Point(45, -30);
-            btnUploadActivity.ImageSize = new Size(25, 23);
-            btnUploadActivity.Location = new Point(12, 810);
-            btnUploadActivity.Name = "btnUploadActivity";
-            btnUploadActivity.ShadowDecoration.CustomizableEdges = customizableEdges10;
-            btnUploadActivity.Size = new Size(800, 170);
-            btnUploadActivity.TabIndex = 5;
-            btnUploadActivity.Text = "Click to upload your file or \r\ndrag and drop your file here";
-            btnUploadActivity.TextOffset = new Point(0, 10);
-            btnUploadActivity.Click += btnUploadActivity_Click;
-            // 
             // btnPostActivity
             // 
             btnPostActivity.BorderRadius = 15;
@@ -167,7 +142,6 @@
             BackColor = Color.White;
             ClientSize = new Size(824, 1061);
             Controls.Add(btnPostActivity);
-            Controls.Add(btnUploadActivity);
             Controls.Add(lblActivityDescription);
             Controls.Add(label4);
             Controls.Add(guna2Panel1);

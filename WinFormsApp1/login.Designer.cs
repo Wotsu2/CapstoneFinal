@@ -38,8 +38,8 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges8 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges9 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges10 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges40 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges41 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges44 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges45 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges11 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges12 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges13 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -67,10 +67,14 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges35 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges36 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges37 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges38 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges39 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges42 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges43 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges46 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges47 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges38 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges39 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges40 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges41 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             label1 = new Label();
             guna2PictureBox2 = new Guna.UI2.WinForms.Guna2PictureBox();
             label2 = new Label();
@@ -114,6 +118,11 @@
             guna2Button1 = new Guna.UI2.WinForms.Guna2Button();
             label5 = new Label();
             btnConfigurationSetting = new Guna.UI2.WinForms.Guna2Button();
+            tabPage4 = new TabPage();
+            label17 = new Label();
+            txtSmtpPass = new Guna.UI2.WinForms.Guna2TextBox();
+            label18 = new Label();
+            txtSmtpUser = new Guna.UI2.WinForms.Guna2TextBox();
             ((System.ComponentModel.ISupportInitialize)guna2PictureBox2).BeginInit();
             ((System.ComponentModel.ISupportInitialize)guna2PictureBox1).BeginInit();
             pnlConfiguration.SuspendLayout();
@@ -121,6 +130,7 @@
             tabPage1.SuspendLayout();
             tabPage2.SuspendLayout();
             tabPage3.SuspendLayout();
+            tabPage4.SuspendLayout();
             SuspendLayout();
             // 
             // label1
@@ -128,7 +138,7 @@
             label1.AutoSize = true;
             label1.BackColor = Color.Transparent;
             label1.Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label1.Location = new Point(141, 84);
+            label1.Location = new Point(141, 79);
             label1.Name = "label1";
             label1.Size = new Size(115, 25);
             label1.TabIndex = 1;
@@ -140,10 +150,10 @@
             guna2PictureBox2.CustomizableEdges = customizableEdges1;
             guna2PictureBox2.Image = Properties.Resources._519651826_1547683232876514_5721937903657253200_n_removebg_preview;
             guna2PictureBox2.ImageRotate = 0F;
-            guna2PictureBox2.Location = new Point(68, 71);
+            guna2PictureBox2.Location = new Point(68, 67);
             guna2PictureBox2.Name = "guna2PictureBox2";
             guna2PictureBox2.ShadowDecoration.CustomizableEdges = customizableEdges2;
-            guna2PictureBox2.Size = new Size(50, 50);
+            guna2PictureBox2.Size = new Size(50, 47);
             guna2PictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
             guna2PictureBox2.TabIndex = 2;
             guna2PictureBox2.TabStop = false;
@@ -153,7 +163,7 @@
             label2.AutoSize = true;
             label2.BackColor = Color.Transparent;
             label2.Font = new Font("Microsoft Sans Serif", 28F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label2.Location = new Point(68, 264);
+            label2.Location = new Point(68, 248);
             label2.Name = "label2";
             label2.Size = new Size(440, 44);
             label2.TabIndex = 3;
@@ -164,7 +174,7 @@
             label3.AutoSize = true;
             label3.BackColor = Color.Transparent;
             label3.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label3.Location = new Point(68, 324);
+            label3.Location = new Point(68, 304);
             label3.Name = "label3";
             label3.Size = new Size(127, 19);
             label3.TabIndex = 4;
@@ -187,13 +197,13 @@
             txtUsername.IconRight = Properties.Resources.Id;
             txtUsername.IconRightOffset = new Point(30, 0);
             txtUsername.IconRightSize = new Size(20, 18);
-            txtUsername.Location = new Point(68, 404);
+            txtUsername.Location = new Point(68, 379);
             txtUsername.Margin = new Padding(3, 4, 3, 4);
             txtUsername.Name = "txtUsername";
             txtUsername.PlaceholderText = "Username";
             txtUsername.SelectedText = "";
             txtUsername.ShadowDecoration.CustomizableEdges = customizableEdges4;
-            txtUsername.Size = new Size(422, 56);
+            txtUsername.Size = new Size(422, 52);
             txtUsername.TabIndex = 5;
             txtUsername.TextOffset = new Point(30, 0);
             // 
@@ -214,14 +224,14 @@
             txtPassword.IconRight = Properties.Resources.Eye1;
             txtPassword.IconRightOffset = new Point(30, 0);
             txtPassword.IconRightSize = new Size(25, 25);
-            txtPassword.Location = new Point(68, 492);
+            txtPassword.Location = new Point(68, 461);
             txtPassword.Margin = new Padding(3, 4, 3, 4);
             txtPassword.Name = "txtPassword";
             txtPassword.PasswordChar = '*';
             txtPassword.PlaceholderText = "Password";
             txtPassword.SelectedText = "";
             txtPassword.ShadowDecoration.CustomizableEdges = customizableEdges6;
-            txtPassword.Size = new Size(422, 56);
+            txtPassword.Size = new Size(422, 52);
             txtPassword.TabIndex = 6;
             txtPassword.TextOffset = new Point(30, 0);
             // 
@@ -237,10 +247,10 @@
             btnLogin.FillColor = Color.Maroon;
             btnLogin.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
             btnLogin.ForeColor = Color.White;
-            btnLogin.Location = new Point(68, 604);
+            btnLogin.Location = new Point(68, 566);
             btnLogin.Name = "btnLogin";
             btnLogin.ShadowDecoration.CustomizableEdges = customizableEdges8;
-            btnLogin.Size = new Size(422, 52);
+            btnLogin.Size = new Size(422, 49);
             btnLogin.TabIndex = 7;
             btnLogin.Text = "Log in";
             btnLogin.Click += btnLogin_Click;
@@ -253,7 +263,7 @@
             guna2PictureBox1.Location = new Point(704, -7);
             guna2PictureBox1.Name = "guna2PictureBox1";
             guna2PictureBox1.ShadowDecoration.CustomizableEdges = customizableEdges10;
-            guna2PictureBox1.Size = new Size(750, 805);
+            guna2PictureBox1.Size = new Size(750, 755);
             guna2PictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             guna2PictureBox1.TabIndex = 0;
             guna2PictureBox1.TabStop = false;
@@ -269,11 +279,11 @@
             pnlConfiguration.Controls.Add(guna2TabControl1);
             pnlConfiguration.Controls.Add(guna2Button1);
             pnlConfiguration.Controls.Add(label5);
-            pnlConfiguration.CustomizableEdges = customizableEdges40;
-            pnlConfiguration.Location = new Point(348, 189);
+            pnlConfiguration.CustomizableEdges = customizableEdges44;
+            pnlConfiguration.Location = new Point(348, 177);
             pnlConfiguration.Name = "pnlConfiguration";
-            pnlConfiguration.ShadowDecoration.CustomizableEdges = customizableEdges41;
-            pnlConfiguration.Size = new Size(719, 415);
+            pnlConfiguration.ShadowDecoration.CustomizableEdges = customizableEdges45;
+            pnlConfiguration.Size = new Size(719, 389);
             pnlConfiguration.TabIndex = 10;
             pnlConfiguration.Visible = false;
             // 
@@ -287,10 +297,10 @@
             btnSaveSetting.FillColor = Color.FromArgb(33, 42, 57);
             btnSaveSetting.Font = new Font("Segoe UI", 9F);
             btnSaveSetting.ForeColor = Color.White;
-            btnSaveSetting.Location = new Point(658, 380);
+            btnSaveSetting.Location = new Point(658, 356);
             btnSaveSetting.Name = "btnSaveSetting";
             btnSaveSetting.ShadowDecoration.CustomizableEdges = customizableEdges12;
-            btnSaveSetting.Size = new Size(54, 30);
+            btnSaveSetting.Size = new Size(54, 28);
             btnSaveSetting.TabIndex = 20;
             btnSaveSetting.Text = "Save";
             btnSaveSetting.Click += btnSaveSetting_Click_1;
@@ -311,7 +321,7 @@
             btnPnlConfigurationClose.Name = "btnPnlConfigurationClose";
             btnPnlConfigurationClose.ShadowDecoration.CustomizableEdges = customizableEdges13;
             btnPnlConfigurationClose.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle;
-            btnPnlConfigurationClose.Size = new Size(32, 31);
+            btnPnlConfigurationClose.Size = new Size(32, 29);
             btnPnlConfigurationClose.TabIndex = 19;
             btnPnlConfigurationClose.Click += btnPnlConfigurationClose_Click;
             // 
@@ -321,11 +331,12 @@
             guna2TabControl1.Controls.Add(tabPage1);
             guna2TabControl1.Controls.Add(tabPage2);
             guna2TabControl1.Controls.Add(tabPage3);
+            guna2TabControl1.Controls.Add(tabPage4);
             guna2TabControl1.ItemSize = new Size(180, 40);
-            guna2TabControl1.Location = new Point(0, 100);
+            guna2TabControl1.Location = new Point(0, 94);
             guna2TabControl1.Name = "guna2TabControl1";
             guna2TabControl1.SelectedIndex = 0;
-            guna2TabControl1.Size = new Size(719, 275);
+            guna2TabControl1.Size = new Size(719, 258);
             guna2TabControl1.TabButtonHoverState.BorderColor = Color.Empty;
             guna2TabControl1.TabButtonHoverState.FillColor = Color.FromArgb(40, 52, 70);
             guna2TabControl1.TabButtonHoverState.Font = new Font("Segoe UI Semibold", 10F);
@@ -363,7 +374,7 @@
             tabPage1.Location = new Point(184, 4);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new Padding(3);
-            tabPage1.Size = new Size(531, 267);
+            tabPage1.Size = new Size(531, 250);
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Networks";
             tabPage1.UseVisualStyleBackColor = true;
@@ -380,12 +391,12 @@
             txtFileTransferPort.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
             txtFileTransferPort.Font = new Font("Segoe UI", 9F);
             txtFileTransferPort.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtFileTransferPort.Location = new Point(19, 231);
+            txtFileTransferPort.Location = new Point(19, 217);
             txtFileTransferPort.Name = "txtFileTransferPort";
             txtFileTransferPort.PlaceholderText = "ex: 5000";
             txtFileTransferPort.SelectedText = "";
             txtFileTransferPort.ShadowDecoration.CustomizableEdges = customizableEdges15;
-            txtFileTransferPort.Size = new Size(198, 27);
+            txtFileTransferPort.Size = new Size(198, 25);
             txtFileTransferPort.TabIndex = 26;
             txtFileTransferPort.TextOffset = new Point(10, 0);
             // 
@@ -411,28 +422,28 @@
             txtCommandPort.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
             txtCommandPort.Font = new Font("Segoe UI", 9F);
             txtCommandPort.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtCommandPort.Location = new Point(295, 32);
+            txtCommandPort.Location = new Point(295, 30);
             txtCommandPort.Name = "txtCommandPort";
             txtCommandPort.PlaceholderText = "ex: 5000";
             txtCommandPort.SelectedText = "";
             txtCommandPort.ShadowDecoration.CustomizableEdges = customizableEdges17;
-            txtCommandPort.Size = new Size(198, 27);
+            txtCommandPort.Size = new Size(198, 25);
             txtCommandPort.TabIndex = 25;
             txtCommandPort.TextOffset = new Point(10, 0);
             // 
             // panel1
             // 
             panel1.BackColor = Color.DarkGray;
-            panel1.Location = new Point(273, 18);
+            panel1.Location = new Point(273, 17);
             panel1.Name = "panel1";
-            panel1.Size = new Size(1, 240);
+            panel1.Size = new Size(1, 225);
             panel1.TabIndex = 23;
             // 
             // label11
             // 
             label11.AutoSize = true;
             label11.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label11.Location = new Point(22, 209);
+            label11.Location = new Point(22, 196);
             label11.Name = "label11";
             label11.Size = new Size(132, 21);
             label11.TabIndex = 21;
@@ -442,7 +453,7 @@
             // 
             label10.AutoSize = true;
             label10.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label10.Location = new Point(22, 156);
+            label10.Location = new Point(22, 146);
             label10.Name = "label10";
             label10.Size = new Size(117, 21);
             label10.TabIndex = 19;
@@ -460,12 +471,12 @@
             txtBroadcastPort.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
             txtBroadcastPort.Font = new Font("Segoe UI", 9F);
             txtBroadcastPort.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtBroadcastPort.Location = new Point(19, 177);
+            txtBroadcastPort.Location = new Point(19, 166);
             txtBroadcastPort.Name = "txtBroadcastPort";
             txtBroadcastPort.PlaceholderText = "ex: 5000";
             txtBroadcastPort.SelectedText = "";
             txtBroadcastPort.ShadowDecoration.CustomizableEdges = customizableEdges19;
-            txtBroadcastPort.Size = new Size(198, 27);
+            txtBroadcastPort.Size = new Size(198, 25);
             txtBroadcastPort.TabIndex = 20;
             txtBroadcastPort.TextOffset = new Point(10, 0);
             // 
@@ -473,7 +484,7 @@
             // 
             label9.AutoSize = true;
             label9.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label9.Location = new Point(22, 104);
+            label9.Location = new Point(22, 98);
             label9.Name = "label9";
             label9.Size = new Size(153, 21);
             label9.TabIndex = 17;
@@ -491,12 +502,12 @@
             txtScreenSharingPort.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
             txtScreenSharingPort.Font = new Font("Segoe UI", 9F);
             txtScreenSharingPort.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtScreenSharingPort.Location = new Point(19, 125);
+            txtScreenSharingPort.Location = new Point(19, 117);
             txtScreenSharingPort.Name = "txtScreenSharingPort";
             txtScreenSharingPort.PlaceholderText = "ex: 5000";
             txtScreenSharingPort.SelectedText = "";
             txtScreenSharingPort.ShadowDecoration.CustomizableEdges = customizableEdges21;
-            txtScreenSharingPort.Size = new Size(198, 27);
+            txtScreenSharingPort.Size = new Size(198, 25);
             txtScreenSharingPort.TabIndex = 18;
             txtScreenSharingPort.TextOffset = new Point(10, 0);
             // 
@@ -504,7 +515,7 @@
             // 
             label8.AutoSize = true;
             label8.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label8.Location = new Point(22, 52);
+            label8.Location = new Point(22, 49);
             label8.Name = "label8";
             label8.Size = new Size(133, 21);
             label8.TabIndex = 15;
@@ -522,12 +533,12 @@
             txtWorkStationPort.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
             txtWorkStationPort.Font = new Font("Segoe UI", 9F);
             txtWorkStationPort.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtWorkStationPort.Location = new Point(19, 73);
+            txtWorkStationPort.Location = new Point(19, 68);
             txtWorkStationPort.Name = "txtWorkStationPort";
             txtWorkStationPort.PlaceholderText = "ex: 5000";
             txtWorkStationPort.SelectedText = "";
             txtWorkStationPort.ShadowDecoration.CustomizableEdges = customizableEdges23;
-            txtWorkStationPort.Size = new Size(198, 27);
+            txtWorkStationPort.Size = new Size(198, 25);
             txtWorkStationPort.TabIndex = 16;
             txtWorkStationPort.TextOffset = new Point(10, 0);
             // 
@@ -553,12 +564,12 @@
             txtServerIP.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
             txtServerIP.Font = new Font("Segoe UI", 9F);
             txtServerIP.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtServerIP.Location = new Point(19, 21);
+            txtServerIP.Location = new Point(19, 20);
             txtServerIP.Name = "txtServerIP";
             txtServerIP.PlaceholderText = "196.168.100.4";
             txtServerIP.SelectedText = "";
             txtServerIP.ShadowDecoration.CustomizableEdges = customizableEdges25;
-            txtServerIP.Size = new Size(198, 27);
+            txtServerIP.Size = new Size(198, 25);
             txtServerIP.TabIndex = 14;
             txtServerIP.TextOffset = new Point(10, 0);
             // 
@@ -577,7 +588,7 @@
             tabPage2.Location = new Point(184, 4);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(531, 267);
+            tabPage2.Size = new Size(531, 250);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Database";
             tabPage2.UseVisualStyleBackColor = true;
@@ -586,7 +597,7 @@
             // 
             label16.AutoSize = true;
             label16.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label16.Location = new Point(21, 70);
+            label16.Location = new Point(21, 66);
             label16.Name = "label16";
             label16.Size = new Size(111, 21);
             label16.TabIndex = 18;
@@ -604,12 +615,12 @@
             txtDatabasePort.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
             txtDatabasePort.Font = new Font("Segoe UI", 9F);
             txtDatabasePort.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtDatabasePort.Location = new Point(18, 91);
+            txtDatabasePort.Location = new Point(18, 85);
             txtDatabasePort.Name = "txtDatabasePort";
             txtDatabasePort.PlaceholderText = "ex: 3306";
             txtDatabasePort.SelectedText = "";
             txtDatabasePort.ShadowDecoration.CustomizableEdges = customizableEdges27;
-            txtDatabasePort.Size = new Size(198, 30);
+            txtDatabasePort.Size = new Size(198, 28);
             txtDatabasePort.TabIndex = 19;
             txtDatabasePort.TextOffset = new Point(10, 0);
             // 
@@ -617,7 +628,7 @@
             // 
             label15.AutoSize = true;
             label15.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label15.Location = new Point(21, 128);
+            label15.Location = new Point(21, 120);
             label15.Name = "label15";
             label15.Size = new Size(124, 21);
             label15.TabIndex = 16;
@@ -635,12 +646,12 @@
             txtDatabaseName.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
             txtDatabaseName.Font = new Font("Segoe UI", 9F);
             txtDatabaseName.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtDatabaseName.Location = new Point(18, 149);
+            txtDatabaseName.Location = new Point(18, 140);
             txtDatabaseName.Name = "txtDatabaseName";
             txtDatabaseName.PlaceholderText = "ex: cdsga_hub";
             txtDatabaseName.SelectedText = "";
             txtDatabaseName.ShadowDecoration.CustomizableEdges = customizableEdges29;
-            txtDatabaseName.Size = new Size(198, 30);
+            txtDatabaseName.Size = new Size(198, 28);
             txtDatabaseName.TabIndex = 17;
             txtDatabaseName.TextOffset = new Point(10, 0);
             // 
@@ -648,7 +659,7 @@
             // 
             label14.AutoSize = true;
             label14.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label14.Location = new Point(21, 186);
+            label14.Location = new Point(21, 174);
             label14.Name = "label14";
             label14.Size = new Size(114, 21);
             label14.TabIndex = 14;
@@ -666,12 +677,12 @@
             txtDatabaseUser.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
             txtDatabaseUser.Font = new Font("Segoe UI", 9F);
             txtDatabaseUser.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtDatabaseUser.Location = new Point(18, 207);
+            txtDatabaseUser.Location = new Point(18, 194);
             txtDatabaseUser.Name = "txtDatabaseUser";
             txtDatabaseUser.PlaceholderText = " ex: ";
             txtDatabaseUser.SelectedText = "";
             txtDatabaseUser.ShadowDecoration.CustomizableEdges = customizableEdges31;
-            txtDatabaseUser.Size = new Size(198, 30);
+            txtDatabaseUser.Size = new Size(198, 28);
             txtDatabaseUser.TabIndex = 15;
             txtDatabaseUser.TextOffset = new Point(10, 0);
             // 
@@ -679,7 +690,7 @@
             // 
             label13.AutoSize = true;
             label13.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label13.Location = new Point(262, 17);
+            label13.Location = new Point(262, 16);
             label13.Name = "label13";
             label13.Size = new Size(150, 21);
             label13.TabIndex = 12;
@@ -697,12 +708,12 @@
             txtDatabasePassword.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
             txtDatabasePassword.Font = new Font("Segoe UI", 9F);
             txtDatabasePassword.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtDatabasePassword.Location = new Point(259, 38);
+            txtDatabasePassword.Location = new Point(259, 36);
             txtDatabasePassword.Name = "txtDatabasePassword";
             txtDatabasePassword.PlaceholderText = "ex: ";
             txtDatabasePassword.SelectedText = "";
             txtDatabasePassword.ShadowDecoration.CustomizableEdges = customizableEdges33;
-            txtDatabasePassword.Size = new Size(198, 30);
+            txtDatabasePassword.Size = new Size(198, 28);
             txtDatabasePassword.TabIndex = 13;
             txtDatabasePassword.TextOffset = new Point(10, 0);
             // 
@@ -710,7 +721,7 @@
             // 
             label4.AutoSize = true;
             label4.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label4.Location = new Point(21, 12);
+            label4.Location = new Point(21, 11);
             label4.Name = "label4";
             label4.Size = new Size(116, 21);
             label4.TabIndex = 0;
@@ -728,12 +739,12 @@
             txtDatabaseHost.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
             txtDatabaseHost.Font = new Font("Segoe UI", 9F);
             txtDatabaseHost.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtDatabaseHost.Location = new Point(18, 33);
+            txtDatabaseHost.Location = new Point(18, 31);
             txtDatabaseHost.Name = "txtDatabaseHost";
             txtDatabaseHost.PlaceholderText = "196.168.100.4";
             txtDatabaseHost.SelectedText = "";
             txtDatabaseHost.ShadowDecoration.CustomizableEdges = customizableEdges35;
-            txtDatabaseHost.Size = new Size(198, 30);
+            txtDatabaseHost.Size = new Size(198, 28);
             txtDatabaseHost.TabIndex = 11;
             txtDatabaseHost.TextOffset = new Point(10, 0);
             // 
@@ -743,7 +754,7 @@
             tabPage3.Controls.Add(label6);
             tabPage3.Location = new Point(184, 4);
             tabPage3.Name = "tabPage3";
-            tabPage3.Size = new Size(531, 267);
+            tabPage3.Size = new Size(531, 250);
             tabPage3.TabIndex = 2;
             tabPage3.Text = "File Storage";
             tabPage3.UseVisualStyleBackColor = true;
@@ -760,10 +771,10 @@
             btnSelectFolder.FillColor = Color.White;
             btnSelectFolder.Font = new Font("Segoe UI", 9F);
             btnSelectFolder.ForeColor = Color.Black;
-            btnSelectFolder.Location = new Point(12, 38);
+            btnSelectFolder.Location = new Point(12, 36);
             btnSelectFolder.Name = "btnSelectFolder";
             btnSelectFolder.ShadowDecoration.CustomizableEdges = customizableEdges37;
-            btnSelectFolder.Size = new Size(127, 40);
+            btnSelectFolder.Size = new Size(127, 38);
             btnSelectFolder.TabIndex = 21;
             btnSelectFolder.Text = "Select Folder";
             btnSelectFolder.Click += btnSelectFolder_Click;
@@ -772,7 +783,7 @@
             // 
             label6.AutoSize = true;
             label6.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label6.Location = new Point(12, 14);
+            label6.Location = new Point(12, 13);
             label6.Name = "label6";
             label6.Size = new Size(95, 21);
             label6.TabIndex = 17;
@@ -782,7 +793,7 @@
             // 
             guna2Button1.BackColor = Color.Transparent;
             guna2Button1.BorderRadius = 10;
-            guna2Button1.CustomizableEdges = customizableEdges38;
+            guna2Button1.CustomizableEdges = customizableEdges42;
             guna2Button1.DisabledState.BorderColor = Color.DarkGray;
             guna2Button1.DisabledState.CustomBorderColor = Color.DarkGray;
             guna2Button1.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -790,10 +801,10 @@
             guna2Button1.FillColor = Color.Maroon;
             guna2Button1.Font = new Font("Segoe UI", 10F);
             guna2Button1.ForeColor = Color.White;
-            guna2Button1.Location = new Point(331, 321);
+            guna2Button1.Location = new Point(331, 301);
             guna2Button1.Name = "guna2Button1";
-            guna2Button1.ShadowDecoration.CustomizableEdges = customizableEdges39;
-            guna2Button1.Size = new Size(83, 39);
+            guna2Button1.ShadowDecoration.CustomizableEdges = customizableEdges43;
+            guna2Button1.Size = new Size(83, 37);
             guna2Button1.TabIndex = 17;
             guna2Button1.Text = "Save";
             // 
@@ -802,7 +813,7 @@
             label5.AutoSize = true;
             label5.BackColor = Color.Transparent;
             label5.Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label5.Location = new Point(14, 11);
+            label5.Location = new Point(14, 10);
             label5.Name = "label5";
             label5.Size = new Size(131, 25);
             label5.TabIndex = 10;
@@ -813,7 +824,7 @@
             btnConfigurationSetting.Animated = true;
             btnConfigurationSetting.BackColor = Color.Transparent;
             btnConfigurationSetting.BorderRadius = 20;
-            btnConfigurationSetting.CustomizableEdges = customizableEdges42;
+            btnConfigurationSetting.CustomizableEdges = customizableEdges46;
             btnConfigurationSetting.DisabledState.BorderColor = Color.DarkGray;
             btnConfigurationSetting.DisabledState.CustomBorderColor = Color.DarkGray;
             btnConfigurationSetting.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -823,18 +834,93 @@
             btnConfigurationSetting.ForeColor = Color.Transparent;
             btnConfigurationSetting.Image = Properties.Resources.setting;
             btnConfigurationSetting.ImageSize = new Size(25, 25);
-            btnConfigurationSetting.Location = new Point(653, 740);
+            btnConfigurationSetting.Location = new Point(653, 694);
             btnConfigurationSetting.Name = "btnConfigurationSetting";
-            btnConfigurationSetting.ShadowDecoration.CustomizableEdges = customizableEdges43;
-            btnConfigurationSetting.Size = new Size(45, 45);
+            btnConfigurationSetting.ShadowDecoration.CustomizableEdges = customizableEdges47;
+            btnConfigurationSetting.Size = new Size(45, 42);
             btnConfigurationSetting.TabIndex = 11;
             btnConfigurationSetting.Click += btnConfigurationSetting_Click_1;
             // 
+            // tabPage4
+            // 
+            tabPage4.Controls.Add(label17);
+            tabPage4.Controls.Add(txtSmtpPass);
+            tabPage4.Controls.Add(label18);
+            tabPage4.Controls.Add(txtSmtpUser);
+            tabPage4.Location = new Point(184, 4);
+            tabPage4.Name = "tabPage4";
+            tabPage4.Size = new Size(531, 250);
+            tabPage4.TabIndex = 3;
+            tabPage4.Text = "Gmail";
+            tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // label17
+            // 
+            label17.AutoSize = true;
+            label17.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label17.Location = new Point(23, 58);
+            label17.Name = "label17";
+            label17.Size = new Size(80, 21);
+            label17.TabIndex = 23;
+            label17.Text = "SmtpPass";
+            // 
+            // txtSmtpPass
+            // 
+            txtSmtpPass.BorderRadius = 10;
+            txtSmtpPass.CustomizableEdges = customizableEdges38;
+            txtSmtpPass.DefaultText = "";
+            txtSmtpPass.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
+            txtSmtpPass.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
+            txtSmtpPass.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
+            txtSmtpPass.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
+            txtSmtpPass.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
+            txtSmtpPass.Font = new Font("Segoe UI", 9F);
+            txtSmtpPass.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
+            txtSmtpPass.Location = new Point(20, 77);
+            txtSmtpPass.Name = "txtSmtpPass";
+            txtSmtpPass.PlaceholderText = "eroh cert nhpm yacq";
+            txtSmtpPass.SelectedText = "";
+            txtSmtpPass.ShadowDecoration.CustomizableEdges = customizableEdges39;
+            txtSmtpPass.Size = new Size(198, 25);
+            txtSmtpPass.TabIndex = 24;
+            txtSmtpPass.TextOffset = new Point(10, 0);
+            // 
+            // label18
+            // 
+            label18.AutoSize = true;
+            label18.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label18.Location = new Point(23, 9);
+            label18.Name = "label18";
+            label18.Size = new Size(82, 21);
+            label18.TabIndex = 21;
+            label18.Text = "SmtpUser";
+            // 
+            // txtSmtpUser
+            // 
+            txtSmtpUser.BorderRadius = 10;
+            txtSmtpUser.CustomizableEdges = customizableEdges40;
+            txtSmtpUser.DefaultText = "";
+            txtSmtpUser.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
+            txtSmtpUser.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
+            txtSmtpUser.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
+            txtSmtpUser.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
+            txtSmtpUser.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
+            txtSmtpUser.Font = new Font("Segoe UI", 9F);
+            txtSmtpUser.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
+            txtSmtpUser.Location = new Point(20, 29);
+            txtSmtpUser.Name = "txtSmtpUser";
+            txtSmtpUser.PlaceholderText = "@gmail.com";
+            txtSmtpUser.SelectedText = "";
+            txtSmtpUser.ShadowDecoration.CustomizableEdges = customizableEdges41;
+            txtSmtpUser.Size = new Size(198, 25);
+            txtSmtpUser.TabIndex = 22;
+            txtSmtpUser.TextOffset = new Point(10, 0);
+            // 
             // Login
             // 
-            AutoScaleDimensions = new SizeF(7F, 16F);
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1414, 793);
+            ClientSize = new Size(1414, 743);
             Controls.Add(btnConfigurationSetting);
             Controls.Add(pnlConfiguration);
             Controls.Add(btnLogin);
@@ -862,6 +948,8 @@
             tabPage2.PerformLayout();
             tabPage3.ResumeLayout(false);
             tabPage3.PerformLayout();
+            tabPage4.ResumeLayout(false);
+            tabPage4.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -912,5 +1000,10 @@
         private Guna.UI2.WinForms.Guna2Button guna2Button1;
         private Label label5;
         private Guna.UI2.WinForms.Guna2Button btnConfigurationSetting;
+        private TabPage tabPage4;
+        private Label label17;
+        private Guna.UI2.WinForms.Guna2TextBox txtSmtpPass;
+        private Label label18;
+        private Guna.UI2.WinForms.Guna2TextBox txtSmtpUser;
     }
 }

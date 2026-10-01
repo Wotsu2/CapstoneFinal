@@ -71,13 +71,12 @@ namespace WinFormsApp1
         int ProfessorID;
         string ProfessorUsername;
 
-        // Banner colors for class cards (Google Classroom style)
         private static readonly Color[] BannerColors = new Color[]
         {
-            Color.FromArgb(46, 125, 90),   // green
-            Color.FromArgb(55, 65, 79),    // dark slate
-            Color.FromArgb(90, 90, 100),   // gray
-            Color.FromArgb(196, 106, 74)   // orange/terracotta
+            Color.FromArgb(46, 125, 90),
+            Color.FromArgb(55, 65, 79),
+            Color.FromArgb(90, 90, 100),
+            Color.FromArgb(196, 106, 74)
         };
         private int _colorIndex = 0;
 
@@ -121,6 +120,9 @@ namespace WinFormsApp1
             NameGet();
             InitializeComboBoxes();
             InitializeNavTooltips();
+
+            try { BuildAttendanceUi(); }
+            catch (Exception ex) { MessageBox.Show("BuildAttendanceUi error: " + ex.Message); }
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
@@ -129,9 +131,6 @@ namespace WinFormsApp1
             base.OnFormClosing(e);
         }
 
-        // =========================================================
-        // NAVIGATION
-        // =========================================================
         private void ShowPage(Panel page, string title, Guna.UI2.WinForms.Guna2Button activeBtn)
         {
             pnlHome.Visible = false;
@@ -186,13 +185,7 @@ namespace WinFormsApp1
         private void btnAttendance_Click(object sender, EventArgs e)
         {
             ShowPage(pnlAttendance, "Attendance", btnAttendance);
-
-            LoadAttendanceSections();
-
-            if (guna2ComboBox11.Items.Count > 0)
-                guna2ComboBox11.SelectedIndex = 0;
-            else
-                dgvAttendance();
+            RefreshAttendanceSections();
         }
 
         private void btnSubject_Click(object sender, EventArgs e)
@@ -211,9 +204,6 @@ namespace WinFormsApp1
         private void btnAccount_Click(object sender, EventArgs e)
             => ShowPage(pnlSetting, "Settings", btnAccount);
 
-        // =========================================================
-        // HOME PAGE
-        // =========================================================
         private void linkLblWorkstations_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
             => ShowPage(pnlWorkstation, "Workstations", btnWorkstation);
 
@@ -227,9 +217,6 @@ namespace WinFormsApp1
             RecentActivity();
         }
 
-        // =========================================================
-        // LISTENERS
-        // =========================================================
         private async Task StartServer()
         {
             try
@@ -237,7 +224,6 @@ namespace WinFormsApp1
                 listener = new TcpListener(IPAddress.Any, SettingsManager.Current.WorkstationPort);
                 listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 listener.Start();
-                Console.WriteLine("[Professor] Workstation listener started on port " + SettingsManager.Current.WorkstationPort);
             }
             catch (Exception ex)
             {
@@ -257,18 +243,12 @@ namespace WinFormsApp1
                 {
                     TcpClient client = await listener.AcceptTcpClientAsync();
                     string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
-                    Console.WriteLine("[Professor] accepted workstation " + clientIp);
 
                     Button wsButton = null;
-
                     SafeInvoke(() => wsButton = OnWorkStationConnected(clientIp));
-
                     _ = MonitorDisconnected(client, wsButton, clientIp);
                 }
-                catch (ObjectDisposedException)
-                {
-                    break;
-                }
+                catch (ObjectDisposedException) { break; }
                 catch (Exception ex)
                 {
                     if (!isRunning) break;
@@ -387,9 +367,6 @@ namespace WinFormsApp1
             lblComputerOffline.Text = disconnectedCount.ToString();
         }
 
-        // =========================================================
-        // MY STUDENTS
-        // =========================================================
         private void LoadAllStudent(string filter = "")
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -464,21 +441,292 @@ namespace WinFormsApp1
         // =========================================================
         // ATTENDANCE
         // =========================================================
-        private void LoadAttendanceSections()
+        private Guna.UI2.WinForms.Guna2ComboBox attSectionCombo;
+        private FlowLayoutPanel attListPanel;
+        private DataGridView attGrid;
+        private Guna.UI2.WinForms.Guna2Button attAddBtn;
+        private Guna.UI2.WinForms.Guna2Button attUpdateBtn;
+        private Guna.UI2.WinForms.Guna2Button attExportBtn;
+        private Label attHeaderDate;
+        private Label attHeaderSection;
+        private bool _attendanceUiBuilt = false;
+
+        private void BuildAttendanceUi()
         {
+            if (_attendanceUiBuilt) return;
+            _attendanceUiBuilt = true;
+
+            pnlAttendance.Controls.Clear();
+            pnlAttendance.BackColor = Color.FromArgb(248, 248, 250);
+            pnlAttendance.BackgroundImage = null;
+            pnlAttendance.Padding = new Padding(0);
+            pnlAttendance.AutoScroll = false;
+
+            Guna2Panel topBar = new Guna2Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 160,
+                FillColor = Color.White,
+                BorderRadius = 0
+            };
+            pnlAttendance.Controls.Add(topBar);
+
+            Label lblTitle = new Label
+            {
+                Text = "Attendance",
+                Font = new Font("Segoe UI Semibold", 20F, FontStyle.Bold),
+                ForeColor = Color.Maroon,
+                BackColor = Color.Transparent,
+                AutoSize = true,
+                Location = new Point(24, 18)
+            };
+            topBar.Controls.Add(lblTitle);
+
+            Label lblSubtitle = new Label
+            {
+                Text = "Track daily student attendance per section",
+                Font = new Font("Segoe UI", 9.5F),
+                ForeColor = Color.FromArgb(120, 120, 120),
+                BackColor = Color.Transparent,
+                AutoSize = true,
+                Location = new Point(26, 52)
+            };
+            topBar.Controls.Add(lblSubtitle);
+
+            Label lblSection = new Label
+            {
+                Text = "Section",
+                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(80, 80, 80),
+                BackColor = Color.Transparent,
+                AutoSize = true,
+                Location = new Point(26, 82)
+            };
+            topBar.Controls.Add(lblSection);
+
+            attSectionCombo = new Guna.UI2.WinForms.Guna2ComboBox
+            {
+                Location = new Point(26, 104),
+                Size = new Size(220, 38),
+                BorderRadius = 8,
+                Font = new Font("Segoe UI", 9.5F),
+                FillColor = Color.FromArgb(250, 250, 252),
+                BorderColor = Color.FromArgb(220, 215, 215),
+                ForeColor = Color.FromArgb(50, 50, 50),
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            attSectionCombo.SelectedIndexChanged += (s, e) => OnAttendanceSectionChanged();
+            topBar.Controls.Add(attSectionCombo);
+
+            attExportBtn = new Guna2Button
+            {
+                Text = "📊  Export",
+                Size = new Size(120, 42),
+                Location = new Point(topBar.Width - 150, 30),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BorderRadius = 10,
+                FillColor = Color.White,
+                ForeColor = Color.Maroon,
+                BorderColor = Color.FromArgb(220, 200, 200),
+                BorderThickness = 1,
+                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold)
+            };
+            attExportBtn.HoverState.FillColor = Color.FromArgb(250, 240, 240);
+            attExportBtn.Click += (s, e) => ExportAttendanceToExcel();
+            topBar.Controls.Add(attExportBtn);
+
+            attAddBtn = new Guna2Button
+            {
+                Text = "➕  Add Attendance",
+                Size = new Size(180, 42),
+                Location = new Point(topBar.Width - 340, 30),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BorderRadius = 10,
+                FillColor = Color.Maroon,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold)
+            };
+            attAddBtn.HoverState.FillColor = Color.FromArgb(100, 0, 0);
+            attAddBtn.Click += (s, e) => StartAttendanceSession();
+            topBar.Controls.Add(attAddBtn);
+
+            attUpdateBtn = new Guna2Button
+            {
+                Text = "💾  Update",
+                Size = new Size(130, 42),
+                Location = new Point(topBar.Width - 480, 30),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BorderRadius = 10,
+                FillColor = Color.White,
+                ForeColor = Color.FromArgb(46, 160, 90),
+                BorderColor = Color.FromArgb(46, 160, 90),
+                BorderThickness = 1,
+                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold)
+            };
+            attUpdateBtn.HoverState.FillColor = Color.FromArgb(240, 250, 240);
+            attUpdateBtn.Click += (s, e) => SaveAttendanceSession();
+            topBar.Controls.Add(attUpdateBtn);
+
+            Panel bodyPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.FromArgb(248, 248, 250)
+            };
+            pnlAttendance.Controls.Add(bodyPanel);
+            bodyPanel.BringToFront();
+
+            Guna2Panel listHeader = new Guna2Panel
+            {
+                Location = new Point(20, 12),
+                Size = new Size(700, 70),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
+                BorderRadius = 12,
+                FillColor = Color.White,
+                BorderColor = Color.FromArgb(235, 230, 230),
+                BorderThickness = 1
+            };
+            bodyPanel.Controls.Add(listHeader);
+
+            attHeaderDate = new Label
+            {
+                Text = DateTime.Today.ToString("dddd, MMMM dd, yyyy"),
+                Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold),
+                ForeColor = Color.Maroon,
+                BackColor = Color.Transparent,
+                AutoSize = true,
+                Location = new Point(20, 12)
+            };
+            listHeader.Controls.Add(attHeaderDate);
+
+            attHeaderSection = new Label
+            {
+                Text = "No section selected",
+                Font = new Font("Segoe UI", 9.5F),
+                ForeColor = Color.FromArgb(120, 120, 120),
+                BackColor = Color.Transparent,
+                AutoSize = true,
+                Location = new Point(22, 40)
+            };
+            listHeader.Controls.Add(attHeaderSection);
+
+            attListPanel = new FlowLayoutPanel
+            {
+                Location = new Point(20, 94),
+                Size = new Size(700, 300),
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoScroll = true,
+                BackColor = Color.FromArgb(248, 248, 250),
+                Padding = new Padding(0)
+            };
+            bodyPanel.Controls.Add(attListPanel);
+
+            Guna2Panel gridHolder = new Guna2Panel
+            {
+                Location = new Point(740, 12),
+                Size = new Size(420, 300),
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right,
+                BorderRadius = 12,
+                FillColor = Color.White,
+                BorderColor = Color.FromArgb(235, 230, 230),
+                BorderThickness = 1
+            };
+            bodyPanel.Controls.Add(gridHolder);
+
+            Label lblGridTitle = new Label
+            {
+                Text = "📈  Attendance Summary",
+                Font = new Font("Segoe UI Semibold", 11.5F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(60, 60, 60),
+                BackColor = Color.Transparent,
+                AutoSize = true,
+                Location = new Point(18, 14)
+            };
+            gridHolder.Controls.Add(lblGridTitle);
+
+            attGrid = new DataGridView
+            {
+                Location = new Point(16, 50),
+                Size = new Size(388, 234),
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
+                BackgroundColor = Color.White,
+                BorderStyle = BorderStyle.None,
+                RowHeadersVisible = false,
+                AllowUserToAddRows = false,
+                AllowUserToResizeRows = false,
+                ReadOnly = true,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                MultiSelect = false,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                EnableHeadersVisualStyles = false,
+                ColumnHeadersHeight = 38,
+                Font = new Font("Segoe UI", 10F)
+            };
+            attGrid.ColumnHeadersDefaultCellStyle.BackColor = Color.Maroon;
+            attGrid.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+            attGrid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            attGrid.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.Maroon;
+            attGrid.DefaultCellStyle.Font = new Font("Segoe UI", 9.5F);
+            attGrid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(250, 235, 235);
+            attGrid.DefaultCellStyle.SelectionForeColor = Color.FromArgb(40, 40, 40);
+            attGrid.RowTemplate.Height = 34;
+            attGrid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(252, 250, 250);
+            gridHolder.Controls.Add(attGrid);
+
+            Action relayout = () =>
+            {
+                int bodyW = bodyPanel.ClientSize.Width;
+                int bodyH = bodyPanel.ClientSize.Height;
+
+                if (bodyW <= 0 || bodyH <= 0) return;
+
+                int rightW = 420;
+                int gap = 20;
+                int rightX = bodyW - rightW - gap;
+                int leftW = rightX - gap - 20;
+                if (leftW < 200) leftW = Math.Max(200, bodyW / 2);
+
+                listHeader.Location = new Point(20, 12);
+                listHeader.Size = new Size(leftW, 70);
+
+                attListPanel.Location = new Point(20, 94);
+                attListPanel.Size = new Size(leftW, Math.Max(50, bodyH - 114));
+
+                gridHolder.Location = new Point(rightX, 12);
+                gridHolder.Size = new Size(rightW, Math.Max(50, bodyH - 24));
+
+                attGrid.Location = new Point(16, 50);
+                attGrid.Size = new Size(
+                    Math.Max(50, gridHolder.Width - 32),
+                    Math.Max(50, gridHolder.Height - 66));
+            };
+
+            bodyPanel.SizeChanged += (s, e) => relayout();
+            pnlAttendance.SizeChanged += (s, e) => relayout();
+
+            pnlAttendance.PerformLayout();
+            bodyPanel.PerformLayout();
+            relayout();
+
+            ShowAttendancePlaceholder();
+            RefreshAttendanceSections();
+        }
+
+        private void RefreshAttendanceSections()
+        {
+            if (attSectionCombo == null) return;
+
             string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
-                string previousSelection = guna2ComboBox11.Text;
-
-                guna2ComboBox11.Items.Clear();
-                guna2ComboBox11.SelectedIndex = -1;
+                string previous = attSectionCombo.Text;
+                attSectionCombo.Items.Clear();
 
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-
                     string query = @"SELECT DISTINCT class_section 
                                      FROM professor_class 
                                      WHERE professor_id = @professor_id
@@ -495,30 +743,42 @@ namespace WinFormsApp1
                             while (reader.Read())
                             {
                                 string section = reader["class_section"]?.ToString()?.Trim();
-                                if (!string.IsNullOrEmpty(section) && !guna2ComboBox11.Items.Contains(section))
-                                    guna2ComboBox11.Items.Add(section);
+                                if (!string.IsNullOrEmpty(section) && !attSectionCombo.Items.Contains(section))
+                                    attSectionCombo.Items.Add(section);
                             }
                         }
                     }
                 }
 
-                if (!string.IsNullOrEmpty(previousSelection) && guna2ComboBox11.Items.Contains(previousSelection))
-                    guna2ComboBox11.SelectedItem = previousSelection;
+                if (!string.IsNullOrEmpty(previous) && attSectionCombo.Items.Contains(previous))
+                    attSectionCombo.SelectedItem = previous;
+                else if (attSectionCombo.Items.Count > 0)
+                    attSectionCombo.SelectedIndex = 0;
             }
             catch (Exception ex)
             {
-                Console.WriteLine("LoadAttendanceSections error: " + ex.Message);
+                Console.WriteLine("RefreshAttendanceSections error: " + ex.Message);
             }
         }
 
-        private void guna2ComboBox11_SelectedIndexChanged(object sender, EventArgs e)
+        private void OnAttendanceSectionChanged()
         {
-            dgvAttendance(guna2ComboBox11.Text);
-            flpAttendance.Controls.Clear();
+            if (attSectionCombo == null) return;
+
+            string section = attSectionCombo.Text;
+            if (string.IsNullOrEmpty(section)) return;
+
+            attHeaderSection.Text = $"Section {section}";
+            attHeaderDate.Text = DateTime.Today.ToString("dddd, MMMM dd, yyyy");
+
+            RefreshAttendanceGrid(section);
+            ShowAttendancePlaceholder();
         }
 
-        private void dgvAttendance(string sectionFilter = "")
+        private void RefreshAttendanceGrid(string sectionFilter)
         {
+            if (attGrid == null) return;
+
             string connStr = SettingsManager.Current.GetConnectionString();
 
             try
@@ -527,200 +787,37 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
-                    bool filterBySection = !string.IsNullOrEmpty(sectionFilter)
-                                           && sectionFilter != "Section";
-
-                    string query;
-
-                    if (filterBySection)
-                    {
-                        query = @"SELECT 
-                                    uc.roles,
-                                    pa.student_name, 
-                                    pa.present, 
-                                    pa.absent, 
-                                    pa.late
-                                  FROM user_credential uc 
-                                  INNER JOIN professor_attendance pa ON uc.user_id = pa.student_id
-                                  INNER JOIN user_information ui ON ui.user_id = uc.user_id
-                                  WHERE uc.roles = 'Student'
-                                    AND LOWER(TRIM(ui.school_section)) = LOWER(TRIM(@section))
-                                  ORDER BY pa.student_name";
-                    }
-                    else
-                    {
-                        query = @"SELECT 
-                                    uc.roles,
-                                    pa.student_name, 
-                                    pa.present, 
-                                    pa.absent, 
-                                    pa.late
-                                  FROM user_credential uc 
-                                  INNER JOIN professor_attendance pa ON uc.user_id = pa.student_id
-                                  WHERE uc.roles = 'Student'
-                                    AND 1 = 0";
-                    }
+                    string query = @"SELECT 
+                                        pa.student_name AS Name, 
+                                        pa.present      AS Present, 
+                                        pa.absent       AS Absent, 
+                                        pa.late         AS Late
+                                     FROM professor_attendance pa
+                                     INNER JOIN user_information ui ON ui.user_id = pa.student_id
+                                     WHERE LOWER(TRIM(ui.school_section)) = LOWER(TRIM(@section))
+                                     ORDER BY pa.student_name";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
-                        if (filterBySection)
-                            cmd.Parameters.AddWithValue("@section", sectionFilter);
+                        cmd.Parameters.AddWithValue("@section", sectionFilter);
 
                         MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
                         DataTable dt = new DataTable();
                         adapter.Fill(dt);
-                        ViewStudentAttendance.DataSource = dt;
+                        attGrid.DataSource = dt;
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("dgvAttendance error: " + ex.Message);
+                Console.WriteLine("RefreshAttendanceGrid error: " + ex.Message);
             }
         }
 
-        private static int TotalUsers()
-        {
-            string connStr = SettingsManager.Current.GetConnectionString();
-            try
-            {
-                using (var conn = new MySqlConnection(connStr))
-                {
-                    conn.Open();
-                    using (var cmd = new MySqlCommand("SELECT COUNT(*) FROM professor_attendance", conn))
-                        return Convert.ToInt32(cmd.ExecuteScalar());
-                }
-            }
-            catch { return 0; }
-        }
-
-        private void btnAddAttendance_Click(object sender, EventArgs e)
-        {
-            if (string.IsNullOrEmpty(guna2ComboBox11.Text) ||
-                guna2ComboBox11.Text == "Section" ||
-                guna2ComboBox11.SelectedIndex < 0)
-            {
-                MessageBox.Show("Please select a section first.");
-                return;
-            }
-
-            flpAttendance.Controls.Clear();
-
-            List<(int StudentId, string StudentName)> students = GetAllStudents(guna2ComboBox11.Text);
-
-            if (students.Count == 0)
-            {
-                MessageBox.Show($"No students found in section {guna2ComboBox11.Text}.");
-                return;
-            }
-
-            FlowLayoutPanel column = new FlowLayoutPanel();
-            column.FlowDirection = FlowDirection.TopDown;
-            column.WrapContents = false;
-            column.AutoSize = true;
-            column.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            column.Width = 320;
-            column.Margin = new Padding(5);
-
-            Label dateHeader = new Label();
-            dateHeader.Text = DateTime.Today.ToString("MMM-dd");
-            dateHeader.Font = new Font("Segoe UI", 12, FontStyle.Bold);
-            dateHeader.AutoSize = true;
-            dateHeader.Margin = new Padding(4, 8, 4, 8);
-            column.Controls.Add(dateHeader);
-
-            FlowLayoutPanel headerRow = new FlowLayoutPanel();
-            headerRow.FlowDirection = FlowDirection.LeftToRight;
-            headerRow.WrapContents = false;
-            headerRow.AutoSize = true;
-            headerRow.Margin = new Padding(0, 0, 0, 4);
-
-            Label lblNameHead = new Label();
-            lblNameHead.Text = "Student Name";
-            lblNameHead.Width = 170;
-            lblNameHead.Font = new Font("Segoe UI", 9, FontStyle.Bold);
-            headerRow.Controls.Add(lblNameHead);
-
-            Label lblStatusHead = new Label();
-            lblStatusHead.Text = "Status";
-            lblStatusHead.Width = 110;
-            lblStatusHead.Font = new Font("Segoe UI", 9, FontStyle.Bold);
-            headerRow.Controls.Add(lblStatusHead);
-
-            column.Controls.Add(headerRow);
-
-            foreach (var student in students)
-            {
-                FlowLayoutPanel row = new FlowLayoutPanel();
-                row.FlowDirection = FlowDirection.LeftToRight;
-                row.WrapContents = false;
-                row.AutoSize = true;
-                row.Margin = new Padding(0, 2, 0, 2);
-
-                Label lblName = new Label();
-                lblName.Text = student.StudentName;
-                lblName.Width = 170;
-                lblName.Height = 30;
-                lblName.TextAlign = ContentAlignment.MiddleLeft;
-                lblName.AutoEllipsis = true;
-                row.Controls.Add(lblName);
-
-                Guna.UI2.WinForms.Guna2ComboBox cmb = new Guna.UI2.WinForms.Guna2ComboBox();
-                cmb.Width = 110;
-                cmb.Height = 30;
-                cmb.Tag = student.StudentId;
-                cmb.Items.Add("Present");
-                cmb.Items.Add("Absent");
-                cmb.Items.Add("Late");
-                cmb.DropDownStyle = ComboBoxStyle.DropDownList;
-                cmb.SelectedIndex = -1;
-                row.Controls.Add(cmb);
-
-                column.Controls.Add(row);
-            }
-
-            flpAttendance.Controls.Add(column);
-
-            string AttendanceDateNow = DateTime.Today.ToString("MMMdd", CultureInfo.InvariantCulture);
-            string connStr = SettingsManager.Current.GetConnectionString();
-
-            try
-            {
-                using (var conn = new MySqlConnection(connStr))
-                {
-                    conn.Open();
-
-                    var builder = new MySqlConnectionStringBuilder(connStr);
-                    string dbName = builder.Database;
-
-                    string checkQuery = @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
-                                           WHERE TABLE_SCHEMA = @dbName 
-                                           AND TABLE_NAME = 'professor_attendance' 
-                                           AND COLUMN_NAME = @columnName";
-
-                    bool columnExists = false;
-                    using (var checkCmd = new MySqlCommand(checkQuery, conn))
-                    {
-                        checkCmd.Parameters.AddWithValue("@dbName", dbName);
-                        checkCmd.Parameters.AddWithValue("@columnName", AttendanceDateNow);
-                        columnExists = Convert.ToInt32(checkCmd.ExecuteScalar()) > 0;
-                    }
-
-                    if (!columnExists)
-                    {
-                        string AddColumnQuery = $"ALTER TABLE professor_attendance ADD `{AttendanceDateNow}` VARCHAR(20)";
-                        using (var cmd = new MySqlCommand(AddColumnQuery, conn))
-                            cmd.ExecuteNonQuery();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("btnAddAttendance_Click error: " + ex.Message);
-            }
-        }
-
-        private List<(int StudentId, string StudentName)> GetAllStudents(string sectionFilter = "")
+        // =========================================================
+        // ENROLLED STUDENTS (via student_class) — used by attendance
+        // =========================================================
+        private List<(int StudentId, string StudentName)> GetStudentsInSection(string sectionFilter)
         {
             List<(int, string)> list = new List<(int, string)>();
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -729,80 +826,133 @@ namespace WinFormsApp1
             {
                 conn.Open();
 
-                bool filterBySection = !string.IsNullOrEmpty(sectionFilter)
-                                       && sectionFilter != "Section";
-
-                string query;
-
-                if (filterBySection)
-                {
-                    query = @"SELECT pa.student_id, pa.student_name
-                              FROM professor_attendance pa
-                              INNER JOIN user_information ui ON ui.user_id = pa.student_id
-                              WHERE pa.student_name IS NOT NULL 
-                                AND pa.student_name <> ''
-                                AND LOWER(TRIM(ui.school_section)) = LOWER(TRIM(@section))
-                              ORDER BY pa.student_name";
-                }
-                else
-                {
-                    query = @"SELECT student_id, student_name 
-                              FROM professor_attendance 
-                              WHERE student_name IS NOT NULL 
-                                AND student_name <> ''
-                              ORDER BY student_name";
-                }
+                // Only students who joined one of the professor's classes in this section
+                string query = @"SELECT DISTINCT
+                                     ui.user_id AS student_id,
+                                     CONCAT(ui.lastname, ' ', ui.firstname, ' ', ui.middlename) AS student_name
+                                 FROM student_class sc
+                                 INNER JOIN user_information ui ON ui.user_id = sc.user_id
+                                 WHERE sc.professor_id = @professor_id
+                                   AND LOWER(TRIM(sc.section)) = LOWER(TRIM(@section))
+                                 ORDER BY student_name";
 
                 using (var cmd = new MySqlCommand(query, conn))
                 {
-                    if (filterBySection)
-                        cmd.Parameters.AddWithValue("@section", sectionFilter);
+                    cmd.Parameters.AddWithValue("@professor_id", ProfessorID);
+                    cmd.Parameters.AddWithValue("@section", sectionFilter);
 
                     using (var reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
-                            list.Add((reader.GetInt32("student_id"), reader.GetString("student_name")));
+                        {
+                            int studentId = Convert.ToInt32(reader["student_id"]);
+                            string studentName = reader["student_name"]?.ToString()?.Trim() ?? "";
+
+                            if (!string.IsNullOrEmpty(studentName))
+                                list.Add((studentId, studentName));
+                        }
                     }
                 }
             }
             return list;
         }
 
-        private void btnAttendanceUpdate_Click(object sender, EventArgs e)
+        private void StartAttendanceSession()
         {
-            string DateToday = DateTime.Today.ToString("MMMdd", CultureInfo.InvariantCulture);
-            string connStr = SettingsManager.Current.GetConnectionString();
-
-            if (flpAttendance.Controls.Count == 0)
+            if (attSectionCombo == null || string.IsNullOrEmpty(attSectionCombo.Text))
             {
-                MessageBox.Show("No attendance data to update. Please load attendance first.");
+                MessageBox.Show("Please select a section first.", "No Section",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            FlowLayoutPanel currentColumn = (FlowLayoutPanel)flpAttendance.Controls[0];
-            List<string> missing = new List<string>();
+            string section = attSectionCombo.Text;
 
-            foreach (Control ctrl in currentColumn.Controls)
+            List<(int StudentId, string StudentName)> students = GetStudentsInSection(section);
+
+            if (students.Count == 0)
             {
-                if (ctrl is FlowLayoutPanel row)
-                {
-                    Label lbl = row.Controls.OfType<Label>().FirstOrDefault();
-                    var cmb = row.Controls.OfType<Guna.UI2.WinForms.Guna2ComboBox>().FirstOrDefault();
-
-                    if (cmb != null && lbl != null && string.IsNullOrEmpty(cmb.Text))
-                        missing.Add(lbl.Text);
-                }
+                MessageBox.Show($"No enrolled students found in section {section}.",
+                    "No Students", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
             }
 
-            if (missing.Count > 0)
-            {
-                DialogResult r = MessageBox.Show(
-                    $"{missing.Count} student(s) have no status selected. Continue anyway?",
-                    "Incomplete Attendance",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Warning);
+            EnsureTodayAttendanceColumn();
 
-                if (r == DialogResult.No) return;
+            // Clean up old cards and free memory
+            attListPanel.SuspendLayout();
+            for (int i = attListPanel.Controls.Count - 1; i >= 0; i--)
+            {
+                var c = attListPanel.Controls[i];
+                attListPanel.Controls.RemoveAt(i);
+                c.Dispose();
+            }
+
+            foreach (var student in students)
+            {
+                var card = BuildStudentAttendanceCard(student.StudentId, student.StudentName);
+                attListPanel.Controls.Add(card);
+            }
+
+            attListPanel.ResumeLayout(true);
+            attListPanel.PerformLayout();
+            attListPanel.Refresh();
+
+            attHeaderSection.Text = $"Section {section}   •   {students.Count} student(s)";
+            attHeaderDate.Text = DateTime.Today.ToString("dddd, MMMM dd, yyyy");
+        }
+
+        private void SaveAttendanceSession()
+        {
+            if (attListPanel == null || attListPanel.Controls.Count == 0)
+            {
+                MessageBox.Show("Nothing to update. Load the attendance list first.",
+                    "Nothing to Update", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            string dateToday = DateTime.Today.ToString("MMMdd", CultureInfo.InvariantCulture);
+            string connStr = SettingsManager.Current.GetConnectionString();
+
+            var selections = new List<(int StudentId, string Status, string Name)>();
+
+            foreach (Control ctrl in attListPanel.Controls)
+            {
+                if (!(ctrl is Guna2Panel card)) continue;
+                if (!(card.Tag is int studentId)) continue;
+
+                string selected = null;
+                string name = "";
+
+                foreach (Control inner in card.Controls)
+                {
+                    if (inner is Label lbl && lbl.Font.Bold && string.IsNullOrEmpty(name) &&
+                        !lbl.Text.StartsWith("Tap a status"))
+                    {
+                        name = lbl.Text;
+                    }
+
+                    if (inner is FlowLayoutPanel row)
+                    {
+                        foreach (Control b in row.Controls)
+                        {
+                            if (b is Guna2Button btn && btn.ForeColor == Color.White && btn.Text.Contains("✓"))
+                            {
+                                selected = btn.Text.Replace("✓", "").Trim();
+                            }
+                        }
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(selected))
+                    selections.Add((studentId, selected, name));
+            }
+
+            if (selections.Count == 0)
+            {
+                MessageBox.Show("No statuses selected yet.",
+                    "Nothing to Update", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
             }
 
             try
@@ -811,45 +961,274 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
-                    foreach (Control ctrl in currentColumn.Controls)
+                    foreach (var s in selections)
                     {
-                        if (ctrl is not FlowLayoutPanel row) continue;
-
-                        var cmb = row.Controls.OfType<Guna.UI2.WinForms.Guna2ComboBox>().FirstOrDefault();
-                        if (cmb == null || cmb.Tag == null) continue;
-
-                        int studentId = (int)cmb.Tag;
-                        string status = cmb.Text;
-                        if (string.IsNullOrEmpty(status)) continue;
-
-                        string col = status == "Present" ? "present"
-                                   : status == "Absent" ? "absent"
+                        string col = s.Status == "Present" ? "present"
+                                   : s.Status == "Absent" ? "absent"
                                    : "late";
 
+                        // Ensure row exists in professor_attendance before updating
+                        string insertIfMissing = @"INSERT INTO professor_attendance 
+                                                     (student_id, student_name, present, absent, late)
+                                                   SELECT @student_id, @name, 0, 0, 0
+                                                   FROM DUAL
+                                                   WHERE NOT EXISTS (
+                                                       SELECT 1 FROM professor_attendance WHERE student_id = @student_id
+                                                   )";
+
+                        using (var cmd = new MySqlCommand(insertIfMissing, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@student_id", s.StudentId);
+                            cmd.Parameters.AddWithValue("@name", s.Name);
+                            cmd.ExecuteNonQuery();
+                        }
+
                         string query = $@"UPDATE professor_attendance 
-                                          SET `{DateToday}` = @status, 
+                                          SET `{dateToday}` = @status, 
                                               {col} = COALESCE({col}, 0) + 1 
                                           WHERE student_id = @student_id";
 
                         using (var cmd = new MySqlCommand(query, conn))
                         {
-                            cmd.Parameters.AddWithValue("@status", status);
-                            cmd.Parameters.AddWithValue("@student_id", studentId);
+                            cmd.Parameters.AddWithValue("@status", s.Status);
+                            cmd.Parameters.AddWithValue("@student_id", s.StudentId);
                             cmd.ExecuteNonQuery();
                         }
                     }
-
-                    dgvAttendance(guna2ComboBox11.Text);
-                    MessageBox.Show("Attendance updated.");
                 }
+
+                MessageBox.Show($"{selections.Count} attendance record(s) saved.",
+                    "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                RefreshAttendanceGrid(attSectionCombo.Text);
             }
             catch (Exception ex)
             {
-                Console.WriteLine("btnAttendanceUpdate_Click error: " + ex.Message);
+                Console.WriteLine("SaveAttendanceSession error: " + ex.Message);
+                MessageBox.Show("Error saving attendance: " + ex.Message,
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void btnExportAttendance_Click(object sender, EventArgs e)
+        private Guna2Panel BuildStudentAttendanceCard(int studentId, string studentName)
+        {
+            int scrollbarWidth = SystemInformation.VerticalScrollBarWidth;
+            int cardWidth = Math.Max(400, attListPanel.ClientSize.Width - scrollbarWidth - 20);
+
+            Guna2Panel card = new Guna2Panel
+            {
+                Size = new Size(cardWidth, 84),
+                FillColor = Color.White,
+                BorderRadius = 12,
+                BorderColor = Color.FromArgb(235, 230, 230),
+                BorderThickness = 1,
+                Margin = new Padding(0, 0, 0, 10),
+                Tag = studentId
+            };
+
+            Guna2CircleButton avatar = new Guna2CircleButton
+            {
+                Size = new Size(52, 52),
+                Location = new Point(16, 16),
+                FillColor = Color.FromArgb(250, 235, 235),
+                ForeColor = Color.Maroon,
+                Font = new Font("Segoe UI Semibold", 13F, FontStyle.Bold),
+                Text = GetInitialsFromName(studentName),
+                Enabled = false
+            };
+            card.Controls.Add(avatar);
+
+            Label lblName = new Label
+            {
+                Text = studentName,
+                Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(40, 40, 40),
+                BackColor = Color.Transparent,
+                AutoSize = false,
+                AutoEllipsis = true,
+                Size = new Size(card.Width - 520, 24),
+                Location = new Point(82, 18)
+            };
+            card.Controls.Add(lblName);
+
+            Label lblHint = new Label
+            {
+                Text = "Tap a status to mark attendance",
+                Font = new Font("Segoe UI", 8.5F, FontStyle.Italic),
+                ForeColor = Color.FromArgb(150, 150, 150),
+                BackColor = Color.Transparent,
+                AutoSize = true,
+                Location = new Point(84, 46)
+            };
+            card.Controls.Add(lblHint);
+
+            FlowLayoutPanel row = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoSize = false,
+                Size = new Size(390, 44),
+                Location = new Point(card.Width - 410, 20),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BackColor = Color.Transparent
+            };
+
+            var btnPresent = MakeAttendanceButton("Present", Color.FromArgb(46, 160, 90));
+            var btnLate = MakeAttendanceButton("Late", Color.FromArgb(230, 160, 30));
+            var btnAbsent = MakeAttendanceButton("Absent", Color.FromArgb(200, 60, 60));
+
+            Action<Guna2Button> reset = b =>
+            {
+                b.FillColor = Color.White;
+                b.ForeColor = (Color)b.Tag;
+                b.Font = new Font("Segoe UI", 9.5F);
+                b.Text = b.Text.Replace("✓", "").Trim();
+            };
+
+            Action<Guna2Button> select = b =>
+            {
+                b.FillColor = (Color)b.Tag;
+                b.ForeColor = Color.White;
+                b.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
+                b.Text = "✓  " + b.Text.Replace("✓", "").Trim();
+            };
+
+            EventHandler onClick = (s, ev) =>
+            {
+                Guna2Button clicked = (Guna2Button)s;
+                reset(btnPresent);
+                reset(btnLate);
+                reset(btnAbsent);
+                select(clicked);
+
+                card.BorderColor = (Color)clicked.Tag;
+                card.BorderThickness = 2;
+            };
+
+            btnPresent.Click += onClick;
+            btnLate.Click += onClick;
+            btnAbsent.Click += onClick;
+
+            row.Controls.Add(btnPresent);
+            row.Controls.Add(btnLate);
+            row.Controls.Add(btnAbsent);
+            card.Controls.Add(row);
+
+            return card;
+        }
+
+        private Guna2Button MakeAttendanceButton(string text, Color accent)
+        {
+            Guna2Button btn = new Guna2Button
+            {
+                Text = text,
+                Size = new Size(120, 40),
+                Margin = new Padding(5, 0, 5, 0),
+                BorderRadius = 10,
+                FillColor = Color.White,
+                ForeColor = accent,
+                Font = new Font("Segoe UI", 9.5F),
+                BorderColor = accent,
+                BorderThickness = 1,
+                Tag = accent,
+                Cursor = Cursors.Hand
+            };
+
+            btn.HoverState.FillColor = Color.FromArgb(30, accent.R, accent.G, accent.B);
+            btn.HoverState.ForeColor = accent;
+
+            return btn;
+        }
+
+        private string GetInitialsFromName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "?";
+
+            var parts = name.Split(new[] { ' ', ',', '_', '.' }, StringSplitOptions.RemoveEmptyEntries);
+            string initials = "";
+            foreach (var p in parts)
+            {
+                if (initials.Length >= 2) break;
+                initials += char.ToUpper(p[0]);
+            }
+            return string.IsNullOrEmpty(initials) ? "?" : initials;
+        }
+
+        private void ShowAttendancePlaceholder()
+        {
+            if (attListPanel == null) return;
+
+            // Don't wipe existing student cards
+            bool hasCards = false;
+            foreach (Control c in attListPanel.Controls)
+            {
+                if (c is Guna2Panel p && p.Tag is int)
+                {
+                    hasCards = true;
+                    break;
+                }
+            }
+            if (hasCards) return;
+
+            attListPanel.Controls.Clear();
+
+            Guna2Panel placeholder = new Guna2Panel
+            {
+                Size = new Size(Math.Max(400, attListPanel.ClientSize.Width - 24), 260),
+                FillColor = Color.White,
+                BorderRadius = 16,
+                BorderColor = Color.FromArgb(230, 225, 225),
+                BorderThickness = 1,
+                Margin = new Padding(0, 20, 0, 0),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+            };
+
+            Label lblIcon = new Label
+            {
+                Text = "📋",
+                Font = new Font("Segoe UI Emoji", 36F),
+                ForeColor = Color.FromArgb(210, 200, 200),
+                BackColor = Color.Transparent,
+                AutoSize = false,
+                Size = new Size(placeholder.Width, 60),
+                Location = new Point(0, 50),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+            };
+            placeholder.Controls.Add(lblIcon);
+
+            Label lblMsg = new Label
+            {
+                Text = "No attendance list loaded",
+                Font = new Font("Segoe UI Semibold", 13F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(80, 80, 80),
+                BackColor = Color.Transparent,
+                AutoSize = false,
+                Size = new Size(placeholder.Width, 26),
+                Location = new Point(0, 120),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+            };
+            placeholder.Controls.Add(lblMsg);
+
+            Label lblSub = new Label
+            {
+                Text = "Click “Add Attendance” above to load today's students.",
+                Font = new Font("Segoe UI", 9.5F),
+                ForeColor = Color.FromArgb(140, 140, 140),
+                BackColor = Color.Transparent,
+                AutoSize = false,
+                Size = new Size(placeholder.Width, 22),
+                Location = new Point(0, 152),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+            };
+            placeholder.Controls.Add(lblSub);
+
+            attListPanel.Controls.Add(placeholder);
+        }
+
+        private void ExportAttendanceToExcel()
         {
             string connStr = SettingsManager.Current.GetConnectionString();
 
@@ -866,30 +1245,74 @@ namespace WinFormsApp1
 
                 if (dt.Rows.Count == 0)
                 {
-                    MessageBox.Show("No data to export.");
+                    MessageBox.Show("No data to export.", "Empty",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
 
                 using (SaveFileDialog sfd = new SaveFileDialog())
                 {
                     sfd.Filter = "Excel Files|*.xlsx";
-                    sfd.FileName = "UserData_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".xlsx";
+                    sfd.FileName = "Attendance_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".xlsx";
 
                     if (sfd.ShowDialog() == DialogResult.OK)
                     {
                         using (var workbook = new XLWorkbook())
                         {
-                            var worksheet = workbook.Worksheets.Add(dt, "Users");
+                            var worksheet = workbook.Worksheets.Add(dt, "Attendance");
                             worksheet.Columns().AdjustToContents();
                             workbook.SaveAs(sfd.FileName);
                         }
-                        MessageBox.Show("Exported successfully!");
+                        MessageBox.Show("Exported successfully!", "Exported",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("btnExportAttendance_Click error: " + ex.Message);
+                Console.WriteLine("ExportAttendanceToExcel error: " + ex.Message);
+                MessageBox.Show("Export failed: " + ex.Message,
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void EnsureTodayAttendanceColumn()
+        {
+            string dateCol = DateTime.Today.ToString("MMMdd", CultureInfo.InvariantCulture);
+            string connStr = SettingsManager.Current.GetConnectionString();
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    var builder = new MySqlConnectionStringBuilder(connStr);
+                    string dbName = builder.Database;
+
+                    string checkQuery = @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                                           WHERE TABLE_SCHEMA = @dbName 
+                                           AND TABLE_NAME = 'professor_attendance' 
+                                           AND COLUMN_NAME = @columnName";
+
+                    bool columnExists;
+                    using (var checkCmd = new MySqlCommand(checkQuery, conn))
+                    {
+                        checkCmd.Parameters.AddWithValue("@dbName", dbName);
+                        checkCmd.Parameters.AddWithValue("@columnName", dateCol);
+                        columnExists = Convert.ToInt32(checkCmd.ExecuteScalar()) > 0;
+                    }
+
+                    if (!columnExists)
+                    {
+                        string addColumnQuery = $"ALTER TABLE professor_attendance ADD `{dateCol}` VARCHAR(20)";
+                        using (var cmd = new MySqlCommand(addColumnQuery, conn))
+                            cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("EnsureTodayAttendanceColumn error: " + ex.Message);
             }
         }
 
@@ -910,7 +1333,6 @@ namespace WinFormsApp1
 
         private void btnCreateClass_Click(object sender, EventArgs e)
         {
-            // Validation
             if (string.IsNullOrWhiteSpace(txtClassCode.Text) ||
                 string.IsNullOrWhiteSpace(txtClassName.Text) ||
                 string.IsNullOrWhiteSpace(txtClassSection.Text) ||
@@ -949,7 +1371,6 @@ namespace WinFormsApp1
 
                 MessageBox.Show("Class created successfully!");
 
-                // Clear fields and close panel
                 txtClassCode.Clear();
                 txtClassName.Clear();
                 txtClassSection.Clear();
@@ -957,6 +1378,8 @@ namespace WinFormsApp1
                 cmbClassDate.SelectedIndex = -1;
                 pnlCreateClass.Visible = false;
                 pnlCreateClass.SendToBack();
+
+                RefreshAttendanceSections();
             }
             catch (Exception ex)
             {
@@ -964,9 +1387,6 @@ namespace WinFormsApp1
                 MessageBox.Show("Error: " + ex.Message);
             }
         }
-
-
-
 
         private void CreateFolderForSection(string folderName)
         {
@@ -993,7 +1413,6 @@ namespace WinFormsApp1
             flpSubjectClass.Controls.Clear();
             _colorIndex = 0;
 
-            // 2 cards per row, next cards go below
             flpSubjectClass.FlowDirection = FlowDirection.LeftToRight;
             flpSubjectClass.WrapContents = true;
             flpSubjectClass.AutoScroll = true;
@@ -1044,10 +1463,8 @@ namespace WinFormsApp1
 
         private bool _classResizeHooked = false;
 
-        // Width so that exactly 2 cards fit per row
         private int GetClassCardWidth()
         {
-            // use the smaller of: the flow panel's width or the space left inside its parent
             int panelWidth = flpSubjectClass.ClientSize.Width;
             if (flpSubjectClass.Parent != null)
             {
@@ -1058,10 +1475,10 @@ namespace WinFormsApp1
             int available = panelWidth
                             - flpSubjectClass.Padding.Horizontal
                             - SystemInformation.VerticalScrollBarWidth
-                            - 20;                    // extra safety buffer
-            int width = (available - 40) / 2;        // 40 = margins (10 left + 10 right) x 2 cards
+                            - 20;
+            int width = (available - 40) / 2;
 
-            return Math.Max(280, Math.Min(width, 420));   // not too small, not too wide
+            return Math.Max(280, Math.Min(width, 420));
         }
 
         private void ResizeClassCards()
@@ -1140,6 +1557,8 @@ namespace WinFormsApp1
                     flpSubjectClass.Controls.Remove(clickedCard);
                     clickedCard.Dispose();
                     menu.Dispose();
+
+                    RefreshAttendanceSections();
                 }
                 catch (Exception ex)
                 {
@@ -1179,11 +1598,6 @@ namespace WinFormsApp1
 
             string professorFolder = SanitizeFolderName(ProfessorName);
 
-            Console.WriteLine("=== POST ACTIVITY ===");
-            Console.WriteLine("ServerIp        = " + SettingsManager.Current.ServerIp);
-            Console.WriteLine("SaveFolder      = " + SettingsManager.Current.SaveFolder);
-            Console.WriteLine("ProfessorFolder = " + professorFolder);
-
             if (!string.IsNullOrEmpty(selectedFilePath) && File.Exists(selectedFilePath))
             {
                 try
@@ -1219,8 +1633,6 @@ namespace WinFormsApp1
                     string ip = SettingsManager.Current.ServerIp.TrimStart('\\').TrimEnd('\\');
                     uncPath = $@"\\{ip}\{shared}\{professorFolder}\{section}\ActivityFiles\{pdfName}";
                 }
-
-                Console.WriteLine("uncPath         = " + uncPath);
             }
 
             try
@@ -1276,8 +1688,6 @@ namespace WinFormsApp1
             {
                 string serverIp = SettingsManager.Current.ServerIp.TrimStart('\\').TrimEnd('\\');
                 int serverPort = SettingsManager.Current.FileTransferPort;
-
-                Console.WriteLine($"[SEND] {serverIp}:{serverPort} prof={professorFolder} section={section} file={fileName}");
 
                 using (TcpClient client = new TcpClient())
                 {
@@ -1385,9 +1795,6 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // FILE MANAGEMENT
-        // =========================================================
         private void lsServerFolderSetup()
         {
             FolderListView.View = View.LargeIcon;
@@ -1455,9 +1862,6 @@ namespace WinFormsApp1
         private void BtnBack_Click(object sender, EventArgs e) => btnBack();
         private void FolderListView_DoubleClick(object sender, EventArgs e) => doubleClick();
 
-        // =========================================================
-        // NEW FOLDER — MODAL PROMPT
-        // =========================================================
         private void btnAddFolder_Click(object sender, EventArgs e)
         {
             if (pnlFile.Controls.OfType<Guna.UI2.WinForms.Guna2Panel>()
@@ -1581,7 +1985,7 @@ namespace WinFormsApp1
                 pnlFile.Controls.Remove(overlay);
                 overlay.Dispose();
             };
-            card.Click += (s, args) => { /* swallow */ };
+            card.Click += (s, args) => { };
 
             txtFolderName.Focus();
         }
@@ -1620,9 +2024,6 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // DELETE FILE / FOLDER
-        // =========================================================
         private void btnDeleteFile_Click(object sender, EventArgs e)
         {
         }
@@ -1699,9 +2100,6 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // GRADES
-        // =========================================================
         private void ActivityStatus(string filter = "")
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -1837,158 +2235,31 @@ namespace WinFormsApp1
             catch { return 0; }
         }
 
-        private void CreatePanelForSubmittedFiles(int User_id, string Title, string Name, string Section, string ClassName, string Status, string filePath)
+        private void CreatePanelForSubmittedFiles(int User_id, string Title, string Name, string Section,
+                                                  string ClassName, string Status, string filePath)
         {
-            Guna.UI2.WinForms.Guna2Panel panel = new Guna.UI2.WinForms.Guna2Panel();
-            panel.Width = 1000;
-            panel.Height = 950;
-            panel.Margin = new Padding(5);
-            panel.Location = new Point(150, 0);
-            panel.BorderRadius = 10;
-            panel.FillColor = Color.LightGray;
-
-            Label lblTitle = new Label();
-            lblTitle.Text = Title;
-            lblTitle.Location = new Point(20, 50);
-            lblTitle.Size = new Size(200, 25);
-            lblTitle.Font = new Font("Arial", 12, FontStyle.Bold);
-            panel.Controls.Add(lblTitle);
-
-            Label lblName = new Label();
-            lblName.Text = "👤 " + Name;
-            lblName.Location = new Point(20, 80);
-            lblName.Size = new Size(200, 25);
-            lblName.Font = new Font("Arial", 12, FontStyle.Bold);
-            panel.Controls.Add(lblName);
-
-            Label lblSection = new Label();
-            lblSection.Text = "📝 " + Section;
-            lblSection.Location = new Point(20, 110);
-            lblSection.Size = new Size(200, 25);
-            lblSection.Font = new Font("Arial", 12, FontStyle.Bold);
-            panel.Controls.Add(lblSection);
-
-            Label lblClassNameGrades = new Label();
-            lblClassNameGrades.Text = "📝 " + ClassName;
-            lblClassNameGrades.Location = new Point(20, 140);
-            lblClassNameGrades.Size = new Size(200, 25);
-            lblClassNameGrades.Font = new Font("Arial", 12, FontStyle.Bold);
-            panel.Controls.Add(lblClassNameGrades);
-
-            Label lblStatus = new Label();
-            lblStatus.Text = "👤 " + Status;
-            lblStatus.Location = new Point(20, 170);
-            lblStatus.Size = new Size(350, 25);
-            lblStatus.Font = new Font("Arial", 12, FontStyle.Bold);
-            panel.Controls.Add(lblStatus);
-
-            Guna.UI2.WinForms.Guna2Panel pdfContainer = new Guna.UI2.WinForms.Guna2Panel();
-            pdfContainer.Location = new Point(20, 200);
-            pdfContainer.Size = new Size(960, 700);
-            pdfContainer.BorderRadius = 5;
-            pdfContainer.BorderColor = Color.Gray;
-            pdfContainer.BorderThickness = 1;
-            pdfContainer.FillColor = Color.White;
-            panel.Controls.Add(pdfContainer);
-
-            PdfViewer pdfViewer = new PdfViewer();
-            pdfViewer.Dock = DockStyle.Fill;
-            pdfContainer.Controls.Add(pdfViewer);
-
             try
             {
-                string trimmedPath = filePath?.Trim() ?? "";
-                if (File.Exists(trimmedPath))
-                {
-                    pdfViewer.LoadDocument(trimmedPath);
-                }
-                else
-                {
-                    Label lblNoFile = new Label();
-                    lblNoFile.Text = "PDF file not found";
-                    lblNoFile.Location = new Point(200, 130);
-                    lblNoFile.Size = new Size(200, 25);
-                    lblNoFile.ForeColor = Color.Red;
-                    pdfContainer.Controls.Add(lblNoFile);
-                }
+                SubmittedActivityForm viewer = new SubmittedActivityForm(
+                    ProfessorID,
+                    User_id,
+                    Title,
+                    Name,
+                    Section,
+                    ClassName,
+                    Status,
+                    filePath);
+
+                viewer.ShowDialog(this);
+
+                ActivityStatus();
             }
             catch (Exception ex)
             {
-                Console.WriteLine("CreatePanelForSubmittedFiles PDF error: " + ex.Message);
+                Console.WriteLine("CreatePanelForSubmittedFiles error: " + ex.Message);
+                MessageBox.Show("Unable to open submission viewer:\n\n" + ex.Message,
+                    "Open Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
-            Guna.UI2.WinForms.Guna2CircleButton btnDispose = new Guna.UI2.WinForms.Guna2CircleButton();
-            btnDispose.Width = 50;
-            btnDispose.Height = 50;
-            btnDispose.Margin = new Padding(5);
-            btnDispose.Image = Properties.Resources.Exit;
-            btnDispose.FillColor = Color.Transparent;
-            btnDispose.Location = new Point(930, 1);
-            btnDispose.Click += (s, args) =>
-            {
-                pnlGrades.Controls.Remove(panel);
-                panel.Dispose();
-            };
-
-            Guna.UI2.WinForms.Guna2TextBox txtScore = new Guna.UI2.WinForms.Guna2TextBox();
-            txtScore.Width = 50;
-            txtScore.Height = 30;
-            txtScore.Location = new Point(800, 160);
-            panel.Controls.Add(txtScore);
-
-            Guna.UI2.WinForms.Guna2CircleButton btnUpdateScore = new Guna.UI2.WinForms.Guna2CircleButton();
-            btnUpdateScore.Width = 30;
-            btnUpdateScore.Height = 30;
-            btnUpdateScore.Text = "✔";
-            btnUpdateScore.Font = new Font("Arial", 12, FontStyle.Bold);
-            btnUpdateScore.Margin = new Padding(5);
-            btnUpdateScore.FillColor = Color.Transparent;
-            btnUpdateScore.Location = new Point(870, 160);
-            btnUpdateScore.Click += (s, args) =>
-            {
-                string connStr = SettingsManager.Current.GetConnectionString();
-
-                if (string.IsNullOrEmpty(txtScore.Text))
-                {
-                    MessageBox.Show("Please enter a score.");
-                    return;
-                }
-
-                try
-                {
-                    using (var conn = new MySqlConnection(connStr))
-                    {
-                        conn.Open();
-                        string query = @"UPDATE submitted_activity SET score = @score WHERE user_id = @user_id";
-                        using (var cmd = new MySqlCommand(query, conn))
-                        {
-                            cmd.Parameters.AddWithValue("@score", txtScore.Text.Trim());
-                            cmd.Parameters.AddWithValue("@user_id", User_id);
-
-                            int rowsAffected = cmd.ExecuteNonQuery();
-                            if (rowsAffected > 0)
-                            {
-                                MessageBox.Show("Score updated successfully.");
-                                ActivityStatus();
-                            }
-                            else
-                            {
-                                MessageBox.Show("Failed to update score. Please check the details.");
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Update score error: " + ex.Message);
-                }
-            };
-
-            panel.Controls.Add(btnDispose);
-            panel.Controls.Add(btnUpdateScore);
-
-            pnlGrades.Controls.Add(panel);
-            panel.BringToFront();
         }
 
         private void dgvStudentActivitySubmitted_MouseDoubleClick(object sender, MouseEventArgs e)
@@ -2059,9 +2330,6 @@ namespace WinFormsApp1
             pnlWorkStationMonitoring.BringToFront();
         }
 
-        // =========================================================
-        // BROADCAST LISTENER
-        // =========================================================
         private async Task StartBroadcastListener()
         {
             try
@@ -2069,7 +2337,6 @@ namespace WinFormsApp1
                 broadcastListener = new TcpListener(IPAddress.Any, SettingsManager.Current.BroadcastPort);
                 broadcastListener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 broadcastListener.Start();
-                Console.WriteLine("[Professor] Broadcast listener started on port " + SettingsManager.Current.BroadcastPort);
             }
             catch (Exception ex)
             {
@@ -2083,17 +2350,10 @@ namespace WinFormsApp1
                 {
                     TcpClient client = await broadcastListener.AcceptTcpClientAsync();
                     string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
-                    Console.WriteLine("[Professor] broadcast client connected " + clientIp);
                     broadcastClients[clientIp] = client;
                 }
-                catch (ObjectDisposedException)
-                {
-                    break;
-                }
-                catch
-                {
-                    if (!isRunning) break;
-                }
+                catch (ObjectDisposedException) { break; }
+                catch { if (!isRunning) break; }
             }
         }
 
@@ -2163,9 +2423,6 @@ namespace WinFormsApp1
             broadcastTimer?.Stop();
         }
 
-        // =========================================================
-        // SHUTDOWN / RESTART
-        // =========================================================
         private void ShutdownStartListener(string clientIp)
         {
             try
@@ -2204,9 +2461,6 @@ namespace WinFormsApp1
 
         private void btnReboot_Click(object sender, EventArgs e) => RestartStartListener(SelectedIP);
 
-        // =========================================================
-        // SCREEN LISTENER
-        // =========================================================
         private async Task StartScreenListener()
         {
             try
@@ -2214,7 +2468,6 @@ namespace WinFormsApp1
                 screenListener = new TcpListener(IPAddress.Any, SettingsManager.Current.ScreenSharePort);
                 screenListener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 screenListener.Start();
-                Console.WriteLine("[Professor] Screen listener started on port " + SettingsManager.Current.ScreenSharePort);
             }
             catch (Exception ex)
             {
@@ -2229,14 +2482,8 @@ namespace WinFormsApp1
                     TcpClient client = await screenListener.AcceptTcpClientAsync();
                     _ = ReceiveScreenStream(client);
                 }
-                catch (ObjectDisposedException)
-                {
-                    break;
-                }
-                catch
-                {
-                    if (!isRunning) break;
-                }
+                catch (ObjectDisposedException) { break; }
+                catch { if (!isRunning) break; }
             }
         }
 
@@ -2264,7 +2511,6 @@ namespace WinFormsApp1
                     using (MemoryStream ms = new MemoryStream(imageBuffer))
                     {
                         Image frame = Image.FromStream(ms);
-
                         SafeInvoke(() => UpdateScreenViewer(clientIp, frame));
                     }
                 }
@@ -2305,10 +2551,7 @@ namespace WinFormsApp1
                         pb.Image = (Image)frame.Clone();
                         oldImage?.Dispose();
                     }
-                    catch
-                    {
-                        viewerIsOpen = false;
-                    }
+                    catch { viewerIsOpen = false; }
                 }
             }
 
@@ -2413,9 +2656,6 @@ namespace WinFormsApp1
 
         private void btnRemoteView_Click(object sender, EventArgs e) => AddScreenViewer(SelectedIP);
 
-        // =========================================================
-        // SETTINGS
-        // =========================================================
         private void btnSettingProfileExpand_Click(object sender, EventArgs e)
         {
             if (pnlSettingProfile.Height <= 350)
@@ -2633,9 +2873,6 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // PROFILE PHOTO — SEND TO ADMIN SHARED FOLDER (like auth photo)
-        // =========================================================
         private async void btnSubmitChangePhoto_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(CurrentProfilePath))
@@ -2665,8 +2902,6 @@ namespace WinFormsApp1
                     MessageBox.Show("Failed to send profile picture to server.");
                     return;
                 }
-
-                Console.WriteLine("[ChangePhoto] Admin returned UNC: " + uncPath);
 
                 string connStr = SettingsManager.Current.GetConnectionString();
                 using (var conn = new MySqlConnection(connStr))
@@ -2709,8 +2944,6 @@ namespace WinFormsApp1
             {
                 string adminIp = SettingsManager.Current.ServerIp.TrimStart('\\').TrimEnd('\\');
                 int adminPort = SettingsManager.Current.FileTransferPort;
-
-                Console.WriteLine($"[PROFILE PHOTO] Sending {fileName} ({imageBytes.Length} bytes) to {adminIp}:{adminPort}");
 
                 using (var client = new TcpClient())
                 {
@@ -2785,11 +3018,9 @@ namespace WinFormsApp1
                                 if (reader.IsDBNull(reader.GetOrdinal("profile_picture"))) return;
 
                                 string path = reader.GetString("profile_picture");
-                                Console.WriteLine("[ChangingPicture] Loading: " + path);
 
                                 if (!File.Exists(path))
                                 {
-                                    Console.WriteLine("[ChangingPicture] File does not exist.");
                                     return;
                                 }
 
@@ -2829,9 +3060,6 @@ namespace WinFormsApp1
 
         private void btnExitChangePhotoPanel_Click(object sender, EventArgs e) => pnlChangePhoto.Visible = false;
 
-        // =========================================================
-        // FILE RECEIVER
-        // =========================================================
         private void NameGet()
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -2862,9 +3090,6 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // FILE TRANSFER LISTENER
-        // =========================================================
         private async Task StartActivityFileServer()
         {
             try
@@ -2872,7 +3097,6 @@ namespace WinFormsApp1
                 activityFileListener = new TcpListener(IPAddress.Any, SettingsManager.Current.FileTransferPort);
                 activityFileListener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 activityFileListener.Start();
-                Console.WriteLine("[Professor] FileTransfer listener started on port " + SettingsManager.Current.FileTransferPort);
             }
             catch (Exception ex)
             {
@@ -2887,10 +3111,7 @@ namespace WinFormsApp1
                     TcpClient client = await activityFileListener.AcceptTcpClientAsync();
                     _ = HandleActivityFileReceive(client);
                 }
-                catch (ObjectDisposedException)
-                {
-                    break;
-                }
+                catch (ObjectDisposedException) { break; }
                 catch (Exception ex)
                 {
                     if (!isRunning) break;
@@ -3094,7 +3315,6 @@ namespace WinFormsApp1
             ConfigureCombo(cmbSection, "Select Section", "Section");
             ConfigureCombo(cmbYear, "Select Year", "Year");
             ConfigureCombo(cmbSemester, "Select Semester", "Semester");
-            ConfigureCombo(guna2ComboBox11, "Section", "Section");
             ConfigureCombo(cmbClassDate, "Select Day", "Day");
             ConfigureCombo(cmbActivityTitle, "Select Title", "Title");
             ConfigureCombo(cmbActivitySection, "Select Section", "Section");
@@ -3138,12 +3358,14 @@ namespace WinFormsApp1
             navToolTip.SetToolTip(btnAccount, "Settings");
             navToolTip.SetToolTip(btnQuizExam, "Quiz Exam Grades");
         }
+
+        private void btnCalendarExpand_Click(object sender, EventArgs e)
+        {
+            var cal = new ProfessorCalendarForm(ProfessorID);
+            cal.ShowDialog(this);
+        }
     }
 
-    // =========================================================
-    // CUSTOM CLASS CARD (Google Classroom style)
-    // Nasa labas ng ProfessorForm para hindi mag-warning ang Designer
-    // =========================================================
     public class ClassCardPanel : Panel
     {
         [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -3246,19 +3468,16 @@ namespace WinFormsApp1
                     g.DrawPath(pen, cardPath);
             }
 
-            // title (wrapped)
             var titleRect = new RectangleF(16, 14, titleAreaWidth, measured.Height + 2);
             using (var whiteBrush = new SolidBrush(Color.White))
                 g.DrawString(Title, titleFont, whiteBrush, titleRect);
             titleFont.Dispose();
 
-            // subtitle
             float subtitleY = 14 + measured.Height + 6;
             using (var subFont = new Font("Segoe UI", 10F, FontStyle.Regular))
             using (var whiteBrush = new SolidBrush(Color.White))
                 g.DrawString(Subtitle, subFont, whiteBrush, new PointF(16, subtitleY));
 
-            // menu dots
             using (var dotsFont = new Font("Segoe UI", 12F, FontStyle.Bold))
             using (var whiteBrush = new SolidBrush(Color.White))
             {
@@ -3266,12 +3485,10 @@ namespace WinFormsApp1
                 g.DrawString("⋮", dotsFont, whiteBrush, new PointF(Width - sz.Width - 12, 10));
             }
 
-            // day + time
             using (var profFont = new Font("Segoe UI", 9F, FontStyle.Regular))
             using (var grayBrush = new SolidBrush(Color.FromArgb(90, 90, 90)))
                 g.DrawString($"{Day}   {Time}", profFont, grayBrush, new PointF(16, _bannerHeight + 14));
 
-            // professor label (bottom-right)
             using (var sectionFont = new Font("Segoe UI", 10F, FontStyle.Bold))
             using (var sectionBrush = new SolidBrush(Color.FromArgb(60, 60, 60)))
             {

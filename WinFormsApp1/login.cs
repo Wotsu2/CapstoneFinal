@@ -341,6 +341,9 @@ namespace WinFormsApp1
 
             if (!string.IsNullOrEmpty(SettingsManager.Current.SaveFolder))
                 selectedRootFolder = SettingsManager.Current.SaveFolder;
+
+            txtSmtpUser.Text = SettingsManager.Current.SmtpUser;
+            txtSmtpPass.Text = SettingsManager.Current.SmtpPass;
         }
 
         // =========================================================
@@ -369,6 +372,8 @@ namespace WinFormsApp1
                     SaveRootFolderToDatabase(selectedRootFolder);
                 }
 
+                SettingsManager.Current.SmtpUser = txtSmtpUser.Text.Trim();
+                SettingsManager.Current.SmtpPass = txtSmtpPass.Text;
 
                 SettingsManager.Save();
             }

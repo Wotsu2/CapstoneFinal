@@ -6,6 +6,13 @@ namespace WinFormsApp1
 {
     public class AppSettings
     {
+        public string SmtpHost { get; set; } = "smtp.gmail.com";
+        public int SmtpPort { get; set; } = 587;
+        public string SmtpUser { get; set; } = "mjmeriales22@gmail.com";
+        public string SmtpPass { get; set; } = "eroh cert nhpm yacq";
+        public string SmtpFrom { get; set; } = "your.email@gmail.com";
+        public string SmtpFromName { get; set; } = "CDSGA Hub";
+
         // Network
         public string ServerIp { get; set; } = "192.168.100.4";
         public int WorkstationPort { get; set; } = 5000;

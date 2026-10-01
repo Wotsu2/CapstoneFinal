@@ -1656,7 +1656,8 @@ namespace WinFormsApp1
             {
                 using (var mail = new MailMessage())
                 {
-                    mail.From = new MailAddress(SmtpFrom, SmtpFromName);
+                    // Use SettingsManager instead of hardcoded constants
+                    mail.From = new MailAddress(SettingsManager.Current.SmtpFrom, SettingsManager.Current.SmtpFromName);
                     mail.To.Add(toEmail);
                     mail.Subject = "Your CDSGA Hub account credentials";
                     mail.IsBodyHtml = true;
@@ -1680,10 +1681,12 @@ namespace WinFormsApp1
   <p style='color:#666;font-size:12px;'>This is an automated message. Do not reply.</p>
 </div>";
 
-                    using (var smtp = new SmtpClient(SmtpHost, SmtpPort))
+                    using (var smtp = new SmtpClient(SettingsManager.Current.SmtpHost, SettingsManager.Current.SmtpPort))
                     {
                         smtp.EnableSsl = true;
-                        smtp.Credentials = new System.Net.NetworkCredential(SmtpUser, SmtpPass);
+                        smtp.Credentials = new System.Net.NetworkCredential(
+                            SettingsManager.Current.SmtpUser,
+                            SettingsManager.Current.SmtpPass);
                         smtp.DeliveryMethod = SmtpDeliveryMethod.Network;
                         smtp.Timeout = 15000;
 
@@ -1692,14 +1695,15 @@ namespace WinFormsApp1
                 }
 
                 Console.WriteLine($"[CreateUser] Credentials emailed to {toEmail}");
-                return true;
+                return true;   // <-- Success path returns true
             }
             catch (Exception ex)
             {
                 Console.WriteLine("[CreateUser] Email send failed: " + ex.Message);
-                return false;
+                return false;  // <-- THIS IS THE MISSING LINE causing CS0161
             }
         }
+        // ... catch ...
 
         private void ClearText()
         {
