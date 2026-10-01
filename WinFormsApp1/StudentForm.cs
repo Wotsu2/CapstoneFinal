@@ -2781,5 +2781,10 @@ namespace WinFormsApp1
             expandedCal.SetEvents(LoadCalendarEvents());   // laging bago ang data pag binuksan
             expandedCal.ShowOn(pnlHome);
         }
+
+        private void guna2Panel1_Paint(object sender, PaintEventArgs e)
+        {
+           
+        }
     }
 }

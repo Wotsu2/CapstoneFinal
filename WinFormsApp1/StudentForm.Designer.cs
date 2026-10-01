@@ -205,6 +205,12 @@
             DataGridViewCellStyle dataGridViewCellStyle11 = new DataGridViewCellStyle();
             DataGridViewCellStyle dataGridViewCellStyle12 = new DataGridViewCellStyle();
             guna2Panel2 = new Guna.UI2.WinForms.Guna2Panel();
+            label8 = new Label();
+            panel1 = new Panel();
+            pictureBox1 = new PictureBox();
+            label30 = new Label();
+            label31 = new Label();
+            pictureBox4 = new PictureBox();
             btnAccount = new Guna.UI2.WinForms.Guna2Button();
             label7 = new Label();
             lblhometitle = new Label();
@@ -215,7 +221,6 @@
             btnGrades = new Guna.UI2.WinForms.Guna2Button();
             btnActivities = new Guna.UI2.WinForms.Guna2Button();
             btnHome = new Guna.UI2.WinForms.Guna2Button();
-            label1 = new Label();
             pnlHome = new Guna.UI2.WinForms.Guna2Panel();
             pictureboxBanner = new PictureBox();
             label5 = new Label();
@@ -226,6 +231,7 @@
             label4 = new Label();
             pictureBox2 = new PictureBox();
             lblStudentName = new Label();
+            label1 = new Label();
             pnlActivity = new Guna.UI2.WinForms.Guna2Panel();
             guna2Panel8 = new Guna.UI2.WinForms.Guna2Panel();
             dgvStudentActivities = new Guna.UI2.WinForms.Guna2DataGridView();
@@ -337,6 +343,8 @@
             pnlQuizExam = new Guna.UI2.WinForms.Guna2Panel();
             QuizExamScore = new Guna.UI2.WinForms.Guna2DataGridView();
             guna2Panel2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBox4).BeginInit();
             guna2Panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)guna2PictureBox1).BeginInit();
             pnlHome.SuspendLayout();
@@ -377,9 +385,14 @@
             // guna2Panel2
             // 
             guna2Panel2.BackColor = Color.White;
+            guna2Panel2.Controls.Add(label8);
+            guna2Panel2.Controls.Add(panel1);
+            guna2Panel2.Controls.Add(pictureBox1);
+            guna2Panel2.Controls.Add(label30);
+            guna2Panel2.Controls.Add(label31);
+            guna2Panel2.Controls.Add(pictureBox4);
             guna2Panel2.Controls.Add(btnAccount);
             guna2Panel2.Controls.Add(label7);
-            guna2Panel2.Controls.Add(lblhometitle);
             guna2Panel2.CustomizableEdges = customizableEdges3;
             guna2Panel2.Dock = DockStyle.Top;
             guna2Panel2.FillColor = Color.White;
@@ -388,6 +401,71 @@
             guna2Panel2.ShadowDecoration.CustomizableEdges = customizableEdges4;
             guna2Panel2.Size = new Size(1370, 83);
             guna2Panel2.TabIndex = 3;
+            // 
+            // label8
+            // 
+            label8.AutoSize = true;
+            label8.BackColor = Color.Transparent;
+            label8.Font = new Font("Segoe UI", 9F);
+            label8.ForeColor = Color.FromArgb(123, 15, 23);
+            label8.Location = new Point(401, 38);
+            label8.Name = "label8";
+            label8.Size = new Size(177, 15);
+            label8.TabIndex = 43;
+            label8.Text = "Colegio De San Gabriel Arcangel";
+            // 
+            // panel1
+            // 
+            panel1.BackColor = Color.FromArgb(123, 15, 23);
+            panel1.Location = new Point(349, 30);
+            panel1.Name = "panel1";
+            panel1.Size = new Size(1, 30);
+            panel1.TabIndex = 38;
+            // 
+            // pictureBox1
+            // 
+            pictureBox1.BackColor = Color.Transparent;
+            pictureBox1.Image = Properties.Resources.Group_2371;
+            pictureBox1.Location = new Point(365, 30);
+            pictureBox1.Name = "pictureBox1";
+            pictureBox1.Size = new Size(30, 30);
+            pictureBox1.SizeMode = PictureBoxSizeMode.CenterImage;
+            pictureBox1.TabIndex = 40;
+            pictureBox1.TabStop = false;
+            // 
+            // label30
+            // 
+            label30.AutoSize = true;
+            label30.BackColor = Color.Transparent;
+            label30.ForeColor = Color.FromArgb(123, 15, 23);
+            label30.Location = new Point(155, 30);
+            label30.Name = "label30";
+            label30.Size = new Size(63, 15);
+            label30.TabIndex = 42;
+            label30.Text = "College Of";
+            // 
+            // label31
+            // 
+            label31.AutoSize = true;
+            label31.BackColor = Color.Transparent;
+            label31.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label31.ForeColor = Color.FromArgb(123, 15, 23);
+            label31.Location = new Point(155, 45);
+            label31.Name = "label31";
+            label31.Size = new Size(179, 15);
+            label31.TabIndex = 41;
+            label31.Text = "Computer Studies Department\r\n";
+            // 
+            // pictureBox4
+            // 
+            pictureBox4.BackColor = Color.Transparent;
+            pictureBox4.Image = Properties.Resources._355823652_701491338448756_8639478619159832458_n_removebg_preview_12;
+            pictureBox4.Location = new Point(112, 30);
+            pictureBox4.Name = "pictureBox4";
+            pictureBox4.Size = new Size(30, 30);
+            pictureBox4.SizeMode = PictureBoxSizeMode.AutoSize;
+            pictureBox4.TabIndex = 39;
+            pictureBox4.TabStop = false;
             // 
             // btnAccount
             // 
@@ -418,7 +496,7 @@
             // 
             label7.AutoSize = true;
             label7.Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label7.Location = new Point(144, 35);
+            label7.Location = new Point(129, 45);
             label7.Name = "label7";
             label7.Size = new Size(0, 28);
             label7.TabIndex = 15;
@@ -427,7 +505,7 @@
             // 
             lblhometitle.AutoSize = true;
             lblhometitle.Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblhometitle.Location = new Point(107, 35);
+            lblhometitle.Location = new Point(6, 101);
             lblhometitle.Name = "lblhometitle";
             lblhometitle.Size = new Size(68, 28);
             lblhometitle.TabIndex = 14;
@@ -442,6 +520,7 @@
             guna2Panel1.Controls.Add(btnGrades);
             guna2Panel1.Controls.Add(btnActivities);
             guna2Panel1.Controls.Add(btnHome);
+            guna2Panel1.Controls.Add(lblhometitle);
             guna2Panel1.CustomizableEdges = customizableEdges17;
             guna2Panel1.FillColor = Color.Maroon;
             guna2Panel1.Location = new Point(0, 0);
@@ -450,6 +529,7 @@
             guna2Panel1.ShadowDecoration.Enabled = true;
             guna2Panel1.Size = new Size(80, 834);
             guna2Panel1.TabIndex = 2;
+            guna2Panel1.Paint += guna2Panel1_Paint;
             // 
             // guna2PictureBox1
             // 
@@ -457,7 +537,7 @@
             guna2PictureBox1.CustomizableEdges = customizableEdges5;
             guna2PictureBox1.Image = Properties.Resources.Top_Icon;
             guna2PictureBox1.ImageRotate = 0F;
-            guna2PictureBox1.Location = new Point(-6, -15);
+            guna2PictureBox1.Location = new Point(-11, -13);
             guna2PictureBox1.Name = "guna2PictureBox1";
             guna2PictureBox1.ShadowDecoration.CustomizableEdges = customizableEdges6;
             guna2PictureBox1.Size = new Size(130, 153);
@@ -600,17 +680,6 @@
             btnHome.TextOffset = new Point(15, 0);
             btnHome.Click += btnHome_Click;
             // 
-            // label1
-            // 
-            label1.AutoSize = true;
-            label1.BackColor = Color.Transparent;
-            label1.Font = new Font("Segoe UI", 15F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label1.Location = new Point(65, 18);
-            label1.Name = "label1";
-            label1.Size = new Size(283, 28);
-            label1.TabIndex = 15;
-            label1.Text = "Welcome to your Workstation, ";
-            // 
             // pnlHome
             // 
             pnlHome.BackColor = Color.SeaShell;
@@ -635,9 +704,9 @@
             // 
             pictureboxBanner.BorderStyle = BorderStyle.Fixed3D;
             pictureboxBanner.Image = (Image)resources.GetObject("pictureboxBanner.Image");
-            pictureboxBanner.Location = new Point(62, 54);
+            pictureboxBanner.Location = new Point(52, 54);
             pictureboxBanner.Name = "pictureboxBanner";
-            pictureboxBanner.Size = new Size(885, 353);
+            pictureboxBanner.Size = new Size(895, 352);
             pictureboxBanner.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureboxBanner.TabIndex = 22;
             pictureboxBanner.TabStop = false;
@@ -736,6 +805,17 @@
             lblStudentName.Size = new Size(143, 28);
             lblStudentName.TabIndex = 16;
             lblStudentName.Text = "Junaid Abdul!";
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.BackColor = Color.Transparent;
+            label1.Font = new Font("Segoe UI", 15F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label1.Location = new Point(65, 18);
+            label1.Name = "label1";
+            label1.Size = new Size(283, 28);
+            label1.TabIndex = 15;
+            label1.Text = "Welcome to your Workstation, ";
             // 
             // pnlActivity
             // 
@@ -2651,6 +2731,7 @@
             // 
             // pnlQuizExam
             // 
+            pnlQuizExam.AutoScroll = true;
             pnlQuizExam.BackColor = Color.Transparent;
             pnlQuizExam.BackgroundImage = Properties.Resources.Shade;
             pnlQuizExam.BackgroundImageLayout = ImageLayout.Stretch;
@@ -2727,7 +2808,6 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1370, 749);
-            Controls.Add(pnlQuizExam);
             Controls.Add(guna2Panel1);
             Controls.Add(guna2Panel2);
             Controls.Add(pnlHome);
@@ -2735,6 +2815,7 @@
             Controls.Add(pnlGrades);
             Controls.Add(pnlActivity);
             Controls.Add(pnlSubject);
+            Controls.Add(pnlQuizExam);
             Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             MinimizeBox = false;
@@ -2744,6 +2825,8 @@
             Load += StudentForm_Load;
             guna2Panel2.ResumeLayout(false);
             guna2Panel2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBox4).EndInit();
             guna2Panel1.ResumeLayout(false);
             guna2Panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)guna2PictureBox1).EndInit();
@@ -2807,7 +2890,6 @@
         private Guna.UI2.WinForms.Guna2Button btnSubject;
         private Guna.UI2.WinForms.Guna2Button btnActivities;
         private Guna.UI2.WinForms.Guna2Button btnHome;
-        private Label label1;
         private Guna.UI2.WinForms.Guna2Panel pnlHome;
         private Label lblStudentName;
         private FlowLayoutPanel flpPendingActivities;
@@ -2934,5 +3016,12 @@
         private MonthCalendar monthCalendar1;
         private Guna.UI2.WinForms.Guna2Button btnCalendarExpand;
         private Guna.UI2.WinForms.Guna2DataGridView QuizExamScore;
+        private Label label8;
+        private Panel panel1;
+        private PictureBox pictureBox1;
+        private Label label30;
+        private Label label31;
+        private PictureBox pictureBox4;
+        private Label label1;
     }
 }

@@ -273,9 +273,15 @@
             btnHome = new Guna.UI2.WinForms.Guna2Button();
             guna2Panel3 = new Guna.UI2.WinForms.Guna2Panel();
             pictureBox1 = new PictureBox();
-            guna2Panel2 = new Guna.UI2.WinForms.Guna2Panel();
-            btnAccount = new Guna.UI2.WinForms.Guna2Button();
             lblPanelName = new Label();
+            guna2Panel2 = new Guna.UI2.WinForms.Guna2Panel();
+            label30 = new Label();
+            panel1 = new Panel();
+            pictureBox5 = new PictureBox();
+            label46 = new Label();
+            label47 = new Label();
+            pictureBox6 = new PictureBox();
+            btnAccount = new Guna.UI2.WinForms.Guna2Button();
             guna2Panel4 = new Guna.UI2.WinForms.Guna2Panel();
             lblMySubjects = new Label();
             label2 = new Label();
@@ -462,6 +468,8 @@
             guna2Panel3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             guna2Panel2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBox5).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBox6).BeginInit();
             guna2Panel4.SuspendLayout();
             guna2Panel5.SuspendLayout();
             guna2Panel6.SuspendLayout();
@@ -766,11 +774,30 @@
             pictureBox1.TabIndex = 2;
             pictureBox1.TabStop = false;
             // 
+            // lblPanelName
+            // 
+            lblPanelName.AutoSize = true;
+            lblPanelName.BackColor = Color.Transparent;
+            lblPanelName.Font = new Font("Segoe UI", 8.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblPanelName.ForeColor = Color.Transparent;
+            lblPanelName.Location = new Point(105, 9);
+            lblPanelName.Name = "lblPanelName";
+            lblPanelName.Size = new Size(10, 13);
+            lblPanelName.TabIndex = 14;
+            lblPanelName.Text = ".";
+            lblPanelName.Click += lblPanelName_Click;
+            // 
             // guna2Panel2
             // 
             guna2Panel2.BackColor = Color.White;
-            guna2Panel2.Controls.Add(btnAccount);
             guna2Panel2.Controls.Add(lblPanelName);
+            guna2Panel2.Controls.Add(label30);
+            guna2Panel2.Controls.Add(panel1);
+            guna2Panel2.Controls.Add(pictureBox5);
+            guna2Panel2.Controls.Add(label46);
+            guna2Panel2.Controls.Add(label47);
+            guna2Panel2.Controls.Add(pictureBox6);
+            guna2Panel2.Controls.Add(btnAccount);
             guna2Panel2.Controls.Add(guna2Panel3);
             guna2Panel2.CustomizableEdges = customizableEdges25;
             guna2Panel2.Dock = DockStyle.Top;
@@ -780,6 +807,71 @@
             guna2Panel2.ShadowDecoration.CustomizableEdges = customizableEdges26;
             guna2Panel2.Size = new Size(1447, 89);
             guna2Panel2.TabIndex = 1;
+            // 
+            // label30
+            // 
+            label30.AutoSize = true;
+            label30.BackColor = Color.Transparent;
+            label30.Font = new Font("Segoe UI", 9F);
+            label30.ForeColor = Color.FromArgb(123, 15, 23);
+            label30.Location = new Point(424, 45);
+            label30.Name = "label30";
+            label30.Size = new Size(177, 15);
+            label30.TabIndex = 22;
+            label30.Text = "Colegio De San Gabriel Arcangel";
+            // 
+            // panel1
+            // 
+            panel1.BackColor = Color.FromArgb(123, 15, 23);
+            panel1.Location = new Point(372, 37);
+            panel1.Name = "panel1";
+            panel1.Size = new Size(1, 30);
+            panel1.TabIndex = 17;
+            // 
+            // pictureBox5
+            // 
+            pictureBox5.BackColor = Color.Transparent;
+            pictureBox5.Image = Properties.Resources.Group_2371;
+            pictureBox5.Location = new Point(388, 37);
+            pictureBox5.Name = "pictureBox5";
+            pictureBox5.Size = new Size(30, 30);
+            pictureBox5.SizeMode = PictureBoxSizeMode.AutoSize;
+            pictureBox5.TabIndex = 19;
+            pictureBox5.TabStop = false;
+            // 
+            // label46
+            // 
+            label46.AutoSize = true;
+            label46.BackColor = Color.Transparent;
+            label46.ForeColor = Color.FromArgb(123, 15, 23);
+            label46.Location = new Point(178, 37);
+            label46.Name = "label46";
+            label46.Size = new Size(63, 15);
+            label46.TabIndex = 21;
+            label46.Text = "College Of";
+            // 
+            // label47
+            // 
+            label47.AutoSize = true;
+            label47.BackColor = Color.Transparent;
+            label47.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label47.ForeColor = Color.FromArgb(123, 15, 23);
+            label47.Location = new Point(178, 52);
+            label47.Name = "label47";
+            label47.Size = new Size(179, 15);
+            label47.TabIndex = 20;
+            label47.Text = "Computer Studies Department\r\n";
+            // 
+            // pictureBox6
+            // 
+            pictureBox6.BackColor = Color.Transparent;
+            pictureBox6.Image = Properties.Resources._355823652_701491338448756_8639478619159832458_n_removebg_preview_12;
+            pictureBox6.Location = new Point(136, 37);
+            pictureBox6.Name = "pictureBox6";
+            pictureBox6.Size = new Size(30, 30);
+            pictureBox6.SizeMode = PictureBoxSizeMode.AutoSize;
+            pictureBox6.TabIndex = 18;
+            pictureBox6.TabStop = false;
             // 
             // btnAccount
             // 
@@ -800,16 +892,6 @@
             btnAccount.Size = new Size(52, 43);
             btnAccount.TabIndex = 16;
             btnAccount.Click += btnAccount_Click;
-            // 
-            // lblPanelName
-            // 
-            lblPanelName.AutoSize = true;
-            lblPanelName.Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblPanelName.Location = new Point(118, 37);
-            lblPanelName.Name = "lblPanelName";
-            lblPanelName.Size = new Size(68, 28);
-            lblPanelName.TabIndex = 14;
-            lblPanelName.Text = "Home";
             // 
             // guna2Panel4
             // 
@@ -2779,9 +2861,7 @@
             // 
             // pnlAttendance
             // 
-            pnlAttendance.AutoScroll = false;
             pnlAttendance.BackColor = Color.FromArgb(248, 248, 250);
-            pnlAttendance.BackgroundImage = null;
             pnlAttendance.BackgroundImageLayout = ImageLayout.Stretch;
             pnlAttendance.Location = new Point(84, 96);
             pnlAttendance.Name = "pnlAttendance";
@@ -2824,9 +2904,10 @@
             // 
             // flpSubjectClass
             // 
+            flpSubjectClass.AutoScroll = true;
             flpSubjectClass.AutoSize = true;
             flpSubjectClass.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            flpSubjectClass.Location = new Point(27, 157);
+            flpSubjectClass.Location = new Point(110, 143);
             flpSubjectClass.Name = "flpSubjectClass";
             flpSubjectClass.Size = new Size(0, 0);
             flpSubjectClass.TabIndex = 1;
@@ -3888,17 +3969,17 @@
             AutoScaleMode = AutoScaleMode.None;
             BackColor = Color.FromArgb(244, 243, 246);
             ClientSize = new Size(1447, 805);
-            Controls.Add(pnlAttendance);
-            Controls.Add(pnlHome);
             Controls.Add(guna2Panel1);
-            Controls.Add(pnlStudent);
             Controls.Add(guna2Panel2);
-            Controls.Add(pnlSubject);
-            Controls.Add(pnlWorkstation);
             Controls.Add(pnlFile);
             Controls.Add(pnlSetting);
             Controls.Add(pnlActivity);
             Controls.Add(pnlGrades);
+            Controls.Add(pnlAttendance);
+            Controls.Add(pnlHome);
+            Controls.Add(pnlStudent);
+            Controls.Add(pnlSubject);
+            Controls.Add(pnlWorkstation);
             Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             MinimizeBox = false;
@@ -3911,6 +3992,8 @@
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             guna2Panel2.ResumeLayout(false);
             guna2Panel2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBox5).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBox6).EndInit();
             guna2Panel4.ResumeLayout(false);
             guna2Panel4.PerformLayout();
             guna2Panel5.ResumeLayout(false);
@@ -4032,7 +4115,6 @@
         private PictureBox pictureBox4;
         private Guna.UI2.WinForms.Guna2Button btnCreateAssessment;
         private Panel pnlHome;
-        private Label lblPanelName;
         public Label lblStudentOnline;
         public FlowLayoutPanel flpMiniWorkStations;
         private Panel pnlWorkstation;
@@ -4212,5 +4294,12 @@
         private Label label29;
         private Guna.UI2.WinForms.Guna2Button btnQuizExam;
         private Guna.UI2.WinForms.Guna2Button btnCalendarExpand;
+        private Label label30;
+        private Panel panel1;
+        private PictureBox pictureBox5;
+        private Label label46;
+        private Label label47;
+        private PictureBox pictureBox6;
+        private Label lblPanelName;
     }
 }

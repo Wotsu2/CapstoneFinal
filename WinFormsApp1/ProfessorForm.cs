@@ -3364,6 +3364,11 @@ namespace WinFormsApp1
             var cal = new ProfessorCalendarForm(ProfessorID);
             cal.ShowDialog(this);
         }
+
+        private void lblPanelName_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 
     public class ClassCardPanel : Panel
