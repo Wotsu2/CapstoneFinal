@@ -21,16 +21,6 @@ namespace WinFormsApp1
 {
     public partial class AdminForm : Form
     {
-        // =========================================================
-        //  SMTP CONFIG — change these to your own
-        // =========================================================
-        private const string SmtpHost = "smtp.gmail.com";
-        private const int SmtpPort = 587;
-        private const string SmtpUser = "mjmeriales22@gmail.com";
-        private const string SmtpPass = "eroh cert nhpm yacq";
-        private const string SmtpFrom = "your.email@gmail.com";
-        private const string SmtpFromName = "CDSGA Hub";
-
         // USER DETAILS
         private Panel overlayPanel;
         private Panel userDetailsPanel;
@@ -74,6 +64,20 @@ namespace WinFormsApp1
         private Guna.UI2.WinForms.Guna2Button btnUploadBanner;
         private Guna.UI2.WinForms.Guna2Button btnOpenBannersFolder;
 
+        // DATABASE NAV BUTTON
+        private Guna.UI2.WinForms.Guna2Button btnDatabaseNav;
+
+        // ANNOUNCEMENTS
+        private Guna.UI2.WinForms.Guna2Button btnAnnouncementNav;
+        private Panel pnlAnnouncements;
+        private TextBox txtAnnTitle;
+        private TextBox txtAnnBody;
+        private ComboBox cmbAnnPriority;
+        private ComboBox cmbAnnTarget;
+        private TextBox txtAnnSection;
+        private Label lblAnnSectionLabel;
+        private FlowLayoutPanel flpAnnouncements;
+        private Guna.UI2.WinForms.Guna2Button btnDeleteFile;
         public AdminForm()
         {
             InitializeComponent();
@@ -102,10 +106,651 @@ namespace WinFormsApp1
             _ = StartAuthPhotoListener();
 
             InitializeBannerButtons();
+
+            EnsureAnnouncementsTable();
+
+            // Add the Database button to the nav strip
+            InitializeDatabaseNavButton();
+
+            // Add the Announcements button to the nav strip
+            InitializeAnnouncementsNavButton();
+            InitializeFileManagementButtons();
         }
 
         // =========================================================
-        //  FILE RECEIVER  (auth photos, activity files, student submissions, profile photos)
+        // NAV STRIP — 6 BUTTONS
+        // =========================================================
+        private void InitializeDatabaseNavButton()
+        {
+            try
+            {
+                if (guna2Panel2 == null) return;
+
+                // 6 buttons across 1345px → ~224px each
+                int newWidth = 224;
+                int x = 0;
+
+                if (btnDashboard != null)
+                {
+                    btnDashboard.Location = new Point(x, 0);
+                    btnDashboard.Size = new Size(newWidth, 80);
+                    x += newWidth;
+                }
+
+                if (btnUserManagement != null)
+                {
+                    btnUserManagement.Location = new Point(x, 0);
+                    btnUserManagement.Size = new Size(newWidth, 80);
+                    x += newWidth;
+                }
+
+                if (btnFileManagement != null)
+                {
+                    btnFileManagement.Location = new Point(x, 0);
+                    btnFileManagement.Size = new Size(newWidth, 80);
+                    x += newWidth;
+                }
+
+                if (btnWorkstation != null)
+                {
+                    btnWorkstation.Location = new Point(x, 0);
+                    btnWorkstation.Size = new Size(newWidth, 80);
+                    x += newWidth;
+                }
+
+                // Announcements button (5th)
+                btnAnnouncementNav = new Guna.UI2.WinForms.Guna2Button
+                {
+                    Text = "Announcements",
+                    Size = new Size(newWidth, 80),
+                    Location = new Point(x, 0),
+                    BorderRadius = 8,
+                    FillColor = Color.FromArgb(234, 234, 234),
+                    ForeColor = Color.FromArgb(123, 15, 23),
+                    Font = new Font("Segoe UI", 13F),
+                    Image = Properties.Resources.Announcement,
+                    ImageSize = new Size(28, 28),
+                    Animated = true,
+                    Name = "btnAnnouncementNav",
+                    Cursor = Cursors.Hand
+                };
+                btnAnnouncementNav.HoverState.FillColor = Color.FromArgb(250, 235, 235);
+                btnAnnouncementNav.Click += (s, ev) => ShowAnnouncementsPage();
+                guna2Panel2.Controls.Add(btnAnnouncementNav);
+                btnAnnouncementNav.BringToFront();
+                x += newWidth;
+
+                // Database button (6th)
+                btnDatabaseNav = new Guna.UI2.WinForms.Guna2Button
+                {
+                    Text = "Database",
+                    Size = new Size(newWidth, 80),
+                    Location = new Point(x, 0),
+                    BorderRadius = 8,
+                    FillColor = Color.FromArgb(234, 234, 234),
+                    ForeColor = Color.FromArgb(123, 15, 23),
+                    Font = new Font("Segoe UI", 13F),
+                    Image = Properties.Resources.database,
+                    ImageSize = new Size(28, 28),
+                    Animated = true,
+                    Name = "btnDatabaseNav",
+                    Cursor = Cursors.Hand
+                };
+                btnDatabaseNav.HoverState.FillColor = Color.FromArgb(250, 235, 235);
+                btnDatabaseNav.Click += (s, ev) =>
+                {
+                    var dbForm = new DatabaseManagerForm();
+                    dbForm.ShowDialog(this);
+                };
+                guna2Panel2.Controls.Add(btnDatabaseNav);
+                btnDatabaseNav.BringToFront();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("InitializeDatabaseNavButton error: " + ex.Message);
+            }
+        }
+
+        // =========================================================
+        // ANNOUNCEMENTS
+        // =========================================================
+        private void InitializeAnnouncementsNavButton()
+        {
+            // Actual button is created in InitializeDatabaseNavButton()
+            // This method only builds the Announcements page panel.
+            BuildAnnouncementsPanel();
+        }
+
+        private void EnsureAnnouncementsTable()
+        {
+            try
+            {
+                string connStr = SettingsManager.Current.GetConnectionString();
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string q = @"
+                        CREATE TABLE IF NOT EXISTS announcements (
+                            announcement_id INT AUTO_INCREMENT PRIMARY KEY,
+                            title VARCHAR(255) NOT NULL,
+                            body TEXT NOT NULL,
+                            priority VARCHAR(20) DEFAULT 'Normal',
+                            target VARCHAR(50) DEFAULT 'All Users',
+                            section_filter VARCHAR(50) NULL,
+                            posted_by INT NOT NULL,
+                            posted_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                        );";
+                    using (var cmd = new MySqlCommand(q, conn))
+                        cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("EnsureAnnouncementsTable error: " + ex.Message);
+            }
+        }
+
+        private void BuildAnnouncementsPanel()
+        {
+            if (pnlAnnouncements != null) return;
+
+            pnlAnnouncements = new Panel
+            {
+                Location = new Point(138, 338),
+                Size = new Size(1345, 590),
+                BackColor = Color.White,
+                Visible = false
+            };
+            this.Controls.Add(pnlAnnouncements);
+
+            // ---------- LEFT: Compose ----------
+            var leftCard = new Guna.UI2.WinForms.Guna2Panel
+            {
+                Location = new Point(20, 20),
+                Size = new Size(500, 545),
+                BorderRadius = 12,
+                FillColor = Color.FromArgb(252, 248, 248),
+                BorderColor = Color.FromArgb(230, 220, 220),
+                BorderThickness = 1
+            };
+            pnlAnnouncements.Controls.Add(leftCard);
+
+            var lblCompose = new Label
+            {
+                Text = "📢  Compose Announcement",
+                Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold),
+                ForeColor = Color.Maroon,
+                AutoSize = true,
+                Location = new Point(18, 14)
+            };
+            leftCard.Controls.Add(lblCompose);
+
+            // Title
+            leftCard.Controls.Add(new Label
+            {
+                Text = "Title:",
+                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
+                AutoSize = true,
+                Location = new Point(20, 55)
+            });
+            txtAnnTitle = new TextBox
+            {
+                Location = new Point(20, 78),
+                Width = 460,
+                Font = new Font("Segoe UI", 10F),
+                BorderStyle = BorderStyle.FixedSingle
+            };
+            leftCard.Controls.Add(txtAnnTitle);
+
+            // Body
+            leftCard.Controls.Add(new Label
+            {
+                Text = "Message:",
+                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
+                AutoSize = true,
+                Location = new Point(20, 112)
+            });
+            txtAnnBody = new TextBox
+            {
+                Location = new Point(20, 135),
+                Size = new Size(460, 200),
+                Font = new Font("Segoe UI", 10F),
+                Multiline = true,
+                ScrollBars = ScrollBars.Vertical,
+                BorderStyle = BorderStyle.FixedSingle
+            };
+            leftCard.Controls.Add(txtAnnBody);
+
+            // Priority
+            leftCard.Controls.Add(new Label
+            {
+                Text = "Priority:",
+                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
+                AutoSize = true,
+                Location = new Point(20, 348)
+            });
+            cmbAnnPriority = new ComboBox
+            {
+                Location = new Point(20, 371),
+                Width = 220,
+                Font = new Font("Segoe UI", 10F),
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            cmbAnnPriority.Items.AddRange(new object[] { "Normal", "Important", "Urgent" });
+            cmbAnnPriority.SelectedIndex = 0;
+            leftCard.Controls.Add(cmbAnnPriority);
+
+            // Target
+            leftCard.Controls.Add(new Label
+            {
+                Text = "Target audience:",
+                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
+                AutoSize = true,
+                Location = new Point(260, 348)
+            });
+            cmbAnnTarget = new ComboBox
+            {
+                Location = new Point(260, 371),
+                Width = 220,
+                Font = new Font("Segoe UI", 10F),
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            cmbAnnTarget.Items.AddRange(new object[] { "All Users", "Students Only", "Professors Only", "Specific Section" });
+            cmbAnnTarget.SelectedIndex = 0;
+            cmbAnnTarget.SelectedIndexChanged += (s, e) =>
+            {
+                bool showSection = cmbAnnTarget.Text == "Specific Section";
+                txtAnnSection.Enabled = showSection;
+                lblAnnSectionLabel.Enabled = showSection;
+            };
+            leftCard.Controls.Add(cmbAnnTarget);
+
+            // Section filter
+            lblAnnSectionLabel = new Label
+            {
+                Text = "Section (e.g. 4-1):",
+                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
+                AutoSize = true,
+                Location = new Point(20, 410),
+                Enabled = false
+            };
+            leftCard.Controls.Add(lblAnnSectionLabel);
+
+            txtAnnSection = new TextBox
+            {
+                Location = new Point(20, 433),
+                Width = 220,
+                Font = new Font("Segoe UI", 10F),
+                BorderStyle = BorderStyle.FixedSingle,
+                Enabled = false
+            };
+            leftCard.Controls.Add(txtAnnSection);
+
+            // Post button
+            var btnPost = new Guna.UI2.WinForms.Guna2Button
+            {
+                Text = "Post Announcement",
+                Size = new Size(220, 44),
+                Location = new Point(260, 425),
+                BorderRadius = 10,
+                FillColor = Color.Maroon,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold)
+            };
+            btnPost.HoverState.FillColor = Color.FromArgb(100, 0, 0);
+            btnPost.Click += (s, e) => PostAnnouncement();
+            leftCard.Controls.Add(btnPost);
+
+            // ---------- RIGHT: Recent ----------
+            var rightCard = new Guna.UI2.WinForms.Guna2Panel
+            {
+                Location = new Point(540, 20),
+                Size = new Size(785, 545),
+                BorderRadius = 12,
+                FillColor = Color.FromArgb(252, 248, 248),
+                BorderColor = Color.FromArgb(230, 220, 220),
+                BorderThickness = 1
+            };
+            pnlAnnouncements.Controls.Add(rightCard);
+
+            var lblRecent = new Label
+            {
+                Text = "📋  Recent Announcements",
+                Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold),
+                ForeColor = Color.Maroon,
+                AutoSize = true,
+                Location = new Point(18, 14)
+            };
+            rightCard.Controls.Add(lblRecent);
+
+            var btnRefresh = new Guna.UI2.WinForms.Guna2Button
+            {
+                Text = "🔄 Refresh",
+                Size = new Size(100, 32),
+                Location = new Point(665, 12),
+                BorderRadius = 8,
+                FillColor = Color.FromArgb(234, 234, 234),
+                ForeColor = Color.FromArgb(50, 50, 50),
+                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold)
+            };
+            btnRefresh.Click += (s, e) => LoadAnnouncements();
+            rightCard.Controls.Add(btnRefresh);
+
+            flpAnnouncements = new FlowLayoutPanel
+            {
+                Location = new Point(18, 55),
+                Size = new Size(750, 475),
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoScroll = true,
+                BackColor = Color.Transparent
+            };
+            rightCard.Controls.Add(flpAnnouncements);
+
+            LoadAnnouncements();
+        }
+
+        private void ShowAnnouncementsPage()
+        {
+            panelDashoard.Visible = false;
+            pnlUserManagement.Visible = false;
+            pnlFileManagement.Visible = false;
+            pnlWorkstation.Visible = false;
+            pnlAnnouncements.Visible = true;
+            pnlAnnouncements.BringToFront();
+
+            navbarStyle.RemoveIndicator(PanelIndicator);
+            PanelIndicator = navbarStyle.CreateIndicator(btnAnnouncementNav);
+
+            LoadAnnouncements();
+        }
+
+        private void PostAnnouncement()
+        {
+            string title = txtAnnTitle.Text.Trim();
+            string body = txtAnnBody.Text.Trim();
+            string priority = cmbAnnPriority.Text;
+            string target = cmbAnnTarget.Text;
+            string sectionFilter = cmbAnnSection();
+
+            if (string.IsNullOrEmpty(title))
+            {
+                MessageBox.Show("Please enter a title.", "Validation",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(body))
+            {
+                MessageBox.Show("Please enter a message.", "Validation",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (target == "Specific Section" && string.IsNullOrEmpty(sectionFilter))
+            {
+                MessageBox.Show("Please enter a section.", "Validation",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (target != "Specific Section")
+                sectionFilter = null;
+
+            try
+            {
+                string connStr = SettingsManager.Current.GetConnectionString();
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string q = @"
+                        INSERT INTO announcements 
+                            (title, body, priority, target, section_filter, posted_by, posted_at)
+                        VALUES 
+                            (@title, @body, @priority, @target, @section_filter, @posted_by, NOW())";
+                    using (var cmd = new MySqlCommand(q, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@title", title);
+                        cmd.Parameters.AddWithValue("@body", body);
+                        cmd.Parameters.AddWithValue("@priority", priority);
+                        cmd.Parameters.AddWithValue("@target", target);
+                        cmd.Parameters.AddWithValue("@section_filter",
+                            (object)sectionFilter ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@posted_by", GetAdminUserId());
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+
+                MessageBox.Show("Announcement posted!", "Success",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                txtAnnTitle.Clear();
+                txtAnnBody.Clear();
+                cmbAnnPriority.SelectedIndex = 0;
+                cmbAnnTarget.SelectedIndex = 0;
+                txtAnnSection.Clear();
+
+                LoadAnnouncements();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Failed to post announcement:\n" + ex.Message,
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private string cmbAnnSection()
+        {
+            return txtAnnSection.Text.Trim();
+        }
+
+        private int GetAdminUserId()
+        {
+            try
+            {
+                string connStr = SettingsManager.Current.GetConnectionString();
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    using (var cmd = new MySqlCommand(
+                        "SELECT user_id FROM user_credential WHERE roles='Admin' LIMIT 1", conn))
+                    {
+                        object r = cmd.ExecuteScalar();
+                        if (r != null && r != DBNull.Value)
+                            return Convert.ToInt32(r);
+                    }
+                }
+            }
+            catch { }
+            return 1; // fallback
+        }
+
+        private void LoadAnnouncements()
+        {
+            if (flpAnnouncements == null) return;
+
+            flpAnnouncements.Controls.Clear();
+
+            try
+            {
+                string connStr = SettingsManager.Current.GetConnectionString();
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string q = @"
+                        SELECT announcement_id, title, body, priority, target,
+                               section_filter, posted_at
+                        FROM announcements
+                        ORDER BY posted_at DESC
+                        LIMIT 50";
+                    using (var cmd = new MySqlCommand(q, conn))
+                    using (var r = cmd.ExecuteReader())
+                    {
+                        bool any = false;
+                        while (r.Read())
+                        {
+                            any = true;
+
+                            int id = Convert.ToInt32(r["announcement_id"]);
+                            string title = r["title"].ToString();
+                            string body = r["body"].ToString();
+                            string priority = r["priority"].ToString();
+                            string target = r["target"].ToString();
+                            string sectionFilter = r["section_filter"] == DBNull.Value
+                                ? ""
+                                : r["section_filter"].ToString();
+                            DateTime postedAt = Convert.ToDateTime(r["posted_at"]);
+
+                            flpAnnouncements.Controls.Add(BuildAnnouncementCard(
+                                id, title, body, priority, target, sectionFilter, postedAt));
+                        }
+
+                        if (!any)
+                        {
+                            var empty = new Label
+                            {
+                                Text = "No announcements yet.",
+                                Font = new Font("Segoe UI", 10F, FontStyle.Italic),
+                                ForeColor = Color.Gray,
+                                AutoSize = true,
+                                Margin = new Padding(10)
+                            };
+                            flpAnnouncements.Controls.Add(empty);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("LoadAnnouncements error: " + ex.Message);
+            }
+        }
+
+        private Panel BuildAnnouncementCard(int id, string title, string body,
+            string priority, string target, string section, DateTime postedAt)
+        {
+            Color accent = priority == "Urgent" ? Color.FromArgb(200, 40, 40)
+                         : priority == "Important" ? Color.FromArgb(220, 150, 30)
+                         : Color.FromArgb(52, 120, 200);
+
+            var card = new Panel
+            {
+                Width = 720,
+                Height = 130,
+                Margin = new Padding(0, 0, 0, 10),
+                BackColor = Color.White,
+                Tag = id
+            };
+
+            card.Paint += (s, e) =>
+            {
+                var g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+
+                using (var path = new GraphicsPath())
+                {
+                    int r = 10;
+                    var rect = new Rectangle(0, 0, card.Width - 1, card.Height - 1);
+                    path.AddArc(rect.X, rect.Y, r * 2, r * 2, 180, 90);
+                    path.AddArc(rect.Right - r * 2, rect.Y, r * 2, r * 2, 270, 90);
+                    path.AddArc(rect.Right - r * 2, rect.Bottom - r * 2, r * 2, r * 2, 0, 90);
+                    path.AddArc(rect.X, rect.Bottom - r * 2, r * 2, r * 2, 90, 90);
+                    path.CloseFigure();
+                    card.Region = new Region(path);
+                }
+
+                using (var border = new Pen(Color.FromArgb(230, 225, 225), 1))
+                    g.DrawRectangle(border, 0, 0, card.Width - 1, card.Height - 1);
+
+                // Left accent strip
+                using (var brush = new SolidBrush(accent))
+                    g.FillRectangle(brush, 0, 0, 6, card.Height);
+            };
+
+            var lblTitle = new Label
+            {
+                Text = title,
+                Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(30, 30, 30),
+                AutoSize = false,
+                Size = new Size(600, 24),
+                Location = new Point(20, 10)
+            };
+            card.Controls.Add(lblTitle);
+
+            var lblMeta = new Label
+            {
+                Text = $"Priority: {priority}   •   Target: {target}" +
+                       (string.IsNullOrEmpty(section) ? "" : $" ({section})") +
+                       $"   •   Posted: {postedAt:MMM dd, yyyy hh:mm tt}",
+                Font = new Font("Segoe UI", 8.5F),
+                ForeColor = Color.FromArgb(120, 120, 120),
+                AutoSize = false,
+                Size = new Size(600, 18),
+                Location = new Point(20, 36)
+            };
+            card.Controls.Add(lblMeta);
+
+            var lblBody = new Label
+            {
+                Text = body,
+                Font = new Font("Segoe UI", 9.5F),
+                ForeColor = Color.FromArgb(70, 70, 70),
+                AutoSize = false,
+                Size = new Size(600, 60),
+                Location = new Point(20, 58),
+                AutoEllipsis = true
+            };
+            card.Controls.Add(lblBody);
+
+            var btnDelete = new Guna.UI2.WinForms.Guna2Button
+            {
+                Text = "🗑",
+                Size = new Size(36, 36),
+                Location = new Point(670, 12),
+                BorderRadius = 18,
+                FillColor = Color.Transparent,
+                ForeColor = Color.FromArgb(180, 40, 40),
+                Font = new Font("Segoe UI Emoji", 12F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnDelete.HoverState.FillColor = Color.FromArgb(255, 240, 240);
+            btnDelete.Click += (s, e) =>
+            {
+                var confirm = MessageBox.Show(
+                    $"Delete announcement \"{title}\"?",
+                    "Confirm Delete",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+                if (confirm != DialogResult.Yes) return;
+
+                try
+                {
+                    string connStr = SettingsManager.Current.GetConnectionString();
+                    using (var conn = new MySqlConnection(connStr))
+                    {
+                        conn.Open();
+                        using (var cmd = new MySqlCommand(
+                            "DELETE FROM announcements WHERE announcement_id = @id", conn))
+                        {
+                            cmd.Parameters.AddWithValue("@id", id);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    LoadAnnouncements();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Delete failed:\n" + ex.Message);
+                }
+            };
+            card.Controls.Add(btnDelete);
+
+            return card;
+        }
+
+        // =========================================================
+        //  FILE RECEIVER
         // =========================================================
         private async Task StartAuthPhotoListener()
         {
@@ -117,12 +762,10 @@ namespace WinFormsApp1
                 authPhotoListener.Server.SetSocketOption(
                     SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 authPhotoListener.Start();
-                Console.WriteLine($"[Admin] FileTransfer listener started on {port}");
             }
             catch (Exception ex)
             {
                 Console.WriteLine("[Admin] FileTransfer bind FAILED: " + ex.Message);
-                MessageBox.Show("Failed to start file listener: " + ex.Message);
                 return;
             }
 
@@ -152,8 +795,6 @@ namespace WinFormsApp1
                 {
                     string firstToken = reader.ReadString();
 
-                    // ---------- ACTIVITY FILE ----------
-                    // [ACTIVITY_FILE][professorFolder][section][fileName][length][bytes]
                     if (firstToken == "ACTIVITY_FILE")
                     {
                         string professorFolder = reader.ReadString();
@@ -164,7 +805,6 @@ namespace WinFormsApp1
                         if (length <= 0 || length > 200 * 1024 * 1024) return;
 
                         byte[] bytes = reader.ReadBytes(length);
-
                         professorFolder = SanitizeFolderName(professorFolder);
                         section = SanitizeFolderName(section);
                         fileName = SanitizeFolderName(fileName);
@@ -173,15 +813,10 @@ namespace WinFormsApp1
                         string folder = Path.Combine(root, professorFolder, section, "ActivityFiles");
                         Directory.CreateDirectory(folder);
 
-                        string savePath = Path.Combine(folder, fileName);
-                        await File.WriteAllBytesAsync(savePath, bytes);
-
-                        Console.WriteLine("[Admin] Activity file saved → " + ToUnc(savePath));
+                        await File.WriteAllBytesAsync(Path.Combine(folder, fileName), bytes);
                         return;
                     }
 
-                    // ---------- STUDENT SUBMISSION ----------
-                    // [STUDENT_SUBMISSION][professorFolder][section][studentName][title][fileName][length][bytes]
                     if (firstToken == "STUDENT_SUBMISSION")
                     {
                         string professorFolder = reader.ReadString();
@@ -194,7 +829,6 @@ namespace WinFormsApp1
                         if (length <= 0 || length > 200 * 1024 * 1024) return;
 
                         byte[] bytes = reader.ReadBytes(length);
-
                         professorFolder = SanitizeFolderName(professorFolder);
                         section = SanitizeFolderName(section);
                         studentName = SanitizeFolderName(studentName);
@@ -207,13 +841,9 @@ namespace WinFormsApp1
 
                         string finalName = SanitizeFolderName($"{studentName}_{title}_{fileName}");
                         string localPath = Path.Combine(folder, finalName);
-
                         await File.WriteAllBytesAsync(localPath, bytes);
 
                         string uncPath = ToUnc(localPath);
-                        Console.WriteLine("[Admin] Student submission saved → " + localPath);
-                        Console.WriteLine("[Admin] Returning UNC to student → " + uncPath);
-
                         try
                         {
                             using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
@@ -226,22 +856,14 @@ namespace WinFormsApp1
                         return;
                     }
 
-                    // ---------- PROFILE PHOTO ----------
-                    // [PROFILE_PHOTO][username][fileName][length][bytes]
                     if (firstToken == "PROFILE_PHOTO")
                     {
                         string username = reader.ReadString();
                         string fileName = reader.ReadString();
                         int length = reader.ReadInt32();
-
-                        if (length <= 0 || length > 20 * 1024 * 1024)
-                        {
-                            Console.WriteLine("[Admin] Invalid profile photo length: " + length);
-                            return;
-                        }
+                        if (length <= 0 || length > 20 * 1024 * 1024) return;
 
                         byte[] bytes = reader.ReadBytes(length);
-
                         username = SanitizeFolderName(username);
                         fileName = SanitizeFolderName(fileName);
 
@@ -251,13 +873,9 @@ namespace WinFormsApp1
 
                         string finalName = $"{username}_{fileName}";
                         string savePath = Path.Combine(folder, finalName);
-
                         await File.WriteAllBytesAsync(savePath, bytes);
 
                         string uncPath = ToUnc(savePath);
-                        Console.WriteLine("[Admin] Profile photo saved → " + savePath);
-                        Console.WriteLine("[Admin] Returning UNC → " + uncPath);
-
                         try
                         {
                             using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
@@ -266,18 +884,13 @@ namespace WinFormsApp1
                                 writer.Flush();
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine("[Admin] Write reply error: " + ex.Message);
-                        }
+                        catch { }
                         return;
                     }
 
-                    // ---------- AUTH PHOTO ----------
-                    // [fileName][length][bytes]
+                    // AUTH PHOTO (default)
                     string authFileName = SanitizeFolderName(firstToken);
                     int authLength = reader.ReadInt32();
-
                     if (authLength <= 0 || authLength > 20 * 1024 * 1024) return;
 
                     byte[] authBytes = reader.ReadBytes(authLength);
@@ -287,10 +900,7 @@ namespace WinFormsApp1
                     string authFolder = Path.Combine(authRoot, authSub);
                     Directory.CreateDirectory(authFolder);
 
-                    string authPath = Path.Combine(authFolder, authFileName);
-                    await File.WriteAllBytesAsync(authPath, authBytes);
-
-                    Console.WriteLine("[Admin] Auth photo saved → " + ToUnc(authPath));
+                    await File.WriteAllBytesAsync(Path.Combine(authFolder, authFileName), authBytes);
                 }
             }
             catch (Exception ex)
@@ -299,7 +909,6 @@ namespace WinFormsApp1
             }
         }
 
-        // Convert  C:\SharedFolder\sub\file.pdf  →  \\192.168.100.4\SharedFolder\sub\file.pdf
         private string ToUnc(string path)
         {
             try
@@ -320,22 +929,14 @@ namespace WinFormsApp1
 
                 return $@"\\{ip}\{sharedName}\{relative}";
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine("ToUnc error: " + ex.Message);
-                return path;
-            }
+            catch { return path; }
         }
 
         private string CleanIp(string raw)
         {
             if (string.IsNullOrWhiteSpace(raw)) return GetLocalLanIp();
 
-            string s = raw.Trim()
-                          .Replace("(null)", "")
-                          .TrimStart('\\')
-                          .TrimEnd('\\');
-
+            string s = raw.Trim().Replace("(null)", "").TrimStart('\\').TrimEnd('\\');
             int slash = s.IndexOf('\\');
             if (slash > 0) s = s.Substring(0, slash);
 
@@ -360,14 +961,10 @@ namespace WinFormsApp1
         private string SanitizeFolderName(string name)
         {
             if (string.IsNullOrWhiteSpace(name)) return "Unknown";
-
             foreach (char c in Path.GetInvalidFileNameChars())
                 name = name.Replace(c, '_');
-
             name = name.Trim().TrimEnd('.');
-            if (string.IsNullOrWhiteSpace(name)) return "Unknown";
-
-            return name;
+            return string.IsNullOrWhiteSpace(name) ? "Unknown" : name;
         }
 
         // =========================================================
@@ -375,39 +972,34 @@ namespace WinFormsApp1
         // =========================================================
         private void InitializeBannerButtons()
         {
-            int btnHeight = 45;
-            int btnWidth = 180;
-
-            btnUploadBanner = new Guna.UI2.WinForms.Guna2Button();
-            btnUploadBanner.Text = "Upload Banner";
-            btnUploadBanner.Size = new Size(btnWidth, btnHeight);
-            btnUploadBanner.BorderRadius = 10;
-            btnUploadBanner.FillColor = Color.Maroon;
-            btnUploadBanner.ForeColor = Color.White;
-            btnUploadBanner.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
-            btnUploadBanner.Cursor = Cursors.Hand;
-            btnUploadBanner.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-
-            btnUploadBanner.Location = new Point(1250, 150);
-
+            btnUploadBanner = new Guna.UI2.WinForms.Guna2Button
+            {
+                Text = "Upload Banner",
+                Size = new Size(180, 45),
+                BorderRadius = 10,
+                FillColor = Color.Maroon,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
+                Location = new Point(1250, 150)
+            };
             btnUploadBanner.Click += BtnUploadBanner_Click;
             this.Controls.Add(btnUploadBanner);
             btnUploadBanner.BringToFront();
 
-            btnOpenBannersFolder = new Guna.UI2.WinForms.Guna2Button();
-            btnOpenBannersFolder.Text = "Open Folder";
-            btnOpenBannersFolder.Size = new Size(140, btnHeight);
-            btnOpenBannersFolder.BorderRadius = 10;
-            btnOpenBannersFolder.FillColor = Color.Gray;
-            btnOpenBannersFolder.ForeColor = Color.White;
-            btnOpenBannersFolder.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
-            btnOpenBannersFolder.Cursor = Cursors.Hand;
-            btnOpenBannersFolder.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-
-            btnOpenBannersFolder.Location = new Point(
-                btnUploadBanner.Left - btnOpenBannersFolder.Width - 10,
-                btnUploadBanner.Top);
-
+            btnOpenBannersFolder = new Guna.UI2.WinForms.Guna2Button
+            {
+                Text = "Open Folder",
+                Size = new Size(140, 45),
+                BorderRadius = 10,
+                FillColor = Color.Gray,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
+                Location = new Point(btnUploadBanner.Left - 150, btnUploadBanner.Top)
+            };
             btnOpenBannersFolder.Click += BtnOpenBannersFolder_Click;
             this.Controls.Add(btnOpenBannersFolder);
             btnOpenBannersFolder.BringToFront();
@@ -416,15 +1008,10 @@ namespace WinFormsApp1
         private void BtnUploadBanner_Click(object sender, EventArgs e)
         {
             string folder = BannerHelper.GetBannersFolder();
-
             if (string.IsNullOrEmpty(folder))
             {
-                MessageBox.Show(
-                    "The Banners folder could not be located.\n\n" +
-                    "Please set a Root Folder in Login → Configuration → File Storage first.",
-                    "Root Folder Not Set",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
+                MessageBox.Show("The Banners folder could not be located.", "Root Folder Not Set",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -432,12 +1019,10 @@ namespace WinFormsApp1
             {
                 ofd.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif";
                 ofd.Multiselect = true;
-                ofd.Title = "Select banner image(s) to upload";
 
                 if (ofd.ShowDialog() != DialogResult.OK) return;
 
                 int copied = 0;
-
                 foreach (string source in ofd.FileNames)
                 {
                     try
@@ -455,54 +1040,31 @@ namespace WinFormsApp1
 
                         File.Copy(source, dest);
                         copied++;
-
-                        Console.WriteLine("[Admin] Uploaded: " + dest);
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show(
-                            $"Failed to upload {Path.GetFileName(source)}:\n\n{ex.Message}",
-                            "Upload Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
+                        MessageBox.Show("Failed: " + ex.Message);
                     }
                 }
 
                 if (copied > 0)
-                {
-                    MessageBox.Show(
-                        $"{copied} banner(s) uploaded successfully.\n\n" +
-                        $"Location:\n{folder}",
-                        "Upload Complete",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information);
-                }
+                    MessageBox.Show($"{copied} banner(s) uploaded.", "Upload Complete",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
         private void BtnOpenBannersFolder_Click(object sender, EventArgs e)
         {
             string folder = BannerHelper.GetBannersFolder();
-
             if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
             {
-                MessageBox.Show(
-                    "The Banners folder does not exist yet.\n\n" +
-                    "Please set a Root Folder in Login → Configuration → File Storage first.",
-                    "Folder Not Found",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
+                MessageBox.Show("The Banners folder does not exist yet.", "Folder Not Found",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            try
-            {
-                System.Diagnostics.Process.Start("explorer.exe", "\"" + folder + "\"");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Could not open folder:\n" + ex.Message);
-            }
+            try { System.Diagnostics.Process.Start("explorer.exe", "\"" + folder + "\""); }
+            catch (Exception ex) { MessageBox.Show("Could not open folder:\n" + ex.Message); }
         }
 
         // =========================================================
@@ -514,6 +1076,7 @@ namespace WinFormsApp1
             pnlUserManagement.Visible = false;
             pnlFileManagement.Visible = false;
             pnlWorkstation.Visible = false;
+            if (pnlAnnouncements != null) pnlAnnouncements.Visible = false;
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnDashboard);
         }
@@ -524,6 +1087,7 @@ namespace WinFormsApp1
             panelDashoard.Visible = false;
             pnlFileManagement.Visible = false;
             pnlWorkstation.Visible = false;
+            if (pnlAnnouncements != null) pnlAnnouncements.Visible = false;
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnUserManagement);
             LoadUserData();
@@ -535,18 +1099,15 @@ namespace WinFormsApp1
             panelDashoard.Visible = false;
             pnlUserManagement.Visible = false;
             pnlWorkstation.Visible = false;
+            if (pnlAnnouncements != null) pnlAnnouncements.Visible = false;
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnFileManagement);
 
             string root = SettingsManager.Current.SaveFolder;
-
             if (!Directory.Exists(root))
             {
-                MessageBox.Show(
-                    "Root save folder is not configured or does not exist:\n" + root +
-                    "\n\nPlease set it in Login → Configuration → File Storage.",
-                    "Folder Missing",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Root save folder is not configured or does not exist:\n" + root,
+                    "Folder Missing", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -560,35 +1121,19 @@ namespace WinFormsApp1
             panelDashoard.Visible = false;
             pnlUserManagement.Visible = false;
             pnlFileManagement.Visible = false;
+            if (pnlAnnouncements != null) pnlAnnouncements.Visible = false;
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnWorkstation);
         }
 
-        private void CreateButton_Click(object sender, EventArgs e)
-        {
-            CreateUser();
-        }
+        private void CreateButton_Click(object sender, EventArgs e) => CreateUser();
 
         private void ContextRoleText_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (ContextRoleText.Text == "Professor")
-            {
-                ContextYearText.Enabled = false;
-                ContextSectionText.Enabled = false;
-                ContextCourseText.Enabled = false;
-            }
-            else if (ContextRoleText.Text == "Student")
-            {
-                ContextYearText.Enabled = true;
-                ContextSectionText.Enabled = true;
-                ContextCourseText.Enabled = true;
-            }
-            else if (ContextRoleText.Text == "Admin")
-            {
-                ContextYearText.Enabled = false;
-                ContextSectionText.Enabled = false;
-                ContextCourseText.Enabled = false;
-            }
+            bool student = ContextRoleText.Text == "Student";
+            ContextYearText.Enabled = student;
+            ContextSectionText.Enabled = student;
+            ContextCourseText.Enabled = student;
         }
 
         private void cmbSelection_SelectedIndexChanged(object sender, EventArgs e)
@@ -599,30 +1144,15 @@ namespace WinFormsApp1
                     LoadUserData();
                     pnlUserList.BringToFront();
                     break;
-
                 case "Create Account":
                     pnlCreateAccount.BringToFront();
-                    break;
-
-                default:
                     break;
             }
         }
 
-        private void SearchButton_TextChanged(object sender, EventArgs e)
-        {
-            LoadUserData(SearchButton.Text);
-        }
-
-        private void lvServerFolder_DoubleClick(object sender, EventArgs e)
-        {
-            doubleClick();
-        }
-
-        private void BtnBack_Click(object sender, EventArgs e)
-        {
-            btnBack();
-        }
+        private void SearchButton_TextChanged(object sender, EventArgs e) => LoadUserData(SearchButton.Text);
+        private void lvServerFolder_DoubleClick(object sender, EventArgs e) => doubleClick();
+        private void BtnBack_Click(object sender, EventArgs e) => btnBack();
 
         // =========================================================
         //  USER DETAILS MODAL
@@ -702,8 +1232,7 @@ namespace WinFormsApp1
                 Size = new Size(120, 120),
                 Location = new Point(60, 100),
                 BackColor = Color.FromArgb(0, 188, 212),
-                SizeMode = PictureBoxSizeMode.Zoom,
-                BorderStyle = BorderStyle.None
+                SizeMode = PictureBoxSizeMode.Zoom
             };
             detailsPhoto.Paint += (s, e) =>
             {
@@ -721,26 +1250,21 @@ namespace WinFormsApp1
                 Text = "Info",
                 FlatStyle = FlatStyle.Flat,
                 BackColor = Color.White,
-                ForeColor = Color.Black,
                 Font = new Font("Segoe UI", 9F, FontStyle.Bold),
                 Size = new Size(80, 32),
                 Location = new Point(270, 175),
                 Cursor = Cursors.Hand
             };
-            detailsInfoTab.FlatAppearance.BorderColor = Color.LightGray;
-
             detailsHistoryTab = new Button
             {
                 Text = "History",
                 FlatStyle = FlatStyle.Flat,
                 BackColor = Color.White,
-                ForeColor = Color.Black,
                 Font = new Font("Segoe UI", 9F),
                 Size = new Size(100, 32),
                 Location = new Point(352, 175),
                 Cursor = Cursors.Hand
             };
-            detailsHistoryTab.FlatAppearance.BorderColor = Color.LightGray;
 
             detailsInfoPage = new Panel
             {
@@ -851,7 +1375,6 @@ namespace WinFormsApp1
 
             userDetailsPanel.Visible = true;
             userDetailsPanel.BringToFront();
-
             CenterUserDetailsPanel();
         }
 
@@ -864,12 +1387,9 @@ namespace WinFormsApp1
         private void CenterUserDetailsPanel()
         {
             if (userDetailsPanel == null) return;
-
             Control parent = UserDataList.Parent ?? this;
-
             Point screenPt = parent.PointToScreen(Point.Empty);
             Point formPt = this.PointToClient(screenPt);
-
             userDetailsPanel.Left = formPt.X + (parent.ClientSize.Width - userDetailsPanel.Width) / 2;
             userDetailsPanel.Top = formPt.Y + (parent.ClientSize.Height - userDetailsPanel.Height) / 2;
         }
@@ -938,28 +1458,18 @@ namespace WinFormsApp1
                     }
 
                     string path = raw as string;
-                    if (!string.IsNullOrWhiteSpace(path))
+                    if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
                     {
-                        if (File.Exists(path))
+                        byte[] fileBytes = File.ReadAllBytes(path);
+                        using (var ms = new MemoryStream(fileBytes))
                         {
-                            byte[] fileBytes = File.ReadAllBytes(path);
-                            using (var ms = new MemoryStream(fileBytes))
-                            {
-                                var temp = Image.FromStream(ms);
-                                return new Bitmap(temp);
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("[LoadUserPhoto] Not found: " + path);
+                            var temp = Image.FromStream(ms);
+                            return new Bitmap(temp);
                         }
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine("[LoadUserPhoto] Error: " + ex.Message);
-            }
+            catch { }
 
             return MakePlaceholderAvatar();
         }
@@ -971,7 +1481,6 @@ namespace WinFormsApp1
             {
                 g.SmoothingMode = SmoothingMode.AntiAlias;
                 g.Clear(Color.FromArgb(0, 188, 212));
-
                 using (var b = new SolidBrush(Color.White))
                 {
                     g.FillEllipse(b, 40, 20, 42, 42);
@@ -988,12 +1497,12 @@ namespace WinFormsApp1
         {
             userContextMenu = new ContextMenuStrip();
 
-            var editItem = new ToolStripMenuItem("Edit Info") { Name = "cmEdit" };
-            var deleteItem = new ToolStripMenuItem("Delete Info") { Name = "cmDelete" };
-            var resetItem = new ToolStripMenuItem("Reset Password") { Name = "cmReset" };
-            var bulkSecItem = new ToolStripMenuItem("Update Section (Bulk)") { Name = "cmBulkSection" };
-            var bulkYrItem = new ToolStripMenuItem("Update Year (Bulk)") { Name = "cmBulkYear" };
-            var bulkSemItem = new ToolStripMenuItem("Update Semester (Bulk)") { Name = "cmBulkSemester" };
+            var editItem = new ToolStripMenuItem("Edit Info");
+            var deleteItem = new ToolStripMenuItem("Delete Info");
+            var resetItem = new ToolStripMenuItem("Reset Password");
+            var bulkSecItem = new ToolStripMenuItem("Update Section (Bulk)");
+            var bulkYrItem = new ToolStripMenuItem("Update Year (Bulk)");
+            var bulkSemItem = new ToolStripMenuItem("Update Semester (Bulk)");
 
             editItem.Click += ContextEdit_Click;
             deleteItem.Click += ContextDelete_Click;
@@ -1025,17 +1534,11 @@ namespace WinFormsApp1
             }
 
             var row = UserDataList.Rows[e.RowIndex];
-
-            if (UserDataList.Columns.Contains("user_id") &&
-                row.Cells["user_id"].Value != null &&
-                row.Cells["user_id"].Value != DBNull.Value)
-            {
-                contextUserId = Convert.ToInt32(row.Cells["user_id"].Value);
-            }
-            else
-            {
-                contextUserId = -1;
-            }
+            contextUserId = (UserDataList.Columns.Contains("user_id") &&
+                             row.Cells["user_id"].Value != null &&
+                             row.Cells["user_id"].Value != DBNull.Value)
+                ? Convert.ToInt32(row.Cells["user_id"].Value)
+                : -1;
         }
 
         private void ContextEdit_Click(object sender, EventArgs e)
@@ -1076,11 +1579,7 @@ namespace WinFormsApp1
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error loading user: " + ex.Message);
-                return;
-            }
+            catch (Exception ex) { MessageBox.Show("Error loading user: " + ex.Message); return; }
 
             using (var dlg = new Form())
             {
@@ -1093,7 +1592,6 @@ namespace WinFormsApp1
 
                 int top = 20;
                 Label MakeLabel(string t) => new Label { Text = t, Left = 20, Top = top, Width = 120 };
-
                 TextBox MakeBox(string val)
                 {
                     var tb = new TextBox { Left = 150, Top = top - 3, Width = 230, Text = val };
@@ -1152,10 +1650,7 @@ namespace WinFormsApp1
                     MessageBox.Show("User info updated.");
                     LoadUserData();
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error updating user: " + ex.Message);
-                }
+                catch (Exception ex) { MessageBox.Show("Error updating user: " + ex.Message); }
             }
         }
 
@@ -1163,12 +1658,8 @@ namespace WinFormsApp1
         {
             if (contextUserId < 0) { MessageBox.Show("No user selected."); return; }
 
-            var confirm = MessageBox.Show(
-                "Are you sure you want to delete this user?",
-                "Confirm Delete",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning);
-
+            var confirm = MessageBox.Show("Are you sure you want to delete this user?",
+                "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (confirm != DialogResult.Yes) return;
 
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -1177,7 +1668,6 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-
                     string[] deletes =
                     {
                         "DELETE FROM mainfolderpath      WHERE user_id = @id",
@@ -1185,46 +1675,37 @@ namespace WinFormsApp1
                         "DELETE FROM user_information    WHERE user_id = @id",
                         "DELETE FROM user_credential     WHERE user_id = @id"
                     };
-
                     foreach (var q in deletes)
                     {
                         using (var cmd = new MySqlCommand(q, conn))
                         {
                             cmd.Parameters.AddWithValue("@id", contextUserId);
-                            try { cmd.ExecuteNonQuery(); }
-                            catch { }
+                            try { cmd.ExecuteNonQuery(); } catch { }
                         }
                     }
                 }
                 MessageBox.Show("User deleted.");
                 LoadUserData();
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error deleting user: " + ex.Message);
-            }
+            catch (Exception ex) { MessageBox.Show("Error deleting user: " + ex.Message); }
         }
 
         private void ContextResetPassword_Click(object sender, EventArgs e)
         {
             if (contextUserId < 0) { MessageBox.Show("No user selected."); return; }
 
-            var confirm = MessageBox.Show(
-                "Reset this user's password to the default '12345678'?",
-                "Confirm Reset",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
-
+            var confirm = MessageBox.Show("Reset password to '12345678'?",
+                "Confirm Reset", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (confirm != DialogResult.Yes) return;
 
-            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
+                string connStr = SettingsManager.Current.GetConnectionString();
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string q = @"UPDATE user_credential SET p_word = @pw WHERE user_id = @id";
-                    using (var cmd = new MySqlCommand(q, conn))
+                    using (var cmd = new MySqlCommand(
+                        "UPDATE user_credential SET p_word = @pw WHERE user_id = @id", conn))
                     {
                         cmd.Parameters.AddWithValue("@pw", "12345678");
                         cmd.Parameters.AddWithValue("@id", contextUserId);
@@ -1233,29 +1714,20 @@ namespace WinFormsApp1
                 }
                 MessageBox.Show("Password reset to default: 12345678");
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error resetting password: " + ex.Message);
-            }
+            catch (Exception ex) { MessageBox.Show("Error resetting password: " + ex.Message); }
         }
 
         // =========================================================
         //  BULK UPDATE
         // =========================================================
         private void ContextBulkSection_Click(object sender, EventArgs e)
-        {
-            BulkUpdateField("school_section", "Section", "e.g. 4-1");
-        }
+            => BulkUpdateField("school_section", "Section", "e.g. 4-1");
 
         private void ContextBulkYear_Click(object sender, EventArgs e)
-        {
-            BulkUpdateField("school_year", "Year", "e.g. 4TH YEAR");
-        }
+            => BulkUpdateField("school_year", "Year", "e.g. 4TH YEAR");
 
         private void ContextBulkSemester_Click(object sender, EventArgs e)
-        {
-            BulkUpdateField("school_semester", "Semester", "e.g. 1ST SEMESTER / 2ND SEMESTER");
-        }
+            => BulkUpdateField("school_semester", "Semester", "e.g. 1ST SEMESTER / 2ND SEMESTER");
 
         private void BulkUpdateField(string columnName, string displayName, string hint)
         {
@@ -1266,29 +1738,22 @@ namespace WinFormsApp1
                 return;
             }
 
-            string newValue = Prompt(
-                $"Enter the new {displayName} for {ids.Count} selected user(s).\n({hint})",
-                "");
-
+            string newValue = Prompt($"Enter the new {displayName} for {ids.Count} selected user(s).\n({hint})", "");
             if (string.IsNullOrWhiteSpace(newValue)) return;
 
             newValue = newValue.Trim().ToUpper();
 
             var confirm = MessageBox.Show(
                 $"Update {displayName} of {ids.Count} user(s) to \"{newValue}\"?",
-                "Confirm Bulk Update",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
-
+                "Confirm Bulk Update", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (confirm != DialogResult.Yes) return;
 
-            string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
+                string connStr = SettingsManager.Current.GetConnectionString();
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-
                     var paramNames = new List<string>();
                     for (int i = 0; i < ids.Count; i++)
                         paramNames.Add("@id" + i);
@@ -1303,15 +1768,12 @@ namespace WinFormsApp1
                             cmd.Parameters.AddWithValue(paramNames[i], ids[i]);
 
                         int rows = cmd.ExecuteNonQuery();
-                        MessageBox.Show($"{rows} user(s) updated to {displayName} = \"{newValue}\".");
+                        MessageBox.Show($"{rows} user(s) updated.");
                     }
                 }
                 LoadUserData();
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error during bulk update: " + ex.Message);
-            }
+            catch (Exception ex) { MessageBox.Show("Error during bulk update: " + ex.Message); }
         }
 
         private List<int> GetSelectedUserIds()
@@ -1334,7 +1796,7 @@ namespace WinFormsApp1
         {
             using (var frm = new Form())
             {
-                frm.Text = "Bulk Update";
+                frm.Text = "Input";
                 frm.Width = 420;
                 frm.Height = 160;
                 frm.StartPosition = FormStartPosition.CenterParent;
@@ -1365,7 +1827,6 @@ namespace WinFormsApp1
         {
             string connStr = SettingsManager.Current.GetConnectionString();
             UserDataList.ReadOnly = true;
-
             UserDataList.MultiSelect = true;
             UserDataList.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
 
@@ -1383,9 +1844,7 @@ namespace WinFormsApp1
                                      LEFT JOIN user_information i ON u.user_id = i.user_id";
 
                     if (!string.IsNullOrEmpty(filter))
-                    {
                         query += " WHERE u.user_id LIKE @f1 OR i.lastname LIKE @f2 OR i.firstname LIKE @f3";
-                    }
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -1396,6 +1855,7 @@ namespace WinFormsApp1
                             cmd.Parameters.AddWithValue("@f2", f);
                             cmd.Parameters.AddWithValue("@f3", f);
                         }
+
                         using (var adapter = new MySqlDataAdapter(cmd))
                         {
                             var dt = new DataTable();
@@ -1413,34 +1873,22 @@ namespace WinFormsApp1
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error: " + ex.Message);
-            }
+            catch (Exception ex) { MessageBox.Show("Error: " + ex.Message); }
         }
 
         private static int TotalUsers()
         {
-            string connStr = SettingsManager.Current.GetConnectionString();
-
             try
             {
+                string connStr = SettingsManager.Current.GetConnectionString();
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = "SELECT COUNT(*) FROM user_credential";
-
-                    using (var cmd = new MySqlCommand(query, conn))
-                    {
+                    using (var cmd = new MySqlCommand("SELECT COUNT(*) FROM user_credential", conn))
                         return Convert.ToInt32(cmd.ExecuteScalar());
-                    }
                 }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-                return 0;
-            }
+            catch (Exception ex) { MessageBox.Show(ex.Message); return 0; }
         }
 
         // =========================================================
@@ -1461,21 +1909,9 @@ namespace WinFormsApp1
                 return;
             }
 
-            // ---- Semester default by role ----
-            if (ContextRoleText.Text == "Professor")
-                semester = "Null";
-            else if (ContextRoleText.Text == "Student")
-                semester = "1st Semester";
-            else
-                semester = "Null";
+            semester = ContextRoleText.Text == "Student" ? "1st Semester" : "Null";
 
-            // ---- Auto-generate username ----
-            string username = GenerateUsername(
-                LastnameText.Text,
-                FirstnameText.Text,
-                MiddlenameText.Text,
-                connStr);
-
+            string username = GenerateUsername(LastnameText.Text, FirstnameText.Text, MiddlenameText.Text, connStr);
             const string defaultPassword = "12345678";
 
             try
@@ -1530,26 +1966,18 @@ namespace WinFormsApp1
                         cmd3.ExecuteNonQuery();
                     }
 
-                    // ---- User folder on share ----
                     string rootPath = SettingsManager.Current.SaveFolder;
                     if (string.IsNullOrEmpty(rootPath))
                     {
-                        MessageBox.Show(
-                            "Root folder is not configured.\n\n" +
-                            "Please log out and set it in Login → Configuration → File Storage first.",
-                            "Root Folder Missing",
-                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        MessageBox.Show("Root folder is not configured.",
+                            "Root Folder Missing", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
 
                     if (!Directory.Exists(rootPath))
                     {
                         try { Directory.CreateDirectory(rootPath); }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show("Could not create root folder:\n" + rootPath + "\n\n" + ex.Message);
-                            return;
-                        }
+                        catch (Exception ex) { MessageBox.Show("Could not create root folder:\n" + ex.Message); return; }
                     }
 
                     string folderName = SanitizeFolderName(
@@ -1561,14 +1989,9 @@ namespace WinFormsApp1
                         if (!Directory.Exists(userFolderPath))
                             Directory.CreateDirectory(userFolderPath);
                     }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Could not create user folder:\n" + userFolderPath + "\n\n" + ex.Message);
-                        return;
-                    }
+                    catch (Exception ex) { MessageBox.Show("Could not create user folder:\n" + ex.Message); return; }
 
-                    string FolderPathQuery = "INSERT INTO mainfolderpath (user_id, FolderPath) VALUES (@user_id, @FolderPath)";
-                    using (var cmd4 = new MySqlCommand(FolderPathQuery, conn))
+                    using (var cmd4 = new MySqlCommand("INSERT INTO mainfolderpath (user_id, FolderPath) VALUES (@user_id, @FolderPath)", conn))
                     {
                         cmd4.Parameters.AddWithValue("@user_id", userId);
                         cmd4.Parameters.AddWithValue("@FolderPath", userFolderPath);
@@ -1576,7 +1999,6 @@ namespace WinFormsApp1
                     }
                 }
 
-                // ---- Send credentials to email ----
                 string email = EmailText.Text.Trim();
                 string fullName = $"{FirstnameText.Text.Trim()} {MiddlenameText.Text.Trim()} {LastnameText.Text.Trim()}".Trim();
                 string role = ContextRoleText.Text.Trim();
@@ -1584,39 +2006,18 @@ namespace WinFormsApp1
                 bool emailed = TrySendCredentialsEmail(email, fullName, username, defaultPassword, role);
 
                 if (emailed)
-                {
-                    MessageBox.Show(
-                        $"Account successfully created!\n\n" +
-                        $"Username: {username}\n" +
-                        $"Password: {defaultPassword}\n\n" +
-                        $"Credentials were emailed to:\n{email}",
-                        "Account Created",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
+                    MessageBox.Show($"Account created!\n\nUsername: {username}\nPassword: {defaultPassword}\n\nEmailed to {email}",
+                        "Account Created", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 else
-                {
-                    MessageBox.Show(
-                        $"Account successfully created, but the email could not be sent.\n\n" +
-                        $"Please give the credentials manually:\n\n" +
-                        $"Username: {username}\n" +
-                        $"Password: {defaultPassword}\n\n" +
-                        $"Email address on file: {email}",
-                        "Account Created (Email Failed)",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                }
+                    MessageBox.Show($"Account created but email failed.\n\nUsername: {username}\nPassword: {defaultPassword}",
+                        "Account Created (Email Failed)", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
                 ClearText();
                 LoadUserData();
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error: " + ex.Message);
-            }
+            catch (Exception ex) { MessageBox.Show("Error: " + ex.Message); }
         }
 
-        // =========================================================
-        // AUTO-GENERATE USERNAME
-        // =========================================================
         private string GenerateUsername(string last, string first, string middle, string connStr)
         {
             string l = string.IsNullOrWhiteSpace(last) ? "X" : last.Trim().Substring(0, 1).ToUpper();
@@ -1630,33 +2031,25 @@ namespace WinFormsApp1
             using (var conn = new MySqlConnection(connStr))
             {
                 conn.Open();
-
                 while (true)
                 {
-                    using (var cmd = new MySqlCommand(
-                        "SELECT COUNT(*) FROM user_credential WHERE username = @u", conn))
+                    using (var cmd = new MySqlCommand("SELECT COUNT(*) FROM user_credential WHERE username = @u", conn))
                     {
                         cmd.Parameters.AddWithValue("@u", candidate);
-                        int exists = Convert.ToInt32(cmd.ExecuteScalar());
-                        if (exists == 0) return candidate;
+                        if (Convert.ToInt32(cmd.ExecuteScalar()) == 0) return candidate;
                     }
-
                     candidate = $"{baseUser}-{suffix}";
                     suffix++;
                 }
             }
         }
 
-        // =========================================================
-        // SEND CREDENTIALS EMAIL
-        // =========================================================
         private bool TrySendCredentialsEmail(string toEmail, string fullName, string username, string password, string role)
         {
             try
             {
                 using (var mail = new MailMessage())
                 {
-                    // Use SettingsManager instead of hardcoded constants
                     mail.From = new MailAddress(SettingsManager.Current.SmtpFrom, SettingsManager.Current.SmtpFromName);
                     mail.To.Add(toEmail);
                     mail.Subject = "Your CDSGA Hub account credentials";
@@ -1669,16 +2062,15 @@ namespace WinFormsApp1
 
                     mail.Body = $@"
 <div style='font-family:Segoe UI,Arial,sans-serif;font-size:14px;color:#222;'>
-  <h2 style='color:#8B0000;margin:0 0 12px 0;'>CDSGA Hub</h2>
+  <h2 style='color:#8B0000;'>CDSGA Hub</h2>
   <p>Hello <b>{safeName}</b>,</p>
-  <p>Your account has been created. Below are your login credentials:</p>
+  <p>Your account has been created.</p>
   <table style='border-collapse:collapse;margin:12px 0;'>
     <tr><td style='padding:6px 12px;background:#f5f5f5;'><b>Role</b></td><td style='padding:6px 12px;'>{safeRole}</td></tr>
     <tr><td style='padding:6px 12px;background:#f5f5f5;'><b>Username</b></td><td style='padding:6px 12px;'>{safeUser}</td></tr>
     <tr><td style='padding:6px 12px;background:#f5f5f5;'><b>Password</b></td><td style='padding:6px 12px;'>{safePass}</td></tr>
   </table>
-  <p>Please log in and change your password as soon as possible.</p>
-  <p style='color:#666;font-size:12px;'>This is an automated message. Do not reply.</p>
+  <p>Please log in and change your password.</p>
 </div>";
 
                     using (var smtp = new SmtpClient(SettingsManager.Current.SmtpHost, SettingsManager.Current.SmtpPort))
@@ -1689,21 +2081,17 @@ namespace WinFormsApp1
                             SettingsManager.Current.SmtpPass);
                         smtp.DeliveryMethod = SmtpDeliveryMethod.Network;
                         smtp.Timeout = 15000;
-
                         smtp.Send(mail);
                     }
                 }
-
-                Console.WriteLine($"[CreateUser] Credentials emailed to {toEmail}");
-                return true;   // <-- Success path returns true
+                return true;
             }
             catch (Exception ex)
             {
                 Console.WriteLine("[CreateUser] Email send failed: " + ex.Message);
-                return false;  // <-- THIS IS THE MISSING LINE causing CS0161
+                return false;
             }
         }
-        // ... catch ...
 
         private void ClearText()
         {
@@ -1736,11 +2124,7 @@ namespace WinFormsApp1
                 listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 listener.Start();
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Workstation bind failed: " + ex.Message);
-                return;
-            }
+            catch (Exception ex) { Console.WriteLine("Workstation bind failed: " + ex.Message); return; }
 
             lblTotalWorkstations.Text = "0";
 
@@ -1751,10 +2135,7 @@ namespace WinFormsApp1
                     TcpClient client = await listener.AcceptTcpClientAsync();
                     string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
 
-                    Console.WriteLine("🟢 New TCP connection accepted from: " + clientIp);
-
                     Button wsButton = null;
-
                     if (this.InvokeRequired)
                         this.Invoke(new Action(() => wsButton = OnWorkStationConnected(clientIp)));
                     else
@@ -1762,14 +2143,8 @@ namespace WinFormsApp1
 
                     _ = MonitorDisconnected(client, wsButton, clientIp);
                 }
-                catch (ObjectDisposedException)
-                {
-                    break;
-                }
-                catch (SocketException)
-                {
-                    break;
-                }
+                catch (ObjectDisposedException) { break; }
+                catch (SocketException) { break; }
                 catch (Exception ex)
                 {
                     if (!isRunning) break;
@@ -1800,11 +2175,9 @@ namespace WinFormsApp1
             MainPcButton.Click += WorkstationButton_Click;
 
             MainWorkstationFLP.Controls.Add(MainPcButton);
-
             workstationButtons[clientIp] = MainPcButton;
 
             UpdateConnectedCount();
-
             return MainPcButton;
         }
 
@@ -1821,10 +2194,7 @@ namespace WinFormsApp1
                     if (bytesRead == 0) break;
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine("MonitorDisconnected exception for " + clientIp + ": " + ex.Message);
-            }
+            catch { }
             finally
             {
                 try
@@ -1857,11 +2227,6 @@ namespace WinFormsApp1
 
         private void UpdateConnectedCount()
         {
-            int connectedCount = workstationButtons.Values
-                .Count(btn => btn.BackColor == Color.LightGreen);
-
-            int disconnectedCount = workstationButtons.Count - connectedCount;
-
             lblTotalWorkstations.Text = workstationButtons.Count.ToString();
         }
 
@@ -1876,11 +2241,7 @@ namespace WinFormsApp1
                 screenListener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 screenListener.Start();
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Screen listener bind failed: " + ex.Message);
-                return;
-            }
+            catch { return; }
 
             while (isRunning)
             {
@@ -1889,19 +2250,9 @@ namespace WinFormsApp1
                     TcpClient client = await screenListener.AcceptTcpClientAsync();
                     _ = ReceiveScreenStream(client);
                 }
-                catch (ObjectDisposedException)
-                {
-                    break;
-                }
-                catch (SocketException)
-                {
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    if (!isRunning) break;
-                    Console.WriteLine("Screen accept error: " + ex.Message);
-                }
+                catch (ObjectDisposedException) { break; }
+                catch (SocketException) { break; }
+                catch { if (!isRunning) break; }
             }
         }
 
@@ -1921,16 +2272,13 @@ namespace WinFormsApp1
                     int imageLength = BitConverter.ToInt32(lengthBuffer, 0);
                     if (imageLength <= 0 || imageLength > 50 * 1024 * 1024) break;
 
-                    Console.WriteLine("Receiving frame: " + imageLength + " bytes from " + clientIp);
                     byte[] imageBuffer = new byte[imageLength];
-
                     int totalRead = await ReadExactAsync(stream, imageBuffer, imageLength);
                     if (totalRead == 0) break;
 
                     using (MemoryStream ms = new MemoryStream(imageBuffer))
                     {
                         Image frame = Image.FromStream(ms);
-
                         if (!this.IsDisposed && this.IsHandleCreated)
                         {
                             if (this.InvokeRequired)
@@ -1979,7 +2327,6 @@ namespace WinFormsApp1
         private void AddScreenViewer(string workstationId)
         {
             ScreenViewerForm viewer = new ScreenViewerForm(workstationId);
-
             screenViewers[workstationId] = viewer.GetPictureBox();
 
             viewer.FormClosed += (s, args) =>
@@ -2003,8 +2350,7 @@ namespace WinFormsApp1
 
         private void LoadServerFolder(string path, bool addToHistory = true)
         {
-            if (string.IsNullOrEmpty(path) || !Directory.Exists(path))
-                return;
+            if (string.IsNullOrEmpty(path) || !Directory.Exists(path)) return;
 
             if (addToHistory && !string.IsNullOrEmpty(currentFolder) && currentFolder != path)
                 folderHistory.Push(currentFolder);
@@ -2017,7 +2363,7 @@ namespace WinFormsApp1
             foreach (string dir in Directory.GetDirectories(path))
             {
                 imageListIcon.Images.Add(Properties.Resources.Folder);
-                ListViewItem item = new ListViewItem(Path.GetFileName(dir), imageIndex);
+                var item = new ListViewItem(Path.GetFileName(dir), imageIndex);
                 item.Tag = dir;
                 lvServerFolder.Items.Add(item);
                 imageIndex++;
@@ -2025,10 +2371,8 @@ namespace WinFormsApp1
 
             foreach (string file in Directory.GetFiles(path))
             {
-                Icon fileIcon = Icon.ExtractAssociatedIcon(file);
                 imageListIcon.Images.Add(Properties.Resources.Item);
-
-                ListViewItem item = new ListViewItem(Path.GetFileName(file), imageIndex);
+                var item = new ListViewItem(Path.GetFileName(file), imageIndex);
                 item.Tag = file;
                 lvServerFolder.Items.Add(item);
                 imageIndex++;
@@ -2049,7 +2393,6 @@ namespace WinFormsApp1
         private void doubleClick()
         {
             if (lvServerFolder.SelectedItems.Count == 0) return;
-
             string path = lvServerFolder.SelectedItems[0].Tag.ToString();
 
             if (Directory.Exists(path))
@@ -2063,12 +2406,8 @@ namespace WinFormsApp1
         // =========================================================
         private void btnLogout_Click(object sender, EventArgs e)
         {
-            var result = MessageBox.Show(
-                "Are you sure you want to log out?",
-                "Logout Confirmation",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
-
+            var result = MessageBox.Show("Log out?", "Logout Confirmation",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result != DialogResult.Yes) return;
 
             isRunning = false;
@@ -2115,6 +2454,123 @@ namespace WinFormsApp1
             authPhotoListener = null;
 
             base.OnFormClosing(e);
+        }
+
+        private void InitializeFileManagementButtons()
+        {
+            try
+            {
+                // Add a Delete button to the File Management panel
+                btnDeleteFile = new Guna.UI2.WinForms.Guna2Button
+                {
+                    Text = "🗑",
+                    Size = new Size(100, 42),
+                    Location = new Point(1150, 85),
+                    Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                    BorderRadius = 10,
+                    FillColor = Color.Maroon,
+                    ForeColor = Color.White,
+                    Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
+                    Cursor = Cursors.Hand
+                };
+                btnDeleteFile.HoverState.FillColor = Color.FromArgb(160, 40, 40);
+                btnDeleteFile.Click += BtnDeleteFile_Click;
+
+                pnlFileManagement.Controls.Add(btnDeleteFile);
+                btnDeleteFile.BringToFront();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("InitializeFileManagementButtons error: " + ex.Message);
+            }
+        }
+
+        private void BtnDeleteFile_Click(object sender, EventArgs e)
+        {
+            if (lvServerFolder.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("Please select a file or folder first.",
+                    "Nothing Selected", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            string path = lvServerFolder.SelectedItems[0].Tag?.ToString();
+            if (string.IsNullOrEmpty(path))
+            {
+                MessageBox.Show("Invalid selection.");
+                return;
+            }
+
+            bool isFolder = Directory.Exists(path);
+            bool isFile = File.Exists(path);
+
+            if (!isFolder && !isFile)
+            {
+                MessageBox.Show("The selected item no longer exists.");
+                return;
+            }
+
+            // Prevent deleting the root folder
+            if (isFolder && !string.IsNullOrEmpty(currentFolder) &&
+                string.Equals(Path.GetFullPath(path).TrimEnd('\\'),
+                              Path.GetFullPath(SettingsManager.Current.SaveFolder).TrimEnd('\\'),
+                              StringComparison.OrdinalIgnoreCase))
+            {
+                MessageBox.Show("You cannot delete the root folder.",
+                    "Not Allowed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string itemName = Path.GetFileName(path);
+
+            string message = isFolder
+                ? $"Delete folder '{itemName}' and ALL of its contents?\n\nThis cannot be undone."
+                : $"Delete file '{itemName}'?\n\nThis cannot be undone.";
+
+            var confirm = MessageBox.Show(message, "Confirm Delete",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+            if (confirm != DialogResult.Yes) return;
+
+            try
+            {
+                if (isFile)
+                {
+                    var attrs = File.GetAttributes(path);
+                    if ((attrs & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+                        File.SetAttributes(path, attrs & ~FileAttributes.ReadOnly);
+                }
+
+                if (isFolder)
+                    Directory.Delete(path, recursive: true);
+                else
+                    File.Delete(path);
+
+                MessageBox.Show("Deleted successfully.",
+                    "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // Refresh the current folder view
+                if (!string.IsNullOrEmpty(currentFolder) && Directory.Exists(currentFolder))
+                    LoadServerFolder(currentFolder, addToHistory: false);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                MessageBox.Show(
+                    "Access denied.\n\nThe file/folder may be open in another program, " +
+                    "or you don't have permission.",
+                    "Delete Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (IOException ioEx)
+            {
+                MessageBox.Show(
+                    "The file is in use or locked.\n\nDetails: " + ioEx.Message,
+                    "Delete Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error deleting: " + ex.Message,
+                    "Delete Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }
