@@ -2673,17 +2673,17 @@ namespace WinFormsApp1
 
                     // ---- ACTIVITIES (sa mga section na sinalihan ng student) ----
                     const string qAct = @"
-                        SELECT pa.title, pa.activity_subject, pa.due_date,
-                               EXISTS (SELECT 1 FROM submitted_activity sa
-                                       WHERE sa.user_id = @user_id
-                                         AND sa.prof_id = pa.professor_id
-                                         AND sa.title   = pa.title
-                                         AND sa.section = pa.section) AS submitted
-                        FROM professor_activity pa
-                        INNER JOIN student_class sc
-                            ON  sc.user_id      = @user_id
-                            AND sc.professor_id = pa.professor_id
-                            AND LOWER(TRIM(sc.section)) = LOWER(TRIM(pa.section))";
+                SELECT pa.activity_id, pa.title, pa.activity_subject, pa.due_date,
+                       EXISTS (SELECT 1 FROM submitted_activity sa
+                               WHERE sa.user_id = @user_id
+                                 AND sa.prof_id = pa.professor_id
+                                 AND sa.title   = pa.title
+                                 AND sa.section = pa.section) AS submitted
+                FROM professor_activity pa
+                INNER JOIN student_class sc
+                    ON  sc.user_id      = @user_id
+                    AND sc.professor_id = pa.professor_id
+                    AND LOWER(TRIM(sc.section)) = LOWER(TRIM(pa.section))";
 
                     using (var cmd = new MySqlCommand(qAct, conn))
                     {
@@ -2704,6 +2704,7 @@ namespace WinFormsApp1
 
                                 list.Add(new CalEvent
                                 {
+                                    Id = Convert.ToInt32(r["activity_id"]),
                                     Date = due.Date,
                                     Kind = "Activity",
                                     Text = string.IsNullOrEmpty(subject) ? title : title + " (" + subject + ")",
@@ -2715,12 +2716,12 @@ namespace WinFormsApp1
 
                     // ---- QUIZZES / EXAMS ----
                     const string qQuiz = @"
-                        SELECT q.quiz_title, q.subject, q.assessment_type, q.created_at,
-                               EXISTS (SELECT 1 FROM quiz_attempts qa
-                                       WHERE qa.quiz_id = q.quiz_id
-                                         AND qa.user_id = @user_id
-                                         AND qa.status  = 'SUBMITTED') AS submitted
-                        FROM quizzes q";
+                SELECT q.quiz_id, q.quiz_title, q.subject, q.assessment_type, q.created_at,
+                       EXISTS (SELECT 1 FROM quiz_attempts qa
+                               WHERE qa.quiz_id = q.quiz_id
+                                 AND qa.user_id = @user_id
+                                 AND qa.status  = 'SUBMITTED') AS submitted
+                FROM quizzes q";
 
                     using (var cmd = new MySqlCommand(qQuiz, conn))
                     {
@@ -2736,6 +2737,7 @@ namespace WinFormsApp1
 
                                 list.Add(new CalEvent
                                 {
+                                    Id = Convert.ToInt32(r["quiz_id"]),
                                     Date = Convert.ToDateTime(r["created_at"]).Date,
                                     Kind = isExam ? "Exam" : "Quiz",
                                     Text = string.IsNullOrEmpty(subject) ? title : subject + " " + title,
@@ -2760,13 +2762,24 @@ namespace WinFormsApp1
             {
                 expandedCal = new ExpandedCalendar();
                 expandedCal.CloseRequested += (s, a) => expandedCal.Visible = false;
+
+                // Pag may na-click na event sa listahan
+                expandedCal.EventOpened += (s, ev) =>
+                {
+                    expandedCal.Visible = false;   // isara muna ang flyout
+
+                    BeginInvoke(new Action(() =>
+                    {
+                        if (ev.Kind == "Activity")
+                            InitializeHomeActivityButton(ev.Id);
+                        else if (ev.Kind == "Quiz" || ev.Kind == "Exam")
+                            OpenAssessment(ev.Id, ev.Text, ev.Kind.ToLower());
+                    }));
+                };
             }
 
             expandedCal.SetEvents(LoadCalendarEvents());   // laging bago ang data pag binuksan
             expandedCal.ShowOn(pnlHome);
         }
-
-
-
     }
 }

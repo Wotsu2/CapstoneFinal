@@ -10,6 +10,7 @@ using Timer = System.Windows.Forms.Timer;
 // Isang item sa calendar
 public class CalEvent
 {
+    public int Id { get; set; }        // activity_id o quiz_id
     public DateTime Date { get; set; }
     public string Kind { get; set; }   // "Exam", "Quiz", "Activity", "Reminder"
     public string Text { get; set; }
@@ -42,7 +43,9 @@ public class ExpandedCalendar : UserControl
 
     private Bitmap backdrop;
 
+   
     public event EventHandler CloseRequested;
+    public event EventHandler<CalEvent> EventOpened;   // <-- bago
 
     public ExpandedCalendar()
     {
@@ -332,6 +335,14 @@ public class ExpandedCalendar : UserControl
 
     private Control MakeEventRow(CalEvent ev)
     {
+        // Clickable ang Activity, at ang Quiz/Exam na hindi pa na-submit
+        bool clickable = ev.Kind == "Activity" ||
+                         ((ev.Kind == "Quiz" || ev.Kind == "Exam") && !ev.Done);
+
+        var normalFont = new Font("Segoe UI", 9.5f);
+        var hoverFont = new Font("Segoe UI", 9.5f, FontStyle.Underline);
+        Color normalColor = ev.Done ? Color.FromArgb(150, 150, 150) : Color.White;
+
         var row = new FlowLayoutPanel
         {
             FlowDirection = FlowDirection.LeftToRight,
@@ -339,30 +350,46 @@ public class ExpandedCalendar : UserControl
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
             BackColor = Color.Transparent,
-            Margin = new Padding(0, 0, 0, 8)
+            Margin = new Padding(0, 0, 0, 8),
+            Cursor = clickable ? Cursors.Hand : Cursors.Default
         };
 
-        row.Controls.Add(new Label
+        var dot = new Label
         {
             Text = "●",
             AutoSize = true,
             ForeColor = ColorFor(ev.Kind),
             BackColor = Color.Transparent,
             Font = new Font("Segoe UI", 9f),
-            Margin = new Padding(0, 0, 4, 0)
-        });
+            Margin = new Padding(0, 0, 4, 0),
+            Cursor = row.Cursor
+        };
 
-        row.Controls.Add(new Label
+        var text = new Label
         {
             Text = (ev.Done ? "✔ " : "") + ev.Kind + " – " + ev.Text,
             AutoSize = true,
             MaximumSize = new Size(255, 0),
-            ForeColor = ev.Done ? Color.FromArgb(150, 150, 150) : Color.White,
+            ForeColor = normalColor,
             BackColor = Color.Transparent,
-            Font = new Font("Segoe UI", 9.5f),
-            Margin = new Padding(0)
-        });
+            Font = normalFont,
+            Margin = new Padding(0),
+            Cursor = row.Cursor
+        };
 
+        if (clickable)
+        {
+            EventHandler open = (s, e) => EventOpened?.Invoke(this, ev);
+            row.Click += open;
+            dot.Click += open;
+            text.Click += open;
+
+            text.MouseEnter += (s, e) => { text.Font = hoverFont; text.ForeColor = Color.FromArgb(120, 180, 240); };
+            text.MouseLeave += (s, e) => { text.Font = normalFont; text.ForeColor = normalColor; };
+        }
+
+        row.Controls.Add(dot);
+        row.Controls.Add(text);
         return row;
     }
 
