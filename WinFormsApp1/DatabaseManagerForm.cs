@@ -181,6 +181,7 @@ namespace WinFormsApp1
             dgvDatabase.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(252, 248, 245);
 
             dgvDatabase.CellDoubleClick += DgvDatabase_CellDoubleClick;
+            dgvDatabase.DataError += DgvDatabase_DataError;
 
             gridHolder.Controls.Add(dgvDatabase);
 
@@ -319,11 +320,52 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    using (var cmd = new MySqlCommand($"SELECT * FROM `{tableName}` LIMIT 500", conn))
+
+                    // Build a SELECT list that only includes non-binary columns
+                    var columnsToLoad = new List<string>();
+                    string schemaQuery = @"
+                SELECT COLUMN_NAME, DATA_TYPE
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE()
+                  AND TABLE_NAME = @table
+                ORDER BY ORDINAL_POSITION";
+
+                    using (var cmd = new MySqlCommand(schemaQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@table", tableName);
+                        using (var r = cmd.ExecuteReader())
+                        {
+                            while (r.Read())
+                            {
+                                string colName = r["COLUMN_NAME"].ToString();
+                                string dataType = r["DATA_TYPE"].ToString().ToLower();
+
+                                // Skip binary / blob columns — they crash the grid
+                                if (dataType == "blob" || dataType == "mediumblob" ||
+                                    dataType == "longblob" || dataType == "tinyblob" ||
+                                    dataType == "binary" || dataType == "varbinary")
+                                    continue;
+
+                                columnsToLoad.Add($"`{colName}`");
+                            }
+                        }
+                    }
+
+                    string selectList = columnsToLoad.Count > 0
+                        ? string.Join(", ", columnsToLoad)
+                        : "*";
+
+                    using (var cmd = new MySqlCommand(
+                        $"SELECT {selectList} FROM `{tableName}` LIMIT 500", conn))
                     using (var adapter = new MySqlDataAdapter(cmd))
                     {
                         var dt = new DataTable();
                         adapter.Fill(dt);
+
+                        // Detach any previous handler
+                        dgvDatabase.DataError -= DgvDatabase_DataError;
+                        dgvDatabase.DataError += DgvDatabase_DataError;
+
                         dgvDatabase.DataSource = dt;
 
                         lblDbStatus.Text = $"{dt.Rows.Count} row(s) loaded from `{tableName}`.";
@@ -335,6 +377,13 @@ namespace WinFormsApp1
                 MessageBox.Show("Failed to load table:\n" + ex.Message,
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void DgvDatabase_DataError(object sender, DataGridViewDataErrorEventArgs e)
+        {
+            // Silently ignore grid rendering errors (e.g. binary columns)
+            e.ThrowException = false;
+            e.Cancel = true;
         }
 
         // =========================================================

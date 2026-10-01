@@ -77,7 +77,7 @@ namespace WinFormsApp1
         private TextBox txtAnnSection;
         private Label lblAnnSectionLabel;
         private FlowLayoutPanel flpAnnouncements;
-
+        private Guna.UI2.WinForms.Guna2Button btnDeleteFile;
         public AdminForm()
         {
             InitializeComponent();
@@ -114,6 +114,7 @@ namespace WinFormsApp1
 
             // Add the Announcements button to the nav strip
             InitializeAnnouncementsNavButton();
+            InitializeFileManagementButtons();
         }
 
         // =========================================================
@@ -167,7 +168,7 @@ namespace WinFormsApp1
                     FillColor = Color.FromArgb(234, 234, 234),
                     ForeColor = Color.FromArgb(123, 15, 23),
                     Font = new Font("Segoe UI", 13F),
-                    Image = Properties.Resources.Vector,
+                    Image = Properties.Resources.Announcement,
                     ImageSize = new Size(28, 28),
                     Animated = true,
                     Name = "btnAnnouncementNav",
@@ -189,7 +190,7 @@ namespace WinFormsApp1
                     FillColor = Color.FromArgb(234, 234, 234),
                     ForeColor = Color.FromArgb(123, 15, 23),
                     Font = new Font("Segoe UI", 13F),
-                    Image = Properties.Resources.Vector,
+                    Image = Properties.Resources.database,
                     ImageSize = new Size(28, 28),
                     Animated = true,
                     Name = "btnDatabaseNav",
@@ -2453,6 +2454,123 @@ namespace WinFormsApp1
             authPhotoListener = null;
 
             base.OnFormClosing(e);
+        }
+
+        private void InitializeFileManagementButtons()
+        {
+            try
+            {
+                // Add a Delete button to the File Management panel
+                btnDeleteFile = new Guna.UI2.WinForms.Guna2Button
+                {
+                    Text = "🗑",
+                    Size = new Size(100, 42),
+                    Location = new Point(1150, 85),
+                    Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                    BorderRadius = 10,
+                    FillColor = Color.Maroon,
+                    ForeColor = Color.White,
+                    Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
+                    Cursor = Cursors.Hand
+                };
+                btnDeleteFile.HoverState.FillColor = Color.FromArgb(160, 40, 40);
+                btnDeleteFile.Click += BtnDeleteFile_Click;
+
+                pnlFileManagement.Controls.Add(btnDeleteFile);
+                btnDeleteFile.BringToFront();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("InitializeFileManagementButtons error: " + ex.Message);
+            }
+        }
+
+        private void BtnDeleteFile_Click(object sender, EventArgs e)
+        {
+            if (lvServerFolder.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("Please select a file or folder first.",
+                    "Nothing Selected", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            string path = lvServerFolder.SelectedItems[0].Tag?.ToString();
+            if (string.IsNullOrEmpty(path))
+            {
+                MessageBox.Show("Invalid selection.");
+                return;
+            }
+
+            bool isFolder = Directory.Exists(path);
+            bool isFile = File.Exists(path);
+
+            if (!isFolder && !isFile)
+            {
+                MessageBox.Show("The selected item no longer exists.");
+                return;
+            }
+
+            // Prevent deleting the root folder
+            if (isFolder && !string.IsNullOrEmpty(currentFolder) &&
+                string.Equals(Path.GetFullPath(path).TrimEnd('\\'),
+                              Path.GetFullPath(SettingsManager.Current.SaveFolder).TrimEnd('\\'),
+                              StringComparison.OrdinalIgnoreCase))
+            {
+                MessageBox.Show("You cannot delete the root folder.",
+                    "Not Allowed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string itemName = Path.GetFileName(path);
+
+            string message = isFolder
+                ? $"Delete folder '{itemName}' and ALL of its contents?\n\nThis cannot be undone."
+                : $"Delete file '{itemName}'?\n\nThis cannot be undone.";
+
+            var confirm = MessageBox.Show(message, "Confirm Delete",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+            if (confirm != DialogResult.Yes) return;
+
+            try
+            {
+                if (isFile)
+                {
+                    var attrs = File.GetAttributes(path);
+                    if ((attrs & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+                        File.SetAttributes(path, attrs & ~FileAttributes.ReadOnly);
+                }
+
+                if (isFolder)
+                    Directory.Delete(path, recursive: true);
+                else
+                    File.Delete(path);
+
+                MessageBox.Show("Deleted successfully.",
+                    "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // Refresh the current folder view
+                if (!string.IsNullOrEmpty(currentFolder) && Directory.Exists(currentFolder))
+                    LoadServerFolder(currentFolder, addToHistory: false);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                MessageBox.Show(
+                    "Access denied.\n\nThe file/folder may be open in another program, " +
+                    "or you don't have permission.",
+                    "Delete Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (IOException ioEx)
+            {
+                MessageBox.Show(
+                    "The file is in use or locked.\n\nDetails: " + ioEx.Message,
+                    "Delete Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error deleting: " + ex.Message,
+                    "Delete Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }
