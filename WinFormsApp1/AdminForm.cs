@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Text;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -78,6 +79,7 @@ namespace WinFormsApp1
         private Label lblAnnSectionLabel;
         private FlowLayoutPanel flpAnnouncements;
         private Guna.UI2.WinForms.Guna2Button btnDeleteFile;
+
         public AdminForm()
         {
             InitializeComponent();
@@ -126,7 +128,6 @@ namespace WinFormsApp1
             {
                 if (guna2Panel2 == null) return;
 
-                // 6 buttons across 1345px → ~224px each
                 int newWidth = 224;
                 int x = 0;
 
@@ -158,7 +159,6 @@ namespace WinFormsApp1
                     x += newWidth;
                 }
 
-                // Announcements button (5th)
                 btnAnnouncementNav = new Guna.UI2.WinForms.Guna2Button
                 {
                     Text = "Announcements",
@@ -180,7 +180,6 @@ namespace WinFormsApp1
                 btnAnnouncementNav.BringToFront();
                 x += newWidth;
 
-                // Database button (6th)
                 btnDatabaseNav = new Guna.UI2.WinForms.Guna2Button
                 {
                     Text = "Database",
@@ -216,8 +215,6 @@ namespace WinFormsApp1
         // =========================================================
         private void InitializeAnnouncementsNavButton()
         {
-            // Actual button is created in InitializeDatabaseNavButton()
-            // This method only builds the Announcements page panel.
             BuildAnnouncementsPanel();
         }
 
@@ -263,7 +260,6 @@ namespace WinFormsApp1
             };
             this.Controls.Add(pnlAnnouncements);
 
-            // ---------- LEFT: Compose ----------
             var leftCard = new Guna.UI2.WinForms.Guna2Panel
             {
                 Location = new Point(20, 20),
@@ -285,7 +281,6 @@ namespace WinFormsApp1
             };
             leftCard.Controls.Add(lblCompose);
 
-            // Title
             leftCard.Controls.Add(new Label
             {
                 Text = "Title:",
@@ -302,7 +297,6 @@ namespace WinFormsApp1
             };
             leftCard.Controls.Add(txtAnnTitle);
 
-            // Body
             leftCard.Controls.Add(new Label
             {
                 Text = "Message:",
@@ -321,7 +315,6 @@ namespace WinFormsApp1
             };
             leftCard.Controls.Add(txtAnnBody);
 
-            // Priority
             leftCard.Controls.Add(new Label
             {
                 Text = "Priority:",
@@ -340,7 +333,6 @@ namespace WinFormsApp1
             cmbAnnPriority.SelectedIndex = 0;
             leftCard.Controls.Add(cmbAnnPriority);
 
-            // Target
             leftCard.Controls.Add(new Label
             {
                 Text = "Target audience:",
@@ -365,7 +357,6 @@ namespace WinFormsApp1
             };
             leftCard.Controls.Add(cmbAnnTarget);
 
-            // Section filter
             lblAnnSectionLabel = new Label
             {
                 Text = "Section (e.g. 4-1):",
@@ -386,7 +377,6 @@ namespace WinFormsApp1
             };
             leftCard.Controls.Add(txtAnnSection);
 
-            // Post button
             var btnPost = new Guna.UI2.WinForms.Guna2Button
             {
                 Text = "Post Announcement",
@@ -401,7 +391,6 @@ namespace WinFormsApp1
             btnPost.Click += (s, e) => PostAnnouncement();
             leftCard.Controls.Add(btnPost);
 
-            // ---------- RIGHT: Recent ----------
             var rightCard = new Guna.UI2.WinForms.Guna2Panel
             {
                 Location = new Point(540, 20),
@@ -561,7 +550,7 @@ namespace WinFormsApp1
                 }
             }
             catch { }
-            return 1; // fallback
+            return 1;
         }
 
         private void LoadAnnouncements()
@@ -661,7 +650,6 @@ namespace WinFormsApp1
                 using (var border = new Pen(Color.FromArgb(230, 225, 225), 1))
                     g.DrawRectangle(border, 0, 0, card.Width - 1, card.Height - 1);
 
-                // Left accent strip
                 using (var brush = new SolidBrush(accent))
                     g.FillRectangle(brush, 0, 0, 6, card.Height);
             };
@@ -702,7 +690,7 @@ namespace WinFormsApp1
             };
             card.Controls.Add(lblBody);
 
-            var btnDelete = new Guna.UI2.WinForms.Guna2Button
+            var btnDeleteAnn = new Guna.UI2.WinForms.Guna2Button
             {
                 Text = "🗑",
                 Size = new Size(36, 36),
@@ -713,8 +701,8 @@ namespace WinFormsApp1
                 Font = new Font("Segoe UI Emoji", 12F, FontStyle.Bold),
                 Cursor = Cursors.Hand
             };
-            btnDelete.HoverState.FillColor = Color.FromArgb(255, 240, 240);
-            btnDelete.Click += (s, e) =>
+            btnDeleteAnn.HoverState.FillColor = Color.FromArgb(255, 240, 240);
+            btnDeleteAnn.Click += (s, e) =>
             {
                 var confirm = CustomMessageBox.Show(
                     $"Delete announcement \"{title}\"?",
@@ -743,7 +731,7 @@ namespace WinFormsApp1
                     Console.WriteLine("Delete announcement error: " + ex.Message);
                 }
             };
-            card.Controls.Add(btnDelete);
+            card.Controls.Add(btnDeleteAnn);
 
             return card;
         }
@@ -2340,13 +2328,19 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        //  SERVER FOLDER MANAGEMENT
+        //  SERVER FOLDER MANAGEMENT  ← MODIFIED SECTION
         // =========================================================
         private void lsServerFolderSetup()
         {
             lvServerFolder.View = View.LargeIcon;
-            lvServerFolder.LargeImageList = imageListIcon;
             lvServerFolder.MultiSelect = false;
+
+            // Configure the image list to hold our custom-drawn icons
+            imageListIcon.ImageSize = new Size(48, 48);
+            imageListIcon.ColorDepth = ColorDepth.Depth32Bit;
+            imageListIcon.Images.Clear();
+
+            lvServerFolder.LargeImageList = imageListIcon;
         }
 
         private void LoadServerFolder(string path, bool addToHistory = true)
@@ -2359,20 +2353,32 @@ namespace WinFormsApp1
             currentFolder = path;
             lvServerFolder.Items.Clear();
             imageListIcon.Images.Clear();
+
+            // Make sure ImageSize is set every time
+            if (imageListIcon.ImageSize.Width != 48 || imageListIcon.ImageSize.Height != 48)
+                imageListIcon.ImageSize = new Size(48, 48);
+
             int imageIndex = 0;
 
+            // ---------- Folders ----------
             foreach (string dir in Directory.GetDirectories(path))
             {
-                imageListIcon.Images.Add(Properties.Resources.Folder);
+                Image folderImg = CreateFolderIcon(48, 48);
+                imageListIcon.Images.Add(folderImg);
+
                 var item = new ListViewItem(Path.GetFileName(dir), imageIndex);
                 item.Tag = dir;
                 lvServerFolder.Items.Add(item);
                 imageIndex++;
             }
 
+            // ---------- Files ----------
             foreach (string file in Directory.GetFiles(path))
             {
-                imageListIcon.Images.Add(Properties.Resources.Item);
+                string ext = Path.GetExtension(file);
+                Image fileImg = CreateFileIcon(ext, 48, 48);
+                imageListIcon.Images.Add(fileImg);
+
                 var item = new ListViewItem(Path.GetFileName(file), imageIndex);
                 item.Tag = file;
                 lvServerFolder.Items.Add(item);
@@ -2380,6 +2386,236 @@ namespace WinFormsApp1
             }
 
             BtnBack.Enabled = folderHistory.Count > 0;
+        }
+
+        // =========================================================
+        //  CUSTOM ICON DRAWING
+        // =========================================================
+        private Image CreateFolderIcon(int width, int height)
+        {
+            var bmp = new Bitmap(width, height);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.Clear(Color.Transparent);
+
+                int pad = 3;
+                int tabW = (int)(width * 0.42);
+                int tabH = (int)(height * 0.15);
+                int bodyY = (int)(height * 0.30);
+                int bodyH = (int)(height * 0.58);
+                int bodyW = width - pad * 2;
+
+                // Folder tab (behind)
+                var tabRect = new Rectangle(pad, bodyY - tabH, tabW, tabH + 6);
+                using (var tabBrush = new LinearGradientBrush(
+                    tabRect,
+                    Color.FromArgb(255, 220, 140),
+                    Color.FromArgb(255, 190, 80),
+                    LinearGradientMode.Vertical))
+                {
+                    using (var tabPath = GetRoundedRect(tabRect, 3))
+                        g.FillPath(tabBrush, tabPath);
+                }
+
+                // Folder body
+                var bodyRect = new Rectangle(pad, bodyY, bodyW, bodyH);
+                using (var bodyPath = GetRoundedRect(bodyRect, 4))
+                {
+                    // Drop shadow
+                    using (var shBrush = new SolidBrush(Color.FromArgb(50, 0, 0, 0)))
+                    {
+                        var shRect = new Rectangle(bodyRect.X + 2, bodyRect.Y + 2, bodyRect.Width, bodyRect.Height);
+                        using (var shPath = GetRoundedRect(shRect, 4))
+                            g.FillPath(shBrush, shPath);
+                    }
+
+                    using (var bodyBrush = new LinearGradientBrush(
+                        bodyRect,
+                        Color.FromArgb(255, 232, 160),
+                        Color.FromArgb(240, 175, 55),
+                        LinearGradientMode.Vertical))
+                    {
+                        g.FillPath(bodyBrush, bodyPath);
+                    }
+
+                    using (var pen = new Pen(Color.FromArgb(200, 130, 30), 1))
+                        g.DrawPath(pen, bodyPath);
+                }
+
+                // Top highlight
+                using (var hl = new SolidBrush(Color.FromArgb(110, 255, 255, 255)))
+                {
+                    var hlRect = new Rectangle(bodyRect.X + 3, bodyRect.Y + 2, bodyRect.Width - 6, 3);
+                    g.FillRectangle(hl, hlRect);
+                }
+
+                // Bottom shadow
+                using (var sh = new SolidBrush(Color.FromArgb(35, 0, 0, 0)))
+                {
+                    g.FillRectangle(sh, bodyRect.X + 4, bodyRect.Bottom - 3, bodyRect.Width - 8, 2);
+                }
+            }
+            return bmp;
+        }
+
+        private Image CreateFileIcon(string extension, int width, int height)
+        {
+            string ext = (extension ?? "").ToLowerInvariant().TrimStart('.');
+
+            // Determine badge text + color
+            string badge;
+            Color badgeColor;
+
+            switch (ext)
+            {
+                case "doc":
+                case "docx":
+                    badge = "W"; badgeColor = Color.FromArgb(43, 87, 154); break;
+                case "pdf":
+                    badge = "PDF"; badgeColor = Color.FromArgb(200, 40, 40); break;
+                case "xls":
+                case "xlsx":
+                case "csv":
+                    badge = "X"; badgeColor = Color.FromArgb(33, 115, 70); break;
+                case "ppt":
+                case "pptx":
+                    badge = "P"; badgeColor = Color.FromArgb(208, 82, 30); break;
+                case "jpg":
+                case "jpeg":
+                case "png":
+                case "gif":
+                case "bmp":
+                case "webp":
+                    badge = "IMG"; badgeColor = Color.FromArgb(150, 60, 150); break;
+                case "zip":
+                case "rar":
+                case "7z":
+                    badge = "ZIP"; badgeColor = Color.FromArgb(120, 90, 40); break;
+                case "cs":
+                    badge = "C#"; badgeColor = Color.FromArgb(80, 40, 130); break;
+                case "sql":
+                    badge = "SQL"; badgeColor = Color.FromArgb(200, 100, 40); break;
+                case "html":
+                case "htm":
+                    badge = "<>"; badgeColor = Color.FromArgb(200, 80, 40); break;
+                case "exe":
+                    badge = "APP"; badgeColor = Color.FromArgb(60, 60, 60); break;
+                default:
+                    badge = "FILE"; badgeColor = Color.FromArgb(100, 100, 110); break;
+            }
+
+            var bmp = new Bitmap(width, height);
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+                g.Clear(Color.Transparent);
+
+                // Document geometry
+                int padX = (int)(width * 0.20);
+                int padY = (int)(height * 0.08);
+                int docW = width - padX * 2;
+                int docH = height - padY * 2;
+                int fold = (int)(docW * 0.34);
+
+                // Drop shadow
+                using (var shBrush = new SolidBrush(Color.FromArgb(50, 0, 0, 0)))
+                    g.FillRectangle(shBrush, padX + 2, padY + 2, docW, docH);
+
+                // Document path (folded top-right corner)
+                using (var docPath = new GraphicsPath())
+                {
+                    docPath.AddLine(padX, padY, padX + docW - fold, padY);
+                    docPath.AddLine(padX + docW - fold, padY, padX + docW, padY + fold);
+                    docPath.AddLine(padX + docW, padY + fold, padX + docW, padY + docH);
+                    docPath.AddLine(padX + docW, padY + docH, padX, padY + docH);
+                    docPath.CloseFigure();
+
+                    using (var docBrush = new LinearGradientBrush(
+                        new Rectangle(padX, padY, docW, docH),
+                        Color.White,
+                        Color.FromArgb(238, 240, 245),
+                        LinearGradientMode.Vertical))
+                    {
+                        g.FillPath(docBrush, docPath);
+                    }
+                    using (var pen = new Pen(Color.FromArgb(170, 175, 185), 1))
+                    {
+                        g.DrawPath(pen, docPath);
+                    }
+                }
+
+                // Fold triangle
+                using (var foldPath = new GraphicsPath())
+                {
+                    foldPath.AddLine(padX + docW - fold, padY,
+                                     padX + docW - fold, padY + fold);
+                    foldPath.AddLine(padX + docW - fold, padY + fold,
+                                     padX + docW, padY + fold);
+                    foldPath.CloseFigure();
+
+                    using (var foldBrush = new SolidBrush(Color.FromArgb(214, 218, 226)))
+                        g.FillPath(foldBrush, foldPath);
+                    using (var foldPen = new Pen(Color.FromArgb(170, 175, 185), 1))
+                        g.DrawPath(foldPen, foldPath);
+                }
+
+                // Text lines (below fold)
+                using (var linePen = new Pen(Color.FromArgb(195, 200, 210), 1))
+                {
+                    int lineY = padY + fold + 5;
+                    for (int i = 0; i < 3; i++)
+                    {
+                        int lineW = (int)(docW * (0.72 - i * 0.12));
+                        if (lineW < 4) lineW = 4;
+                        g.DrawLine(linePen, padX + 4, lineY, padX + 4 + lineW, lineY);
+                        lineY += 4;
+                    }
+                }
+
+                // Badge strip at bottom
+                int badgeH = (int)(docH * 0.34);
+                int badgeY = padY + docH - badgeH;
+                var badgeRect = new Rectangle(padX, badgeY, docW, badgeH);
+
+                using (var badgeBrush = new SolidBrush(badgeColor))
+                    g.FillRectangle(badgeBrush, badgeRect);
+
+                // Slight dark line above badge
+                using (var edgePen = new Pen(Color.FromArgb(80, 0, 0, 0), 1))
+                    g.DrawLine(edgePen, badgeRect.Left, badgeRect.Top, badgeRect.Right, badgeRect.Top);
+
+                // Badge text
+                float fontSize = Math.Max(7f, badgeH * 0.58f);
+                using (var font = new Font("Segoe UI", fontSize, FontStyle.Bold, GraphicsUnit.Pixel))
+                using (var sf = new StringFormat
+                {
+                    Alignment = StringAlignment.Center,
+                    LineAlignment = StringAlignment.Center
+                })
+                using (var textBrush = new SolidBrush(Color.White))
+                {
+                    g.DrawString(badge, font, textBrush, badgeRect, sf);
+                }
+            }
+            return bmp;
+        }
+
+        private GraphicsPath GetRoundedRect(Rectangle rect, int radius)
+        {
+            var path = new GraphicsPath();
+            int d = radius * 2;
+
+            if (d > rect.Width) d = rect.Width;
+            if (d > rect.Height) d = rect.Height;
+
+            path.AddArc(rect.X, rect.Y, d, d, 180, 90);
+            path.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
+            path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90);
+            path.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
+            path.CloseFigure();
+            return path;
         }
 
         private void btnBack()
@@ -2461,7 +2697,6 @@ namespace WinFormsApp1
         {
             try
             {
-                // Add a Delete button to the File Management panel
                 btnDeleteFile = new Guna.UI2.WinForms.Guna2Button
                 {
                     Text = "🗑",
@@ -2511,7 +2746,6 @@ namespace WinFormsApp1
                 return;
             }
 
-            // Prevent deleting the root folder
             if (isFolder && !string.IsNullOrEmpty(currentFolder) &&
                 string.Equals(Path.GetFullPath(path).TrimEnd('\\'),
                               Path.GetFullPath(SettingsManager.Current.SaveFolder).TrimEnd('\\'),
@@ -2550,7 +2784,6 @@ namespace WinFormsApp1
                 CustomMessageBox.Show("Deleted successfully.",
                     "Deleted", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
 
-                // Refresh the current folder view
                 if (!string.IsNullOrEmpty(currentFolder) && Directory.Exists(currentFolder))
                     LoadServerFolder(currentFolder, addToHistory: false);
             }

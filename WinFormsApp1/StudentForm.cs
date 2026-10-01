@@ -2798,6 +2798,11 @@ namespace WinFormsApp1
             expandedCal.ShowOn(pnlHome);
         }
 
+        private void guna2Panel1_Paint(object sender, PaintEventArgs e)
+        {
+           
+        }
+
         private void BuildNotificationsUi()
         {
             if (btnNotifications != null) return;
