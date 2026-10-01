@@ -74,6 +74,47 @@ namespace WinFormsApp1
         private FileSystemWatcher bannersWatcher;
         private ToolTip navToolTip;
 
+        // =========================================================
+        // NIGHT MODE
+        // =========================================================
+
+        private bool _isNightMode = false;
+        private readonly Dictionary<Control, ThemeSnapshot> _originalTheme
+            = new Dictionary<Control, ThemeSnapshot>();
+
+        private bool _inNightForcePaint = false;   // <-- IDAGDAG MO ITO
+
+        private sealed class ThemeSnapshot
+        {
+            public Color BackColor;
+            public Color ForeColor;
+            public Color FillColor = Color.Empty;
+            public Color BorderColor = Color.Empty;
+            public bool HasFill = false;
+            public bool HasBorder = false;
+            public Color GridBack = Color.Empty;
+            public Color GridFore = Color.Empty;
+            public bool HasGrid = false;
+        }
+
+        // Night palette
+        private static readonly Color NightFormBack = Color.FromArgb(18, 18, 18);
+        private static readonly Color NightPanelBack = Color.FromArgb(30, 30, 30);
+        private static readonly Color NightCardBack = Color.FromArgb(42, 42, 42);
+        private static readonly Color NightText = Color.FromArgb(235, 235, 235);
+        private static readonly Color NightSubText = Color.FromArgb(160, 160, 160);
+        private static readonly Color NightBorder = Color.FromArgb(60, 60, 60);
+        private static readonly Color NightInputBack = Color.FromArgb(50, 50, 50);
+
+        // Containers whose children are re-created every toggle (skip snapshotting their children)
+        private static readonly HashSet<string> DynamicContainers = new HashSet<string>
+        {
+            "flpPendingActivities",
+            "flpSubjectClass",
+            "assessmentsList",
+            "notificationList"
+        };
+
         public StudentForm(int UserId, string Section, string Username)
         {
             InitializeComponent();
@@ -155,6 +196,18 @@ namespace WinFormsApp1
                     }
                 };
                 activitiesRefreshTimer.Start();
+<<<<<<< Updated upstream
+=======
+
+                CustomMessageBox.Show(
+            $"Welcome back, {StudentUsername}!\n\n" +
+            $"Your dashboard is ready.\n" +
+            $"Section: {StudentSection}\n" +
+            $"Pending activities and assessments have been loaded.",
+            "Login Successful",
+            CustomMessageBoxButtons.OK,
+            CustomMessageBoxIcon.Information);
+>>>>>>> Stashed changes
             }
             catch (Exception ex)
             {
@@ -755,8 +808,8 @@ namespace WinFormsApp1
                                 card.Width = 260;
                                 card.Height = 250;
                                 card.Margin = new Padding(10);
-                                card.FillColor = Color.White;
-                                card.BorderColor = Color.FromArgb(66, 133, 244);
+                                card.FillColor = _isNightMode ? NightCardBack : Color.White;
+                                card.BorderColor = _isNightMode ? NightBorder : Color.FromArgb(66, 133, 244);
                                 card.BorderThickness = 2;
                                 card.BorderRadius = 14;
                                 card.Cursor = Cursors.Hand;
@@ -787,7 +840,7 @@ namespace WinFormsApp1
 
                                 Label lblSubject = new Label();
                                 lblSubject.Text = className.ToUpper();
-                                lblSubject.ForeColor = Color.Black;
+                                lblSubject.ForeColor = _isNightMode ? NightText : Color.Black;
                                 lblSubject.BackColor = Color.Transparent;
                                 lblSubject.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
                                 lblSubject.AutoSize = false;
@@ -798,7 +851,7 @@ namespace WinFormsApp1
 
                                 Label lblTitle = new Label();
                                 lblTitle.Text = title;
-                                lblTitle.ForeColor = Color.FromArgb(30, 30, 30);
+                                lblTitle.ForeColor = _isNightMode ? NightText : Color.FromArgb(30, 30, 30);
                                 lblTitle.BackColor = Color.Transparent;
                                 lblTitle.Font = new Font("Segoe UI", 12F, FontStyle.Regular);
                                 lblTitle.AutoSize = false;
@@ -809,7 +862,7 @@ namespace WinFormsApp1
 
                                 Label lblStatus = new Label();
                                 lblStatus.Text = activity_status;
-                                lblStatus.ForeColor = Color.Gray;
+                                lblStatus.ForeColor = _isNightMode ? NightSubText : Color.Gray;
                                 lblStatus.BackColor = Color.Transparent;
                                 lblStatus.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
                                 lblStatus.AutoSize = true;
@@ -819,7 +872,7 @@ namespace WinFormsApp1
 
                                 Label lblView = new Label();
                                 lblView.Text = "View Activity   ›";
-                                lblView.ForeColor = Color.FromArgb(139, 0, 0);
+                                lblView.ForeColor = _isNightMode ? Color.FromArgb(220, 130, 130) : Color.FromArgb(139, 0, 0);
                                 lblView.BackColor = Color.Transparent;
                                 lblView.Font = new Font("Segoe UI", 11F, FontStyle.Regular);
                                 lblView.AutoSize = true;
@@ -982,6 +1035,7 @@ namespace WinFormsApp1
                         adapter.Fill(dt);
 
                         dgvStudentActivities.DataSource = dt;
+                        ApplyGridTheme(dgvStudentActivities);
 
                         if (dgvStudentActivities.Columns.Contains("description"))
                             dgvStudentActivities.Columns["description"].Visible = false;
@@ -1209,6 +1263,7 @@ namespace WinFormsApp1
                         DataTable dt = new DataTable();
                         adapter.Fill(dt);
                         dgvStudentGrades.DataSource = dt;
+                        ApplyGridTheme(dgvStudentGrades);
                     }
                 }
             }
@@ -1352,12 +1407,12 @@ namespace WinFormsApp1
             string connStr = SettingsManager.Current.GetConnectionString();
             Color maroon = Color.FromArgb(123, 15, 23);
             Color softPink = Color.FromArgb(253, 236, 238);
-            Color borderIdle = Color.FromArgb(230, 225, 225);
+            Color borderIdle = _isNightMode ? NightBorder : Color.FromArgb(230, 225, 225);
 
             try
             {
                 flpSubjectClass.Controls.Clear();
-                flpSubjectClass.BackColor = Color.FromArgb(255, 245, 240);
+                flpSubjectClass.BackColor = _isNightMode ? NightFormBack : Color.FromArgb(255, 245, 240);
                 flpSubjectClass.Padding = new Padding(10);
 
                 using (var conn = new MySqlConnection(connStr))
@@ -1411,7 +1466,7 @@ namespace WinFormsApp1
                                 var cardPanel = new Guna.UI2.WinForms.Guna2Panel
                                 {
                                     Size = new Size(350, 250),
-                                    FillColor = Color.White,
+                                    FillColor = _isNightMode ? NightCardBack : Color.White,
                                     BackColor = Color.Transparent,
                                     BorderRadius = 16,
                                     BorderColor = borderIdle,
@@ -1491,7 +1546,7 @@ namespace WinFormsApp1
                                 {
                                     Text = "PROFESSOR",
                                     Font = new Font("Segoe UI", 7.5F, FontStyle.Bold),
-                                    ForeColor = Color.FromArgb(150, 150, 150),
+                                    ForeColor = _isNightMode ? NightSubText : Color.FromArgb(150, 150, 150),
                                     BackColor = Color.Transparent,
                                     AutoSize = true,
                                     Location = new Point(74, 98),
@@ -1502,7 +1557,7 @@ namespace WinFormsApp1
                                 {
                                     Text = profFullName,
                                     Font = new Font("Segoe UI", 10.5F, FontStyle.Bold),
-                                    ForeColor = maroon,
+                                    ForeColor = _isNightMode ? NightText : maroon,
                                     BackColor = Color.Transparent,
                                     AutoSize = false,
                                     AutoEllipsis = true,
@@ -1517,7 +1572,7 @@ namespace WinFormsApp1
                                 {
                                     Size = new Size(310, 1),
                                     Location = new Point(20, 158),
-                                    BackColor = Color.FromArgb(235, 235, 235)
+                                    BackColor = _isNightMode ? NightBorder : Color.FromArgb(235, 235, 235)
                                 });
 
                                 // ===== SCHEDULE =====
@@ -1525,7 +1580,7 @@ namespace WinFormsApp1
                                 {
                                     Text = "📅  " + rClassDate,
                                     Font = new Font("Segoe UI Emoji", 11F, FontStyle.Bold),
-                                    ForeColor = Color.FromArgb(40, 40, 40),
+                                    ForeColor = _isNightMode ? NightText : Color.FromArgb(40, 40, 40),
                                     BackColor = Color.Transparent,
                                     AutoSize = true,
                                     Location = new Point(20, 172),
@@ -1536,7 +1591,7 @@ namespace WinFormsApp1
                                 {
                                     Text = "🕒  " + rClassTime,
                                     Font = new Font("Segoe UI Emoji", 10F, FontStyle.Regular),
-                                    ForeColor = Color.FromArgb(110, 110, 110),
+                                    ForeColor = _isNightMode ? NightSubText : Color.FromArgb(110, 110, 110),
                                     BackColor = Color.Transparent,
                                     AutoSize = true,
                                     Location = new Point(20, 202),
@@ -2207,10 +2262,10 @@ namespace WinFormsApp1
             {
                 Size = new Size(307, 390),
                 Location = new Point(977, 355),
-                FillColor = Color.White,
+                FillColor = _isNightMode ? NightCardBack : Color.White,
                 BackColor = Color.Transparent,
                 BorderRadius = 10,
-                BorderColor = Color.FromArgb(220, 220, 220),
+                BorderColor = _isNightMode ? NightBorder : Color.FromArgb(220, 220, 220),
                 BorderThickness = 1,
                 ShadowDecoration = { BorderRadius = 10, Enabled = true, Depth = 30, Color = Color.FromArgb(60, 0, 0, 0) },
                 AutoScroll = false
@@ -2235,7 +2290,7 @@ namespace WinFormsApp1
             {
                 Text = "Assessments",
                 Font = new Font("Segoe UI", 13F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(30, 30, 30),
+                ForeColor = _isNightMode ? NightText : Color.FromArgb(30, 30, 30),
                 Location = new Point(45, 10),
                 AutoSize = true
             };
@@ -2314,7 +2369,7 @@ namespace WinFormsApp1
                                 {
                                     Text = "No assessments yet.",
                                     Font = new Font("Segoe UI", 9F, FontStyle.Italic),
-                                    ForeColor = Color.Gray,
+                                    ForeColor = _isNightMode ? NightSubText : Color.Gray,
                                     AutoSize = true,
                                     Margin = new Padding(8, 12, 0, 0)
                                 };
@@ -2676,11 +2731,6 @@ namespace WinFormsApp1
         // UTILITIES
         // =========================================================
 
-
-        // =========================================================
-        // UTILITIES
-        // =========================================================
-
         private static string SanitizeFolderName(string name)
 
         {
@@ -2831,6 +2881,14 @@ namespace WinFormsApp1
             expandedCal.ShowOn(pnlHome);
         }
 
+<<<<<<< Updated upstream
+=======
+        private void guna2Panel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+>>>>>>> Stashed changes
         private void BuildNotificationsUi()
         {
             if (btnNotifications != null) return;
@@ -2842,13 +2900,12 @@ namespace WinFormsApp1
                 Anchor = AnchorStyles.Top | AnchorStyles.Right,
                 BorderRadius = 23,
                 BackColor = Color.White,
-                FillColor = Color.White,
-                ForeColor = Color.Maroon,
+                FillColor = _isNightMode ? NightCardBack : Color.White,
+                ForeColor = _isNightMode ? Color.FromArgb(255, 130, 130) : Color.Maroon,
                 Font = new Font("Segoe UI Emoji", 14F, FontStyle.Bold),
                 Text = "🔔",
                 Cursor = Cursors.Hand
             };
-            btnNotifications.HoverState.FillColor = Color.FromArgb(250, 235, 235);
             btnNotifications.HoverState.FillColor = Color.FromArgb(250, 235, 235);
             btnNotifications.Click += (s, e) => ToggleNotificationPanel();
 
@@ -2891,8 +2948,8 @@ namespace WinFormsApp1
                     78),
                 Anchor = AnchorStyles.Top | AnchorStyles.Right,
                 BorderRadius = 14,
-                FillColor = Color.White,
-                BorderColor = Color.FromArgb(230, 225, 225),
+                FillColor = _isNightMode ? NightCardBack : Color.White,
+                BorderColor = _isNightMode ? NightBorder : Color.FromArgb(230, 225, 225),
                 BorderThickness = 1,
                 ShadowDecoration = { Enabled = true, Depth = 16, Color = Color.FromArgb(60, 0, 0, 0) },
                 Visible = false,
@@ -2952,7 +3009,7 @@ namespace WinFormsApp1
                 WrapContents = false,
                 AutoScroll = true,
                 Padding = new Padding(10),
-                BackColor = Color.White
+                BackColor = _isNightMode ? NightPanelBack : Color.White
             };
             notificationPanel.Controls.Add(notificationList);
             notificationList.BringToFront();
@@ -3059,7 +3116,7 @@ namespace WinFormsApp1
                 {
                     Text = "🔕  No new notifications",
                     Font = new Font("Segoe UI", 10F, FontStyle.Italic),
-                    ForeColor = Color.FromArgb(140, 140, 140),
+                    ForeColor = _isNightMode ? NightSubText : Color.FromArgb(140, 140, 140),
                     AutoSize = false,
                     Size = new Size(notificationList.Width - 30, 80),
                     TextAlign = ContentAlignment.MiddleCenter
@@ -3100,12 +3157,21 @@ namespace WinFormsApp1
 
         private Panel BuildNotificationCard(NotificationItem item)
         {
+            Color unreadNight = Color.FromArgb(60, 35, 35);
+            Color unreadDay = Color.FromArgb(255, 248, 248);
+
+            Color cardBack;
+            if (_isNightMode)
+                cardBack = item.Unread ? unreadNight : NightCardBack;
+            else
+                cardBack = item.Unread ? unreadDay : Color.White;
+
             var card = new Panel
             {
                 Width = notificationList.ClientSize.Width - 28,
                 Height = 74,
                 Margin = new Padding(0, 0, 0, 8),
-                BackColor = item.Unread ? Color.FromArgb(255, 248, 248) : Color.White,
+                BackColor = cardBack,
                 Cursor = Cursors.Hand,
                 Tag = item.Key
             };
@@ -3127,7 +3193,7 @@ namespace WinFormsApp1
                     card.Region = new Region(path);
                 }
 
-                using (var border = new Pen(Color.FromArgb(235, 230, 230), 1))
+                using (var border = new Pen(_isNightMode ? NightBorder : Color.FromArgb(235, 230, 230), 1))
                     e.Graphics.DrawRectangle(border, 0, 0, card.Width - 1, card.Height - 1);
 
                 if (item.Unread)
@@ -3141,7 +3207,7 @@ namespace WinFormsApp1
             {
                 Text = item.Icon,
                 Font = new Font("Segoe UI Emoji", 18F),
-                ForeColor = Color.FromArgb(60, 60, 60),
+                ForeColor = _isNightMode ? NightText : Color.FromArgb(60, 60, 60),
                 BackColor = Color.Transparent,
                 AutoSize = false,
                 Size = new Size(42, 42),
@@ -3155,7 +3221,7 @@ namespace WinFormsApp1
             {
                 Text = item.Title,
                 Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(35, 35, 35),
+                ForeColor = _isNightMode ? NightText : Color.FromArgb(35, 35, 35),
                 BackColor = Color.Transparent,
                 AutoSize = false,
                 AutoEllipsis = true,
@@ -3169,7 +3235,7 @@ namespace WinFormsApp1
             {
                 Text = item.Subtitle,
                 Font = new Font("Segoe UI", 8.5F),
-                ForeColor = Color.FromArgb(120, 120, 120),
+                ForeColor = _isNightMode ? NightSubText : Color.FromArgb(120, 120, 120),
                 BackColor = Color.Transparent,
                 AutoSize = false,
                 AutoEllipsis = true,
@@ -3185,7 +3251,7 @@ namespace WinFormsApp1
                 {
                     Text = GetRelativeTime(item.Time.Value),
                     Font = new Font("Segoe UI", 8F, FontStyle.Italic),
-                    ForeColor = Color.FromArgb(160, 160, 160),
+                    ForeColor = _isNightMode ? Color.FromArgb(120, 120, 120) : Color.FromArgb(160, 160, 160),
                     BackColor = Color.Transparent,
                     AutoSize = false,
                     Size = new Size(card.Width - 100, 16),
@@ -3400,5 +3466,473 @@ namespace WinFormsApp1
         }
 
 
+<<<<<<< Updated upstream
+=======
+        // =========================================================
+        // NIGHT MODE — TOGGLE + THEMING
+        // =========================================================
+        
+
+        private void UpdateNightModeButton()
+        {
+            if (guna2Button4 == null) return;
+            try
+            {
+                guna2Button4.Text = _isNightMode ? "☀️" : "🌙";
+                guna2Button4.FillColor = _isNightMode
+                    ? Color.FromArgb(255, 193, 7)
+                    : Color.FromArgb(240, 240, 240);
+                guna2Button4.ForeColor = _isNightMode ? Color.Black : Color.Maroon;
+                guna2Button4.BackColor = _isNightMode
+                    ? Color.FromArgb(255, 193, 7)
+                    : Color.FromArgb(240, 240, 240);
+            }
+            catch { }
+        }
+
+        private void RebuildDynamicContent()
+        {
+            try
+            {
+                flpPendingActivities.Controls.Clear();
+                InitializeCreateButtonActivity();
+            }
+            catch (Exception ex) { Console.WriteLine("Rebuild activities: " + ex.Message); }
+
+            try { LoadJoinedClasses(); }
+            catch (Exception ex) { Console.WriteLine("Rebuild classes: " + ex.Message); }
+
+            try
+            {
+                if (assessmentsPanel != null)
+                {
+                    try { pnlHome.Controls.Remove(assessmentsPanel); } catch { }
+                    try { assessmentsPanel.Dispose(); } catch { }
+                    assessmentsPanel = null;
+                    assessmentsList = null;
+                }
+                _assessmentsInitialized = false;
+                InitializeAssessmentsCard();
+                _assessmentsInitialized = true;
+            }
+            catch (Exception ex) { Console.WriteLine("Rebuild assessments: " + ex.Message); }
+
+            try
+            {
+                if (notificationPanel != null)
+                {
+                    notificationPanel.FillColor = _isNightMode ? NightCardBack : Color.White;
+                    notificationPanel.BorderColor = _isNightMode ? NightBorder : Color.FromArgb(230, 225, 225);
+                    notificationPanel.BackColor = _isNightMode ? NightCardBack : Color.White;
+                }
+                if (notificationList != null)
+                    notificationList.BackColor = _isNightMode ? NightPanelBack : Color.White;
+
+                if (btnNotifications != null)
+                {
+                    btnNotifications.FillColor = _isNightMode ? NightCardBack : Color.White;
+                    btnNotifications.BackColor = _isNightMode ? NightCardBack : Color.White;
+                    btnNotifications.ForeColor = _isNightMode
+                        ? Color.FromArgb(255, 130, 130)
+                        : Color.Maroon;
+                }
+
+                LoadNotifications();
+            }
+            catch (Exception ex) { Console.WriteLine("Rebuild notifications: " + ex.Message); }
+
+            try { ApplyGridTheme(dgvStudentActivities); } catch { }
+            try { ApplyGridTheme(dgvStudentGrades); } catch { }
+        }
+
+        // ============ HELPERS ============
+        private static bool IsMaroonish(Color c)
+            => c.A > 200 && c.R > 80 && c.R < 190 && c.G < 90 && c.B < 90;
+
+        private static bool IsLight(Color c)
+        {
+            if (c == Color.Transparent) return false;
+            if (c.A < 30) return false;
+            // Consider any color with high brightness as light
+            return c.GetBrightness() > 0.55;
+        }
+
+        private static bool IsDark(Color c)
+            => c.A > 0 && c != Color.Transparent && c.GetBrightness() < 0.5;
+
+        private bool IsDynamicContainer(Control c)
+            => c != null && !string.IsNullOrEmpty(c.Name) && DynamicContainers.Contains(c.Name);
+
+        // Names of top-level design controls that MUST be forced dark
+        private static readonly string[] ForcedDarkControls =
+        {
+            "pnlSetting", "pnlChangeUsername", "pnlChangePassword", "pnlChangePhoto",
+            "pnlSettingQandA", "pnlSettingProfile", "pnlSettingAuthenticationPhoto",
+            "pnlHome", "pnlActivity", "pnlSubject", "pnlGrades", "pnlQuizExam",
+            "pnlCreateClass",
+            "panelContainer", "pnlMain", "pnlContent", "pnlHeader", "pnlTop",
+            "pnlBody", "pnlDashboard", "pnlMenu", "pnlProfile"
+        };
+
+        private ThemeSnapshot CaptureTheme(Control c)
+        {
+            var s = new ThemeSnapshot
+            {
+                BackColor = c.BackColor,
+                ForeColor = c.ForeColor
+            };
+
+            if (c is Guna.UI2.WinForms.Guna2CustomGradientPanel gcp)
+            {
+                s.FillColor = gcp.FillColor;
+                s.HasFill = true;
+                s.BorderColor = gcp.BorderColor;
+                s.HasBorder = true;
+            }
+            else if (c is Guna.UI2.WinForms.Guna2Panel gp)
+            {
+                s.FillColor = gp.FillColor;
+                s.HasFill = true;
+                s.BorderColor = gp.BorderColor;
+                s.HasBorder = true;
+            }
+            else if (c is Guna.UI2.WinForms.Guna2Button gb)
+            {
+                s.FillColor = gb.FillColor;
+                s.HasFill = true;
+                s.BorderColor = gb.BorderColor;
+                s.HasBorder = true;
+            }
+            else if (c is DataGridView dgv)
+            {
+                s.HasGrid = true;
+                s.GridBack = dgv.BackgroundColor;
+                s.GridFore = dgv.DefaultCellStyle.ForeColor;
+            }
+
+            return s;
+        }
+
+        private void ApplyTheme(Control parent)
+        {
+            foreach (Control c in parent.Controls)
+            {
+                if (!_originalTheme.ContainsKey(c))
+                    _originalTheme[c] = CaptureTheme(c);
+
+                ApplyControlTheme(c);
+
+                if (c.HasChildren && !IsDynamicContainer(c))
+                    ApplyTheme(c);
+            }
+        }
+
+        private void ApplyControlTheme(Control c)
+        {
+            if (!_originalTheme.TryGetValue(c, out var s)) return;
+
+            if (_isNightMode)
+            {
+                if (c is Form f) { f.BackColor = NightFormBack; return; }
+
+                if (c is Guna.UI2.WinForms.Guna2CustomGradientPanel gcp)
+                {
+                    if (s.HasFill && IsLight(s.FillColor) && !IsMaroonish(s.FillColor))
+                    {
+                        gcp.FillColor = NightCardBack;
+                        gcp.FillColor2 = NightCardBack;
+                        gcp.FillColor3 = NightCardBack;
+                        gcp.FillColor4 = NightCardBack;
+                    }
+                    return;
+                }
+
+                if (c is Guna.UI2.WinForms.Guna2Panel gp)
+                {
+                    if (s.HasFill && IsLight(s.FillColor) && !IsMaroonish(s.FillColor))
+                        gp.FillColor = NightCardBack;
+                    if (s.HasBorder && s.BorderColor != Color.Transparent && s.BorderColor.A > 100 && IsLight(s.BorderColor))
+                        gp.BorderColor = NightBorder;
+                    return;
+                }
+
+                if (c is Guna.UI2.WinForms.Guna2Button gb)
+                {
+                    if (c == guna2Button4) return;
+                    if (s.HasFill && IsLight(s.FillColor) && !IsMaroonish(s.FillColor))
+                        gb.FillColor = NightCardBack;
+                    if (IsLight(gb.BackColor) && !IsMaroonish(gb.BackColor))
+                        gb.BackColor = NightCardBack;
+                    if (IsDark(s.ForeColor))
+                        gb.ForeColor = NightText;
+                    return;
+                }
+
+                if (c is FlowLayoutPanel flp)
+                {
+                    if (IsLight(s.BackColor) && !IsMaroonish(s.BackColor))
+                        flp.BackColor = NightPanelBack;
+                    return;
+                }
+
+                if (c is Panel p && !(c is Guna.UI2.WinForms.Guna2Panel))
+                {
+                    if (IsLight(s.BackColor) && !IsMaroonish(s.BackColor))
+                        p.BackColor = NightPanelBack;
+                    return;
+                }
+
+                if (c is TableLayoutPanel tlp)
+                {
+                    if (IsLight(s.BackColor) && !IsMaroonish(s.BackColor))
+                        tlp.BackColor = NightPanelBack;
+                    return;
+                }
+
+                if (c is DataGridView dgv) { ApplyGridTheme(dgv); return; }
+
+                if (c is Label lbl)
+                {
+                    if (IsDark(s.ForeColor)) lbl.ForeColor = NightText;
+                    return;
+                }
+
+                if (c is TextBox tb) { tb.BackColor = NightInputBack; tb.ForeColor = NightText; return; }
+                if (c is RichTextBox rtb) { rtb.BackColor = NightInputBack; rtb.ForeColor = NightText; return; }
+                if (c is ComboBox cb) { cb.BackColor = NightInputBack; cb.ForeColor = NightText; return; }
+
+                if (c is PictureBox pb)
+                {
+                    if (IsLight(s.BackColor)) pb.BackColor = NightPanelBack;
+                    return;
+                }
+            }
+            else
+            {
+                c.BackColor = s.BackColor;
+                c.ForeColor = s.ForeColor;
+
+                if (c is Guna.UI2.WinForms.Guna2CustomGradientPanel gcp)
+                {
+                    if (s.HasFill) gcp.FillColor = s.FillColor;
+                }
+                else if (c is Guna.UI2.WinForms.Guna2Panel gp)
+                {
+                    if (s.HasFill) gp.FillColor = s.FillColor;
+                    if (s.HasBorder) gp.BorderColor = s.BorderColor;
+                }
+                else if (c is Guna.UI2.WinForms.Guna2Button gb)
+                {
+                    if (s.HasFill) gb.FillColor = s.FillColor;
+                    if (s.HasBorder) gb.BorderColor = s.BorderColor;
+                }
+                else if (c is DataGridView dgv) { ApplyGridTheme(dgv); }
+                else if (c is TextBox tb) { tb.BackColor = Color.White; tb.ForeColor = Color.Black; }
+                else if (c is RichTextBox rtb) { rtb.BackColor = Color.White; rtb.ForeColor = Color.Black; }
+                else if (c is ComboBox cb) { cb.BackColor = Color.White; cb.ForeColor = Color.Black; }
+            }
+        }
+
+        // =========================================================
+        // AGGRESSIVE FORCE PASS — catches EVERYTHING
+        // =========================================================
+        private void ForceNightThemeRecursive(Control parent)
+        {
+            if (!_isNightMode) return;
+            if (parent == null) return;
+
+            foreach (Control c in parent.Controls)
+            {
+                // Skip children of dynamic containers (they get themed on rebuild)
+                if (!IsDynamicContainer(c))
+                    ForceNightTheme(c);
+
+                if (c.HasChildren && !IsDynamicContainer(c))
+                    ForceNightThemeRecursive(c);
+            }
+        }
+
+        private void ForceNightTheme(Control c)
+        {
+            if (c == null) return;
+            if (c == guna2Button4) return; // night toggle — leave alone
+
+            // ---- Skip maroon-branded controls ----
+            bool brand = false;
+            if (c is Guna.UI2.WinForms.Guna2Panel gpBrand
+                && gpBrand.FillColor != Color.Transparent
+                && IsMaroonish(gpBrand.FillColor))
+                brand = true;
+            else if (c is Guna.UI2.WinForms.Guna2Button gbBrand
+                && gbBrand.FillColor != Color.Transparent
+                && IsMaroonish(gbBrand.FillColor))
+                brand = true;
+            else if (c.BackColor.A > 0
+                && c.BackColor != Color.Transparent
+                && IsMaroonish(c.BackColor))
+                brand = true;
+
+            if (brand) return;
+
+            // ---- Guna2CustomGradientPanel: darken all 4 fill stops ----
+            if (c is Guna.UI2.WinForms.Guna2CustomGradientPanel gcp)
+            {
+                gcp.FillColor = NightCardBack;
+                gcp.FillColor2 = NightCardBack;
+                gcp.FillColor3 = NightCardBack;
+                gcp.FillColor4 = NightCardBack;
+                if (gcp.BackColor.A > 0 && gcp.BackColor != Color.Transparent && IsLight(gcp.BackColor))
+                    gcp.BackColor = NightPanelBack;
+                return;
+            }
+
+            // ---- Guna2Panel ----
+            if (c is Guna.UI2.WinForms.Guna2Panel gp)
+            {
+                if (gp.FillColor.A > 0 && gp.FillColor != Color.Transparent && IsLight(gp.FillColor))
+                    gp.FillColor = NightCardBack;
+
+                if (gp.BackColor.A > 0 && gp.BackColor != Color.Transparent && IsLight(gp.BackColor))
+                    gp.BackColor = NightPanelBack;
+                return;
+            }
+
+            // ---- Guna2Button ----
+            if (c is Guna.UI2.WinForms.Guna2Button btn)
+            {
+                if (btn.FillColor.A > 0 && btn.FillColor != Color.Transparent && IsLight(btn.FillColor))
+                    btn.FillColor = NightCardBack;
+
+                if (btn.BackColor.A > 0 && btn.BackColor != Color.Transparent && IsLight(btn.BackColor))
+                    btn.BackColor = NightCardBack;
+
+                if (IsDark(btn.ForeColor))
+                    btn.ForeColor = NightText;
+                return;
+            }
+
+            // ---- DataGridView ----
+            if (c is DataGridView dgv)
+            {
+                ApplyGridTheme(dgv);
+                return;
+            }
+
+            // ---- Label ----
+            if (c is Label lbl)
+            {
+                if (lbl.ForeColor.A > 0 && lbl.ForeColor != Color.Transparent
+                    && lbl.ForeColor.GetBrightness() < 0.6)
+                    lbl.ForeColor = NightText;
+                return;
+            }
+
+            // ---- Text inputs ----
+            if (c is TextBox tb) { tb.BackColor = NightInputBack; tb.ForeColor = NightText; return; }
+            if (c is RichTextBox rtb) { rtb.BackColor = NightInputBack; rtb.ForeColor = NightText; return; }
+            if (c is ComboBox cb) { cb.BackColor = NightInputBack; cb.ForeColor = NightText; return; }
+
+            // ---- PictureBox ----
+            if (c is PictureBox pb)
+            {
+                if (pb.BackColor.A > 0 && pb.BackColor != Color.Transparent && IsLight(pb.BackColor))
+                    pb.BackColor = NightPanelBack;
+                return;
+            }
+
+            // ============ UNIVERSAL FALLBACK ============
+            // Any remaining control — force any light BackColor to dark.
+            // This is what catches UserControls, ScrollableControls,
+            // SplitContainers, custom containers, and anything else.
+            if (c.BackColor.A > 0 && c.BackColor != Color.Transparent && IsLight(c.BackColor))
+            {
+                // Preserve non-panel controls (e.g. NumericUpDown, DateTimePicker)
+                // so their intended colors remain, only theme common containers.
+                if (c is Panel
+                    || c is FlowLayoutPanel
+                    || c is TableLayoutPanel
+                    || c is UserControl
+                    || c is SplitContainer
+                    || c is SplitterPanel
+                    || c is TabControl
+                    || c is TabPage
+                    || c is GroupBox
+                    || c is Form)
+                {
+                    c.BackColor = NightPanelBack;
+                }
+            }
+        }
+
+        private void ApplyGridTheme(DataGridView dgv)
+        {
+            if (dgv == null) return;
+
+            if (_isNightMode)
+            {
+                dgv.BackgroundColor = NightPanelBack;
+                dgv.GridColor = NightBorder;
+                dgv.DefaultCellStyle.BackColor = NightCardBack;
+                dgv.DefaultCellStyle.ForeColor = NightText;
+                dgv.DefaultCellStyle.SelectionBackColor = Color.FromArgb(80, 80, 110);
+                dgv.DefaultCellStyle.SelectionForeColor = Color.White;
+                dgv.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(55, 55, 55);
+                dgv.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+                dgv.RowHeadersDefaultCellStyle.BackColor = Color.FromArgb(45, 45, 45);
+                dgv.RowHeadersDefaultCellStyle.ForeColor = NightText;
+                dgv.EnableHeadersVisualStyles = false;
+            }
+            else
+            {
+                dgv.BackgroundColor = Color.White;
+                dgv.GridColor = Color.Gainsboro;
+                dgv.DefaultCellStyle.BackColor = Color.White;
+                dgv.DefaultCellStyle.ForeColor = Color.Black;
+                dgv.DefaultCellStyle.SelectionBackColor = SystemColors.Highlight;
+                dgv.DefaultCellStyle.SelectionForeColor = Color.White;
+                dgv.ColumnHeadersDefaultCellStyle.BackColor = Color.White;
+                dgv.ColumnHeadersDefaultCellStyle.ForeColor = Color.Black;
+                dgv.RowHeadersDefaultCellStyle.BackColor = Color.White;
+                dgv.RowHeadersDefaultCellStyle.ForeColor = Color.Black;
+                dgv.EnableHeadersVisualStyles = true;
+            }
+        }
+
+        private void pnlSetting_Paint(object sender, PaintEventArgs e)
+        {
+            if (!_isNightMode) return;
+            if (_inNightForcePaint) return; // guard para iwas infinite repaint loop
+
+            var ctl = sender as Control;
+            if (ctl == null) return;
+
+            try
+            {
+                _inNightForcePaint = true;
+
+                // 1) Force the panel surface itself to night background on EVERY repaint.
+                //    Ito ang sumasalo sa pinkish/cream na background na bumabalik
+                //    tuwing nagre-repaint ang pnlSetting.
+                using (var brush = new SolidBrush(NightFormBack))
+                    e.Graphics.FillRectangle(brush, ctl.ClientRectangle);
+
+                // 2) Re-force the children, in case a designer or user code
+                //    repainted them with day colors.
+                foreach (Control child in ctl.Controls)
+                {
+                    if (IsDynamicContainer(child)) continue;
+
+                    ForceNightTheme(child);
+
+                    if (child.HasChildren)
+                        ForceNightThemeRecursive(child);
+                }
+            }
+            finally
+            {
+                _inNightForcePaint = false;
+            }
+        }
+>>>>>>> Stashed changes
     }
 }

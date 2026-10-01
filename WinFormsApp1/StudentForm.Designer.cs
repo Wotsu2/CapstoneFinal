@@ -1446,6 +1446,7 @@
             pnlSetting.Name = "pnlSetting";
             pnlSetting.Size = new Size(1312, 751);
             pnlSetting.TabIndex = 26;
+            pnlSetting.Paint += pnlSetting_Paint;
             // 
             // pnlSettingQandA
             // 
@@ -2809,12 +2810,12 @@
             ClientSize = new Size(1370, 749);
             Controls.Add(guna2Panel1);
             Controls.Add(guna2Panel2);
-            Controls.Add(pnlHome);
             Controls.Add(pnlSetting);
             Controls.Add(pnlGrades);
             Controls.Add(pnlActivity);
             Controls.Add(pnlSubject);
             Controls.Add(pnlQuizExam);
+            Controls.Add(pnlHome);
             Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             MinimizeBox = false;
