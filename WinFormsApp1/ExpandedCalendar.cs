@@ -6,19 +6,26 @@ using System.Globalization;
 using System.Linq;
 using System.Windows.Forms;
 using Timer = System.Windows.Forms.Timer;
+using System.ComponentModel;
+
+
 
 // Isang item sa calendar
 public class CalEvent
 {
-    public int Id { get; set; }        // activity_id o quiz_id
+    public int Id { get; set; }                  // activity_id o quiz_id
     public DateTime Date { get; set; }
-    public string Kind { get; set; }   // "Exam", "Quiz", "Activity", "Reminder"
-    public string Text { get; set; }
-    public bool Done { get; set; }     // true kung na-submit na
+    public string Kind { get; set; } = "";       // "Exam", "Quiz", "Activity", "Reminder"
+    public string Text { get; set; } = "";
+    public bool Done { get; set; }               // true kung na-submit na
 }
 
 public class ExpandedCalendar : UserControl
 {
+    // true = lahat ng Activity/Quiz/Exam ay clickable (gamit ng professor)
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public bool AllClickable { get; set; }
+
     private static readonly string[] KindOrder = { "Exam", "Quiz", "Activity", "Reminder" };
 
     private readonly Label lblTime = new Label();
@@ -41,11 +48,10 @@ public class ExpandedCalendar : UserControl
     private readonly List<CalEvent> reminders = new List<CalEvent>();  // tinype sa textbox
     private Dictionary<DateTime, List<CalEvent>> byDate = new Dictionary<DateTime, List<CalEvent>>();
 
-    private Bitmap backdrop;
+    private Bitmap? backdrop;
 
-   
-    public event EventHandler CloseRequested;
-    public event EventHandler<CalEvent> EventOpened;   // <-- bago
+    public event EventHandler? CloseRequested;
+    public event EventHandler<CalEvent>? EventOpened;
 
     public ExpandedCalendar()
     {
@@ -272,9 +278,9 @@ public class ExpandedCalendar : UserControl
     }
 
     // Maliliit na bilog sa TAAS ng numero. Puno = may pending, guwang = tapos na lahat.
-    private void Cell_Paint(object sender, PaintEventArgs e)
+    private void Cell_Paint(object? sender, PaintEventArgs e)
     {
-        var cell = (Label)sender;
+        var cell = (Label)sender!;
         if (!(cell.Tag is DateTime d)) return;
 
         var items = EventsOn(d);
@@ -335,9 +341,11 @@ public class ExpandedCalendar : UserControl
 
     private Control MakeEventRow(CalEvent ev)
     {
-        // Clickable ang Activity, at ang Quiz/Exam na hindi pa na-submit
-        bool clickable = ev.Kind == "Activity" ||
-                         ((ev.Kind == "Quiz" || ev.Kind == "Exam") && !ev.Done);
+        // Student: clickable ang Activity, at ang Quiz/Exam na hindi pa na-submit
+        // Professor (AllClickable): lahat maliban sa Reminder
+        bool clickable = AllClickable
+            ? ev.Kind != "Reminder"
+            : (ev.Kind == "Activity" || ((ev.Kind == "Quiz" || ev.Kind == "Exam") && !ev.Done));
 
         var normalFont = new Font("Segoe UI", 9.5f);
         var hoverFont = new Font("Segoe UI", 9.5f, FontStyle.Underline);
@@ -457,15 +465,15 @@ public class ExpandedCalendar : UserControl
         }
     }
 
-    private void Cell_Click(object sender, EventArgs e)
+    private void Cell_Click(object? sender, EventArgs e)
     {
-        selected = ((DateTime)((Label)sender).Tag).Date;
+        selected = ((DateTime)((Label)sender!).Tag!).Date;
         viewMonth = new DateTime(selected.Year, selected.Month, 1);
         RefreshGrid();
         ShowEvents();
     }
 
-    private void TxtEvent_KeyDown(object sender, KeyEventArgs e)
+    private void TxtEvent_KeyDown(object? sender, KeyEventArgs e)
     {
         if (e.KeyCode != Keys.Enter || string.IsNullOrWhiteSpace(txtEvent.Text)) return;
         e.SuppressKeyPress = true;
