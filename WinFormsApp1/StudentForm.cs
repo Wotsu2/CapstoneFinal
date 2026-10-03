@@ -196,8 +196,7 @@ namespace WinFormsApp1
                     }
                 };
                 activitiesRefreshTimer.Start();
-<<<<<<< Updated upstream
-=======
+
 
                 CustomMessageBox.Show(
             $"Welcome back, {StudentUsername}!\n\n" +
@@ -207,7 +206,7 @@ namespace WinFormsApp1
             "Login Successful",
             CustomMessageBoxButtons.OK,
             CustomMessageBoxIcon.Information);
->>>>>>> Stashed changes
+
             }
             catch (Exception ex)
             {
@@ -2881,14 +2880,13 @@ namespace WinFormsApp1
             expandedCal.ShowOn(pnlHome);
         }
 
-<<<<<<< Updated upstream
-=======
+
         private void guna2Panel1_Paint(object sender, PaintEventArgs e)
         {
 
         }
 
->>>>>>> Stashed changes
+
         private void BuildNotificationsUi()
         {
             if (btnNotifications != null) return;
@@ -3466,8 +3464,7 @@ namespace WinFormsApp1
         }
 
 
-<<<<<<< Updated upstream
-=======
+
         // =========================================================
         // NIGHT MODE — TOGGLE + THEMING
         // =========================================================
@@ -3933,6 +3930,6 @@ namespace WinFormsApp1
                 _inNightForcePaint = false;
             }
         }
->>>>>>> Stashed changes
+
     }
 }
