@@ -143,6 +143,8 @@ namespace WinFormsApp1
                 InitializeSaveDirectory();
                 InitializeChangingPicture();
 
+                Task.Run(() => AttendanceHelper.MarkStudentPresentOnLogin(int.Parse(userId)));
+
                 try { InitializeCreateButtonActivity(); }
                 catch (Exception ex) { Console.WriteLine("InitCreateButton: " + ex.Message); }
 

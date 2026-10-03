@@ -856,24 +856,30 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
+                    // ⭐ FIX: Gamitin ang student_class para sa tamang section match,
+                    // at i-filter sa professor
                     string query = @"SELECT 
-                                        pa.student_name AS Name, 
-                                        pa.present      AS Present, 
-                                        pa.absent       AS Absent, 
-                                        pa.late         AS Late
-                                     FROM professor_attendance pa
-                                     INNER JOIN user_information ui ON ui.user_id = pa.student_id
-                                     WHERE LOWER(TRIM(ui.school_section)) = LOWER(TRIM(@section))
-                                     ORDER BY pa.student_name";
+                                pa.student_name AS Name, 
+                                COALESCE(pa.present, 0) AS Present, 
+                                COALESCE(pa.absent, 0)  AS Absent, 
+                                COALESCE(pa.late, 0)    AS Late
+                             FROM professor_attendance pa
+                             INNER JOIN student_class sc ON sc.user_id = pa.student_id
+                             WHERE sc.professor_id = @professor_id
+                               AND LOWER(TRIM(sc.section)) = LOWER(TRIM(@section))
+                             ORDER BY pa.student_name";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
+                        cmd.Parameters.AddWithValue("@professor_id", ProfessorID);
                         cmd.Parameters.AddWithValue("@section", sectionFilter);
 
                         MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
                         DataTable dt = new DataTable();
                         adapter.Fill(dt);
                         attGrid.DataSource = dt;
+
+                        Console.WriteLine($"[Grid] Loaded {dt.Rows.Count} row(s) for section {sectionFilter}");
                     }
                 }
             }
@@ -937,10 +943,12 @@ namespace WinFormsApp1
             string section = attSectionCombo.Text;
 
             List<(int StudentId, string StudentName)> students = null;
+            Dictionary<int, string> existingAttendance = null;
 
             await RunWithLoadingAsync("Loading students", async () =>
             {
                 students = await Task.Run(() => GetStudentsInSection(section));
+                existingAttendance = await Task.Run(() => GetTodayAttendanceForSection(section));
             });
 
             if (students == null || students.Count == 0)
@@ -962,7 +970,12 @@ namespace WinFormsApp1
 
             foreach (var student in students)
             {
-                var card = BuildStudentAttendanceCard(student.StudentId, student.StudentName);
+                // ⭐ Kunin ang existing status kung meron
+                string currentStatus = existingAttendance != null && existingAttendance.ContainsKey(student.StudentId)
+                    ? existingAttendance[student.StudentId]
+                    : null;
+
+                var card = BuildStudentAttendanceCard(student.StudentId, student.StudentName, currentStatus);
                 attListPanel.Controls.Add(card);
             }
 
@@ -972,6 +985,66 @@ namespace WinFormsApp1
 
             attHeaderSection.Text = $"Section {section}   •   {students.Count} student(s)";
             attHeaderDate.Text = DateTime.Today.ToString("dddd, MMMM dd, yyyy");
+        }
+
+        private Dictionary<int, string> GetTodayAttendanceForSection(string sectionFilter)
+        {
+            var result = new Dictionary<int, string>();
+            string dateCol = DateTime.Today.ToString("MMMdd", CultureInfo.InvariantCulture);
+            string connStr = SettingsManager.Current.GetConnectionString();
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    // Check muna kung existing ang today's column
+                    string checkQuery = @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                                  WHERE TABLE_SCHEMA = DATABASE()
+                                  AND TABLE_NAME = 'professor_attendance' 
+                                  AND COLUMN_NAME = @col";
+
+                    using (var checkCmd = new MySqlCommand(checkQuery, conn))
+                    {
+                        checkCmd.Parameters.AddWithValue("@col", dateCol);
+                        if (Convert.ToInt32(checkCmd.ExecuteScalar()) == 0)
+                            return result; // walang column = walang attendance today
+                    }
+                    string query = $@"
+    SELECT pa.student_name AS Name, COALESCE(pa.`{dateCol}`, '—') AS Status
+    FROM professor_attendance_new pa
+    INNER JOIN student_class sc ON sc.user_id = pa.student_id 
+        AND sc.professor_id = pa.professor_id
+    WHERE pa.professor_id = @professor_id
+      AND LOWER(TRIM(sc.section)) = LOWER(TRIM(@section))
+    ORDER BY pa.student_name";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@professor_id", ProfessorID);
+                        cmd.Parameters.AddWithValue("@section", sectionFilter);
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                int studentId = Convert.ToInt32(reader["student_id"]);
+                                string status = reader["status"]?.ToString()?.Trim();
+
+                                if (!string.IsNullOrEmpty(status))
+                                    result[studentId] = status;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("GetTodayAttendanceForSection error: " + ex.Message);
+            }
+
+            return result;
         }
 
         // =========================================================
@@ -1062,9 +1135,13 @@ namespace WinFormsApp1
                                 }
 
                                 string query = $@"UPDATE professor_attendance 
-                                                  SET `{dateToday}` = @status, 
-                                                      {col} = COALESCE({col}, 0) + 1 
-                                                  WHERE student_id = @student_id";
+                  SET {col} = CASE 
+                        WHEN `{dateToday}` IS NULL OR `{dateToday}` <> @status 
+                        THEN COALESCE({col}, 0) + 1 
+                        ELSE COALESCE({col}, 0) 
+                      END,
+                      `{dateToday}` = @status
+                  WHERE student_id = @student_id";
 
                                 using (var cmd = new MySqlCommand(query, conn))
                                 {
@@ -1090,7 +1167,7 @@ namespace WinFormsApp1
             }
         }
 
-        private Guna2Panel BuildStudentAttendanceCard(int studentId, string studentName)
+        private Guna2Panel BuildStudentAttendanceCard(int studentId, string studentName, string currentStatus = null)
         {
             int scrollbarWidth = SystemInformation.VerticalScrollBarWidth;
             int cardWidth = Math.Max(400, attListPanel.ClientSize.Width - scrollbarWidth - 20);
@@ -1131,11 +1208,18 @@ namespace WinFormsApp1
             };
             card.Controls.Add(lblName);
 
+            // Hint text — iba kung may existing status
+            string hintText = string.IsNullOrEmpty(currentStatus)
+                ? "Tap a status to mark attendance"
+                : $"✓ Already marked as {currentStatus} today";
+
             Label lblHint = new Label
             {
-                Text = "Tap a status to mark attendance",
+                Text = hintText,
                 Font = new Font("Segoe UI", 8.5F, FontStyle.Italic),
-                ForeColor = Color.FromArgb(150, 150, 150),
+                ForeColor = string.IsNullOrEmpty(currentStatus)
+                    ? Color.FromArgb(150, 150, 150)
+                    : GetStatusColor(currentStatus),
                 BackColor = Color.Transparent,
                 AutoSize = true,
                 Location = new Point(84, 46)
@@ -1183,6 +1267,11 @@ namespace WinFormsApp1
 
                 card.BorderColor = (Color)clicked.Tag;
                 card.BorderThickness = 2;
+
+                // Update hint
+                string newStatus = clicked.Text.Replace("✓", "").Trim();
+                lblHint.Text = $"✓ Already marked as {newStatus} today";
+                lblHint.ForeColor = (Color)clicked.Tag;
             };
 
             btnPresent.Click += onClick;
@@ -1194,7 +1283,36 @@ namespace WinFormsApp1
             row.Controls.Add(btnAbsent);
             card.Controls.Add(row);
 
+            // ⭐ Pre-select kung may existing status
+            if (!string.IsNullOrEmpty(currentStatus))
+            {
+                Guna2Button target = null;
+                switch (currentStatus.ToLower())
+                {
+                    case "present": target = btnPresent; break;
+                    case "late": target = btnLate; break;
+                    case "absent": target = btnAbsent; break;
+                }
+
+                if (target != null)
+                {
+                    select(target);
+                    card.BorderColor = (Color)target.Tag;
+                    card.BorderThickness = 2;
+                }
+            }
+
             return card;
+        }
+        private Color GetStatusColor(string status)
+        {
+            switch (status?.ToLower())
+            {
+                case "present": return Color.FromArgb(46, 160, 90);
+                case "late": return Color.FromArgb(230, 160, 30);
+                case "absent": return Color.FromArgb(200, 60, 60);
+                default: return Color.FromArgb(150, 150, 150);
+            }
         }
 
         private Guna2Button MakeAttendanceButton(string text, Color accent)
@@ -1312,6 +1430,14 @@ namespace WinFormsApp1
         // =========================================================
         private async void ExportAttendanceToExcel()
         {
+            if (attSectionCombo == null || string.IsNullOrEmpty(attSectionCombo.Text))
+            {
+                CustomMessageBox.Show("Please select a section first.",
+                    "No Section", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
+                return;
+            }
+
+            string section = attSectionCombo.Text;
             string connStr = SettingsManager.Current.GetConnectionString();
 
             try
@@ -1323,11 +1449,38 @@ namespace WinFormsApp1
                     dt = await Task.Run(() =>
                     {
                         var table = new DataTable();
+
                         using (var conn = new MySqlConnection(connStr))
                         {
                             conn.Open();
-                            using (var adapter = new MySqlDataAdapter("SELECT * FROM professor_attendance", conn))
-                                adapter.Fill(table);
+
+                            // Kunin ang lahat ng students sa section na ito (via student_class)
+                            // at i-join sa professor_attendance
+                            string query = @"
+                        SELECT 
+                            pa.student_id,
+                            pa.student_name,
+                            pa.present,
+                            pa.absent,
+                            pa.late,
+                            pa.Sep02, pa.Sep04, pa.Sep24, pa.Sep28, pa.Oct01, pa.Oct04
+                        FROM professor_attendance pa
+                        INNER JOIN student_class sc ON sc.user_id = pa.student_id
+                        WHERE sc.professor_id = @professor_id
+                          AND LOWER(TRIM(sc.section)) = LOWER(TRIM(@section))
+                        ORDER BY pa.student_name";
+
+                            // ⚠️ IMPORTANT: Ito ay static columns lang. Kung gusto mo dynamic,
+                            // tingnan ang "Dynamic version" sa ibaba.
+
+                            using (var cmd = new MySqlCommand(query, conn))
+                            {
+                                cmd.Parameters.AddWithValue("@professor_id", ProfessorID);
+                                cmd.Parameters.AddWithValue("@section", section);
+
+                                using (var adapter = new MySqlDataAdapter(cmd))
+                                    adapter.Fill(table);
+                            }
                         }
                         return table;
                     });
@@ -1335,15 +1488,15 @@ namespace WinFormsApp1
 
                 if (dt.Rows.Count == 0)
                 {
-                    CustomMessageBox.Show("No data to export.", "Empty",
-                        CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
+                    CustomMessageBox.Show($"No attendance data found for section {section}.",
+                        "Empty", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                     return;
                 }
 
                 using (SaveFileDialog sfd = new SaveFileDialog())
                 {
                     sfd.Filter = "Excel Files|*.xlsx";
-                    sfd.FileName = "Attendance_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".xlsx";
+                    sfd.FileName = $"Attendance_{SanitizeFolderName(section)}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
 
                     if (sfd.ShowDialog() == DialogResult.OK)
                     {
@@ -1354,14 +1507,31 @@ namespace WinFormsApp1
                                 using (var workbook = new XLWorkbook())
                                 {
                                     var worksheet = workbook.Worksheets.Add(dt, "Attendance");
+
+                                    // Header styling
+                                    var headerRow = worksheet.Row(1);
+                                    headerRow.Style.Font.Bold = true;
+                                    headerRow.Style.Fill.BackgroundColor = XLColor.Maroon;
+                                    headerRow.Style.Font.FontColor = XLColor.White;
+                                    headerRow.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                                    headerRow.Height = 22;
+
+                                    // Highlight Present/Late/Absent cells with colors
+                                    ColorDateColumns(worksheet, dt);
+
+                                    // Highlight Present/Late/Absent cells with colors
                                     worksheet.Columns().AdjustToContents();
+
+                                    // Freeze header row
+                                    worksheet.SheetView.FreezeRows(1);
+
                                     workbook.SaveAs(sfd.FileName);
                                 }
                             });
                         });
 
-                        CustomMessageBox.Show("Exported successfully!", "Exported",
-                            CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
+                        CustomMessageBox.Show($"Exported successfully!\n\nFile: {sfd.FileName}",
+                            "Exported", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                     }
                 }
             }
@@ -1370,6 +1540,64 @@ namespace WinFormsApp1
                 Console.WriteLine("ExportAttendanceToExcel error: " + ex.Message);
                 CustomMessageBox.Show("Export failed: " + ex.Message,
                     "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Kulayan ang mga Present/Late/Absent cells sa Excel para madaling basahin.
+        /// </summary>
+        private void ColorDateColumns(IXLWorksheet worksheet, DataTable dt)
+        {
+            // Hanapin ang mga columns na mukhang date (Sep02, Oct04, atbp.)
+            var dateColumnIndices = new List<int>();
+
+            for (int col = 0; col < dt.Columns.Count; col++)
+            {
+                string colName = dt.Columns[col].ColumnName;
+                // Match MMMdd format like Sep02, Oct04
+                if (System.Text.RegularExpressions.Regex.IsMatch(colName, @"^[A-Z][a-z]{2}\d{2}$"))
+                {
+                    dateColumnIndices.Add(col + 1); // ClosedXML is 1-indexed
+                }
+            }
+
+            // Kulayan ang bawat date cell base sa value
+            foreach (int colIdx in dateColumnIndices)
+            {
+                for (int row = 2; row <= dt.Rows.Count + 1; row++)
+                {
+                    var cell = worksheet.Cell(row, colIdx);
+                    string value = cell.GetString()?.Trim() ?? "";
+
+                    switch (value.ToLower())
+                    {
+                        case "present":
+                            cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#D4EDDA"); // light green
+                            cell.Style.Font.FontColor = XLColor.FromHtml("#155724");
+                            break;
+                        case "late":
+                            cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#FFF3CD"); // light yellow
+                            cell.Style.Font.FontColor = XLColor.FromHtml("#856404");
+                            break;
+                        case "absent":
+                            cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#F8D7DA"); // light red
+                            cell.Style.Font.FontColor = XLColor.FromHtml("#721C24");
+                            break;
+                    }
+
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                }
+            }
+
+            // Center-align counters (Present, Absent, Late columns)
+            string[] counterCols = { "present", "absent", "late" };
+            for (int col = 0; col < dt.Columns.Count; col++)
+            {
+                if (counterCols.Contains(dt.Columns[col].ColumnName.ToLower()))
+                {
+                    worksheet.Column(col + 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    worksheet.Column(col + 1).Style.Font.Bold = true;
+                }
             }
         }
 
