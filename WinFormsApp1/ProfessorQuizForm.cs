@@ -1,8 +1,10 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using MySql.Data.MySqlClient;
 
@@ -30,6 +32,7 @@ namespace WinFormsApp1
         private RoundedButton btnSaveQuiz;
         private RoundedButton btnClear;
         private RoundedButton btnMonitor;
+        private RoundedButton btnEditQuestion;
 
         private Label lblFileName;
         private Label lblQuestionCount;
@@ -48,10 +51,20 @@ namespace WinFormsApp1
 
         private int monitoredQuizId = 0;
 
+        // =========================================================
+        // IMPORTED QUESTIONS
+        // =========================================================
+
         private List<QuizQuestion> importedQuestions =
             new List<QuizQuestion>();
 
+        // Maps ListBox item index to the actual QuizQuestion
+        // This allows the professor to edit the selected question.
+        private Dictionary<int, QuizQuestion> questionItemMap =
+            new Dictionary<int, QuizQuestion>();
+
         // ---- Colors ----
+
         private static readonly Color ClrMaroon =
             Color.FromArgb(94, 14, 33);
 
@@ -88,13 +101,18 @@ namespace WinFormsApp1
         private static readonly Color ClrPageBg =
             Color.FromArgb(250, 247, 239);
 
+        // =========================================================
+        // CONSTRUCTOR
+        // =========================================================
+
         public ProfessorQuizForm(int professorID)
         {
             professorUserId = professorID;
 
             BuildProfessorInterface();
 
-            this.FormClosed += ProfessorQuizForm_FormClosed;
+            this.FormClosed +=
+                ProfessorQuizForm_FormClosed;
         }
 
         // =========================================================
@@ -103,29 +121,49 @@ namespace WinFormsApp1
 
         private void BuildProfessorInterface()
         {
-            Text = "Professor - Create Quiz / Exam";
-            StartPosition = FormStartPosition.CenterScreen;
-            Size = new Size(1200, 800);
-            MinimumSize = new Size(1100, 740);
-            BackColor = ClrPageBg;
-            FormBorderStyle = FormBorderStyle.None;
-            Font = new Font("Segoe UI", 9.5F);
+            Text =
+                "Professor - Create Quiz / Exam";
 
-            this.Paint += (s, e) =>
-            {
-                using (var pen =
-                       new Pen(
-                           ClrGold,
-                           1.5f))
+            StartPosition =
+                FormStartPosition.CenterScreen;
+
+            Size =
+                new Size(
+                    1200,
+                    800);
+
+            MinimumSize =
+                new Size(
+                    1100,
+                    740);
+
+            BackColor =
+                ClrPageBg;
+
+            FormBorderStyle =
+                FormBorderStyle.None;
+
+            Font =
+                new Font(
+                    "Segoe UI",
+                    9.5F);
+
+            this.Paint +=
+                (s, e) =>
                 {
-                    e.Graphics.DrawRectangle(
-                        pen,
-                        0,
-                        0,
-                        this.Width - 1,
-                        this.Height - 1);
-                }
-            };
+                    using (var pen =
+                           new Pen(
+                               ClrGold,
+                               1.5f))
+                    {
+                        e.Graphics.DrawRectangle(
+                            pen,
+                            0,
+                            0,
+                            this.Width - 1,
+                            this.Height - 1);
+                    }
+                };
 
             // =====================================================
             // MAIN LAYOUT
@@ -134,6 +172,7 @@ namespace WinFormsApp1
             int pad = 30;
 
             int leftWidth = 690;
+
             int rightWidth = 410;
 
             int rightX =
@@ -146,35 +185,55 @@ namespace WinFormsApp1
             int yShift = 40;
 
             // =====================================================
-            // HEADER BANNER (maroon + gold, CDSGA)
+            // HEADER BANNER
             // =====================================================
 
-            Panel bannerPanel = new Panel();
+            Panel bannerPanel =
+                new Panel();
 
-            bannerPanel.Location = new Point(0, 0);
+            bannerPanel.Location =
+                new Point(
+                    0,
+                    0);
 
-            bannerPanel.Size = new Size(this.Width, bannerHeight);
+            bannerPanel.Size =
+                new Size(
+                    this.Width,
+                    bannerHeight);
 
-            bannerPanel.BackColor = ClrMaroon;
+            bannerPanel.BackColor =
+                ClrMaroon;
 
-            bannerPanel.Paint += (s, e) =>
-            {
-                using (var goldLine = new Pen(ClrGold, 4f))
+            bannerPanel.Anchor =
+                AnchorStyles.Top |
+                AnchorStyles.Left |
+                AnchorStyles.Right;
+
+            bannerPanel.Paint +=
+                (s, e) =>
                 {
-                    e.Graphics.DrawLine(
-                        goldLine,
-                        0,
-                        bannerPanel.Height - 2,
-                        bannerPanel.Width,
-                        bannerPanel.Height - 2);
-                }
-            };
+                    using (var goldLine =
+                           new Pen(
+                               ClrGold,
+                               4f))
+                    {
+                        e.Graphics.DrawLine(
+                            goldLine,
+                            0,
+                            bannerPanel.Height - 2,
+                            bannerPanel.Width,
+                            bannerPanel.Height - 2);
+                    }
+                };
 
-            Controls.Add(bannerPanel);
+            Controls.Add(
+                bannerPanel);
 
-            Label lblBrand = new Label();
+            Label lblBrand =
+                new Label();
 
-            lblBrand.Text = "CDSGA";
+            lblBrand.Text =
+                "CDSGA";
 
             lblBrand.Font =
                 new Font(
@@ -182,15 +241,22 @@ namespace WinFormsApp1
                     13,
                     FontStyle.Bold);
 
-            lblBrand.ForeColor = ClrGold;
+            lblBrand.ForeColor =
+                ClrGold;
 
-            lblBrand.AutoSize = true;
+            lblBrand.AutoSize =
+                true;
 
-            lblBrand.Location = new Point(pad, 16);
+            lblBrand.Location =
+                new Point(
+                    pad,
+                    16);
 
-            bannerPanel.Controls.Add(lblBrand);
+            bannerPanel.Controls.Add(
+                lblBrand);
 
-            Label lblHeader = new Label();
+            Label lblHeader =
+                new Label();
 
             lblHeader.Text =
                 "Create Quiz / Exam";
@@ -204,18 +270,22 @@ namespace WinFormsApp1
             lblHeader.ForeColor =
                 Color.White;
 
-            lblHeader.AutoSize = true;
+            lblHeader.AutoSize =
+                true;
 
             lblHeader.Location =
                 new Point(
                     pad,
                     40);
 
-            bannerPanel.Controls.Add(lblHeader);
+            bannerPanel.Controls.Add(
+                lblHeader);
 
-            Label lblClose = new Label();
+            Label lblClose =
+                new Label();
 
-            lblClose.Text = "✕";
+            lblClose.Text =
+                "✕";
 
             lblClose.Font =
                 new Font(
@@ -225,26 +295,34 @@ namespace WinFormsApp1
             lblClose.ForeColor =
                 Color.White;
 
-            lblClose.AutoSize = true;
+            lblClose.AutoSize =
+                true;
 
             lblClose.Cursor =
                 Cursors.Hand;
 
             lblClose.Location =
                 new Point(
-                    this.ClientSize.Width - pad - 16,
+                    this.ClientSize.Width -
+                    pad -
+                    16,
                     36);
 
             lblClose.Anchor =
-                AnchorStyles.Top | AnchorStyles.Right;
+                AnchorStyles.Top |
+                AnchorStyles.Right;
 
             lblClose.Click +=
-                (s, e) => this.Close();
+                (s, e) =>
+                {
+                    this.Close();
+                };
 
-            bannerPanel.Controls.Add(lblClose);
+            bannerPanel.Controls.Add(
+                lblClose);
 
             // =====================================================
-            // LEFT CARD BACKDROP
+            // LEFT CARD
             // =====================================================
 
             Panel leftCard =
@@ -254,17 +332,20 @@ namespace WinFormsApp1
                     leftWidth + 30,
                     660);
 
-            Controls.Add(leftCard);
+            Controls.Add(
+                leftCard);
 
             leftCard.SendToBack();
 
             // =====================================================
-            // LEFT SIDE - QUIZ CREATION
+            // TITLE
             // =====================================================
 
-            Label lblTitle = new Label();
+            Label lblTitle =
+                new Label();
 
-            lblTitle.Text = "Title";
+            lblTitle.Text =
+                "Title";
 
             lblTitle.Font =
                 new Font(
@@ -275,16 +356,19 @@ namespace WinFormsApp1
             lblTitle.ForeColor =
                 ClrLabelGray;
 
-            lblTitle.AutoSize = true;
+            lblTitle.AutoSize =
+                true;
 
             lblTitle.Location =
                 new Point(
                     pad,
                     85 + yShift);
 
-            Controls.Add(lblTitle);
+            Controls.Add(
+                lblTitle);
 
-            txtQuizTitle = new TextBox();
+            txtQuizTitle =
+                new TextBox();
 
             txtQuizTitle.Font =
                 new Font(
@@ -304,7 +388,8 @@ namespace WinFormsApp1
                     leftWidth,
                     30);
 
-            Controls.Add(txtQuizTitle);
+            Controls.Add(
+                txtQuizTitle);
 
             // =====================================================
             // ASSESSMENT TYPE / EXAM PERIOD
@@ -313,7 +398,8 @@ namespace WinFormsApp1
             int halfWidth =
                 (leftWidth - 24) / 2;
 
-            Label lblType = new Label();
+            Label lblType =
+                new Label();
 
             lblType.Text =
                 "Assessment Type";
@@ -327,16 +413,19 @@ namespace WinFormsApp1
             lblType.ForeColor =
                 ClrLabelGray;
 
-            lblType.AutoSize = true;
+            lblType.AutoSize =
+                true;
 
             lblType.Location =
                 new Point(
                     pad,
                     155 + yShift);
 
-            Controls.Add(lblType);
+            Controls.Add(
+                lblType);
 
-            Label lblExamPeriod = new Label();
+            Label lblExamPeriod =
+                new Label();
 
             lblExamPeriod.Text =
                 "Exam Period";
@@ -350,7 +439,8 @@ namespace WinFormsApp1
             lblExamPeriod.ForeColor =
                 ClrLabelGray;
 
-            lblExamPeriod.AutoSize = true;
+            lblExamPeriod.AutoSize =
+                true;
 
             lblExamPeriod.Location =
                 new Point(
@@ -359,7 +449,8 @@ namespace WinFormsApp1
                     24,
                     155 + yShift);
 
-            Controls.Add(lblExamPeriod);
+            Controls.Add(
+                lblExamPeriod);
 
             cmbAssessmentType =
                 new ComboBox();
@@ -367,8 +458,11 @@ namespace WinFormsApp1
             cmbAssessmentType.DropDownStyle =
                 ComboBoxStyle.DropDownList;
 
-            cmbAssessmentType.Items.Add("Quiz");
-            cmbAssessmentType.Items.Add("Exam");
+            cmbAssessmentType.Items.Add(
+                "Quiz");
+
+            cmbAssessmentType.Items.Add(
+                "Exam");
 
             cmbAssessmentType.SelectedIndex =
                 0;
@@ -388,7 +482,8 @@ namespace WinFormsApp1
                     halfWidth,
                     30);
 
-            Controls.Add(cmbAssessmentType);
+            Controls.Add(
+                cmbAssessmentType);
 
             cmbExamPeriod =
                 new ComboBox();
@@ -396,10 +491,17 @@ namespace WinFormsApp1
             cmbExamPeriod.DropDownStyle =
                 ComboBoxStyle.DropDownList;
 
-            cmbExamPeriod.Items.Add("PRELIM");
-            cmbExamPeriod.Items.Add("MIDTERM");
-            cmbExamPeriod.Items.Add("SEMIFINALS");
-            cmbExamPeriod.Items.Add("FINALS");
+            cmbExamPeriod.Items.Add(
+                "PRELIM");
+
+            cmbExamPeriod.Items.Add(
+                "MIDTERM");
+
+            cmbExamPeriod.Items.Add(
+                "SEMIFINALS");
+
+            cmbExamPeriod.Items.Add(
+                "FINALS");
 
             cmbExamPeriod.SelectedIndex =
                 0;
@@ -421,13 +523,15 @@ namespace WinFormsApp1
                     halfWidth,
                     30);
 
-            Controls.Add(cmbExamPeriod);
+            Controls.Add(
+                cmbExamPeriod);
 
             // =====================================================
             // SUBJECT / TIME LIMIT
             // =====================================================
 
-            Label lblSubject = new Label();
+            Label lblSubject =
+                new Label();
 
             lblSubject.Text =
                 "Subject";
@@ -441,16 +545,19 @@ namespace WinFormsApp1
             lblSubject.ForeColor =
                 ClrLabelGray;
 
-            lblSubject.AutoSize = true;
+            lblSubject.AutoSize =
+                true;
 
             lblSubject.Location =
                 new Point(
                     pad,
                     225 + yShift);
 
-            Controls.Add(lblSubject);
+            Controls.Add(
+                lblSubject);
 
-            Label lblDuration = new Label();
+            Label lblDuration =
+                new Label();
 
             lblDuration.Text =
                 "Time Limit";
@@ -464,7 +571,8 @@ namespace WinFormsApp1
             lblDuration.ForeColor =
                 ClrLabelGray;
 
-            lblDuration.AutoSize = true;
+            lblDuration.AutoSize =
+                true;
 
             lblDuration.Location =
                 new Point(
@@ -473,7 +581,8 @@ namespace WinFormsApp1
                     24,
                     225 + yShift);
 
-            Controls.Add(lblDuration);
+            Controls.Add(
+                lblDuration);
 
             txtSubject =
                 new TextBox();
@@ -496,10 +605,11 @@ namespace WinFormsApp1
                     halfWidth,
                     30);
 
-            Controls.Add(txtSubject);
+            Controls.Add(
+                txtSubject);
 
             // =====================================================
-            // TIME LIMIT INPUT (HOURS + MINUTES)
+            // TIME LIMIT
             // =====================================================
 
             int durationInputX =
@@ -510,87 +620,130 @@ namespace WinFormsApp1
             int durationInputY =
                 248 + yShift;
 
-            numHours = new NumericUpDown();
+            numHours =
+                new NumericUpDown();
 
-            numHours.Font = new Font("Segoe UI", 10);
+            numHours.Font =
+                new Font(
+                    "Segoe UI",
+                    10);
 
-            numHours.BorderStyle = BorderStyle.FixedSingle;
+            numHours.BorderStyle =
+                BorderStyle.FixedSingle;
 
             numHours.Location =
-                new Point(durationInputX, durationInputY);
+                new Point(
+                    durationInputX,
+                    durationInputY);
 
-            numHours.Size = new Size(70, 30);
+            numHours.Size =
+                new Size(
+                    70,
+                    30);
 
-            numHours.Minimum = 0;
+            numHours.Minimum =
+                0;
 
-            numHours.Maximum = 24;
+            numHours.Maximum =
+                24;
 
-            numHours.Value = 1;
+            numHours.Value =
+                1;
 
-            numHours.TextAlign = HorizontalAlignment.Center;
+            numHours.TextAlign =
+                HorizontalAlignment.Center;
 
-            Controls.Add(numHours);
+            Controls.Add(
+                numHours);
 
-            Label lblHoursUnit = new Label();
+            Label lblHoursUnit =
+                new Label();
 
-            lblHoursUnit.Text = "hr";
+            lblHoursUnit.Text =
+                "hr";
 
             lblHoursUnit.Font =
-                new Font("Segoe UI", 9.5F);
+                new Font(
+                    "Segoe UI",
+                    9.5F);
 
-            lblHoursUnit.ForeColor = ClrLabelGray;
+            lblHoursUnit.ForeColor =
+                ClrLabelGray;
 
-            lblHoursUnit.AutoSize = true;
+            lblHoursUnit.AutoSize =
+                true;
 
             lblHoursUnit.Location =
                 new Point(
                     durationInputX + 74,
                     durationInputY + 7);
 
-            Controls.Add(lblHoursUnit);
+            Controls.Add(
+                lblHoursUnit);
 
-            numMinutes = new NumericUpDown();
+            numMinutes =
+                new NumericUpDown();
 
-            numMinutes.Font = new Font("Segoe UI", 10);
+            numMinutes.Font =
+                new Font(
+                    "Segoe UI",
+                    10);
 
-            numMinutes.BorderStyle = BorderStyle.FixedSingle;
+            numMinutes.BorderStyle =
+                BorderStyle.FixedSingle;
 
             numMinutes.Location =
                 new Point(
                     durationInputX + 104,
                     durationInputY);
 
-            numMinutes.Size = new Size(70, 30);
+            numMinutes.Size =
+                new Size(
+                    70,
+                    30);
 
-            numMinutes.Minimum = 0;
+            numMinutes.Minimum =
+                0;
 
-            numMinutes.Maximum = 59;
+            numMinutes.Maximum =
+                59;
 
-            numMinutes.Increment = 5;
+            numMinutes.Increment =
+                5;
 
-            numMinutes.Value = 0;
+            numMinutes.Value =
+                0;
 
-            numMinutes.TextAlign = HorizontalAlignment.Center;
+            numMinutes.TextAlign =
+                HorizontalAlignment.Center;
 
-            Controls.Add(numMinutes);
+            Controls.Add(
+                numMinutes);
 
-            Label lblMinutesUnit = new Label();
+            Label lblMinutesUnit =
+                new Label();
 
-            lblMinutesUnit.Text = "min";
+            lblMinutesUnit.Text =
+                "min";
 
             lblMinutesUnit.Font =
-                new Font("Segoe UI", 9.5F);
+                new Font(
+                    "Segoe UI",
+                    9.5F);
 
-            lblMinutesUnit.ForeColor = ClrLabelGray;
+            lblMinutesUnit.ForeColor =
+                ClrLabelGray;
 
-            lblMinutesUnit.AutoSize = true;
+            lblMinutesUnit.AutoSize =
+                true;
 
             lblMinutesUnit.Location =
                 new Point(
                     durationInputX + 178,
                     durationInputY + 7);
 
-            Controls.Add(lblMinutesUnit);
+            Controls.Add(
+                lblMinutesUnit);
 
             // =====================================================
             // IMPORT DOCX
@@ -630,10 +783,11 @@ namespace WinFormsApp1
             btnImportDocx.Click +=
                 BtnImportDocx_Click;
 
-            Controls.Add(btnImportDocx);
+            Controls.Add(
+                btnImportDocx);
 
             // =====================================================
-            // VIEW EXAMPLE DOCX (small button beside Import Docx)
+            // VIEW EXAMPLE
             // =====================================================
 
             btnViewExample =
@@ -677,7 +831,8 @@ namespace WinFormsApp1
             btnViewExample.Click +=
                 BtnViewExample_Click;
 
-            Controls.Add(btnViewExample);
+            Controls.Add(
+                btnViewExample);
 
             lblFileName =
                 new Label();
@@ -697,14 +852,16 @@ namespace WinFormsApp1
                     115,
                     110);
 
-            lblFileName.AutoSize = true;
+            lblFileName.AutoSize =
+                true;
 
             lblFileName.Location =
                 new Point(
                     pad + 250,
                     312 + yShift);
 
-            Controls.Add(lblFileName);
+            Controls.Add(
+                lblFileName);
 
             lblQuestionCount =
                 new Label();
@@ -721,7 +878,8 @@ namespace WinFormsApp1
             lblQuestionCount.ForeColor =
                 ClrMaroon;
 
-            lblQuestionCount.AutoSize = true;
+            lblQuestionCount.AutoSize =
+                true;
 
             lblQuestionCount.Location =
                 new Point(
@@ -730,7 +888,8 @@ namespace WinFormsApp1
                     110,
                     312 + yShift);
 
-            Controls.Add(lblQuestionCount);
+            Controls.Add(
+                lblQuestionCount);
 
             // =====================================================
             // PREVIEW TITLE
@@ -751,14 +910,16 @@ namespace WinFormsApp1
             lblPreview.ForeColor =
                 ClrLabelGray;
 
-            lblPreview.AutoSize = true;
+            lblPreview.AutoSize =
+                true;
 
             lblPreview.Location =
                 new Point(
                     pad,
                     358 + yShift);
 
-            Controls.Add(lblPreview);
+            Controls.Add(
+                lblPreview);
 
             // =====================================================
             // QUESTION LIST
@@ -788,7 +949,53 @@ namespace WinFormsApp1
                     leftWidth,
                     230);
 
-            Controls.Add(lstQuestions);
+            Controls.Add(
+                lstQuestions);
+
+            // Double click question to edit
+            lstQuestions.DoubleClick +=
+                LstQuestions_DoubleClick;
+
+            // =====================================================
+            // EDIT SELECTED QUESTION
+            // =====================================================
+
+            btnEditQuestion =
+                new RoundedButton();
+
+            btnEditQuestion.Text =
+                "✎  EDIT SELECTED";
+
+            btnEditQuestion.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    9.5F,
+                    FontStyle.Bold);
+
+            btnEditQuestion.Size =
+                new Size(
+                    160,
+                    38);
+
+            btnEditQuestion.Location =
+                new Point(
+                    pad,
+                    625 + yShift);
+
+            btnEditQuestion.BackColor =
+                ClrGold;
+
+            btnEditQuestion.HoverColor =
+                ClrGoldDark;
+
+            btnEditQuestion.ForeColor =
+                ClrMaroonDark;
+
+            btnEditQuestion.Click +=
+                BtnEditQuestion_Click;
+
+            Controls.Add(
+                btnEditQuestion);
 
             // =====================================================
             // SAVE / CLEAR
@@ -830,7 +1037,8 @@ namespace WinFormsApp1
             btnSaveQuiz.Click +=
                 BtnSaveQuiz_Click;
 
-            Controls.Add(btnSaveQuiz);
+            Controls.Add(
+                btnSaveQuiz);
 
             btnMonitor =
                 new RoundedButton();
@@ -871,7 +1079,8 @@ namespace WinFormsApp1
             btnMonitor.Click +=
                 BtnMonitor_Click;
 
-            Controls.Add(btnMonitor);
+            Controls.Add(
+                btnMonitor);
 
             btnClear =
                 new RoundedButton();
@@ -909,10 +1118,11 @@ namespace WinFormsApp1
             btnClear.Click +=
                 BtnClear_Click;
 
-            Controls.Add(btnClear);
+            Controls.Add(
+                btnClear);
 
             // =====================================================
-            // RIGHT SIDE - MONITORING DASHBOARD (CARD)
+            // RIGHT SIDE - MONITORING DASHBOARD
             // =====================================================
 
             Panel monitoringPanel =
@@ -922,7 +1132,8 @@ namespace WinFormsApp1
                     rightWidth,
                     632);
 
-            Controls.Add(monitoringPanel);
+            Controls.Add(
+                monitoringPanel);
 
             lblMonitoringTitle =
                 new Label();
@@ -939,7 +1150,8 @@ namespace WinFormsApp1
             lblMonitoringTitle.ForeColor =
                 ClrMaroon;
 
-            lblMonitoringTitle.AutoSize = true;
+            lblMonitoringTitle.AutoSize =
+                true;
 
             lblMonitoringTitle.Location =
                 new Point(
@@ -1179,7 +1391,8 @@ namespace WinFormsApp1
                     116,
                     139);
 
-            lblRefresh.AutoSize = true;
+            lblRefresh.AutoSize =
+                true;
 
             lblRefresh.Location =
                 new Point(
@@ -1206,7 +1419,7 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        // CARD PANEL HELPER (maroon + gold theme)
+        // CARD PANEL HELPER
         // =========================================================
 
         private Panel CreateCardPanel(
@@ -1216,40 +1429,51 @@ namespace WinFormsApp1
             int height,
             int radius = 14)
         {
-            Panel panel = new Panel();
+            Panel panel =
+                new Panel();
 
-            panel.Location = new Point(x, y);
+            panel.Location =
+                new Point(
+                    x,
+                    y);
 
-            panel.Size = new Size(width, height);
+            panel.Size =
+                new Size(
+                    width,
+                    height);
 
-            panel.BackColor = Color.White;
+            panel.BackColor =
+                Color.White;
 
-            panel.Paint += (s, e) =>
-            {
-                e.Graphics.SmoothingMode =
-                    SmoothingMode.AntiAlias;
-
-                Rectangle bounds =
-                    new Rectangle(
-                        0,
-                        0,
-                        panel.Width - 1,
-                        panel.Height - 1);
-
-                using (GraphicsPath path =
-                       BuildRoundedRectPath(
-                           bounds,
-                           radius))
+            panel.Paint +=
+                (s, e) =>
                 {
-                    using (var borderPen =
-                           new Pen(ClrGold, 1.6f))
+                    e.Graphics.SmoothingMode =
+                        SmoothingMode.AntiAlias;
+
+                    Rectangle bounds =
+                        new Rectangle(
+                            0,
+                            0,
+                            panel.Width - 1,
+                            panel.Height - 1);
+
+                    using (GraphicsPath path =
+                           BuildRoundedRectPath(
+                               bounds,
+                               radius))
                     {
-                        e.Graphics.DrawPath(
-                            borderPen,
-                            path);
+                        using (var borderPen =
+                               new Pen(
+                                   ClrGold,
+                                   1.6f))
+                        {
+                            e.Graphics.DrawPath(
+                                borderPen,
+                                path);
+                        }
                     }
-                }
-            };
+                };
 
             return panel;
         }
@@ -1258,9 +1482,11 @@ namespace WinFormsApp1
             Rectangle bounds,
             int radius)
         {
-            int d = radius * 2;
+            int d =
+                radius * 2;
 
-            GraphicsPath path = new GraphicsPath();
+            GraphicsPath path =
+                new GraphicsPath();
 
             path.AddArc(
                 bounds.X,
@@ -1300,7 +1526,7 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        // LEGEND (colored dots instead of emoji)
+        // LEGEND
         // =========================================================
 
         private void LegendPanel_Paint(
@@ -1310,15 +1536,20 @@ namespace WinFormsApp1
             e.Graphics.SmoothingMode =
                 SmoothingMode.AntiAlias;
 
-            int dotSize = 10;
+            int dotSize =
+                10;
 
             int y =
-                (((Panel)sender).Height - dotSize) / 2;
+                (((Panel)sender).Height -
+                 dotSize) / 2;
 
-            int x = 0;
+            int x =
+                0;
 
             using (var font =
-                   new Font("Segoe UI", 8.5F))
+                   new Font(
+                       "Segoe UI",
+                       8.5F))
             {
                 DrawLegendItem(
                     e.Graphics,
@@ -1373,13 +1604,17 @@ namespace WinFormsApp1
                     dotSize);
             }
 
-            x += dotSize + 6;
+            x +=
+                dotSize + 6;
 
             SizeF textSize =
-                g.MeasureString(text, font);
+                g.MeasureString(
+                    text,
+                    font);
 
             using (var textBrush =
-                   new SolidBrush(ClrLabelGray))
+                   new SolidBrush(
+                       ClrLabelGray))
             {
                 g.DrawString(
                     text,
@@ -1389,11 +1624,12 @@ namespace WinFormsApp1
                     y - 3);
             }
 
-            x += (int)textSize.Width;
+            x +=
+                (int)textSize.Width;
         }
 
         // =========================================================
-        // STATUS COLUMN - CUSTOM COLORED DOT PAINTING
+        // STATUS COLUMN
         // =========================================================
 
         private void DgvAttempts_CellPainting(
@@ -1401,6 +1637,7 @@ namespace WinFormsApp1
             DataGridViewCellPaintingEventArgs e)
         {
             if (e.RowIndex < 0 ||
+                e.ColumnIndex < 0 ||
                 dgvAttempts.Columns[e.ColumnIndex].Name !=
                 "Status")
             {
@@ -1416,32 +1653,41 @@ namespace WinFormsApp1
                     ? ""
                     : e.Value.ToString();
 
-            Color dotColor = ClrRed;
+            Color dotColor =
+                ClrRed;
 
-            if (status == "Taking Quiz")
+            if (status ==
+                "Taking Quiz")
             {
-                dotColor = ClrGreen;
+                dotColor =
+                    ClrGreen;
             }
-            else if (status == "Disconnected")
+            else if (status ==
+                     "Disconnected")
             {
-                dotColor = ClrYellow;
+                dotColor =
+                    ClrYellow;
             }
-            else if (status == "Submitted")
+            else if (status ==
+                     "Submitted")
             {
-                dotColor = ClrGreen;
+                dotColor =
+                    ClrGreen;
             }
 
             e.Graphics.SmoothingMode =
                 SmoothingMode.AntiAlias;
 
-            int dotSize = 10;
+            int dotSize =
+                10;
 
             int dotX =
                 e.CellBounds.Left + 10;
 
             int dotY =
                 e.CellBounds.Top +
-                ((e.CellBounds.Height - dotSize) / 2);
+                ((e.CellBounds.Height -
+                  dotSize) / 2);
 
             using (var dotBrush =
                    new SolidBrush(dotColor))
@@ -1460,48 +1706,68 @@ namespace WinFormsApp1
                        9,
                        FontStyle.Bold))
             using (var textBrush =
-                   new SolidBrush(ClrBlack))
+                   new SolidBrush(
+                       ClrBlack))
             {
                 e.Graphics.DrawString(
                     status,
                     font,
                     textBrush,
-                    dotX + dotSize + 8,
+                    dotX +
+                    dotSize +
+                    8,
                     e.CellBounds.Top +
-                    ((e.CellBounds.Height - font.Height) / 2));
+                    ((e.CellBounds.Height -
+                      font.Height) / 2));
             }
 
-            e.Handled = true;
+            e.Handled =
+                true;
         }
 
         // =========================================================
-        // FORMAT DURATION (hours + minutes -> readable text)
+        // FORMAT DURATION
         // =========================================================
 
-        private string FormatDuration(int totalMinutes)
+        private string FormatDuration(
+            int totalMinutes)
         {
-            int hours = totalMinutes / 60;
+            int hours =
+                totalMinutes / 60;
 
-            int minutes = totalMinutes % 60;
+            int minutes =
+                totalMinutes % 60;
 
-            if (hours > 0 && minutes > 0)
+            if (hours > 0 &&
+                minutes > 0)
             {
-                return hours + "h " + minutes + "m";
+                return
+                    hours +
+                    "h " +
+                    minutes +
+                    "m";
             }
 
             if (hours > 0)
             {
-                return hours + "h";
+                return
+                    hours +
+                    "h";
             }
 
-            return minutes + " minute" + (minutes == 1 ? "" : "s");
+            return
+                minutes +
+                " minute" +
+                (minutes == 1
+                    ? ""
+                    : "s");
         }
 
         // =========================================================
         // IMPORT DOCX
         // =========================================================
 
-        private void BtnImportDocx_Click(
+        private async void BtnImportDocx_Click(
             object sender,
             EventArgs e)
         {
@@ -1525,9 +1791,22 @@ namespace WinFormsApp1
 
                 try
                 {
+                    string selectedDocx =
+                        dialog.FileName;
+
                     QuizImportResult result =
-                        DocxQuizImporter.Import(
-                            dialog.FileName);
+                        null;
+
+                    using (new LoadingOverlay(
+                        this,
+                        "Importing DOCX"))
+                    {
+                        result =
+                            await Task.Run(
+                                () =>
+                                    DocxQuizImporter.Import(
+                                        selectedDocx));
+                    }
 
                     if (result == null)
                     {
@@ -1585,8 +1864,10 @@ namespace WinFormsApp1
                         "Questions found: " +
                         importedQuestions.Count +
                         "\n\n" +
-                        "The original DOCX order will be preserved when saved.\n" +
-                        "Question scrambling will happen on the student side by section.",
+                        "You can now edit any imported question " +
+                        "without uploading another DOCX.\n\n" +
+                        "Double-click a question or select it " +
+                        "and click EDIT SELECTED.",
                         "Import Successful",
                         CustomMessageBoxButtons.OK,
                         CustomMessageBoxIcon.Information);
@@ -1607,7 +1888,7 @@ namespace WinFormsApp1
         // VIEW EXAMPLE DOCX
         // =========================================================
 
-        private void BtnViewExample_Click(
+        private async void BtnViewExample_Click(
             object sender,
             EventArgs e)
         {
@@ -1631,8 +1912,18 @@ namespace WinFormsApp1
 
                 try
                 {
-                    ExampleTemplateGenerator.Generate(
-                        dialog.FileName);
+                    string examplePath =
+                        dialog.FileName;
+
+                    using (new LoadingOverlay(
+                        this,
+                        "Creating template"))
+                    {
+                        await Task.Run(
+                            () =>
+                                ExampleTemplateGenerator.Generate(
+                                    examplePath));
+                    }
 
                     var open =
                         CustomMessageBox.Show(
@@ -1648,8 +1939,11 @@ namespace WinFormsApp1
                         System.Diagnostics.Process.Start(
                             new System.Diagnostics.ProcessStartInfo
                             {
-                                FileName = dialog.FileName,
-                                UseShellExecute = true
+                                FileName =
+                                    dialog.FileName,
+
+                                UseShellExecute =
+                                    true
                             });
                     }
                 }
@@ -1673,13 +1967,16 @@ namespace WinFormsApp1
         {
             lstQuestions.Items.Clear();
 
+            questionItemMap.Clear();
+
             if (importedQuestions == null ||
                 importedQuestions.Count == 0)
             {
                 return;
             }
 
-            int displayNumber = 1;
+            int displayNumber =
+                1;
 
             AddSectionToPreview(
                 "multiple_choice",
@@ -1731,7 +2028,8 @@ namespace WinFormsApp1
                         q.QuestionType,
                         false);
 
-                if (type == sectionType)
+                if (type ==
+                    sectionType)
                 {
                     sectionQuestions.Add(q);
                 }
@@ -1770,15 +2068,108 @@ namespace WinFormsApp1
                         ? ""
                         : q.Question.Trim();
 
-                lstQuestions.Items.Add(
-                    displayNumber +
-                    ". " +
-                    questionText);
+                int itemIndex =
+                    lstQuestions.Items.Add(
+                        displayNumber +
+                        ". " +
+                        questionText);
+
+                questionItemMap[itemIndex] =
+                    q;
 
                 displayNumber++;
             }
 
             lstQuestions.Items.Add("");
+        }
+
+        // =========================================================
+        // DOUBLE CLICK QUESTION
+        // =========================================================
+
+        private void LstQuestions_DoubleClick(
+            object sender,
+            EventArgs e)
+        {
+            EditSelectedQuestion();
+        }
+
+        // =========================================================
+        // EDIT BUTTON
+        // =========================================================
+
+        private void BtnEditQuestion_Click(
+            object sender,
+            EventArgs e)
+        {
+            EditSelectedQuestion();
+        }
+
+        // =========================================================
+        // EDIT SELECTED QUESTION
+        // =========================================================
+
+        private void EditSelectedQuestion()
+        {
+            if (lstQuestions.SelectedIndex < 0)
+            {
+                CustomMessageBox.Show(
+                    "Please select a question first.\n\n" +
+                    "You can also double-click a question to edit it.",
+                    "Edit Question",
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Information);
+
+                return;
+            }
+
+            int selectedIndex =
+                lstQuestions.SelectedIndex;
+
+            if (!questionItemMap.ContainsKey(
+                selectedIndex))
+            {
+                CustomMessageBox.Show(
+                    "Please select an actual question.\n\n" +
+                    "Section headers cannot be edited.",
+                    "Edit Question",
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Information);
+
+                return;
+            }
+
+            QuizQuestion selectedQuestion =
+                questionItemMap[selectedIndex];
+
+            if (selectedQuestion == null)
+            {
+                return;
+            }
+
+            using (QuestionEditorForm editor =
+                   new QuestionEditorForm(
+                       selectedQuestion))
+            {
+                if (editor.ShowDialog(this) ==
+                    DialogResult.OK)
+                {
+                    RefreshQuestionList();
+
+                    lblQuestionCount.Text =
+                        "Questions: " +
+                        importedQuestions.Count;
+
+                    CustomMessageBox.Show(
+                        "Question updated successfully.\n\n" +
+                        "You do not need to upload the DOCX again.\n\n" +
+                        "The updated question will be used when " +
+                        "you submit the Quiz / Exam.",
+                        "Question Updated",
+                        CustomMessageBoxButtons.OK,
+                        CustomMessageBoxIcon.Information);
+                }
+            }
         }
 
         // =========================================================
@@ -1824,7 +2215,7 @@ namespace WinFormsApp1
         // SAVE QUIZ / EXAM
         // =========================================================
 
-        private void BtnSaveQuiz_Click(
+        private async void BtnSaveQuiz_Click(
             object sender,
             EventArgs e)
         {
@@ -1886,7 +2277,7 @@ namespace WinFormsApp1
             }
 
             // =====================================================
-            // VALIDATE TIME LIMIT (HOURS + MINUTES)
+            // VALIDATE TIME LIMIT
             // =====================================================
 
             int durationMinutes =
@@ -1932,7 +2323,7 @@ namespace WinFormsApp1
             }
 
             // =====================================================
-            // VALIDATE
+            // VALIDATE EDITED QUESTIONS
             // =====================================================
 
             string validationError =
@@ -1991,7 +2382,8 @@ namespace WinFormsApp1
                     subject +
                     "\n" +
                     "Time Limit: " +
-                    FormatDuration(durationMinutes) +
+                    FormatDuration(
+                        durationMinutes) +
                     "\n\n" +
                     "QUESTION STRUCTURE\n" +
                     "Multiple Choice: " +
@@ -2022,6 +2414,110 @@ namespace WinFormsApp1
                 SettingsManager.Current
                 .GetConnectionString();
 
+            int quizId =
+                0;
+
+            Exception saveError =
+                null;
+
+            using (new LoadingOverlay(
+                this,
+                "Submitting " +
+                assessmentType))
+            {
+                try
+                {
+                    quizId =
+                        await Task.Run(
+                            () =>
+                                SaveQuizToDatabase(
+                                    connStr,
+                                    title,
+                                    assessmentType,
+                                    subject,
+                                    examPeriod,
+                                    durationMinutes));
+                }
+                catch (Exception ex)
+                {
+                    saveError =
+                        ex;
+                }
+            }
+
+            if (saveError != null)
+            {
+                CustomMessageBox.Show(
+                    "The " +
+                    assessmentType.ToUpper() +
+                    " was not submitted.\n\n" +
+                    saveError.Message,
+                    "Database Error",
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Error);
+
+                return;
+            }
+
+            monitoredQuizId =
+                quizId;
+
+            btnMonitor.Enabled =
+                true;
+
+            StartMonitoring(
+                monitoredQuizId);
+
+            CustomMessageBox.Show(
+                assessmentType.ToUpper() +
+                " submitted successfully!\n\n" +
+                "Quiz ID: " +
+                quizId +
+                "\n" +
+                "Exam Period: " +
+                examPeriod +
+                "\n" +
+                "Time Limit: " +
+                FormatDuration(
+                    durationMinutes) +
+                "\n\n" +
+                "Question Structure:\n" +
+                "Multiple Choice: " +
+                mcCount +
+                "\n" +
+                "True / False: " +
+                tfCount +
+                "\n" +
+                "Identification: " +
+                identificationCount +
+                "\n" +
+                "Essay: " +
+                essayCount +
+                "\n\n" +
+                "Total Questions: " +
+                importedQuestions.Count +
+                "\n\n" +
+                "Student monitoring is now active.",
+                "Submit Successful",
+                CustomMessageBoxButtons.OK,
+                CustomMessageBoxIcon.Information);
+
+            ClearForm(
+                false);
+        }
+
+        // =========================================================
+        // SAVE QUIZ TO DATABASE
+        // =========================================================
+
+        private int SaveQuizToDatabase(
+            string connStr,
+            string title,
+            string assessmentType,
+            string subject,
+            string examPeriod,
+            int durationMinutes)
+        {
             using (var connection =
                    new MySqlConnection(connStr))
             {
@@ -2133,16 +2629,30 @@ namespace WinFormsApp1
                         QuizQuestion q =
                             importedQuestions[i];
 
+                        if (q == null)
+                        {
+                            continue;
+                        }
+
                         string questionType =
                             NormalizeQuestionType(
                                 q.QuestionType,
                                 true);
 
-                        string choiceA = null;
-                        string choiceB = null;
-                        string choiceC = null;
-                        string choiceD = null;
-                        string correctAnswer = null;
+                        string choiceA =
+                            null;
+
+                        string choiceB =
+                            null;
+
+                        string choiceC =
+                            null;
+
+                        string choiceD =
+                            null;
+
+                        string correctAnswer =
+                            null;
 
                         // =================================================
                         // MULTIPLE CHOICE
@@ -2265,7 +2775,8 @@ namespace WinFormsApp1
                         else if (questionType ==
                                  "essay")
                         {
-                            correctAnswer = null;
+                            correctAnswer =
+                                null;
                         }
 
                         // =================================================
@@ -2319,62 +2830,11 @@ namespace WinFormsApp1
                         }
                     }
 
-                    // =================================================
-                    // COMMIT
-                    // =================================================
-
                     transaction.Commit();
 
-                    // =================================================
-                    // START MONITORING THIS QUIZ
-                    // =================================================
-
-                    monitoredQuizId =
-                        quizId;
-
-                    btnMonitor.Enabled =
-                        true;
-
-                    StartMonitoring(
-                        monitoredQuizId);
-
-                    CustomMessageBox.Show(
-                        assessmentType.ToUpper() +
-                        " submitted successfully!\n\n" +
-                        "Quiz ID: " +
-                        quizId +
-                        "\n" +
-                        "Exam Period: " +
-                        examPeriod +
-                        "\n" +
-                        "Time Limit: " +
-                        FormatDuration(durationMinutes) +
-                        "\n\n" +
-                        "Question Structure:\n" +
-                        "Multiple Choice: " +
-                        mcCount +
-                        "\n" +
-                        "True / False: " +
-                        tfCount +
-                        "\n" +
-                        "Identification: " +
-                        identificationCount +
-                        "\n" +
-                        "Essay: " +
-                        essayCount +
-                        "\n\n" +
-                        "Total Questions: " +
-                        importedQuestions.Count +
-                        "\n\n" +
-                        "Student monitoring is now active.",
-                        "Submit Successful",
-                        CustomMessageBoxButtons.OK,
-                        CustomMessageBoxIcon.Information);
-
-                    ClearForm(
-                        false);
+                    return quizId;
                 }
-                catch (Exception ex)
+                catch
                 {
                     try
                     {
@@ -2387,14 +2847,7 @@ namespace WinFormsApp1
                     {
                     }
 
-                    CustomMessageBox.Show(
-                        "The " +
-                        assessmentType.ToUpper() +
-                        " was not submitted.\n\n" +
-                        ex.Message,
-                        "Database Error",
-                        CustomMessageBoxButtons.OK,
-                        CustomMessageBoxIcon.Error);
+                    throw;
                 }
             }
         }
@@ -2420,6 +2873,7 @@ namespace WinFormsApp1
             if (monitoringTimer != null)
             {
                 monitoringTimer.Stop();
+
                 monitoringTimer.Start();
             }
         }
@@ -2520,14 +2974,18 @@ namespace WinFormsApp1
                             while (reader.Read())
                             {
                                 string fullName =
-                                    reader["full_name"] == DBNull.Value
+                                    reader["full_name"] ==
+                                    DBNull.Value
                                         ? "Unknown Student"
-                                        : reader["full_name"].ToString();
+                                        : reader["full_name"]
+                                            .ToString();
 
                                 string dbStatus =
-                                    reader["status"] == DBNull.Value
+                                    reader["status"] ==
+                                    DBNull.Value
                                         ? ""
-                                        : reader["status"].ToString();
+                                        : reader["status"]
+                                            .ToString();
 
                                 DateTime? lastSeen =
                                     null;
@@ -2555,7 +3013,8 @@ namespace WinFormsApp1
             }
             catch
             {
-                // Silent — the next refresh will try again.
+                // Silent.
+                // The next refresh will try again.
             }
         }
 
@@ -2611,7 +3070,8 @@ namespace WinFormsApp1
         private int CountQuestionsByType(
             string targetType)
         {
-            int count = 0;
+            int count =
+                0;
 
             if (importedQuestions == null)
             {
@@ -2635,7 +3095,8 @@ namespace WinFormsApp1
                         q.QuestionType,
                         false);
 
-                if (type == targetType)
+                if (type ==
+                    targetType)
                 {
                     count++;
                 }
@@ -2691,6 +3152,10 @@ namespace WinFormsApp1
                         " has an unsupported question type.\n\n" +
                         ex.Message;
                 }
+
+                // =================================================
+                // MULTIPLE CHOICE
+                // =================================================
 
                 if (questionType ==
                     "multiple_choice")
@@ -2756,6 +3221,11 @@ namespace WinFormsApp1
                             q.Question;
                     }
                 }
+
+                // =================================================
+                // TRUE / FALSE
+                // =================================================
+
                 else if (questionType ==
                          "true_false")
                 {
@@ -2780,6 +3250,11 @@ namespace WinFormsApp1
                             q.Question;
                     }
                 }
+
+                // =================================================
+                // IDENTIFICATION
+                // =================================================
+
                 else if (questionType ==
                          "identification")
                 {
@@ -2794,10 +3269,16 @@ namespace WinFormsApp1
                             q.Question;
                     }
                 }
+
+                // =================================================
+                // ESSAY
+                // =================================================
+
                 else if (questionType ==
                          "essay")
                 {
-                    // Essay does not require a correct answer.
+                    // Essay does not require
+                    // a correct answer.
                 }
             }
 
@@ -3020,16 +3501,20 @@ namespace WinFormsApp1
 
             if (numHours != null)
             {
-                numHours.Value = 1;
+                numHours.Value =
+                    1;
             }
 
             if (numMinutes != null)
             {
-                numMinutes.Value = 0;
+                numMinutes.Value =
+                    0;
             }
 
             importedQuestions =
                 new List<QuizQuestion>();
+
+            questionItemMap.Clear();
 
             lstQuestions.Items.Clear();
 
@@ -3068,9 +3553,12 @@ namespace WinFormsApp1
             }
         }
 
+        // =========================================================
+        // INITIALIZE COMPONENT
+        // =========================================================
+
         private void InitializeComponent()
         {
-
         }
 
         // =========================================================
@@ -3096,7 +3584,1035 @@ namespace WinFormsApp1
         }
     }
 
+    // =================================================================
+    // QUESTION EDITOR FORM
+    // =================================================================
+
+    public class QuestionEditorForm : Form
+    {
+        private QuizQuestion question;
+
+        private ComboBox cmbQuestionType;
+
+        private TextBox txtQuestion;
+
+        private TextBox txtChoiceA;
+        private TextBox txtChoiceB;
+        private TextBox txtChoiceC;
+        private TextBox txtChoiceD;
+
+        private TextBox txtCorrectAnswer;
+
+        private Label lblChoiceA;
+        private Label lblChoiceB;
+        private Label lblChoiceC;
+        private Label lblChoiceD;
+        private Label lblCorrectAnswer;
+
+        private Button btnSave;
+        private Button btnCancel;
+
+        private Panel choicesPanel;
+
+        private static readonly Color ClrMaroon =
+            Color.FromArgb(
+                94,
+                14,
+                33);
+
+        private static readonly Color ClrMaroonDark =
+            Color.FromArgb(
+                70,
+                10,
+                24);
+
+        private static readonly Color ClrGold =
+            Color.FromArgb(
+                198,
+                156,
+                53);
+
+        private static readonly Color ClrGoldDark =
+            Color.FromArgb(
+                163,
+                126,
+                36);
+
+        private static readonly Color ClrPageBg =
+            Color.FromArgb(
+                250,
+                247,
+                239);
+
+        // =========================================================
+        // CONSTRUCTOR
+        // =========================================================
+
+        public QuestionEditorForm(
+            QuizQuestion questionToEdit)
+        {
+            question =
+                questionToEdit;
+
+            BuildInterface();
+
+            LoadQuestion();
+        }
+
+        // =========================================================
+        // BUILD EDITOR
+        // =========================================================
+
+        private void BuildInterface()
+        {
+            Text =
+                "Edit Question";
+
+            StartPosition =
+                FormStartPosition.CenterParent;
+
+            Size =
+                new Size(
+                    700,
+                    650);
+
+            MinimumSize =
+                new Size(
+                    650,
+                    600);
+
+            BackColor =
+                ClrPageBg;
+
+            Font =
+                new Font(
+                    "Segoe UI",
+                    9.5F);
+
+            FormBorderStyle =
+                FormBorderStyle.FixedDialog;
+
+            MaximizeBox =
+                false;
+
+            MinimizeBox =
+                false;
+
+            // =====================================================
+            // HEADER
+            // =====================================================
+
+            Panel header =
+                new Panel();
+
+            header.Location =
+                new Point(
+                    0,
+                    0);
+
+            header.Size =
+                new Size(
+                    ClientSize.Width,
+                    80);
+
+            header.BackColor =
+                ClrMaroon;
+
+            Controls.Add(
+                header);
+
+            Label title =
+                new Label();
+
+            title.Text =
+                "Edit Imported Question";
+
+            title.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    18,
+                    FontStyle.Bold);
+
+            title.ForeColor =
+                Color.White;
+
+            title.AutoSize =
+                true;
+
+            title.Location =
+                new Point(
+                    25,
+                    18);
+
+            header.Controls.Add(
+                title);
+
+            // =====================================================
+            // QUESTION TYPE
+            // =====================================================
+
+            Label lblType =
+                new Label();
+
+            lblType.Text =
+                "Question Type";
+
+            lblType.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    10,
+                    FontStyle.Bold);
+
+            lblType.AutoSize =
+                true;
+
+            lblType.Location =
+                new Point(
+                    30,
+                    105);
+
+            Controls.Add(
+                lblType);
+
+            cmbQuestionType =
+                new ComboBox();
+
+            cmbQuestionType.DropDownStyle =
+                ComboBoxStyle.DropDownList;
+
+            cmbQuestionType.Font =
+                new Font(
+                    "Segoe UI",
+                    10);
+
+            cmbQuestionType.Items.Add(
+                "Multiple Choice");
+
+            cmbQuestionType.Items.Add(
+                "True / False");
+
+            cmbQuestionType.Items.Add(
+                "Identification");
+
+            cmbQuestionType.Items.Add(
+                "Essay");
+
+            cmbQuestionType.Location =
+                new Point(
+                    30,
+                    130);
+
+            cmbQuestionType.Size =
+                new Size(
+                    250,
+                    32);
+
+            cmbQuestionType.SelectedIndexChanged +=
+                CmbQuestionType_SelectedIndexChanged;
+
+            Controls.Add(
+                cmbQuestionType);
+
+            // =====================================================
+            // QUESTION
+            // =====================================================
+
+            Label lblQuestion =
+                new Label();
+
+            lblQuestion.Text =
+                "Question";
+
+            lblQuestion.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    10,
+                    FontStyle.Bold);
+
+            lblQuestion.AutoSize =
+                true;
+
+            lblQuestion.Location =
+                new Point(
+                    30,
+                    180);
+
+            Controls.Add(
+                lblQuestion);
+
+            txtQuestion =
+                new TextBox();
+
+            txtQuestion.Multiline =
+                true;
+
+            txtQuestion.ScrollBars =
+                ScrollBars.Vertical;
+
+            txtQuestion.Font =
+                new Font(
+                    "Segoe UI",
+                    10);
+
+            txtQuestion.Location =
+                new Point(
+                    30,
+                    205);
+
+            txtQuestion.Size =
+                new Size(
+                    620,
+                    80);
+
+            Controls.Add(
+                txtQuestion);
+
+            // =====================================================
+            // CHOICES PANEL
+            // =====================================================
+
+            choicesPanel =
+                new Panel();
+
+            choicesPanel.Location =
+                new Point(
+                    30,
+                    305);
+
+            choicesPanel.Size =
+                new Size(
+                    620,
+                    230);
+
+            choicesPanel.BackColor =
+                Color.White;
+
+            choicesPanel.BorderStyle =
+                BorderStyle.FixedSingle;
+
+            Controls.Add(
+                choicesPanel);
+
+            // =====================================================
+            // CHOICE A
+            // =====================================================
+
+            lblChoiceA =
+                CreateLabel(
+                    "Choice A",
+                    15,
+                    15);
+
+            choicesPanel.Controls.Add(
+                lblChoiceA);
+
+            txtChoiceA =
+                CreateTextBox(
+                    100,
+                    12,
+                    480,
+                    30);
+
+            choicesPanel.Controls.Add(
+                txtChoiceA);
+
+            // =====================================================
+            // CHOICE B
+            // =====================================================
+
+            lblChoiceB =
+                CreateLabel(
+                    "Choice B",
+                    15,
+                    55);
+
+            choicesPanel.Controls.Add(
+                lblChoiceB);
+
+            txtChoiceB =
+                CreateTextBox(
+                    100,
+                    52,
+                    480,
+                    30);
+
+            choicesPanel.Controls.Add(
+                txtChoiceB);
+
+            // =====================================================
+            // CHOICE C
+            // =====================================================
+
+            lblChoiceC =
+                CreateLabel(
+                    "Choice C",
+                    15,
+                    95);
+
+            choicesPanel.Controls.Add(
+                lblChoiceC);
+
+            txtChoiceC =
+                CreateTextBox(
+                    100,
+                    92,
+                    480,
+                    30);
+
+            choicesPanel.Controls.Add(
+                txtChoiceC);
+
+            // =====================================================
+            // CHOICE D
+            // =====================================================
+
+            lblChoiceD =
+                CreateLabel(
+                    "Choice D",
+                    15,
+                    135);
+
+            choicesPanel.Controls.Add(
+                lblChoiceD);
+
+            txtChoiceD =
+                CreateTextBox(
+                    100,
+                    132,
+                    480,
+                    30);
+
+            choicesPanel.Controls.Add(
+                txtChoiceD);
+
+            // =====================================================
+            // CORRECT ANSWER
+            // =====================================================
+
+            lblCorrectAnswer =
+                CreateLabel(
+                    "Correct Answer",
+                    15,
+                    175);
+
+            choicesPanel.Controls.Add(
+                lblCorrectAnswer);
+
+            txtCorrectAnswer =
+                CreateTextBox(
+                    140,
+                    172,
+                    440,
+                    30);
+
+            choicesPanel.Controls.Add(
+                txtCorrectAnswer);
+
+            // =====================================================
+            // SAVE CHANGES
+            // =====================================================
+
+            btnSave =
+                new Button();
+
+            btnSave.Text =
+                "✓  SAVE CHANGES";
+
+            btnSave.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    10,
+                    FontStyle.Bold);
+
+            btnSave.BackColor =
+                ClrMaroon;
+
+            btnSave.ForeColor =
+                Color.White;
+
+            btnSave.FlatStyle =
+                FlatStyle.Flat;
+
+            btnSave.FlatAppearance.BorderSize =
+                0;
+
+            btnSave.Size =
+                new Size(
+                    170,
+                    42);
+
+            btnSave.Location =
+                new Point(
+                    300,
+                    555);
+
+            btnSave.Click +=
+                BtnSave_Click;
+
+            Controls.Add(
+                btnSave);
+
+            // =====================================================
+            // CANCEL
+            // =====================================================
+
+            btnCancel =
+                new Button();
+
+            btnCancel.Text =
+                "CANCEL";
+
+            btnCancel.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    10,
+                    FontStyle.Bold);
+
+            btnCancel.BackColor =
+                Color.FromArgb(
+                    40,
+                    40,
+                    40);
+
+            btnCancel.ForeColor =
+                Color.White;
+
+            btnCancel.FlatStyle =
+                FlatStyle.Flat;
+
+            btnCancel.FlatAppearance.BorderSize =
+                0;
+
+            btnCancel.Size =
+                new Size(
+                    130,
+                    42);
+
+            btnCancel.Location =
+                new Point(
+                    480,
+                    555);
+
+            btnCancel.Click +=
+                (s, e) =>
+                {
+                    DialogResult =
+                        DialogResult.Cancel;
+
+                    Close();
+                };
+
+            Controls.Add(
+                btnCancel);
+        }
+
+        // =========================================================
+        // LABEL HELPER
+        // =========================================================
+
+        private Label CreateLabel(
+            string text,
+            int x,
+            int y)
+        {
+            Label label =
+                new Label();
+
+            label.Text =
+                text;
+
+            label.Font =
+                new Font(
+                    "Segoe UI Semibold",
+                    9,
+                    FontStyle.Bold);
+
+            label.ForeColor =
+                Color.FromArgb(
+                    50,
+                    50,
+                    50);
+
+            label.AutoSize =
+                true;
+
+            label.Location =
+                new Point(
+                    x,
+                    y + 6);
+
+            return label;
+        }
+
+        // =========================================================
+        // TEXTBOX HELPER
+        // =========================================================
+
+        private TextBox CreateTextBox(
+            int x,
+            int y,
+            int width,
+            int height)
+        {
+            TextBox textbox =
+                new TextBox();
+
+            textbox.Font =
+                new Font(
+                    "Segoe UI",
+                    9.5F);
+
+            textbox.BorderStyle =
+                BorderStyle.FixedSingle;
+
+            textbox.Location =
+                new Point(
+                    x,
+                    y);
+
+            textbox.Size =
+                new Size(
+                    width,
+                    height);
+
+            return textbox;
+        }
+
+        // =========================================================
+        // LOAD QUESTION
+        // =========================================================
+
+        private void LoadQuestion()
+        {
+            if (question == null)
+            {
+                return;
+            }
+
+            string type =
+                question.QuestionType == null
+                    ? ""
+                    : question.QuestionType
+                        .Trim()
+                        .ToLower();
+
+            if (type ==
+                    "multiple_choice" ||
+                type ==
+                    "multiplechoice" ||
+                type ==
+                    "multiple choice" ||
+                type ==
+                    "mc")
+            {
+                cmbQuestionType.SelectedIndex =
+                    0;
+            }
+            else if (type ==
+                         "true_false" ||
+                     type ==
+                         "truefalse" ||
+                     type ==
+                         "true or false" ||
+                     type ==
+                         "tf")
+            {
+                cmbQuestionType.SelectedIndex =
+                    1;
+            }
+            else if (type ==
+                         "identification" ||
+                     type ==
+                         "identification_question" ||
+                     type ==
+                         "identification question" ||
+                     type ==
+                         "identify" ||
+                     type ==
+                         "id")
+            {
+                cmbQuestionType.SelectedIndex =
+                    2;
+            }
+            else
+            {
+                cmbQuestionType.SelectedIndex =
+                    3;
+            }
+
+            txtQuestion.Text =
+                question.Question ?? "";
+
+            txtChoiceA.Text =
+                question.ChoiceA ?? "";
+
+            txtChoiceB.Text =
+                question.ChoiceB ?? "";
+
+            txtChoiceC.Text =
+                question.ChoiceC ?? "";
+
+            txtChoiceD.Text =
+                question.ChoiceD ?? "";
+
+            txtCorrectAnswer.Text =
+                question.CorrectAnswer ?? "";
+
+            UpdateQuestionTypeControls();
+        }
+
+        // =========================================================
+        // QUESTION TYPE CHANGED
+        // =========================================================
+
+        private void CmbQuestionType_SelectedIndexChanged(
+            object sender,
+            EventArgs e)
+        {
+            UpdateQuestionTypeControls();
+        }
+
+        // =========================================================
+        // UPDATE CONTROLS
+        // =========================================================
+
+        private void UpdateQuestionTypeControls()
+        {
+            if (cmbQuestionType == null)
+            {
+                return;
+            }
+
+            int index =
+                cmbQuestionType.SelectedIndex;
+
+            bool multipleChoice =
+                index == 0;
+
+            bool trueFalse =
+                index == 1;
+
+            bool identification =
+                index == 2;
+
+            bool essay =
+                index == 3;
+
+            lblChoiceA.Visible =
+                multipleChoice;
+
+            lblChoiceB.Visible =
+                multipleChoice;
+
+            lblChoiceC.Visible =
+                multipleChoice;
+
+            lblChoiceD.Visible =
+                multipleChoice;
+
+            txtChoiceA.Visible =
+                multipleChoice;
+
+            txtChoiceB.Visible =
+                multipleChoice;
+
+            txtChoiceC.Visible =
+                multipleChoice;
+
+            txtChoiceD.Visible =
+                multipleChoice;
+
+            lblCorrectAnswer.Visible =
+                !essay;
+
+            txtCorrectAnswer.Visible =
+                !essay;
+
+            if (trueFalse)
+            {
+                lblCorrectAnswer.Text =
+                    "Correct Answer";
+            }
+            else if (identification)
+            {
+                lblCorrectAnswer.Text =
+                    "Expected Answer";
+            }
+            else
+            {
+                lblCorrectAnswer.Text =
+                    "Correct Answer";
+            }
+
+            // Important:
+            // We DO NOT erase existing choices here.
+            // This prevents accidental data loss when
+            // changing controls.
+        }
+
+        // =========================================================
+        // SAVE EDITED QUESTION
+        // =========================================================
+
+        private void BtnSave_Click(
+            object sender,
+            EventArgs e)
+        {
+            if (question == null)
+            {
+                return;
+            }
+
+            string questionText =
+                txtQuestion.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(
+                questionText))
+            {
+                MessageBox.Show(
+                    "Question text is required.",
+                    "Validation",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                txtQuestion.Focus();
+
+                return;
+            }
+
+            if (cmbQuestionType.SelectedIndex < 0)
+            {
+                MessageBox.Show(
+                    "Please select a question type.",
+                    "Validation",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                return;
+            }
+
+            string newType;
+
+            if (cmbQuestionType.SelectedIndex == 0)
+            {
+                newType =
+                    "multiple_choice";
+            }
+            else if (cmbQuestionType.SelectedIndex == 1)
+            {
+                newType =
+                    "true_false";
+            }
+            else if (cmbQuestionType.SelectedIndex == 2)
+            {
+                newType =
+                    "identification";
+            }
+            else
+            {
+                newType =
+                    "essay";
+            }
+
+            // =====================================================
+            // MULTIPLE CHOICE
+            // =====================================================
+
+            if (newType ==
+                "multiple_choice")
+            {
+                if (string.IsNullOrWhiteSpace(
+                    txtChoiceA.Text) ||
+                    string.IsNullOrWhiteSpace(
+                    txtChoiceB.Text) ||
+                    string.IsNullOrWhiteSpace(
+                    txtChoiceC.Text) ||
+                    string.IsNullOrWhiteSpace(
+                    txtChoiceD.Text))
+                {
+                    MessageBox.Show(
+                        "Multiple Choice requires choices A, B, C, and D.",
+                        "Validation",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+
+                    return;
+                }
+
+                string answer =
+                    txtCorrectAnswer.Text
+                        .Trim()
+                        .ToUpper();
+
+                if (answer != "A" &&
+                    answer != "B" &&
+                    answer != "C" &&
+                    answer != "D")
+                {
+                    MessageBox.Show(
+                        "Correct Answer must be A, B, C, or D.",
+                        "Validation",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+
+                    txtCorrectAnswer.Focus();
+
+                    return;
+                }
+
+                question.ChoiceA =
+                    txtChoiceA.Text.Trim();
+
+                question.ChoiceB =
+                    txtChoiceB.Text.Trim();
+
+                question.ChoiceC =
+                    txtChoiceC.Text.Trim();
+
+                question.ChoiceD =
+                    txtChoiceD.Text.Trim();
+
+                question.CorrectAnswer =
+                    answer;
+            }
+
+            // =====================================================
+            // TRUE / FALSE
+            // =====================================================
+
+            else if (newType ==
+                     "true_false")
+            {
+                string answer =
+                    txtCorrectAnswer.Text
+                        .Trim()
+                        .ToUpper();
+
+                if (answer == "T")
+                {
+                    answer =
+                        "TRUE";
+                }
+
+                if (answer == "F")
+                {
+                    answer =
+                        "FALSE";
+                }
+
+                if (answer != "TRUE" &&
+                    answer != "FALSE")
+                {
+                    MessageBox.Show(
+                        "True / False Correct Answer must be TRUE or FALSE.",
+                        "Validation",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+
+                    txtCorrectAnswer.Focus();
+
+                    return;
+                }
+
+                question.ChoiceA =
+                    "TRUE";
+
+                question.ChoiceB =
+                    "FALSE";
+
+                question.ChoiceC =
+                    null;
+
+                question.ChoiceD =
+                    null;
+
+                question.CorrectAnswer =
+                    answer;
+            }
+
+            // =====================================================
+            // IDENTIFICATION
+            // =====================================================
+
+            else if (newType ==
+                     "identification")
+            {
+                string answer =
+                    txtCorrectAnswer.Text.Trim();
+
+                if (string.IsNullOrWhiteSpace(
+                    answer))
+                {
+                    MessageBox.Show(
+                        "Identification requires an expected answer.",
+                        "Validation",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+
+                    txtCorrectAnswer.Focus();
+
+                    return;
+                }
+
+                question.ChoiceA =
+                    null;
+
+                question.ChoiceB =
+                    null;
+
+                question.ChoiceC =
+                    null;
+
+                question.ChoiceD =
+                    null;
+
+                question.CorrectAnswer =
+                    answer;
+            }
+
+            // =====================================================
+            // ESSAY
+            // =====================================================
+
+            else if (newType ==
+                     "essay")
+            {
+                question.ChoiceA =
+                    null;
+
+                question.ChoiceB =
+                    null;
+
+                question.ChoiceC =
+                    null;
+
+                question.ChoiceD =
+                    null;
+
+                question.CorrectAnswer =
+                    null;
+            }
+
+            // =====================================================
+            // SAVE QUESTION TEXT + TYPE
+            // =====================================================
+
+            question.Question =
+                questionText;
+
+            question.QuestionType =
+                newType;
+
+            DialogResult =
+                DialogResult.OK;
+
+            Close();
+        }
+    }
+
     // NOTE:
-    // RoundedButton class ay nasa LivenessCheckForm.cs na —
-    // inalis dito para maiwasan ang duplicate/ambiguous class error.
+    // RoundedButton class ay nasa LivenessCheckForm.cs mo.
+    // Huwag magdagdag ng panibagong RoundedButton class dito
+    // para maiwasan ang duplicate/ambiguous class error.
 }
+

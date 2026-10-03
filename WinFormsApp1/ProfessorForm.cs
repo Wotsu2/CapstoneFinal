@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -105,6 +106,7 @@ namespace WinFormsApp1
         {
             saveFolder = GetFolderPath(ProfessorID);
             isRunning = true;
+
 
             _ = StartServer();
             _ = StartBroadcastListener();
@@ -245,6 +247,43 @@ namespace WinFormsApp1
             ShowPage(pnlActivity, "Activities", btnActivities);
             ActivitySectionSubject();
             RecentActivity();
+        }
+
+        // =========================================================
+        // LOADING OVERLAY HELPERS (NEW)
+        // =========================================================
+        private async Task<T> RunWithLoadingAsync<T>(string message, Func<Task<T>> operation)
+        {
+            LoadingOverlay overlay = null;
+            try
+            {
+                overlay = new LoadingOverlay(this, message);
+                
+                return await operation();
+            }
+            finally
+            {
+                
+                overlay?.Dispose();
+                this.Focus();
+            }
+        }
+
+        private async Task RunWithLoadingAsync(string message, Func<Task> operation)
+        {
+            LoadingOverlay overlay = null;
+            try
+            {
+                overlay = new LoadingOverlay(this, message);
+                
+                await operation();
+            }
+            finally
+            {
+                
+                overlay?.Dispose();
+                this.Focus();
+            }
         }
 
         private async Task StartServer()
@@ -883,7 +922,10 @@ namespace WinFormsApp1
             return list;
         }
 
-        private void StartAttendanceSession()
+        // =========================================================
+        // MODIFIED: StartAttendanceSession - WITH LOADING
+        // =========================================================
+        private async void StartAttendanceSession()
         {
             if (attSectionCombo == null || string.IsNullOrEmpty(attSectionCombo.Text))
             {
@@ -894,9 +936,14 @@ namespace WinFormsApp1
 
             string section = attSectionCombo.Text;
 
-            List<(int StudentId, string StudentName)> students = GetStudentsInSection(section);
+            List<(int StudentId, string StudentName)> students = null;
 
-            if (students.Count == 0)
+            await RunWithLoadingAsync("Loading students", async () =>
+            {
+                students = await Task.Run(() => GetStudentsInSection(section));
+            });
+
+            if (students == null || students.Count == 0)
             {
                 CustomMessageBox.Show($"No enrolled students found in section {section}.",
                     "No Students", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
@@ -927,7 +974,10 @@ namespace WinFormsApp1
             attHeaderDate.Text = DateTime.Today.ToString("dddd, MMMM dd, yyyy");
         }
 
-        private void SaveAttendanceSession()
+        // =========================================================
+        // MODIFIED: SaveAttendanceSession - WITH LOADING
+        // =========================================================
+        private async void SaveAttendanceSession()
         {
             if (attListPanel == null || attListPanel.Controls.Count == 0)
             {
@@ -982,44 +1032,50 @@ namespace WinFormsApp1
 
             try
             {
-                using (var conn = new MySqlConnection(connStr))
+                await RunWithLoadingAsync("Saving attendance", async () =>
                 {
-                    conn.Open();
-
-                    foreach (var s in selections)
+                    await Task.Run(() =>
                     {
-                        string col = s.Status == "Present" ? "present"
-                                   : s.Status == "Absent" ? "absent"
-                                   : "late";
-
-                        string insertIfMissing = @"INSERT INTO professor_attendance 
-                                                     (student_id, student_name, present, absent, late)
-                                                   SELECT @student_id, @name, 0, 0, 0
-                                                   FROM DUAL
-                                                   WHERE NOT EXISTS (
-                                                       SELECT 1 FROM professor_attendance WHERE student_id = @student_id
-                                                   )";
-
-                        using (var cmd = new MySqlCommand(insertIfMissing, conn))
+                        using (var conn = new MySqlConnection(connStr))
                         {
-                            cmd.Parameters.AddWithValue("@student_id", s.StudentId);
-                            cmd.Parameters.AddWithValue("@name", s.Name);
-                            cmd.ExecuteNonQuery();
-                        }
+                            conn.Open();
 
-                        string query = $@"UPDATE professor_attendance 
-                                          SET `{dateToday}` = @status, 
-                                              {col} = COALESCE({col}, 0) + 1 
-                                          WHERE student_id = @student_id";
+                            foreach (var s in selections)
+                            {
+                                string col = s.Status == "Present" ? "present"
+                                           : s.Status == "Absent" ? "absent"
+                                           : "late";
 
-                        using (var cmd = new MySqlCommand(query, conn))
-                        {
-                            cmd.Parameters.AddWithValue("@status", s.Status);
-                            cmd.Parameters.AddWithValue("@student_id", s.StudentId);
-                            cmd.ExecuteNonQuery();
+                                string insertIfMissing = @"INSERT INTO professor_attendance 
+                                                             (student_id, student_name, present, absent, late)
+                                                           SELECT @student_id, @name, 0, 0, 0
+                                                           FROM DUAL
+                                                           WHERE NOT EXISTS (
+                                                               SELECT 1 FROM professor_attendance WHERE student_id = @student_id
+                                                           )";
+
+                                using (var cmd = new MySqlCommand(insertIfMissing, conn))
+                                {
+                                    cmd.Parameters.AddWithValue("@student_id", s.StudentId);
+                                    cmd.Parameters.AddWithValue("@name", s.Name);
+                                    cmd.ExecuteNonQuery();
+                                }
+
+                                string query = $@"UPDATE professor_attendance 
+                                                  SET `{dateToday}` = @status, 
+                                                      {col} = COALESCE({col}, 0) + 1 
+                                                  WHERE student_id = @student_id";
+
+                                using (var cmd = new MySqlCommand(query, conn))
+                                {
+                                    cmd.Parameters.AddWithValue("@status", s.Status);
+                                    cmd.Parameters.AddWithValue("@student_id", s.StudentId);
+                                    cmd.ExecuteNonQuery();
+                                }
+                            }
                         }
-                    }
-                }
+                    });
+                });
 
                 CustomMessageBox.Show($"{selections.Count} attendance record(s) saved.",
                     "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
@@ -1251,20 +1307,31 @@ namespace WinFormsApp1
             attListPanel.Controls.Add(placeholder);
         }
 
-        private void ExportAttendanceToExcel()
+        // =========================================================
+        // MODIFIED: ExportAttendanceToExcel - WITH LOADING
+        // =========================================================
+        private async void ExportAttendanceToExcel()
         {
             string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
-                DataTable dt = new DataTable();
+                DataTable dt = null;
 
-                using (var conn = new MySqlConnection(connStr))
+                await RunWithLoadingAsync("Loading attendance data", async () =>
                 {
-                    conn.Open();
-                    using (var adapter = new MySqlDataAdapter("SELECT * FROM professor_attendance", conn))
-                        adapter.Fill(dt);
-                }
+                    dt = await Task.Run(() =>
+                    {
+                        var table = new DataTable();
+                        using (var conn = new MySqlConnection(connStr))
+                        {
+                            conn.Open();
+                            using (var adapter = new MySqlDataAdapter("SELECT * FROM professor_attendance", conn))
+                                adapter.Fill(table);
+                        }
+                        return table;
+                    });
+                });
 
                 if (dt.Rows.Count == 0)
                 {
@@ -1280,12 +1347,19 @@ namespace WinFormsApp1
 
                     if (sfd.ShowDialog() == DialogResult.OK)
                     {
-                        using (var workbook = new XLWorkbook())
+                        await RunWithLoadingAsync("Exporting to Excel", async () =>
                         {
-                            var worksheet = workbook.Worksheets.Add(dt, "Attendance");
-                            worksheet.Columns().AdjustToContents();
-                            workbook.SaveAs(sfd.FileName);
-                        }
+                            await Task.Run(() =>
+                            {
+                                using (var workbook = new XLWorkbook())
+                                {
+                                    var worksheet = workbook.Worksheets.Add(dt, "Attendance");
+                                    worksheet.Columns().AdjustToContents();
+                                    workbook.SaveAs(sfd.FileName);
+                                }
+                            });
+                        });
+
                         CustomMessageBox.Show("Exported successfully!", "Exported",
                             CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                     }
@@ -1354,7 +1428,10 @@ namespace WinFormsApp1
             pnlCreateClass.SendToBack();
         }
 
-        private void btnCreateClass_Click(object sender, EventArgs e)
+        // =========================================================
+        // MODIFIED: btnCreateClass_Click - WITH LOADING
+        // =========================================================
+        private async void btnCreateClass_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtClassCode.Text) ||
                 string.IsNullOrWhiteSpace(txtClassName.Text) ||
@@ -1370,24 +1447,30 @@ namespace WinFormsApp1
             string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
-                using (var conn = new MySqlConnection(connStr))
+                await RunWithLoadingAsync("Creating class", async () =>
                 {
-                    conn.Open();
-                    string query = @"INSERT INTO professor_class 
-                            (professor_id, class_code, class_name, class_section, class_time, class_date) 
-                            VALUES (@professor_id, @class_code, @class_name, @class_section, @class_time, @class_date)";
-
-                    using (var cmd = new MySqlCommand(query, conn))
+                    await Task.Run(() =>
                     {
-                        cmd.Parameters.AddWithValue("@professor_id", ProfessorID);
-                        cmd.Parameters.AddWithValue("@class_code", txtClassCode.Text.Trim());
-                        cmd.Parameters.AddWithValue("@class_name", txtClassName.Text.Trim());
-                        cmd.Parameters.AddWithValue("@class_section", txtClassSection.Text.Trim());
-                        cmd.Parameters.AddWithValue("@class_time", txtClassTime.Text.Trim());
-                        cmd.Parameters.AddWithValue("@class_date", cmbClassDate.Text.Trim());
-                        cmd.ExecuteNonQuery();
-                    }
-                }
+                        using (var conn = new MySqlConnection(connStr))
+                        {
+                            conn.Open();
+                            string query = @"INSERT INTO professor_class 
+                                    (professor_id, class_code, class_name, class_section, class_time, class_date) 
+                                    VALUES (@professor_id, @class_code, @class_name, @class_section, @class_time, @class_date)";
+
+                            using (var cmd = new MySqlCommand(query, conn))
+                            {
+                                cmd.Parameters.AddWithValue("@professor_id", ProfessorID);
+                                cmd.Parameters.AddWithValue("@class_code", txtClassCode.Text.Trim());
+                                cmd.Parameters.AddWithValue("@class_name", txtClassName.Text.Trim());
+                                cmd.Parameters.AddWithValue("@class_section", txtClassSection.Text.Trim());
+                                cmd.Parameters.AddWithValue("@class_time", txtClassTime.Text.Trim());
+                                cmd.Parameters.AddWithValue("@class_date", cmbClassDate.Text.Trim());
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+                    });
+                });
 
                 string folderName = txtClassSection.Text.Trim();
                 AutoCreateClassBtn();
@@ -1414,7 +1497,10 @@ namespace WinFormsApp1
             }
         }
 
-        private void CreateFolderForSection(string folderName)
+        // =========================================================
+        // MODIFIED: CreateFolderForSection - WITH LOADING
+        // =========================================================
+        private async void CreateFolderForSection(string folderName)
         {
             if (string.IsNullOrWhiteSpace(folderName) || string.IsNullOrEmpty(saveFolder) || saveFolder == "Null")
             {
@@ -1424,16 +1510,20 @@ namespace WinFormsApp1
             }
 
             string newFolderPath = Path.Combine(saveFolder, SanitizeFolderName(folderName));
-            if (!Directory.Exists(newFolderPath))
-            {
-                Directory.CreateDirectory(newFolderPath);
-                LoadServerFolder(saveFolder);
-            }
-            else
+
+            if (Directory.Exists(newFolderPath))
             {
                 CustomMessageBox.Show("Folder already exists.", "Notice",
                     CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
+                return;
             }
+
+            await RunWithLoadingAsync("Creating section folder", async () =>
+            {
+                await Task.Run(() => Directory.CreateDirectory(newFolderPath));
+            });
+
+            LoadServerFolder(saveFolder);
         }
 
         private void AutoCreateClassBtn()
@@ -1548,7 +1638,10 @@ namespace WinFormsApp1
             return card;
         }
 
-        private void DeleteClass_Click(object sender, EventArgs e)
+        // =========================================================
+        // MODIFIED: DeleteClass_Click - WITH LOADING
+        // =========================================================
+        private async void DeleteClass_Click(object sender, EventArgs e)
         {
             ToolStripMenuItem menuItem = sender as ToolStripMenuItem;
             if (menuItem == null) return;
@@ -1570,15 +1663,21 @@ namespace WinFormsApp1
                 string connStr = SettingsManager.Current.GetConnectionString();
                 try
                 {
-                    using (var conn = new MySqlConnection(connStr))
+                    await RunWithLoadingAsync("Deleting class", async () =>
                     {
-                        conn.Open();
-                        using (var cmd = new MySqlCommand("DELETE FROM professor_class WHERE class_id = @id", conn))
+                        await Task.Run(() =>
                         {
-                            cmd.Parameters.AddWithValue("@id", classId);
-                            cmd.ExecuteNonQuery();
-                        }
-                    }
+                            using (var conn = new MySqlConnection(connStr))
+                            {
+                                conn.Open();
+                                using (var cmd = new MySqlCommand("DELETE FROM professor_class WHERE class_id = @id", conn))
+                                {
+                                    cmd.Parameters.AddWithValue("@id", classId);
+                                    cmd.ExecuteNonQuery();
+                                }
+                            }
+                        });
+                    });
 
                     flpSubjectClass.Controls.Remove(clickedCard);
                     clickedCard.Dispose();
@@ -1605,9 +1704,99 @@ namespace WinFormsApp1
                     selectedFilePath = ofd.FileName;
                     btnActivityUploadFile.Text = Path.GetFileName(selectedFilePath);
                 }
+                // Enable drag-drop on the upload button
+                if (btnActivityUploadFile != null)
+                {
+                    btnActivityUploadFile.AllowDrop = true;
+                    btnActivityUploadFile.DragEnter += ActivityUpload_DragEnter;
+                    btnActivityUploadFile.DragDrop += ActivityUpload_DragDrop;
+                }
+
+                // Also enable on the panel that holds the upload area (optional but recommended)
+                if (pnlActivity != null)
+                {
+                    pnlActivity.AllowDrop = true;
+                    pnlActivity.DragEnter += ActivityUpload_DragEnter;
+                    pnlActivity.DragDrop += ActivityUpload_DragDrop;
+                }
             }
         }
 
+        // =========================================================
+        // DRAG AND DROP FOR ACTIVITY FILE UPLOAD
+        // =========================================================
+
+
+        private void ActivityUpload_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (files != null && files.Length > 0)
+                {
+                    e.Effect = DragDropEffects.Copy;
+                    return;
+                }
+            }
+            e.Effect = DragDropEffects.None;
+        }
+
+        private void ActivityUpload_DragDrop(object sender, DragEventArgs e)
+        {
+            try
+            {
+                if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+                    return;
+
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (files == null || files.Length == 0)
+                    return;
+
+                // Only accept the first file (single-file upload)
+                string droppedFile = files[0];
+
+                if (!File.Exists(droppedFile))
+                {
+                    CustomMessageBox.Show("The dropped item is not a valid file.",
+                        "Invalid File", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
+                    return;
+                }
+
+                // Check file size (optional limit: 200 MB to match server limit)
+                FileInfo fi = new FileInfo(droppedFile);
+                if (fi.Length > 200 * 1024 * 1024)
+                {
+                    CustomMessageBox.Show("File is too large. Maximum allowed size is 200 MB.",
+                        "File Too Large", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
+                    return;
+                }
+
+                // Assign to the same variable used by the normal upload
+                selectedFilePath = droppedFile;
+                btnActivityUploadFile.Text = Path.GetFileName(selectedFilePath);
+
+                // Optional: visual feedback
+                btnActivityUploadFile.FillColor = Color.FromArgb(46, 160, 90); // green flash
+                var resetTimer = new System.Windows.Forms.Timer { Interval = 800 };
+                resetTimer.Tick += (s, ev) =>
+                {
+                    btnActivityUploadFile.FillColor = Color.Maroon; // back to original
+                    resetTimer.Stop();
+                    resetTimer.Dispose();
+                };
+                resetTimer.Start();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("ActivityUpload_DragDrop error: " + ex.Message);
+                CustomMessageBox.Show("Error handling dropped file: " + ex.Message,
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
+            }
+        }
+
+        // =========================================================
+        // MODIFIED: btnPostActivity_Click - WITH LOADING
+        // =========================================================
         private async void btnPostActivity_Click(object sender, EventArgs e)
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -1628,8 +1817,11 @@ namespace WinFormsApp1
             {
                 try
                 {
-                    pdfName = SanitizeFolderName(Path.GetFileName(selectedFilePath));
-                    fileBytes = await File.ReadAllBytesAsync(selectedFilePath);
+                    await RunWithLoadingAsync("Reading file", async () =>
+                    {
+                        pdfName = SanitizeFolderName(Path.GetFileName(selectedFilePath));
+                        fileBytes = await File.ReadAllBytesAsync(selectedFilePath);
+                    });
                 }
                 catch (Exception ex)
                 {
@@ -1641,7 +1833,12 @@ namespace WinFormsApp1
 
             if (fileBytes != null && !string.IsNullOrEmpty(pdfName))
             {
-                bool sent = await SendActivityFileToServer(professorFolder, section, pdfName, fileBytes);
+                bool sent = false;
+                await RunWithLoadingAsync("Uploading file to server", async () =>
+                {
+                    sent = await SendActivityFileToServer(professorFolder, section, pdfName, fileBytes);
+                });
+
                 if (!sent)
                 {
                     CustomMessageBox.Show("Failed to send activity file to server. Activity not posted.",
@@ -1665,33 +1862,39 @@ namespace WinFormsApp1
 
             try
             {
-                using (var conn = new MySqlConnection(connStr))
+                await RunWithLoadingAsync("Posting activity", async () =>
                 {
-                    conn.Open();
-                    string query = @"INSERT INTO professor_activity 
-                (professor_id, title, description, section, activity_subject, 
-                 start_time, due_date, activity_status, score, 
-                 activity_filename, activity_file) 
-                VALUES (@professor_id, @title, @description, @section, @activity_subject, 
-                        @start_time, @due_date, @activity_status, @score, 
-                        @activity_filename, @activity_file)";
-
-                    using (var cmd = new MySqlCommand(query, conn))
+                    await Task.Run(() =>
                     {
-                        cmd.Parameters.AddWithValue("@professor_id", ProfessorID);
-                        cmd.Parameters.AddWithValue("@title", cmbActivityTitle.Text.Trim());
-                        cmd.Parameters.AddWithValue("@description", txtActivityPostDetails.Text.Trim());
-                        cmd.Parameters.AddWithValue("@section", cmbActivitySection.Text.Trim());
-                        cmd.Parameters.AddWithValue("@activity_subject", cmbActivitySubject.Text.Trim());
-                        cmd.Parameters.AddWithValue("@start_time", FullDateTime);
-                        cmd.Parameters.AddWithValue("@due_date", dtpActivityDeadline.Value);
-                        cmd.Parameters.AddWithValue("@activity_status", "Pending");
-                        cmd.Parameters.AddWithValue("@score", txtActivityScore.Text.Trim());
-                        cmd.Parameters.AddWithValue("@activity_file", (object)uncPath ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@activity_filename", (object)pdfName ?? DBNull.Value);
-                        cmd.ExecuteNonQuery();
-                    }
-                }
+                        using (var conn = new MySqlConnection(connStr))
+                        {
+                            conn.Open();
+                            string query = @"INSERT INTO professor_activity 
+                        (professor_id, title, description, section, activity_subject, 
+                         start_time, due_date, activity_status, score, 
+                         activity_filename, activity_file) 
+                        VALUES (@professor_id, @title, @description, @section, @activity_subject, 
+                                @start_time, @due_date, @activity_status, @score, 
+                                @activity_filename, @activity_file)";
+
+                            using (var cmd = new MySqlCommand(query, conn))
+                            {
+                                cmd.Parameters.AddWithValue("@professor_id", ProfessorID);
+                                cmd.Parameters.AddWithValue("@title", cmbActivityTitle.Text.Trim());
+                                cmd.Parameters.AddWithValue("@description", txtActivityPostDetails.Text.Trim());
+                                cmd.Parameters.AddWithValue("@section", cmbActivitySection.Text.Trim());
+                                cmd.Parameters.AddWithValue("@activity_subject", cmbActivitySubject.Text.Trim());
+                                cmd.Parameters.AddWithValue("@start_time", FullDateTime);
+                                cmd.Parameters.AddWithValue("@due_date", dtpActivityDeadline.Value);
+                                cmd.Parameters.AddWithValue("@activity_status", "Pending");
+                                cmd.Parameters.AddWithValue("@score", txtActivityScore.Text.Trim());
+                                cmd.Parameters.AddWithValue("@activity_file", (object)uncPath ?? DBNull.Value);
+                                cmd.Parameters.AddWithValue("@activity_filename", (object)pdfName ?? DBNull.Value);
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+                    });
+                });
 
                 CustomMessageBox.Show("Activity Posted Successfully", "Success",
                     CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
@@ -1712,12 +1915,22 @@ namespace WinFormsApp1
         }
 
         private async Task<bool> SendActivityFileToServer(
-            string professorFolder, string section, string fileName, byte[] fileBytes)
+    string professorFolder, string section, string fileName, byte[] fileBytes)
         {
             try
             {
                 string serverIp = SettingsManager.Current.ServerIp.TrimStart('\\').TrimEnd('\\');
                 int serverPort = SettingsManager.Current.FileTransferPort;
+
+                // DEBUG LOGS - tingnan mo sa Output window
+                Console.WriteLine("=== SendActivityFileToServer START ===");
+                Console.WriteLine("ServerIp (raw)   : " + SettingsManager.Current.ServerIp);
+                Console.WriteLine("ServerIp (clean) : " + serverIp);
+                Console.WriteLine("ServerPort       : " + serverPort);
+                Console.WriteLine("ProfessorFolder  : " + professorFolder);
+                Console.WriteLine("Section          : " + section);
+                Console.WriteLine("FileName         : " + fileName);
+                Console.WriteLine("FileSize (bytes) : " + fileBytes.Length);
 
                 using (TcpClient client = new TcpClient())
                 {
@@ -1727,16 +1940,34 @@ namespace WinFormsApp1
 
                     if (completed == timeoutTask)
                     {
-                        Console.WriteLine($"Server ({serverIp}:{serverPort}) not reachable (timeout).");
+                        Console.WriteLine("❌ TIMEOUT: Server (" + serverIp + ":" + serverPort + ") not reachable.");
+                        CustomMessageBox.Show(
+                            "Connection timeout.\n\n" +
+                            "Server: " + serverIp + ":" + serverPort + "\n\n" +
+                            "Possible causes:\n" +
+                            "• Server app is not running\n" +
+                            "• Wrong IP address\n" +
+                            "• Firewall blocking the port",
+                            "Connection Timeout",
+
+                            CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
                         return false;
                     }
 
                     await connectTask;
+
                     if (!client.Connected)
                     {
-                        Console.WriteLine($"Server ({serverIp}:{serverPort}) refused the connection.");
+                        Console.WriteLine("❌ Connection refused by " + serverIp + ":" + serverPort);
+                        CustomMessageBox.Show(
+                            "Connection refused by server.\n\n" +
+                            "Server: " + serverIp + ":" + serverPort,
+                            "Connection Refused",
+                            CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
                         return false;
                     }
+
+                    Console.WriteLine("✅ Connected to server.");
 
                     using (NetworkStream stream = client.GetStream())
                     using (BinaryWriter writer = new BinaryWriter(stream))
@@ -1748,13 +1979,24 @@ namespace WinFormsApp1
                         writer.Write(fileBytes.Length);
                         writer.Write(fileBytes);
                         writer.Flush();
+
+                        Console.WriteLine("✅ File sent successfully.");
                     }
                 }
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine("SendActivityFileToServer error: " + ex.Message);
+                Console.WriteLine("❌ SendActivityFileToServer EXCEPTION: " + ex.GetType().Name);
+                Console.WriteLine("   Message: " + ex.Message);
+
+                CustomMessageBox.Show(
+                    "Error sending file:\n\n" +
+                    ex.GetType().Name + "\n" +
+                    ex.Message,
+                    "Send Error",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
+
                 return false;
             }
         }
@@ -2200,6 +2442,9 @@ namespace WinFormsApp1
         private void BtnBack_Click(object sender, EventArgs e) => btnBack();
         private void FolderListView_DoubleClick(object sender, EventArgs e) => doubleClick();
 
+        // =========================================================
+        // MODIFIED: btnAddFolder_Click - WITH LOADING
+        // =========================================================
         private void btnAddFolder_Click(object sender, EventArgs e)
         {
             if (pnlFile.Controls.OfType<Guna.UI2.WinForms.Guna2Panel>()
@@ -2330,6 +2575,9 @@ namespace WinFormsApp1
             txtFolderName.Focus();
         }
 
+        // =========================================================
+        // MODIFIED: NewCreateFolder - WITH LOADING
+        // =========================================================
         private bool NewCreateFolder(string folderName)
         {
             if (string.IsNullOrEmpty(saveFolder) || saveFolder == "Null")
@@ -2354,7 +2602,12 @@ namespace WinFormsApp1
 
             try
             {
-                Directory.CreateDirectory(newFolderPath);
+                using (new LoadingOverlay(this, "Creating folder"))
+                {
+                    Directory.CreateDirectory(newFolderPath);
+                    System.Windows.Forms.Application.DoEvents();
+                }
+
                 CustomMessageBox.Show("Folder created!", "Success",
                     CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 LoadServerFolder(basePath, addToHistory: false);
@@ -3099,7 +3352,10 @@ namespace WinFormsApp1
 
         private void btnExitChangeUsernamePanel_Click(object sender, EventArgs e) => pnlChangeUsername.Visible = false;
 
-        private void btnSubmitChangeUsername_Click(object sender, EventArgs e)
+        // =========================================================
+        // MODIFIED: btnSubmitChangeUsername_Click - WITH LOADING
+        // =========================================================
+        private async void btnSubmitChangeUsername_Click(object sender, EventArgs e)
         {
             string connStr = SettingsManager.Current.GetConnectionString();
 
@@ -3119,21 +3375,28 @@ namespace WinFormsApp1
 
             try
             {
-                using (var conn = new MySqlConnection(connStr))
+                await RunWithLoadingAsync("Updating username", async () =>
                 {
-                    conn.Open();
-                    string query = @"UPDATE user_credential SET username = @new_username WHERE username = @current_username";
-                    using (var cmd = new MySqlCommand(query, conn))
+                    await Task.Run(() =>
                     {
-                        cmd.Parameters.AddWithValue("@new_username", txtNewUsername.Text.Trim());
-                        cmd.Parameters.AddWithValue("@current_username", txtCurrentUsername.Text.Trim());
-                        cmd.ExecuteNonQuery();
-                    }
-                    ProfessorUsername = txtNewUsername.Text.Trim();
-                    ClearTextSettings();
-                    CustomMessageBox.Show("Username updated successfully.",
-                        "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
-                }
+                        using (var conn = new MySqlConnection(connStr))
+                        {
+                            conn.Open();
+                            string query = @"UPDATE user_credential SET username = @new_username WHERE username = @current_username";
+                            using (var cmd = new MySqlCommand(query, conn))
+                            {
+                                cmd.Parameters.AddWithValue("@new_username", txtNewUsername.Text.Trim());
+                                cmd.Parameters.AddWithValue("@current_username", txtCurrentUsername.Text.Trim());
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+                    });
+                });
+
+                ProfessorUsername = txtNewUsername.Text.Trim();
+                ClearTextSettings();
+                CustomMessageBox.Show("Username updated successfully.",
+                    "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -3150,7 +3413,10 @@ namespace WinFormsApp1
 
         private void btnExitChangePasswordPanel_Click(object sender, EventArgs e) => pnlChangePassword.Visible = false;
 
-        private void btnSubmitChangePassword_Click(object sender, EventArgs e)
+        // =========================================================
+        // MODIFIED: btnSubmitChangePassword_Click - WITH LOADING
+        // =========================================================
+        private async void btnSubmitChangePassword_Click(object sender, EventArgs e)
         {
             string connStr = SettingsManager.Current.GetConnectionString();
 
@@ -3169,20 +3435,27 @@ namespace WinFormsApp1
 
             try
             {
-                using (var conn = new MySqlConnection(connStr))
+                await RunWithLoadingAsync("Updating password", async () =>
                 {
-                    conn.Open();
-                    string query = @"UPDATE user_credential SET p_word = @new_password WHERE username = @current_username";
-                    using (var cmd = new MySqlCommand(query, conn))
+                    await Task.Run(() =>
                     {
-                        cmd.Parameters.AddWithValue("@new_password", txtNewPassword.Text.Trim());
-                        cmd.Parameters.AddWithValue("@current_username", ProfessorUsername);
-                        cmd.ExecuteNonQuery();
-                    }
-                    ClearTextSettings();
-                    CustomMessageBox.Show("Password updated successfully.",
-                        "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
-                }
+                        using (var conn = new MySqlConnection(connStr))
+                        {
+                            conn.Open();
+                            string query = @"UPDATE user_credential SET p_word = @new_password WHERE username = @current_username";
+                            using (var cmd = new MySqlCommand(query, conn))
+                            {
+                                cmd.Parameters.AddWithValue("@new_password", txtNewPassword.Text.Trim());
+                                cmd.Parameters.AddWithValue("@current_username", ProfessorUsername);
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+                    });
+                });
+
+                ClearTextSettings();
+                CustomMessageBox.Show("Password updated successfully.",
+                    "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -3227,6 +3500,9 @@ namespace WinFormsApp1
             }
         }
 
+        // =========================================================
+        // MODIFIED: btnSubmitChangePhoto_Click - WITH LOADING
+        // =========================================================
         private async void btnSubmitChangePhoto_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(CurrentProfilePath))
@@ -3245,13 +3521,19 @@ namespace WinFormsApp1
 
             try
             {
-                byte[] imageBytes = await File.ReadAllBytesAsync(CurrentProfilePath);
+                byte[] imageBytes = null;
+                string uncPath = null;
 
-                string ext = Path.GetExtension(CurrentProfilePath);
-                string fileName = SanitizeFolderName(ProfessorUsername) + "_" +
-                                  DateTime.Now.ToString("yyyyMMddHHmmss") + ext;
+                await RunWithLoadingAsync("Uploading profile photo", async () =>
+                {
+                    imageBytes = await File.ReadAllBytesAsync(CurrentProfilePath);
 
-                string uncPath = await SendProfilePhotoToAdmin(imageBytes, fileName);
+                    string ext = Path.GetExtension(CurrentProfilePath);
+                    string fileName = SanitizeFolderName(ProfessorUsername) + "_" +
+                                      DateTime.Now.ToString("yyyyMMddHHmmss") + ext;
+
+                    uncPath = await SendProfilePhotoToAdmin(imageBytes, fileName);
+                });
 
                 if (string.IsNullOrEmpty(uncPath))
                 {
@@ -3260,27 +3542,29 @@ namespace WinFormsApp1
                     return;
                 }
 
-                string connStr = SettingsManager.Current.GetConnectionString();
-                using (var conn = new MySqlConnection(connStr))
+                await RunWithLoadingAsync("Saving profile photo", async () =>
                 {
-                    conn.Open();
-                    string query = @"UPDATE user_credential 
-                                     SET profile_picture = @profile_picture 
-                                     WHERE username = @username";
-                    using (var cmd = new MySqlCommand(query, conn))
+                    await Task.Run(() =>
                     {
-                        cmd.Parameters.AddWithValue("@profile_picture", uncPath);
-                        cmd.Parameters.AddWithValue("@username", ProfessorUsername);
-
-                        int rows = cmd.ExecuteNonQuery();
-                        if (rows == 0)
+                        string connStr = SettingsManager.Current.GetConnectionString();
+                        using (var conn = new MySqlConnection(connStr))
                         {
-                            CustomMessageBox.Show("No user row was updated. Check the username.",
-                                "Database Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
-                            return;
+                            conn.Open();
+                            string query = @"UPDATE user_credential 
+                                             SET profile_picture = @profile_picture 
+                                             WHERE username = @username";
+                            using (var cmd = new MySqlCommand(query, conn))
+                            {
+                                cmd.Parameters.AddWithValue("@profile_picture", uncPath);
+                                cmd.Parameters.AddWithValue("@username", ProfessorUsername);
+
+                                int rows = cmd.ExecuteNonQuery();
+                                if (rows == 0)
+                                    throw new Exception("No user row was updated. Check the username.");
+                            }
                         }
-                    }
-                }
+                    });
+                });
 
                 profileImageLoaded = false;
                 cachedProfileImage?.Dispose();
@@ -3577,7 +3861,10 @@ namespace WinFormsApp1
             QuizGradeform.ShowDialog();
         }
 
-        private void btnDeleteFile_Click_1(object sender, EventArgs e)
+        // =========================================================
+        // MODIFIED: btnDeleteFile_Click_1 - WITH LOADING
+        // =========================================================
+        private async void btnDeleteFile_Click_1(object sender, EventArgs e)
         {
             if (FolderListView.SelectedItems.Count == 0)
             {
@@ -3631,17 +3918,23 @@ namespace WinFormsApp1
 
             try
             {
-                if (isFile)
+                await RunWithLoadingAsync("Deleting " + (isFolder ? "folder" : "file"), async () =>
                 {
-                    var attrs = File.GetAttributes(path);
-                    if ((attrs & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
-                        File.SetAttributes(path, attrs & ~FileAttributes.ReadOnly);
-                }
+                    await Task.Run(() =>
+                    {
+                        if (isFile)
+                        {
+                            var attrs = File.GetAttributes(path);
+                            if ((attrs & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+                                File.SetAttributes(path, attrs & ~FileAttributes.ReadOnly);
+                        }
 
-                if (isFolder)
-                    Directory.Delete(path, recursive: true);
-                else
-                    File.Delete(path);
+                        if (isFolder)
+                            Directory.Delete(path, recursive: true);
+                        else
+                            File.Delete(path);
+                    });
+                });
 
                 CustomMessageBox.Show("Deleted successfully.",
                     "Deleted", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
@@ -3791,10 +4084,13 @@ namespace WinFormsApp1
                 FillColor = Color.White,
                 BorderColor = Color.FromArgb(230, 225, 225),
                 BorderThickness = 1,
-                ShadowDecoration = { Enabled = true, Depth = 16, Color = Color.FromArgb(60, 0, 0, 0) },
                 Visible = false,
                 AutoScroll = false
             };
+
+            notificationPanel.ShadowDecoration.Enabled = true;
+            notificationPanel.ShadowDecoration.Depth = 16;
+            notificationPanel.ShadowDecoration.Color = Color.FromArgb(60, 0, 0, 0);
 
             Guna2Panel panelHeader = new Guna2Panel
             {
@@ -4471,6 +4767,284 @@ namespace WinFormsApp1
                 g.DrawString(Section, sectionFont, sectionBrush,
                     new PointF(Width - sz.Width - 16, Height - sz.Height - 12));
             }
+        }
+    }
+
+
+
+    // =========================================================
+    // LOADING OVERLAY  (card only: page stays fully visible)
+    // Same API: new LoadingOverlay(form, "msg"), UpdateMessage(), Dispose()
+    //
+    // Only a small white card is added on top of the form.
+    // There is NO full-screen layer, so the page behind is never
+    // hidden, dimmed or repainted, and the animation stays light.
+    // =========================================================
+    public class LoadingOverlay : IDisposable
+    {
+        private readonly Form _parentForm;
+        private LoadingCard _card;
+        private LoadingInputBlocker _blocker;
+        private bool _disposed = false;
+
+        public LoadingOverlay(Form parentForm, string message)
+        {
+            _parentForm = parentForm;
+            string msg = string.IsNullOrEmpty(message) ? "Loading" : message;
+
+            if (_parentForm == null || _parentForm.IsDisposed) return;
+
+            _card = new LoadingCard(msg);
+            _parentForm.Controls.Add(_card);
+            _card.BringToFront();
+            CenterCard();
+            _parentForm.Resize += ParentForm_Resize;
+            _card.StartAnimation();
+
+            // Invisible click/keyboard blocker (so you do NOT need this.Enabled = false)
+            _blocker = new LoadingInputBlocker(_parentForm);
+            Application.AddMessageFilter(_blocker);
+        }
+
+        private void ParentForm_Resize(object sender, EventArgs e)
+        {
+            CenterCard();
+        }
+
+        private void CenterCard()
+        {
+            if (_card == null || _card.IsDisposed || _parentForm == null || _parentForm.IsDisposed) return;
+
+            Size area = _parentForm.ClientSize;
+            _card.Location = new Point(
+                Math.Max(0, (area.Width - _card.Width) / 2),
+                Math.Max(0, (area.Height - _card.Height) / 2));
+        }
+
+        public void UpdateMessage(string message)
+        {
+            if (_card == null || _card.IsDisposed) return;
+
+            if (_card.InvokeRequired)
+                _card.BeginInvoke(new Action(() => _card.SetMessage(message)));
+            else
+                _card.SetMessage(message);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed) return;
+            _disposed = true;
+
+            if (!disposing || _card == null) return;
+
+            Action cleanup = () =>
+            {
+                try
+                {
+                    if (_blocker != null) Application.RemoveMessageFilter(_blocker);
+                    _blocker = null;
+                    _parentForm.Resize -= ParentForm_Resize;
+                    _card.StopAnimation();
+                    if (!_parentForm.IsDisposed)
+                        _parentForm.Controls.Remove(_card);
+                    _card.Dispose();
+                }
+                catch { }
+                _card = null;
+            };
+
+            if (_parentForm != null && !_parentForm.IsDisposed && _parentForm.InvokeRequired)
+                _parentForm.Invoke(cleanup);
+            else
+                cleanup();
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Swallows mouse clicks, mouse wheel and keyboard input that are
+    // aimed at the parent form while loading. Draws nothing, so the
+    // page stays fully visible and buttons keep their normal colors.
+    // ---------------------------------------------------------
+    internal class LoadingInputBlocker : IMessageFilter
+    {
+        private readonly Form _form;
+
+        public LoadingInputBlocker(Form form) { _form = form; }
+
+        public bool PreFilterMessage(ref Message m)
+        {
+            int msg = m.Msg;
+
+            bool isInput =
+                (msg >= 0x0201 && msg <= 0x0209) ||   // mouse buttons (down/up/double-click)
+                msg == 0x020A ||                      // mouse wheel
+                (msg >= 0x0100 && msg <= 0x0109);     // keyboard
+
+            if (!isInput) return false;
+
+            try
+            {
+                Control c = Control.FromHandle(m.HWnd);
+                if (c == null) return false;
+                return c.FindForm() == _form;   // only block input meant for this form
+            }
+            catch { return false; }
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Small OPAQUE card: spinner + message. Cheap to repaint.
+    // ---------------------------------------------------------
+    internal class LoadingCard : Control
+    {
+        private static readonly Color Accent = Color.FromArgb(128, 0, 0);          // maroon
+        private static readonly Color AccentSoft = Color.FromArgb(244, 232, 232);  // spinner track
+        private static readonly Color TextMain = Color.FromArgb(45, 45, 55);
+        private static readonly Color TextSub = Color.FromArgb(135, 135, 145);
+        private static readonly Color BorderColor = Color.FromArgb(225, 220, 220);
+
+        private const int SpinnerSize = 46;
+
+        private readonly System.Windows.Forms.Timer _timer;
+        private readonly Stopwatch _clock = new Stopwatch();
+        private readonly Font _fontMain;
+        private readonly Font _fontSub;
+        private readonly Pen _trackPen;
+        private readonly Pen _arcPen;
+        private readonly StringFormat _centerFormat;
+        private string _message;
+        private int _lastDots = -1;
+        private Rectangle _spinnerRect;
+
+        public LoadingCard(string message)
+        {
+            _message = message;
+
+            SetStyle(ControlStyles.UserPaint |
+                     ControlStyles.AllPaintingInWmPaint |
+                     ControlStyles.OptimizedDoubleBuffer |
+                     ControlStyles.ResizeRedraw, true);
+
+            Size = new Size(280, 150);
+            BackColor = Color.White;
+
+            _fontMain = new Font("Segoe UI Semibold", 11.5F, FontStyle.Bold);
+            _fontSub = new Font("Segoe UI", 9F, FontStyle.Regular);
+
+            _trackPen = new Pen(AccentSoft, 4.5F);
+            _arcPen = new Pen(Accent, 4.5F);
+            _arcPen.StartCap = LineCap.Round;
+            _arcPen.EndCap = LineCap.Round;
+
+            _centerFormat = new StringFormat { Alignment = StringAlignment.Center };
+
+            _spinnerRect = new Rectangle((Width - SpinnerSize) / 2 + 3, 22 + 3, SpinnerSize - 6, SpinnerSize - 6);
+
+            _timer = new System.Windows.Forms.Timer();
+            _timer.Interval = 33; // ~30 FPS is plenty for a spinner
+            _timer.Tick += (s, e) => OnFrame();
+        }
+
+        public void StartAnimation() { _clock.Restart(); _timer.Start(); }
+        public void StopAnimation() { _timer.Stop(); _clock.Stop(); }
+
+        public void SetMessage(string message)
+        {
+            _message = string.IsNullOrEmpty(message) ? "Loading" : message;
+            Invalidate();
+        }
+
+        private void OnFrame()
+        {
+            int dots = (int)(_clock.ElapsedMilliseconds / 380) % 4;
+            if (dots != _lastDots)
+            {
+                _lastDots = dots;
+                Invalidate();                 // text changed -> repaint card
+            }
+            else
+            {
+                Rectangle r = _spinnerRect;   // otherwise repaint only the spinner
+                r.Inflate(6, 6);
+                Invalidate(r);
+            }
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            // rounded corners via Region (cheap, no per-frame cost)
+            using (GraphicsPath path = RoundedRect(new Rectangle(0, 0, Width, Height), 14))
+                Region = new Region(path);
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            Graphics g = e.Graphics;
+            g.Clear(Color.White);
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+
+            double t = _clock.ElapsedMilliseconds;
+
+            // Thin border so the card stands out without a shadow
+            using (GraphicsPath bp = RoundedRect(new Rectangle(0, 0, Width - 1, Height - 1), 14))
+            using (Pen border = new Pen(BorderColor, 1))
+                g.DrawPath(border, bp);
+
+            // Spinner: track + animated arc
+            g.DrawEllipse(_trackPen, _spinnerRect);
+
+            float rotation = (float)((t / 1100.0 * 360.0) % 360.0);
+            float sweep = 50f + 200f * (float)(0.5 - 0.5 * Math.Cos(2 * Math.PI * t / 1600.0));
+            g.DrawArc(_arcPen, _spinnerRect, rotation - 90f, sweep);
+
+            // Message (dots drawn so the text doesn't jump around)
+            int dots = (int)(t / 380.0) % 4;
+            string full = _message + "...";
+            string shown = _message + new string('.', dots);
+
+            SizeF fullSize = g.MeasureString(full, _fontMain, Width * 2, StringFormat.GenericTypographic);
+            float x = (Width - fullSize.Width) / 2f;
+            using (SolidBrush tb = new SolidBrush(TextMain))
+                g.DrawString(shown, _fontMain, tb, x, 84, StringFormat.GenericTypographic);
+
+            using (SolidBrush sb = new SolidBrush(TextSub))
+                g.DrawString("Please wait a moment", _fontSub, sb,
+                    new RectangleF(0, 112, Width, 20), _centerFormat);
+        }
+
+        private static GraphicsPath RoundedRect(Rectangle rect, int radius)
+        {
+            int d = radius * 2;
+            GraphicsPath path = new GraphicsPath();
+            path.AddArc(rect.X, rect.Y, d, d, 180, 90);
+            path.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
+            path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90);
+            path.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
+            path.CloseFigure();
+            return path;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _timer.Dispose();
+                _fontMain.Dispose();
+                _fontSub.Dispose();
+                _trackPen.Dispose();
+                _arcPen.Dispose();
+                _centerFormat.Dispose();
+            }
+            base.Dispose(disposing);
         }
     }
 }

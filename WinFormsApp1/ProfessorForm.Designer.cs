@@ -3971,7 +3971,6 @@
             ClientSize = new Size(1447, 805);
             Controls.Add(guna2Panel1);
             Controls.Add(guna2Panel2);
-            Controls.Add(pnlSetting);
             Controls.Add(pnlActivity);
             Controls.Add(pnlGrades);
             Controls.Add(pnlAttendance);
@@ -3980,6 +3979,7 @@
             Controls.Add(pnlSubject);
             Controls.Add(pnlWorkstation);
             Controls.Add(pnlFile);
+            Controls.Add(pnlSetting);
             Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             MinimizeBox = false;

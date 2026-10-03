@@ -32,12 +32,32 @@ namespace WinFormsApp1
         private Button btnSavePreset;
         private Button btnDeletePreset;
 
+        // =========================================================
+        // SINGLE ACCOUNT / SINGLE SESSION
+        // =========================================================
+        private string activeSessionToken = "";
+        private int activeSessionUserId = 0;
+        private System.Windows.Forms.Timer sessionHeartbeatTimer;
+        private bool sessionReleased = false;
+
+        // A session is considered dead after this many seconds
+        // without a heartbeat.
+        private const int SESSION_TIMEOUT_SECONDS = 90;
+
         public Login()
         {
             InitializeComponent();
 
-            // Clear textboxes EVERY time the form is shown (not just on first load).
+            // Clear textboxes EVERY time the form is shown.
             this.Shown += Login_Shown;
+
+            // Create the heartbeat timer once.
+            sessionHeartbeatTimer = new System.Windows.Forms.Timer();
+            sessionHeartbeatTimer.Interval = 15000; // 15 seconds
+            sessionHeartbeatTimer.Tick += SessionHeartbeatTimer_Tick;
+
+            // If Login is closed, release the current session.
+            this.FormClosing += Login_FormClosing;
         }
 
         // Fires every time the form becomes visible — including re-shows after logout.
@@ -400,7 +420,7 @@ namespace WinFormsApp1
                     string createTable = @"CREATE TABLE IF NOT EXISTS mainfolderpath (
                                         user_id INT PRIMARY KEY,
                                         FolderPath VARCHAR(255)
-                                    )";
+                                   )";
                     using (var createCmd = new MySqlCommand(createTable, conn))
                         createCmd.ExecuteNonQuery();
 
@@ -530,6 +550,8 @@ namespace WinFormsApp1
                         {
                             if (!reader.Read())
                             {
+                                ReleaseCurrentSession();
+
                                 MessageBox.Show("User not found.", "Login Error",
                                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                                 return;
@@ -537,6 +559,8 @@ namespace WinFormsApp1
 
                             if (reader.IsDBNull(reader.GetOrdinal("authentication_photo")))
                             {
+                                ReleaseCurrentSession();
+
                                 MessageBox.Show("No face photo stored for this user.", "Login Error",
                                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                                 return;
@@ -550,6 +574,8 @@ namespace WinFormsApp1
 
                             if (!File.Exists(faceFullPath))
                             {
+                                ReleaseCurrentSession();
+
                                 MessageBox.Show("Reference photo not found: " + faceFullPath,
                                     "Login Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                                 return;
@@ -566,13 +592,16 @@ namespace WinFormsApp1
                             LivenessCheckForm livenessForm = new LivenessCheckForm(
                                 studentreferencesPhoto, UserId, StudentSection, username);
 
+                            // When liveness closes, check whether another form is still active.
                             livenessForm.FormClosed += (s, args) =>
                             {
                                 bool anyOtherVisible = false;
+
                                 foreach (Form f in Application.OpenForms)
                                 {
                                     if (f == this) continue;
                                     if (f is LivenessCheckForm) continue;
+
                                     if (f.Visible && !f.IsDisposed)
                                     {
                                         anyOtherVisible = true;
@@ -581,9 +610,15 @@ namespace WinFormsApp1
                                 }
 
                                 if (anyOtherVisible)
+                                {
                                     this.Hide();
+                                }
                                 else
+                                {
+                                    // Liveness failed/cancelled before entering StudentForm.
+                                    ReleaseCurrentSession();
                                     this.Show();
+                                }
                             };
 
                             livenessForm.Show();
@@ -593,6 +628,7 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
+                ReleaseCurrentSession();
                 MessageBox.Show("Face authentication error: " + ex.Message);
             }
         }
@@ -630,30 +666,265 @@ namespace WinFormsApp1
         }
 
         // =========================================================
+        // SINGLE SESSION FUNCTIONS
+        // =========================================================
+
+        /// <summary>
+        /// Atomically claims the account.
+        /// Returns TRUE only if this PC successfully became the active session.
+        ///
+        /// A previous session is considered stale if last_seen is older
+        /// than SESSION_TIMEOUT_SECONDS.
+        /// </summary>
+        private bool TryAcquireSession(int userId, string username)
+        {
+            string connStr = SettingsManager.Current.GetConnectionString();
+
+            string newToken = Guid.NewGuid().ToString("N");
+
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    string query = @"
+                        UPDATE user_credential
+                        SET
+                            is_logged_in = 1,
+                            session_token = @newToken,
+                            last_seen = NOW()
+                        WHERE
+                            user_id = @userId
+                            AND
+                            (
+                                is_logged_in = 0
+                                OR last_seen IS NULL
+                                OR last_seen < DATE_SUB(NOW(), INTERVAL @timeout SECOND)
+                            )";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@newToken", newToken);
+                        cmd.Parameters.AddWithValue("@userId", userId);
+                        cmd.Parameters.AddWithValue("@timeout", SESSION_TIMEOUT_SECONDS);
+
+                        int affected = cmd.ExecuteNonQuery();
+
+                        // 0 rows = another active computer already owns it.
+                        if (affected != 1)
+                        {
+                            MessageBox.Show(
+                                "This account is already logged in on another computer.\n\n" +
+                                "You cannot open the same account at the same time.\n\n" +
+                                "If the previous computer was unexpectedly closed, " +
+                                "please wait up to 90 seconds before trying again.",
+                                "Account Already In Use",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Warning);
+
+                            return false;
+                        }
+                    }
+                }
+
+                activeSessionUserId = userId;
+                activeSessionToken = newToken;
+                sessionReleased = false;
+
+                sessionHeartbeatTimer.Start();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Unable to start the account session.\n\n" + ex.Message,
+                    "Session Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Keeps the active session alive every 15 seconds.
+        /// </summary>
+        private void SessionHeartbeatTimer_Tick(object sender, EventArgs e)
+        {
+            if (activeSessionUserId <= 0 || string.IsNullOrEmpty(activeSessionToken))
+                return;
+
+            try
+            {
+                string connStr = SettingsManager.Current.GetConnectionString();
+
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    string query = @"
+                        UPDATE user_credential
+                        SET last_seen = NOW()
+                        WHERE user_id = @userId
+                          AND session_token = @token
+                          AND is_logged_in = 1";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@userId", activeSessionUserId);
+                        cmd.Parameters.AddWithValue("@token", activeSessionToken);
+
+                        int affected = cmd.ExecuteNonQuery();
+
+                        // The database session no longer belongs to this app.
+                        if (affected != 1)
+                        {
+                            sessionHeartbeatTimer.Stop();
+
+                            MessageBox.Show(
+                                "Your account session is no longer active.\n\n" +
+                                "This application will close.",
+                                "Session Ended",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Warning);
+
+                            sessionReleased = true;
+                            activeSessionUserId = 0;
+                            activeSessionToken = "";
+
+                            Application.Exit();
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Do not immediately log the user out because of one
+                // temporary database/network failure.
+                // The next heartbeat will try again.
+            }
+        }
+
+        /// <summary>
+        /// Releases ONLY the session created by this application.
+        /// The token prevents this PC from accidentally releasing
+        /// another PC's newer session.
+        /// </summary>
+        public void ReleaseCurrentSession()
+        {
+            if (sessionReleased)
+                return;
+
+            if (activeSessionUserId <= 0 || string.IsNullOrEmpty(activeSessionToken))
+                return;
+
+            try
+            {
+                sessionHeartbeatTimer?.Stop();
+
+                string connStr = SettingsManager.Current.GetConnectionString();
+
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    string query = @"
+                        UPDATE user_credential
+                        SET
+                            is_logged_in = 0,
+                            session_token = NULL,
+                            last_seen = NULL
+                        WHERE user_id = @userId
+                          AND session_token = @token";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@userId", activeSessionUserId);
+                        cmd.Parameters.AddWithValue("@token", activeSessionToken);
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch
+            {
+                // If database is unavailable, the stale-session timeout
+                // will eventually unlock the account automatically.
+            }
+            finally
+            {
+                sessionReleased = true;
+                activeSessionUserId = 0;
+                activeSessionToken = "";
+            }
+        }
+
+        private void Login_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            // If Login is closed while this application still owns
+            // a session, release it.
+            ReleaseCurrentSession();
+        }
+
+        // =========================================================
         // LOGIN
         // =========================================================
+
         private void btnLogin_Click(object sender, EventArgs e)
         {
-            string username = txtUsername.Text;
+            string username = txtUsername.Text.Trim();
             string password = txtPassword.Text;
+
+            if (string.IsNullOrWhiteSpace(username) ||
+                string.IsNullOrWhiteSpace(password))
+            {
+                MessageBox.Show(
+                    "Please enter your username and password.",
+                    "Login",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
 
             InitializeGetQandA(username);
 
             if (username == "admin123" && password == "123admin")
             {
                 AdminForm adminform = new AdminForm();
+
+                // Admin login is also treated as a single session.
+                // The hard-coded admin account is not in user_credential,
+                // so it cannot use the database lock below.
                 this.Hide();
+
+                adminform.FormClosed += (s, args) =>
+                {
+                    this.Show();
+                };
+
                 adminform.Show();
                 return;
             }
 
             string connStr = SettingsManager.Current.GetConnectionString();
+
             try
             {
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = "SELECT user_id, username, p_word, roles, authentication_photo FROM user_credential WHERE username = @username";
+
+                    string query = @"
+                        SELECT
+                            user_id,
+                            username,
+                            p_word,
+                            roles,
+                            authentication_photo
+                        FROM user_credential
+                        WHERE username = @username
+                        LIMIT 1";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -664,27 +935,53 @@ namespace WinFormsApp1
                             if (reader.Read())
                             {
                                 UserId = reader.GetInt32("user_id");
+
                                 string storedPassword = reader.GetString("p_word");
                                 string role = reader.GetString("roles");
-                                string authentication_photo = reader.IsDBNull(reader.GetOrdinal("authentication_photo"))
+
+                                string authentication_photo =
+                                    reader.IsDBNull(reader.GetOrdinal("authentication_photo"))
                                     ? ""
                                     : reader.GetString("authentication_photo");
 
                                 if (storedPassword == password)
                                 {
+                                    // IMPORTANT:
+                                    // Do the session claim BEFORE opening
+                                    // Professor/Student/Admin forms.
+                                    //
+                                    // If another PC already owns this account,
+                                    // TryAcquireSession returns FALSE and
+                                    // NOTHING is opened.
+                                    if (!TryAcquireSession(UserId, username))
+                                        return;
+
                                     SelectSection(UserId);
-                                    OpenAppropriateForm(role, username, UserId, authentication_photo, question, answer);
+
+                                    OpenAppropriateForm(
+                                        role,
+                                        username,
+                                        UserId,
+                                        authentication_photo,
+                                        question,
+                                        answer);
                                 }
                                 else
                                 {
-                                    MessageBox.Show("Incorrect password.", "Login Error",
-                                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    MessageBox.Show(
+                                        "Incorrect password.",
+                                        "Login Error",
+                                        MessageBoxButtons.OK,
+                                        MessageBoxIcon.Warning);
                                 }
                             }
                             else
                             {
-                                MessageBox.Show("Username not found.", "Login Error",
-                                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                MessageBox.Show(
+                                    "Username not found.",
+                                    "Login Error",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Warning);
                             }
                         }
                     }
@@ -692,23 +989,56 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred: " + ex.Message);
+                ReleaseCurrentSession();
+
+                MessageBox.Show(
+                    "An error occurred: " + ex.Message,
+                    "Login Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
         }
 
-        private void OpenAppropriateForm(string role, string username, int UserId,
-                                  string authenticationPhoto, string question, string answer)
+        private void OpenAppropriateForm(
+            string role,
+            string username,
+            int UserId,
+            string authenticationPhoto,
+            string question,
+            string answer)
         {
             if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
             {
                 AdminForm adminForm = new AdminForm();
+
                 this.Hide();
+
+                adminForm.FormClosed += (s, e) =>
+                {
+                    ReleaseCurrentSession();
+                    this.Show();
+                    txtUsername.Clear();
+                    txtPassword.Clear();
+                    txtUsername.Focus();
+                };
+
                 adminForm.Show();
             }
             else if (role.Equals("Professor", StringComparison.OrdinalIgnoreCase))
             {
                 ProfessorForm profForm = new ProfessorForm(UserId, username);
+
                 this.Hide();
+
+                profForm.FormClosed += (s, e) =>
+                {
+                    ReleaseCurrentSession();
+                    this.Show();
+                    txtUsername.Clear();
+                    txtPassword.Clear();
+                    txtUsername.Focus();
+                };
+
                 profForm.Show();
             }
             else if (role.Equals("Student", StringComparison.OrdinalIgnoreCase))
@@ -723,20 +1053,65 @@ namespace WinFormsApp1
 
                 if (string.IsNullOrEmpty(question) && string.IsNullOrEmpty(answer))
                 {
-                    StudentForm studentform = new StudentForm(UserId, StudentSection, username);
+                    StudentForm studentform =
+                        new StudentForm(UserId, StudentSection, username);
+
                     this.Hide();
+
+                    studentform.FormClosed += (s, e) =>
+                    {
+                        ReleaseCurrentSession();
+                        this.Show();
+                        txtUsername.Clear();
+                        txtPassword.Clear();
+                        txtUsername.Focus();
+                    };
+
                     studentform.Show();
                 }
-                else if (!string.IsNullOrEmpty(question) && !string.IsNullOrEmpty(answer))
+                else if (!string.IsNullOrEmpty(question) &&
+                         !string.IsNullOrEmpty(answer))
                 {
-                    QandAForm QandAform = new QandAForm(UserId, StudentSection, username);
+                    QandAForm QandAform =
+                        new QandAForm(UserId, StudentSection, username);
+
                     this.Hide();
+
+                    QandAform.FormClosed += (s, e) =>
+                    {
+                        ReleaseCurrentSession();
+                        this.Show();
+                        txtUsername.Clear();
+                        txtPassword.Clear();
+                        txtUsername.Focus();
+                    };
+
                     QandAform.Show();
+                }
+                else
+                {
+                    // Prevent leaving the account locked if the
+                    // security-question data is incomplete.
+                    ReleaseCurrentSession();
+
+                    MessageBox.Show(
+                        "Your account security-question information is incomplete.",
+                        "Login Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+
+                    this.Show();
                 }
             }
             else
             {
-                MessageBox.Show("Unknown role: " + role);
+                ReleaseCurrentSession();
+
+                MessageBox.Show(
+                    "Unknown role: " + role,
+                    "Login Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
             }
         }
     }
