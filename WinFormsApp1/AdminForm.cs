@@ -56,6 +56,9 @@ namespace WinFormsApp1
         // FILE MANAGEMENT
         private Guna.UI2.WinForms.Guna2Button btnDeleteFile;
 
+        // INLINE VALIDATION
+        private Label _inlineErrorLabel;
+
         public AdminForm()
         {
             InitializeComponent();
@@ -86,6 +89,106 @@ namespace WinFormsApp1
             InitializeAppMenu();
 
             InitializeFileManagementButtons();
+
+            // I-attach ang TextChanged events para mawala agad ang pula habang nag-type
+            AttachValidationResetEvents();
+        }
+
+        // =========================================================
+        //  INLINE VALIDATION HELPERS
+        // =========================================================
+        private void AttachValidationResetEvents()
+        {
+            LastnameText.TextChanged += (s, e) => { SetFieldError(LastnameText, false); HideInlineError(); };
+            FirstnameText.TextChanged += (s, e) => { SetFieldError(FirstnameText, false); HideInlineError(); };
+            MiddlenameText.TextChanged += (s, e) => { SetFieldError(MiddlenameText, false); HideInlineError(); };
+            EmailText.TextChanged += (s, e) => { SetFieldError(EmailText, false); HideInlineError(); };
+            ContextRoleText.TextChanged += (s, e) => { SetFieldError(ContextRoleText, false); HideInlineError(); };
+        }
+
+        private void SetFieldError(Control ctrl, bool hasError)
+        {
+            if (ctrl == null) return;
+            try
+            {
+                Color errorColor = Color.FromArgb(255, 228, 230);
+                Color normalColor = Color.White;
+
+                if (ctrl is Guna.UI2.WinForms.Guna2TextBox gunaTb)
+                {
+                    gunaTb.FillColor = hasError ? errorColor : normalColor;
+                    gunaTb.BorderColor = hasError ? Color.FromArgb(220, 53, 69) : Color.FromArgb(213, 218, 223);
+                    gunaTb.BorderThickness = hasError ? 2 : 1;
+                }
+                else if (ctrl is Guna.UI2.WinForms.Guna2ComboBox gunaCb)
+                {
+                    gunaCb.FillColor = hasError ? errorColor : normalColor;
+                    gunaCb.BorderColor = hasError ? Color.FromArgb(220, 53, 69) : Color.FromArgb(213, 218, 223);
+                    gunaCb.BorderThickness = hasError ? 2 : 1;
+                }
+                else
+                {
+                    ctrl.BackColor = hasError ? errorColor : normalColor;
+                }
+            }
+            catch { }
+        }
+
+        private void ShowInlineError(string message)
+        {
+            if (_inlineErrorLabel == null || _inlineErrorLabel.IsDisposed)
+            {
+                _inlineErrorLabel = new Label
+                {
+                    AutoSize = false,
+                    Font = new Font("Segoe UI", 8.5F, FontStyle.Regular),
+                    ForeColor = Color.FromArgb(220, 53, 69),
+                    BackColor = Color.Transparent,
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    Height = 22,
+                    Width = 340,
+                    Visible = false
+                };
+
+                Control anchor = null;
+                try
+                {
+                    foreach (Control c in this.Controls)
+                        FindControlRecursive(c, "CreateButton", ref anchor);
+                }
+                catch { }
+
+                Control parent = anchor?.Parent ?? this;
+
+                if (anchor != null)
+                    _inlineErrorLabel.Location = new Point(anchor.Left, anchor.Bottom + 3);
+                else
+                    _inlineErrorLabel.Location = new Point(20, 20);
+
+                parent.Controls.Add(_inlineErrorLabel);
+                _inlineErrorLabel.BringToFront();
+            }
+
+            _inlineErrorLabel.Text = "⚠  " + message;
+            _inlineErrorLabel.Visible = true;
+        }
+
+        // 3. HideInlineError  ← ITO ANG NAWAWALA
+        private void HideInlineError()
+        {
+            if (_inlineErrorLabel != null && !_inlineErrorLabel.IsDisposed)
+                _inlineErrorLabel.Visible = false;
+        }
+
+        // 4. FindControlRecursive
+        private void FindControlRecursive(Control parent, string name, ref Control found)
+        {
+            if (found != null) return;
+            foreach (Control c in parent.Controls)
+            {
+                if (c.Name == name) { found = c; return; }
+                FindControlRecursive(c, name, ref found);
+            }
         }
 
         // =========================================================
@@ -96,7 +199,6 @@ namespace WinFormsApp1
             lblTotalUsers.Text = TotalUsers().ToString();
             lblTotalWorkstations.Text = workstationButtons.Count.ToString();
 
-            // Fire-and-forget file count (can be slow if folder is large)
             Task.Run(() => CountFilesInServerFolder())
                 .ContinueWith(t =>
                 {
@@ -388,9 +490,6 @@ namespace WinFormsApp1
                     string firstToken = reader.ReadString();
                     Console.WriteLine("[Admin] FileTransfer command: " + firstToken);
 
-                    // =========================================================
-                    // ACTIVITY_FILE
-                    // =========================================================
                     if (firstToken == "ACTIVITY_FILE")
                     {
                         string professorFolder = reader.ReadString();
@@ -416,9 +515,6 @@ namespace WinFormsApp1
                         return;
                     }
 
-                    // =========================================================
-                    // STUDENT_SUBMISSION
-                    // =========================================================
                     if (firstToken == "STUDENT_SUBMISSION")
                     {
                         string professorFolder = reader.ReadString();
@@ -460,9 +556,6 @@ namespace WinFormsApp1
                         return;
                     }
 
-                    // =========================================================
-                    // PROFILE_PHOTO
-                    // =========================================================
                     if (firstToken == "PROFILE_PHOTO")
                     {
                         string username = reader.ReadString();
@@ -497,9 +590,6 @@ namespace WinFormsApp1
                         return;
                     }
 
-                    // =========================================================
-                    // AUTH_PHOTO  —  MISSING BRANCH (this is what you need to add)
-                    // =========================================================
                     if (firstToken == "AUTH_PHOTO")
                     {
                         string fileName = reader.ReadString();
@@ -533,7 +623,6 @@ namespace WinFormsApp1
 
                         RefreshFileCountAsync();
 
-                        // Reply with the saved path so the student can store it in DB
                         try
                         {
                             string uncPath = ToUnc(savePath);
@@ -551,13 +640,8 @@ namespace WinFormsApp1
                         return;
                     }
 
-                    // =========================================================
-                    // LEGACY fallback — anything else
-                    // =========================================================
                     Console.WriteLine("[Admin] Unknown FileTransfer command: " + firstToken);
 
-                    // Only treat as legacy auth photo if the first token looks like a filename
-                    // (no spaces, has an extension). Otherwise, just close.
                     string legacyName = SanitizeFolderName(firstToken);
                     int legacyLength;
                     try { legacyLength = reader.ReadInt32(); }
@@ -1219,13 +1303,44 @@ namespace WinFormsApp1
         {
             string connStr = SettingsManager.Current.GetConnectionString();
 
-            if (string.IsNullOrEmpty(LastnameText.Text) ||
-                string.IsNullOrEmpty(FirstnameText.Text) ||
-                string.IsNullOrEmpty(ContextRoleText.Text) ||
-                string.IsNullOrEmpty(EmailText.Text))
+            // 1. Reset lahat ng field colors at itago ang inline error
+            SetFieldError(LastnameText, false);
+            SetFieldError(FirstnameText, false);
+            SetFieldError(MiddlenameText, false);
+            SetFieldError(EmailText, false);
+            SetFieldError(ContextRoleText, false);
+            HideInlineError();
+
+            // 2. Check kung may kulang na required fields
+            bool hasError = false;
+            if (string.IsNullOrWhiteSpace(LastnameText.Text)) { SetFieldError(LastnameText, true); hasError = true; }
+            if (string.IsNullOrWhiteSpace(FirstnameText.Text)) { SetFieldError(FirstnameText, true); hasError = true; }
+            if (string.IsNullOrWhiteSpace(ContextRoleText.Text)) { SetFieldError(ContextRoleText, true); hasError = true; }
+            if (string.IsNullOrWhiteSpace(EmailText.Text)) { SetFieldError(EmailText, true); hasError = true; }
+
+            if (hasError)
             {
-                CustomMessageBox.Show("Please fill in at least: Role, Last Name, First Name, and Email.",
-                    "Validation", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
+                ShowInlineError("Please fill in all required fields.");
+                return;
+            }
+
+            // 3. Check kung may numero sa mga pangalan
+            hasError = false;
+            if (LastnameText.Text.Any(char.IsDigit)) { SetFieldError(LastnameText, true); hasError = true; }
+            if (FirstnameText.Text.Any(char.IsDigit)) { SetFieldError(FirstnameText, true); hasError = true; }
+            if (MiddlenameText.Text.Any(char.IsDigit)) { SetFieldError(MiddlenameText, true); hasError = true; }
+
+            if (hasError)
+            {
+                ShowInlineError("Names cannot contain numbers.");
+                return;
+            }
+
+            // 4. Check kung ang email ay @gmail.com
+            if (!EmailText.Text.Trim().EndsWith("@gmail.com", StringComparison.OrdinalIgnoreCase))
+            {
+                SetFieldError(EmailText, true);
+                ShowInlineError("Email must end with @gmail.com");
                 return;
             }
 
@@ -1287,8 +1402,7 @@ namespace WinFormsApp1
                     string rootPath = SettingsManager.Current.SaveFolder;
                     if (string.IsNullOrEmpty(rootPath))
                     {
-                        CustomMessageBox.Show("Root folder is not configured.",
-                            "Root Folder Missing", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
+                        ShowInlineError("Root folder is not configured.");
                         return;
                     }
 
@@ -1343,6 +1457,7 @@ namespace WinFormsApp1
             string f = string.IsNullOrWhiteSpace(first) ? "X" : first.Trim().Substring(0, 1).ToUpper();
             string m = string.IsNullOrWhiteSpace(middle) ? "X" : middle.Trim().Substring(0, 1).ToUpper();
 
+            // Kung gusto mong walang petsa (numero) sa username, palitan ang baseUser ng: $"{l}{f}{m}"
             string baseUser = $"{l}{f}{m}{DateTime.Now:MMddyyyy}";
             string candidate = baseUser;
             int suffix = 1;
@@ -1420,6 +1535,14 @@ namespace WinFormsApp1
             MiddlenameText.Clear();
             EmailText.Clear();
             ContextRoleText.SelectedIndex = -1;
+
+            // Reset din ang kulay at inline error
+            SetFieldError(LastnameText, false);
+            SetFieldError(FirstnameText, false);
+            SetFieldError(MiddlenameText, false);
+            SetFieldError(EmailText, false);
+            SetFieldError(ContextRoleText, false);
+            HideInlineError();
         }
 
         // =========================================================
