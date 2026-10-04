@@ -328,47 +328,6 @@ namespace WinFormsApp1
             btnSubmit.HoverState.FillColor = Color.FromArgb(100, 0, 0);
             btnSubmit.Click += btnPostActivity_Click;
             footerPanel.Controls.Add(btnSubmit);
-
-            // Layout callback for window resize
-            this.Resize += (s, e) =>
-            {
-                if (mainCard == null || headerPanel == null) return;
-
-                // Header full-width
-                headerPanel.Width = mainCard.Width;
-
-                // Due date + badge re-anchor
-                if (lblDueDate != null)
-                    lblDueDate.Location = new Point(headerPanel.Width - 400, 34);
-
-                if (badgePanel != null)
-                    badgePanel.Location = new Point(headerPanel.Width - 140, 34);
-
-                // Description panel
-                descPanel.Width = mainCard.Width - 40;
-
-                // PDF card fills the middle
-                int headerH = 95;
-                int descTop = headerH + 15;
-                int descH = 75;
-                int gap = 15;
-                int footerH = 120;
-                int footerBottomGap = 20;
-
-                int pdfTop = descTop + descH + gap;
-                int pdfHeight = mainCard.Height - pdfTop - footerH - footerBottomGap - 15;
-
-                pdfCard.Location = new Point(20, pdfTop);
-                pdfCard.Size = new Size(mainCard.Width - 40, Math.Max(200, pdfHeight));
-
-                footerPanel.Location = new Point(20, mainCard.Height - footerH - footerBottomGap);
-                footerPanel.Width = mainCard.Width - 40;
-
-                btnSubmit.Location = new Point(footerPanel.Width - 150, (footerPanel.Height - btnSubmit.Height) / 2);
-            };
-
-            // Initial layout
-            this.Resize?.Invoke(this, EventArgs.Empty);
         }
 
         // =========================================================

@@ -2811,12 +2811,12 @@
             ClientSize = new Size(1350, 729);
             Controls.Add(guna2Panel1);
             Controls.Add(guna2Panel2);
-            Controls.Add(pnlHome);
             Controls.Add(pnlSetting);
             Controls.Add(pnlGrades);
             Controls.Add(pnlActivity);
             Controls.Add(pnlSubject);
             Controls.Add(pnlQuizExam);
+            Controls.Add(pnlHome);
             Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             Name = "StudentForm";

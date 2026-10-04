@@ -3295,64 +3295,250 @@ namespace WinFormsApp1
             }
         }
 
+        // =========================================================
+        // *** FIXED HandleActivityFileReceive ***
+        // Reads the command first, then dispatches to the correct protocol
+        // =========================================================
+
         private async Task HandleActivityFileReceive(TcpClient client)
         {
             try
             {
                 using (client)
                 using (NetworkStream stream = client.GetStream())
-                using (BinaryReader reader = new BinaryReader(stream))
+                using (BinaryReader reader = new BinaryReader(stream, Encoding.UTF8))
                 {
-                    string Section = reader.ReadString();
-                    string prof_ID = reader.ReadString();
-                    string user_ID = reader.ReadString();
-                    string fileName = reader.ReadString();
-                    int fileLength = reader.ReadInt32();
+                    // =========================================================
+                    // Read the command header FIRST
+                    // =========================================================
+                    string command = reader.ReadString();
+                    Console.WriteLine("[Professor] FileTransfer command: " + command);
 
-                    if (fileLength <= 0 || fileLength > 200 * 1024 * 1024) { Console.WriteLine("Invalid file length received."); return; }
-                    byte[] fileBytes = reader.ReadBytes(fileLength);
+                    if (command == "STUDENT_SUBMISSION")
+                    {
+                        // Matches ActivityForm.SendSubmissionToServer
+                        string professorFolder = reader.ReadString();
+                        string section = reader.ReadString();
+                        string studentName = reader.ReadString();
+                        string activityTitle = reader.ReadString();
+                        string fileName = reader.ReadString();
+                        int fileLength = reader.ReadInt32();
 
-                    if (string.IsNullOrEmpty(saveFolder) || saveFolder == "Null") { Console.WriteLine("Save folder not configured."); return; }
-                    if (string.IsNullOrEmpty(ProfessorName)) NameGet();
+                        if (fileLength <= 0 || fileLength > 200 * 1024 * 1024)
+                        {
+                            Console.WriteLine("[Professor] Invalid file length: " + fileLength);
+                            return;
+                        }
 
-                    string professorFolder = SanitizeFolderName(ProfessorName);
-                    string safeSection = SanitizeFolderName(Section);
-                    string targetFolder = Path.Combine(saveFolder, professorFolder, safeSection, "ActivityFiles");
+                        byte[] fileBytes = reader.ReadBytes(fileLength);
 
-                    if (!Directory.Exists(targetFolder)) Directory.CreateDirectory(targetFolder);
+                        if (string.IsNullOrEmpty(saveFolder) || saveFolder == "Null")
+                        {
+                            Console.WriteLine("[Professor] Save folder not configured.");
+                            return;
+                        }
 
-                    string safeFileName = SanitizeFolderName(fileName);
-                    string savePath = Path.Combine(targetFolder, safeFileName);
+                        // Save under the section folder directly (student submission)
+                        string sectionFolder = Path.Combine(saveFolder, SanitizeFolderName(section));
+                        if (!Directory.Exists(sectionFolder))
+                            Directory.CreateDirectory(sectionFolder);
 
-                    await File.WriteAllBytesAsync(savePath, fileBytes);
-                    Console.WriteLine("[FileTransfer] Saved to: " + savePath);
+                        string safeName = SanitizeFolderName(fileName);
+                        string savePath = Path.Combine(sectionFolder, safeName);
 
-                    OnActivityFileReceived(prof_ID, user_ID, savePath);
+                        await File.WriteAllBytesAsync(savePath, fileBytes);
+                        Console.WriteLine("[Professor] Student submission saved: " + savePath);
+
+                        // Look up student ID by name
+                        int studentId = GetStudentIdByName(studentName);
+
+                        // Update the database with the correct save path
+                        UpdateSubmissionFilePath(studentId, activityTitle, section, savePath);
+
+                        // =========================================================
+                        // *** IMPORTANT: REPLY WITH THE SAVED PATH ***
+                        // Without this, the Student's ReadString() will fail/hang
+                        // and the student will see "Failed to submit. Please try again."
+                        // =========================================================
+                        try
+                        {
+                            using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
+                            {
+                                writer.Write(savePath);
+                                writer.Flush();
+                            }
+                            Console.WriteLine("[Professor] Replied with path: " + savePath);
+                        }
+                        catch (Exception exReply)
+                        {
+                            Console.WriteLine("[Professor] Failed to send reply: " + exReply.Message);
+                        }
+
+                        // Refresh UI
+                        SafeInvoke(() =>
+                        {
+                            try { ActivityStatus(); } catch { }
+                        });
+                    }
+                    else if (command == "ACTIVITY_FILE")
+                    {
+                        // Matches ProfessorForm.SendActivityFileToServer
+                        string professorFolder = reader.ReadString();
+                        string section = reader.ReadString();
+                        string fileName = reader.ReadString();
+                        int fileLength = reader.ReadInt32();
+
+                        if (fileLength <= 0 || fileLength > 200 * 1024 * 1024)
+                            return;
+
+                        byte[] fileBytes = reader.ReadBytes(fileLength);
+
+                        if (string.IsNullOrEmpty(saveFolder) || saveFolder == "Null") return;
+                        if (string.IsNullOrEmpty(ProfessorName)) NameGet();
+
+                        string professorFolderSafe = string.IsNullOrEmpty(ProfessorName)
+                            ? "Unknown"
+                            : SanitizeFolderName(ProfessorName);
+
+                        string targetFolder = Path.Combine(
+                            saveFolder,
+                            professorFolderSafe,
+                            SanitizeFolderName(section),
+                            "ActivityFiles");
+
+                        if (!Directory.Exists(targetFolder))
+                            Directory.CreateDirectory(targetFolder);
+
+                        string savePath = Path.Combine(targetFolder, SanitizeFolderName(fileName));
+                        await File.WriteAllBytesAsync(savePath, fileBytes);
+                        Console.WriteLine("[Professor] Activity file saved: " + savePath);
+                    }
+                    else if (command == "PROFILE_PHOTO")
+                    {
+                        // Matches StudentForm.SendProfilePhotoToAdmin
+                        string username = reader.ReadString();
+                        string fileName = reader.ReadString();
+                        int fileLength = reader.ReadInt32();
+
+                        if (fileLength <= 0 || fileLength > 200 * 1024 * 1024)
+                            return;
+
+                        byte[] fileBytes = reader.ReadBytes(fileLength);
+
+                        string profileFolder = Path.Combine(saveFolder ?? "", "ProfilePictures");
+                        if (!Directory.Exists(profileFolder))
+                            Directory.CreateDirectory(profileFolder);
+
+                        string savePath = Path.Combine(profileFolder, SanitizeFolderName(fileName));
+                        await File.WriteAllBytesAsync(savePath, fileBytes);
+
+                        // Reply back with the UNC path
+                        try
+                        {
+                            using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
+                            {
+                                writer.Write(savePath);
+                                writer.Flush();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("[Professor] Failed to send reply: " + ex.Message);
+                        }
+
+                        Console.WriteLine("[Professor] Profile photo saved: " + savePath);
+                    }
+                    else
+                    {
+                        Console.WriteLine("[Professor] Unknown FileTransfer command: " + command);
+                    }
                 }
             }
-            catch (Exception ex) { Console.WriteLine("HandleActivityFileReceive error: " + ex.Message); }
+            catch (Exception ex)
+            {
+                Console.WriteLine("HandleActivityFileReceive error: " + ex.Message);
+            }
         }
-
-        private void OnActivityFileReceived(string prof_ID, string user_ID, string savePath)
+        // =========================================================
+        // NEW: Get student_id from "Lastname_Firstname_Middlename"
+        // =========================================================
+        private int GetStudentIdByName(string studentName)
         {
+            if (string.IsNullOrWhiteSpace(studentName)) return 0;
+
+            string[] parts = studentName.Split(new[] { '_' }, StringSplitOptions.RemoveEmptyEntries);
+            string lastname = parts.Length > 0 ? parts[0].Trim() : "";
+            string firstname = parts.Length > 1 ? parts[1].Trim() : "";
+            string middlename = parts.Length > 2 ? parts[2].Trim() : "";
+
             string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = @"UPDATE submitted_activity SET file_path = @file_path WHERE prof_id = @prof_id AND user_id = @user_id";
+                    string query = @"SELECT user_id FROM user_information
+                                     WHERE LOWER(TRIM(lastname))   = LOWER(TRIM(@ln))
+                                       AND LOWER(TRIM(firstname))  = LOWER(TRIM(@fn))
+                                       AND LOWER(TRIM(middlename)) = LOWER(TRIM(@mn))
+                                     LIMIT 1";
                     using (var cmd = new MySqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@file_path", savePath);
-                        cmd.Parameters.AddWithValue("@prof_id", prof_ID);
-                        cmd.Parameters.AddWithValue("@user_id", user_ID);
-                        cmd.ExecuteNonQuery();
+                        cmd.Parameters.AddWithValue("@ln", lastname);
+                        cmd.Parameters.AddWithValue("@fn", firstname);
+                        cmd.Parameters.AddWithValue("@mn", middlename);
+
+                        object result = cmd.ExecuteScalar();
+                        if (result != null && result != DBNull.Value)
+                            return Convert.ToInt32(result);
                     }
-                    SafeInvoke(() => ActivityStatus());
                 }
             }
-            catch (Exception ex) { Console.WriteLine("OnActivityFileReceived error: " + ex.Message); }
+            catch (Exception ex)
+            {
+                Console.WriteLine("GetStudentIdByName error: " + ex.Message);
+            }
+            return 0;
+        }
+
+        // =========================================================
+        // NEW: Update submitted_activity file path + status
+        // =========================================================
+        private void UpdateSubmissionFilePath(int studentId, string title, string section, string savedPath)
+        {
+            if (studentId <= 0 || string.IsNullOrEmpty(title)) return;
+
+            string connStr = SettingsManager.Current.GetConnectionString();
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    string query = @"UPDATE submitted_activity
+                                     SET file_path = @path,
+                                         activity_status = 'Submitted'
+                                     WHERE prof_id = @prof_id
+                                       AND user_id = @user_id
+                                       AND title   = @title
+                                       AND section = @section";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@path", savedPath);
+                        cmd.Parameters.AddWithValue("@prof_id", ProfessorID);
+                        cmd.Parameters.AddWithValue("@user_id", studentId);
+                        cmd.Parameters.AddWithValue("@title", title);
+                        cmd.Parameters.AddWithValue("@section", section);
+
+                        int rows = cmd.ExecuteNonQuery();
+                        Console.WriteLine($"[Professor] Updated {rows} submitted_activity row(s) for student {studentId}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("UpdateSubmissionFilePath error: " + ex.Message);
+            }
         }
 
         private string SanitizeFolderName(string name)
