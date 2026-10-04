@@ -32,18 +32,16 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges4 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges1 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges2 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges13 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges14 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges11 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges12 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges5 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges6 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges7 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges8 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges9 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges10 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges11 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges12 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges15 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges16 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges13 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges14 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             guna2Panel1 = new Guna.UI2.WinForms.Guna2Panel();
             btnCloseForm = new Guna.UI2.WinForms.Guna2Button();
             label1 = new Label();
@@ -62,8 +60,6 @@
             label10 = new Label();
             pictureBox1 = new PictureBox();
             label9 = new Label();
-            guna2Panel3 = new Guna.UI2.WinForms.Guna2Panel();
-            picboxAuthenticationPhoto = new PictureBox();
             label8 = new Label();
             btnSkipforNow = new Guna.UI2.WinForms.Guna2Button();
             label13 = new Label();
@@ -71,11 +67,11 @@
             label15 = new Label();
             label16 = new Label();
             lblRemainingLimit = new Label();
+            picboxAuthenticationPhoto = new PictureBox();
             guna2Panel1.SuspendLayout();
             guna2Panel2.SuspendLayout();
             guna2Panel4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
-            guna2Panel3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)picboxAuthenticationPhoto).BeginInit();
             SuspendLayout();
             // 
@@ -89,7 +85,7 @@
             guna2Panel1.Location = new Point(0, 0);
             guna2Panel1.Name = "guna2Panel1";
             guna2Panel1.ShadowDecoration.CustomizableEdges = customizableEdges4;
-            guna2Panel1.Size = new Size(1149, 85);
+            guna2Panel1.Size = new Size(1084, 63);
             guna2Panel1.TabIndex = 0;
             // 
             // btnCloseForm
@@ -103,7 +99,7 @@
             btnCloseForm.Font = new Font("Segoe UI", 9F);
             btnCloseForm.ForeColor = Color.White;
             btnCloseForm.Image = Properties.Resources.white_ekis;
-            btnCloseForm.Location = new Point(1072, 29);
+            btnCloseForm.Location = new Point(1025, 12);
             btnCloseForm.Name = "btnCloseForm";
             btnCloseForm.ShadowDecoration.CustomizableEdges = customizableEdges2;
             btnCloseForm.Size = new Size(43, 40);
@@ -113,11 +109,11 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Font = new Font("Segoe UI", 21.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label1.Font = new Font("Segoe UI", 18.75F);
             label1.ForeColor = Color.White;
-            label1.Location = new Point(24, 29);
+            label1.Location = new Point(24, 17);
             label1.Name = "label1";
-            label1.Size = new Size(680, 40);
+            label1.Size = new Size(590, 35);
             label1.TabIndex = 0;
             label1.Text = "CDSGA HUB Account Security — Facial Profile Setup";
             // 
@@ -125,7 +121,7 @@
             // 
             label2.AutoSize = true;
             label2.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label2.Location = new Point(24, 131);
+            label2.Location = new Point(22, 87);
             label2.Name = "label2";
             label2.Size = new Size(1036, 21);
             label2.TabIndex = 1;
@@ -135,7 +131,7 @@
             // 
             label3.AutoSize = true;
             label3.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label3.Location = new Point(24, 152);
+            label3.Location = new Point(22, 108);
             label3.Name = "label3";
             label3.Size = new Size(556, 21);
             label3.TabIndex = 2;
@@ -145,7 +141,7 @@
             // 
             label4.AutoSize = true;
             label4.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label4.Location = new Point(24, 217);
+            label4.Location = new Point(20, 147);
             label4.Name = "label4";
             label4.Size = new Size(420, 21);
             label4.TabIndex = 3;
@@ -155,7 +151,7 @@
             // 
             label5.AutoSize = true;
             label5.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label5.Location = new Point(89, 257);
+            label5.Location = new Point(85, 187);
             label5.Name = "label5";
             label5.Size = new Size(181, 21);
             label5.TabIndex = 4;
@@ -165,7 +161,7 @@
             // 
             label6.AutoSize = true;
             label6.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label6.Location = new Point(276, 257);
+            label6.Location = new Point(272, 187);
             label6.Name = "label6";
             label6.Size = new Size(757, 21);
             label6.TabIndex = 5;
@@ -175,7 +171,7 @@
             // 
             label7.AutoSize = true;
             label7.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label7.Location = new Point(89, 278);
+            label7.Location = new Point(85, 208);
             label7.Name = "label7";
             label7.Size = new Size(579, 21);
             label7.TabIndex = 6;
@@ -187,17 +183,17 @@
             guna2Panel2.BorderColor = Color.Black;
             guna2Panel2.BorderRadius = 20;
             guna2Panel2.BorderThickness = 1;
+            guna2Panel2.Controls.Add(picboxAuthenticationPhoto);
             guna2Panel2.Controls.Add(btnSubmitAuthenticationPhoto);
             guna2Panel2.Controls.Add(btnUploadAuthenticationPhoto);
             guna2Panel2.Controls.Add(guna2Panel4);
-            guna2Panel2.Controls.Add(guna2Panel3);
             guna2Panel2.Controls.Add(label8);
-            guna2Panel2.CustomizableEdges = customizableEdges13;
+            guna2Panel2.CustomizableEdges = customizableEdges11;
             guna2Panel2.FillColor = Color.White;
-            guna2Panel2.Location = new Point(392, 342);
+            guna2Panel2.Location = new Point(362, 244);
             guna2Panel2.Name = "guna2Panel2";
-            guna2Panel2.ShadowDecoration.CustomizableEdges = customizableEdges14;
-            guna2Panel2.Size = new Size(322, 376);
+            guna2Panel2.ShadowDecoration.CustomizableEdges = customizableEdges12;
+            guna2Panel2.Size = new Size(318, 343);
             guna2Panel2.TabIndex = 7;
             // 
             // btnSubmitAuthenticationPhoto
@@ -215,7 +211,7 @@
             btnSubmitAuthenticationPhoto.ForeColor = Color.White;
             btnSubmitAuthenticationPhoto.Image = Properties.Resources.Camera;
             btnSubmitAuthenticationPhoto.ImageSize = new Size(18, 18);
-            btnSubmitAuthenticationPhoto.Location = new Point(113, 334);
+            btnSubmitAuthenticationPhoto.Location = new Point(109, 288);
             btnSubmitAuthenticationPhoto.Name = "btnSubmitAuthenticationPhoto";
             btnSubmitAuthenticationPhoto.ShadowDecoration.BorderRadius = 10;
             btnSubmitAuthenticationPhoto.ShadowDecoration.CustomizableEdges = customizableEdges6;
@@ -240,7 +236,7 @@
             btnUploadAuthenticationPhoto.ForeColor = Color.White;
             btnUploadAuthenticationPhoto.Image = Properties.Resources.Camera;
             btnUploadAuthenticationPhoto.ImageSize = new Size(18, 18);
-            btnUploadAuthenticationPhoto.Location = new Point(31, 292);
+            btnUploadAuthenticationPhoto.Location = new Point(27, 246);
             btnUploadAuthenticationPhoto.Name = "btnUploadAuthenticationPhoto";
             btnUploadAuthenticationPhoto.ShadowDecoration.BorderRadius = 10;
             btnUploadAuthenticationPhoto.ShadowDecoration.CustomizableEdges = customizableEdges8;
@@ -264,7 +260,7 @@
             guna2Panel4.Controls.Add(label9);
             guna2Panel4.CustomizableEdges = customizableEdges9;
             guna2Panel4.FillColor = Color.FromArgb(234, 231, 181);
-            guna2Panel4.Location = new Point(30, 195);
+            guna2Panel4.Location = new Point(26, 149);
             guna2Panel4.Name = "guna2Panel4";
             guna2Panel4.ShadowDecoration.CustomizableEdges = customizableEdges10;
             guna2Panel4.Size = new Size(264, 91);
@@ -324,33 +320,11 @@
             label9.TabIndex = 8;
             label9.Text = "PHOTO UNAVAILABLE";
             // 
-            // guna2Panel3
-            // 
-            guna2Panel3.BorderRadius = 50;
-            guna2Panel3.Controls.Add(picboxAuthenticationPhoto);
-            guna2Panel3.CustomizableEdges = customizableEdges11;
-            guna2Panel3.FillColor = Color.Silver;
-            guna2Panel3.Location = new Point(113, 76);
-            guna2Panel3.Name = "guna2Panel3";
-            guna2Panel3.ShadowDecoration.CustomizableEdges = customizableEdges12;
-            guna2Panel3.Size = new Size(100, 100);
-            guna2Panel3.TabIndex = 9;
-            // 
-            // picboxAuthenticationPhoto
-            // 
-            picboxAuthenticationPhoto.Image = Properties.Resources.Avatar;
-            picboxAuthenticationPhoto.Location = new Point(0, 0);
-            picboxAuthenticationPhoto.Name = "picboxAuthenticationPhoto";
-            picboxAuthenticationPhoto.Size = new Size(100, 100);
-            picboxAuthenticationPhoto.SizeMode = PictureBoxSizeMode.StretchImage;
-            picboxAuthenticationPhoto.TabIndex = 12;
-            picboxAuthenticationPhoto.TabStop = false;
-            // 
             // label8
             // 
             label8.AutoSize = true;
             label8.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label8.Location = new Point(20, 26);
+            label8.Location = new Point(17, 9);
             label8.Name = "label8";
             label8.Size = new Size(143, 21);
             label8.TabIndex = 8;
@@ -360,7 +334,7 @@
             // 
             btnSkipforNow.BackColor = Color.Transparent;
             btnSkipforNow.BorderRadius = 10;
-            btnSkipforNow.CustomizableEdges = customizableEdges15;
+            btnSkipforNow.CustomizableEdges = customizableEdges13;
             btnSkipforNow.DisabledState.BorderColor = Color.DarkGray;
             btnSkipforNow.DisabledState.CustomBorderColor = Color.DarkGray;
             btnSkipforNow.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -369,10 +343,10 @@
             btnSkipforNow.Font = new Font("Segoe UI", 9F);
             btnSkipforNow.ForeColor = Color.White;
             btnSkipforNow.ImageSize = new Size(18, 18);
-            btnSkipforNow.Location = new Point(422, 724);
+            btnSkipforNow.Location = new Point(388, 593);
             btnSkipforNow.Name = "btnSkipforNow";
             btnSkipforNow.ShadowDecoration.BorderRadius = 10;
-            btnSkipforNow.ShadowDecoration.CustomizableEdges = customizableEdges16;
+            btnSkipforNow.ShadowDecoration.CustomizableEdges = customizableEdges14;
             btnSkipforNow.ShadowDecoration.Depth = 10;
             btnSkipforNow.Size = new Size(264, 39);
             btnSkipforNow.TabIndex = 12;
@@ -383,7 +357,7 @@
             // 
             label13.AutoSize = true;
             label13.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label13.Location = new Point(89, 833);
+            label13.Location = new Point(85, 687);
             label13.Name = "label13";
             label13.Size = new Size(350, 21);
             label13.TabIndex = 15;
@@ -393,7 +367,7 @@
             // 
             label14.AutoSize = true;
             label14.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label14.Location = new Point(291, 812);
+            label14.Location = new Point(287, 666);
             label14.Name = "label14";
             label14.Size = new Size(699, 21);
             label14.TabIndex = 14;
@@ -403,7 +377,7 @@
             // 
             label15.AutoSize = true;
             label15.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label15.Location = new Point(89, 812);
+            label15.Location = new Point(85, 666);
             label15.Name = "label15";
             label15.Size = new Size(196, 21);
             label15.TabIndex = 13;
@@ -423,17 +397,27 @@
             // 
             lblRemainingLimit.AutoSize = true;
             lblRemainingLimit.Font = new Font("Segoe UI", 8.25F, FontStyle.Bold | FontStyle.Italic, GraphicsUnit.Point, 0);
-            lblRemainingLimit.Location = new Point(612, 766);
+            lblRemainingLimit.Location = new Point(578, 635);
             lblRemainingLimit.Name = "lblRemainingLimit";
             lblRemainingLimit.Size = new Size(75, 13);
             lblRemainingLimit.TabIndex = 17;
             lblRemainingLimit.Text = "*2 remaining";
             // 
+            // picboxAuthenticationPhoto
+            // 
+            picboxAuthenticationPhoto.Image = Properties.Resources.Avatar;
+            picboxAuthenticationPhoto.Location = new Point(114, 43);
+            picboxAuthenticationPhoto.Name = "picboxAuthenticationPhoto";
+            picboxAuthenticationPhoto.Size = new Size(100, 100);
+            picboxAuthenticationPhoto.SizeMode = PictureBoxSizeMode.StretchImage;
+            picboxAuthenticationPhoto.TabIndex = 12;
+            picboxAuthenticationPhoto.TabStop = false;
+            // 
             // FacialRecognitionReminderForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1149, 964);
+            ClientSize = new Size(1080, 724);
             ControlBox = false;
             Controls.Add(lblRemainingLimit);
             Controls.Add(label16);
@@ -462,7 +446,6 @@
             guna2Panel4.ResumeLayout(false);
             guna2Panel4.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
-            guna2Panel3.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)picboxAuthenticationPhoto).EndInit();
             ResumeLayout(false);
             PerformLayout();
@@ -481,7 +464,6 @@
         private Label label7;
         private Guna.UI2.WinForms.Guna2Panel guna2Panel2;
         private Label label8;
-        private Guna.UI2.WinForms.Guna2Panel guna2Panel3;
         private Guna.UI2.WinForms.Guna2Button btnUploadAuthenticationPhoto;
         private Guna.UI2.WinForms.Guna2Panel guna2Panel4;
         private PictureBox pictureBox1;
@@ -495,7 +477,7 @@
         private Label label15;
         private Label label16;
         private Label lblRemainingLimit;
-        private PictureBox picboxAuthenticationPhoto;
         private Guna.UI2.WinForms.Guna2Button btnSubmitAuthenticationPhoto;
+        private PictureBox picboxAuthenticationPhoto;
     }
 }

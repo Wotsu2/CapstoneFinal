@@ -83,19 +83,22 @@ namespace WinFormsApp1
         {
             // ---------------- FORM ----------------
             this.Text = "Activity - " + title;
-            this.Size = new Size(1050, 950);
+            this.Size = new Size(1320, 720);
+            this.MinimumSize = new Size(1100, 640);
             this.StartPosition = FormStartPosition.CenterParent;
+            this.WindowState = FormWindowState.Maximized;      // fill the screen for best fit
             this.BackColor = Color.FromArgb(245, 245, 248);
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
+            this.FormBorderStyle = FormBorderStyle.Sizable;
+            this.MaximizeBox = true;
+            this.MinimizeBox = true;
             this.ShowIcon = false;
 
             // ---------------- MAIN CARD ----------------
             mainCard = new Guna2Panel
             {
-                Size = new Size(1010, 900),
+                Size = new Size(1280, 680),
                 Location = new Point(15, 15),
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
                 BorderRadius = 16,
                 FillColor = Color.White,
                 BorderColor = Color.FromArgb(225, 225, 225),
@@ -108,7 +111,7 @@ namespace WinFormsApp1
             headerPanel = new Guna2Panel
             {
                 Dock = DockStyle.Top,
-                Height = 110,
+                Height = 95,
                 FillColor = Color.Maroon,
                 BorderRadius = 0
             };
@@ -118,13 +121,13 @@ namespace WinFormsApp1
             lblTitle = new Label
             {
                 Text = title,
-                Font = new Font("Segoe UI Semibold", 17F, FontStyle.Bold),
+                Font = new Font("Segoe UI Semibold", 15F, FontStyle.Bold),
                 ForeColor = Color.White,
                 BackColor = Color.Transparent,
                 AutoSize = false,
                 AutoEllipsis = true,
-                Size = new Size(460, 38),
-                Location = new Point(28, 20)
+                Size = new Size(560, 32),
+                Location = new Point(24, 16)
             };
             headerPanel.Controls.Add(lblTitle);
 
@@ -132,13 +135,13 @@ namespace WinFormsApp1
             lblSubject = new Label
             {
                 Text = activitySubject + "  •  Section " + studentSection,
-                Font = new Font("Segoe UI", 10F),
+                Font = new Font("Segoe UI", 9.5F),
                 ForeColor = Color.FromArgb(255, 220, 220),
                 BackColor = Color.Transparent,
                 AutoSize = false,
                 AutoEllipsis = true,
-                Size = new Size(460, 24),
-                Location = new Point(30, 66)
+                Size = new Size(560, 22),
+                Location = new Point(26, 56)
             };
             headerPanel.Controls.Add(lblSubject);
 
@@ -146,12 +149,12 @@ namespace WinFormsApp1
             lblDueDate = new Label
             {
                 Text = "Due: " + dueDate,
-                Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
+                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
                 ForeColor = Color.White,
                 BackColor = Color.Transparent,
                 AutoSize = false,
-                Size = new Size(240, 34),
-                Location = new Point(headerPanel.Width - 380, 38),
+                Size = new Size(240, 30),
+                Location = new Point(headerPanel.Width - 400, 34),
                 TextAlign = ContentAlignment.MiddleRight,
                 Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
@@ -162,10 +165,10 @@ namespace WinFormsApp1
 
             badgePanel = new Guna2Panel
             {
-                Size = new Size(120, 34),
-                Location = new Point(headerPanel.Width - 130, 38),
+                Size = new Size(120, 30),
+                Location = new Point(headerPanel.Width - 140, 34),
                 FillColor = badgeColor,
-                BorderRadius = 17,
+                BorderRadius = 15,
                 Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
             headerPanel.Controls.Add(badgePanel);
@@ -173,7 +176,7 @@ namespace WinFormsApp1
             lblStatusBadge = new Label
             {
                 Text = status,
-                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
+                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
                 ForeColor = Color.White,
                 BackColor = Color.Transparent,
                 Dock = DockStyle.Fill,
@@ -184,8 +187,8 @@ namespace WinFormsApp1
             // ---------------- DESCRIPTION ----------------
             descPanel = new Guna2Panel
             {
-                Size = new Size(mainCard.Width - 40, 90),
-                Location = new Point(20, 130),
+                Size = new Size(mainCard.Width - 40, 75),
+                Location = new Point(20, 110),
                 BorderRadius = 12,
                 FillColor = Color.FromArgb(252, 248, 248),
                 BorderColor = Color.FromArgb(240, 230, 230),
@@ -197,23 +200,23 @@ namespace WinFormsApp1
             lblDescLabel = new Label
             {
                 Text = "📄   Activity Description",
-                Font = new Font("Segoe UI Semibold", 10.5F, FontStyle.Bold),
+                Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
                 ForeColor = Color.Maroon,
                 BackColor = Color.Transparent,
                 AutoSize = true,
-                Location = new Point(18, 12)
+                Location = new Point(16, 10)
             };
             descPanel.Controls.Add(lblDescLabel);
 
             lblDescription = new Label
             {
                 Text = string.IsNullOrWhiteSpace(description) ? "(No description provided)" : description,
-                Font = new Font("Segoe UI", 10F),
+                Font = new Font("Segoe UI", 9.5F),
                 ForeColor = Color.FromArgb(70, 70, 70),
                 BackColor = Color.Transparent,
                 AutoSize = false,
-                Size = new Size(descPanel.Width - 36, 48),
-                Location = new Point(20, 38),
+                Size = new Size(descPanel.Width - 32, 38),
+                Location = new Point(18, 32),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             descPanel.Controls.Add(lblDescription);
@@ -221,13 +224,13 @@ namespace WinFormsApp1
             // ---------------- PDF CARD ----------------
             pdfCard = new Guna2Panel
             {
-                Size = new Size(mainCard.Width - 40, 500),
-                Location = new Point(20, 235),
+                Size = new Size(mainCard.Width - 40, 330),
+                Location = new Point(20, 200),
                 BorderRadius = 12,
                 FillColor = Color.FromArgb(245, 245, 248),
                 BorderColor = Color.FromArgb(225, 225, 225),
                 BorderThickness = 1,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
             };
             mainCard.Controls.Add(pdfCard);
 
@@ -241,8 +244,8 @@ namespace WinFormsApp1
             // ---------------- FOOTER / UPLOAD ----------------
             footerPanel = new Guna2Panel
             {
-                Size = new Size(mainCard.Width - 40, 140),
-                Location = new Point(20, 748),
+                Size = new Size(mainCard.Width - 40, 120),
+                Location = new Point(20, mainCard.Height - 140),
                 BorderRadius = 12,
                 FillColor = Color.FromArgb(252, 248, 248),
                 BorderColor = Color.FromArgb(240, 230, 230),
@@ -253,8 +256,8 @@ namespace WinFormsApp1
 
             uploadZone = new Guna2Panel
             {
-                Size = new Size(footerPanel.Width - 200, 100),
-                Location = new Point(20, 20),
+                Size = new Size(footerPanel.Width - 180, 84),
+                Location = new Point(18, 18),
                 BorderRadius = 12,
                 FillColor = Color.FromArgb(245, 240, 240),
                 BorderColor = Color.FromArgb(200, 180, 180),
@@ -268,7 +271,7 @@ namespace WinFormsApp1
             lblUploadHint = new Label
             {
                 Text = "☁\nClick to upload your file",
-                Font = new Font("Segoe UI", 9.5F, FontStyle.Italic),
+                Font = new Font("Segoe UI", 9F, FontStyle.Italic),
                 ForeColor = Color.FromArgb(120, 100, 100),
                 BackColor = Color.Transparent,
                 Dock = DockStyle.Fill,
@@ -280,12 +283,12 @@ namespace WinFormsApp1
             lblFileName = new Label
             {
                 Text = "",
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
+                Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold),
                 ForeColor = Color.Maroon,
                 BackColor = Color.Transparent,
                 AutoSize = false,
-                Size = new Size(uploadZone.Width, 20),
-                Location = new Point(0, uploadZone.Height - 22),
+                Size = new Size(uploadZone.Width, 18),
+                Location = new Point(0, uploadZone.Height - 20),
                 TextAlign = ContentAlignment.MiddleCenter,
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
             };
@@ -314,17 +317,58 @@ namespace WinFormsApp1
             btnSubmit = new Guna2Button
             {
                 Text = "Submit",
-                Size = new Size(140, 50),
-                Location = new Point(footerPanel.Width - 170, 45),
+                Size = new Size(130, 46),
+                Location = new Point(footerPanel.Width - 150, 36),
                 Anchor = AnchorStyles.Right,
                 BorderRadius = 10,
                 FillColor = Color.Maroon,
                 ForeColor = Color.White,
-                Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold)
+                Font = new Font("Segoe UI Semibold", 10.5F, FontStyle.Bold)
             };
             btnSubmit.HoverState.FillColor = Color.FromArgb(100, 0, 0);
             btnSubmit.Click += btnPostActivity_Click;
             footerPanel.Controls.Add(btnSubmit);
+
+            // Layout callback for window resize
+            this.Resize += (s, e) =>
+            {
+                if (mainCard == null || headerPanel == null) return;
+
+                // Header full-width
+                headerPanel.Width = mainCard.Width;
+
+                // Due date + badge re-anchor
+                if (lblDueDate != null)
+                    lblDueDate.Location = new Point(headerPanel.Width - 400, 34);
+
+                if (badgePanel != null)
+                    badgePanel.Location = new Point(headerPanel.Width - 140, 34);
+
+                // Description panel
+                descPanel.Width = mainCard.Width - 40;
+
+                // PDF card fills the middle
+                int headerH = 95;
+                int descTop = headerH + 15;
+                int descH = 75;
+                int gap = 15;
+                int footerH = 120;
+                int footerBottomGap = 20;
+
+                int pdfTop = descTop + descH + gap;
+                int pdfHeight = mainCard.Height - pdfTop - footerH - footerBottomGap - 15;
+
+                pdfCard.Location = new Point(20, pdfTop);
+                pdfCard.Size = new Size(mainCard.Width - 40, Math.Max(200, pdfHeight));
+
+                footerPanel.Location = new Point(20, mainCard.Height - footerH - footerBottomGap);
+                footerPanel.Width = mainCard.Width - 40;
+
+                btnSubmit.Location = new Point(footerPanel.Width - 150, (footerPanel.Height - btnSubmit.Height) / 2);
+            };
+
+            // Initial layout
+            this.Resize?.Invoke(this, EventArgs.Empty);
         }
 
         // =========================================================
@@ -421,7 +465,7 @@ namespace WinFormsApp1
                 TextAlign = ContentAlignment.MiddleCenter,
                 AutoSize = false,
                 Size = new Size(600, 120),
-                Location = new Point((pdfCard.Width - 600) / 2, 140)
+                Location = new Point((pdfCard.Width - 600) / 2, 120)
             };
             overlay.Controls.Add(lbl);
 
@@ -429,7 +473,7 @@ namespace WinFormsApp1
             {
                 Text = "Open File",
                 Size = new Size(160, 44),
-                Location = new Point((pdfCard.Width - 160) / 2, 270),
+                Location = new Point((pdfCard.Width - 160) / 2, 240),
                 BorderRadius = 10,
                 FillColor = Color.Maroon,
                 ForeColor = Color.White,
