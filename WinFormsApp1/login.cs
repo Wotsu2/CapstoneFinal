@@ -1,17 +1,10 @@
 ﻿using AForge.Video.DirectShow;
-using DocumentFormat.OpenXml.Drawing;
-using DocumentFormat.OpenXml.Office.SpreadSheetML.Y2023.MsForms;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 using Path = System.IO.Path;
 
@@ -40,27 +33,21 @@ namespace WinFormsApp1
         private System.Windows.Forms.Timer sessionHeartbeatTimer;
         private bool sessionReleased = false;
 
-        // A session is considered dead after this many seconds
-        // without a heartbeat.
         private const int SESSION_TIMEOUT_SECONDS = 90;
 
         public Login()
         {
             InitializeComponent();
 
-            // Clear textboxes EVERY time the form is shown.
             this.Shown += Login_Shown;
 
-            // Create the heartbeat timer once.
             sessionHeartbeatTimer = new System.Windows.Forms.Timer();
-            sessionHeartbeatTimer.Interval = 15000; // 15 seconds
+            sessionHeartbeatTimer.Interval = 15000;
             sessionHeartbeatTimer.Tick += SessionHeartbeatTimer_Tick;
 
-            // If Login is closed, release the current session.
             this.FormClosing += Login_FormClosing;
         }
 
-        // Fires every time the form becomes visible — including re-shows after logout.
         private void Login_Shown(object sender, EventArgs e)
         {
             txtUsername.Clear();
@@ -80,12 +67,10 @@ namespace WinFormsApp1
         // =========================================================
         // PRESET UI
         // =========================================================
-
         private void BuildPresetUi()
         {
             if (pnlConfiguration == null) return;
 
-            // If it already exists (Load ran twice), remove it first
             var existing = pnlConfiguration.Controls.Find("pnlPresetContainer", true);
             foreach (var c in existing)
                 pnlConfiguration.Controls.Remove(c);
@@ -194,7 +179,6 @@ namespace WinFormsApp1
 
             var preset = SettingsManager.Current.ServerPresets[index];
 
-            // Network
             txtServerIP.Text = preset.ServerIp;
             txtWorkStationPort.Text = preset.WorkstationPort.ToString();
             txtScreenSharingPort.Text = preset.ScreenSharePort.ToString();
@@ -202,14 +186,12 @@ namespace WinFormsApp1
             txtFileTransferPort.Text = preset.FileTransferPort.ToString();
             txtCommandPort.Text = preset.CommandPort.ToString();
 
-            // Database
             txtDatabaseHost.Text = preset.DatabaseHost;
             txtDatabasePort.Text = preset.DatabasePort.ToString();
             txtDatabaseName.Text = preset.DatabaseName;
             txtDatabaseUser.Text = preset.DatabaseUser;
             txtDatabasePassword.Text = preset.DatabasePassword;
 
-            // Apply in-memory
             SettingsManager.Current.ServerIp = preset.ServerIp;
             SettingsManager.Current.WorkstationPort = preset.WorkstationPort;
             SettingsManager.Current.ScreenSharePort = preset.ScreenSharePort;
@@ -250,7 +232,6 @@ namespace WinFormsApp1
                 return;
             }
 
-            // Validate network ports
             if (!int.TryParse(txtWorkStationPort.Text.Trim(), out int wsPort) ||
                 !int.TryParse(txtScreenSharingPort.Text.Trim(), out int ssPort) ||
                 !int.TryParse(txtBroadcastPort.Text.Trim(), out int bcPort) ||
@@ -261,7 +242,6 @@ namespace WinFormsApp1
                 return;
             }
 
-            // Validate database port
             if (!int.TryParse(txtDatabasePort.Text.Trim(), out int dbPort))
             {
                 MessageBox.Show("Please enter a valid database port.");
@@ -343,7 +323,6 @@ namespace WinFormsApp1
         // =========================================================
         // LOAD CURRENT SETTINGS
         // =========================================================
-
         private void LoadCurrentSettings()
         {
             txtServerIP.Text = SettingsManager.Current.ServerIp;
@@ -416,7 +395,6 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
-                    // Ensure the table exists (safe to run every time)
                     string createTable = @"CREATE TABLE IF NOT EXISTS mainfolderpath (
                                         user_id INT PRIMARY KEY,
                                         FolderPath VARCHAR(255)
@@ -589,39 +567,41 @@ namespace WinFormsApp1
 
                             this.Hide();
 
-                            LivenessCheckForm livenessForm = new LivenessCheckForm(
-                                studentreferencesPhoto, UserId, StudentSection, username);
-
-                            // When liveness closes, check whether another form is still active.
-                            livenessForm.FormClosed += (s, args) =>
+                            using (LivenessCheckForm livenessForm = new LivenessCheckForm(
+                                studentreferencesPhoto, UserId, StudentSection, username))
                             {
-                                bool anyOtherVisible = false;
+                                livenessForm.ShowDialog(this);
+                            }
 
-                                foreach (Form f in Application.OpenForms)
+                            // After liveness closes, check whether another form is still visible.
+                            bool anyOtherVisible = false;
+
+                            foreach (Form f in Application.OpenForms)
+                            {
+                                if (f == this) continue;
+                                if (f is LivenessCheckForm) continue;
+
+                                if (f.Visible && !f.IsDisposed)
                                 {
-                                    if (f == this) continue;
-                                    if (f is LivenessCheckForm) continue;
-
-                                    if (f.Visible && !f.IsDisposed)
-                                    {
-                                        anyOtherVisible = true;
-                                        break;
-                                    }
+                                    anyOtherVisible = true;
+                                    break;
                                 }
+                            }
 
-                                if (anyOtherVisible)
-                                {
-                                    this.Hide();
-                                }
-                                else
-                                {
-                                    // Liveness failed/cancelled before entering StudentForm.
-                                    ReleaseCurrentSession();
-                                    this.Show();
-                                }
-                            };
-
-                            livenessForm.Show();
+                            if (anyOtherVisible)
+                            {
+                                this.Hide();
+                            }
+                            else
+                            {
+                                ReleaseCurrentSession();
+                                this.Show();
+                                this.BringToFront();
+                                this.Activate();
+                                txtUsername.Clear();
+                                txtPassword.Clear();
+                                txtUsername.Focus();
+                            }
                         }
                     }
                 }
@@ -668,14 +648,6 @@ namespace WinFormsApp1
         // =========================================================
         // SINGLE SESSION FUNCTIONS
         // =========================================================
-
-        /// <summary>
-        /// Atomically claims the account.
-        /// Returns TRUE only if this PC successfully became the active session.
-        ///
-        /// A previous session is considered stale if last_seen is older
-        /// than SESSION_TIMEOUT_SECONDS.
-        /// </summary>
         private bool TryAcquireSession(int userId, string username)
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -711,7 +683,6 @@ namespace WinFormsApp1
 
                         int affected = cmd.ExecuteNonQuery();
 
-                        // 0 rows = another active computer already owns it.
                         if (affected != 1)
                         {
                             MessageBox.Show(
@@ -748,9 +719,6 @@ namespace WinFormsApp1
             }
         }
 
-        /// <summary>
-        /// Keeps the active session alive every 15 seconds.
-        /// </summary>
         private void SessionHeartbeatTimer_Tick(object sender, EventArgs e)
         {
             if (activeSessionUserId <= 0 || string.IsNullOrEmpty(activeSessionToken))
@@ -778,7 +746,6 @@ namespace WinFormsApp1
 
                         int affected = cmd.ExecuteNonQuery();
 
-                        // The database session no longer belongs to this app.
                         if (affected != 1)
                         {
                             sessionHeartbeatTimer.Stop();
@@ -801,17 +768,10 @@ namespace WinFormsApp1
             }
             catch
             {
-                // Do not immediately log the user out because of one
-                // temporary database/network failure.
-                // The next heartbeat will try again.
+                // Ignore a single network blip; next tick will retry.
             }
         }
 
-        /// <summary>
-        /// Releases ONLY the session created by this application.
-        /// The token prevents this PC from accidentally releasing
-        /// another PC's newer session.
-        /// </summary>
         public void ReleaseCurrentSession()
         {
             if (sessionReleased)
@@ -849,8 +809,7 @@ namespace WinFormsApp1
             }
             catch
             {
-                // If database is unavailable, the stale-session timeout
-                // will eventually unlock the account automatically.
+                // Stale-session timeout will eventually unlock the account.
             }
             finally
             {
@@ -862,15 +821,12 @@ namespace WinFormsApp1
 
         private void Login_FormClosing(object sender, FormClosingEventArgs e)
         {
-            // If Login is closed while this application still owns
-            // a session, release it.
             ReleaseCurrentSession();
         }
 
         // =========================================================
         // LOGIN
         // =========================================================
-
         private void btnLogin_Click(object sender, EventArgs e)
         {
             string username = txtUsername.Text.Trim();
@@ -888,24 +844,6 @@ namespace WinFormsApp1
             }
 
             InitializeGetQandA(username);
-
-            if (username == "admin123" && password == "123admin")
-            {
-                AdminForm adminform = new AdminForm();
-
-                // Admin login is also treated as a single session.
-                // The hard-coded admin account is not in user_credential,
-                // so it cannot use the database lock below.
-                this.Hide();
-
-                adminform.FormClosed += (s, args) =>
-                {
-                    this.Show();
-                };
-
-                adminform.Show();
-                return;
-            }
 
             string connStr = SettingsManager.Current.GetConnectionString();
 
@@ -946,13 +884,7 @@ namespace WinFormsApp1
 
                                 if (storedPassword == password)
                                 {
-                                    // IMPORTANT:
-                                    // Do the session claim BEFORE opening
-                                    // Professor/Student/Admin forms.
-                                    //
-                                    // If another PC already owns this account,
-                                    // TryAcquireSession returns FALSE and
-                                    // NOTHING is opened.
+                                    // Session claim BEFORE opening any role form.
                                     if (!TryAcquireSession(UserId, username))
                                         return;
 
@@ -1009,37 +941,37 @@ namespace WinFormsApp1
         {
             if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
             {
-                AdminForm adminForm = new AdminForm();
-
                 this.Hide();
 
-                adminForm.FormClosed += (s, e) =>
+                using (AdminForm adminForm = new AdminForm())
                 {
-                    ReleaseCurrentSession();
-                    this.Show();
-                    txtUsername.Clear();
-                    txtPassword.Clear();
-                    txtUsername.Focus();
-                };
+                    adminForm.ShowDialog(this);
+                }
 
-                adminForm.Show();
+                ReleaseCurrentSession();
+                this.Show();
+                this.BringToFront();
+                this.Activate();
+                txtUsername.Clear();
+                txtPassword.Clear();
+                txtUsername.Focus();
             }
             else if (role.Equals("Professor", StringComparison.OrdinalIgnoreCase))
             {
-                ProfessorForm profForm = new ProfessorForm(UserId, username);
-
                 this.Hide();
 
-                profForm.FormClosed += (s, e) =>
+                using (ProfessorForm profForm = new ProfessorForm(UserId, username))
                 {
-                    ReleaseCurrentSession();
-                    this.Show();
-                    txtUsername.Clear();
-                    txtPassword.Clear();
-                    txtUsername.Focus();
-                };
+                    profForm.ShowDialog(this);
+                }
 
-                profForm.Show();
+                ReleaseCurrentSession();
+                this.Show();
+                this.BringToFront();
+                this.Activate();
+                txtUsername.Clear();
+                txtPassword.Clear();
+                txtUsername.Focus();
             }
             else if (role.Equals("Student", StringComparison.OrdinalIgnoreCase))
             {
@@ -1053,45 +985,43 @@ namespace WinFormsApp1
 
                 if (string.IsNullOrEmpty(question) && string.IsNullOrEmpty(answer))
                 {
-                    StudentForm studentform =
-                        new StudentForm(UserId, StudentSection, username);
-
                     this.Hide();
 
-                    studentform.FormClosed += (s, e) =>
+                    using (StudentForm studentform =
+                        new StudentForm(UserId, StudentSection, username))
                     {
-                        ReleaseCurrentSession();
-                        this.Show();
-                        txtUsername.Clear();
-                        txtPassword.Clear();
-                        txtUsername.Focus();
-                    };
+                        studentform.ShowDialog(this);
+                    }
 
-                    studentform.Show();
+                    ReleaseCurrentSession();
+                    this.Show();
+                    this.BringToFront();
+                    this.Activate();
+                    txtUsername.Clear();
+                    txtPassword.Clear();
+                    txtUsername.Focus();
                 }
                 else if (!string.IsNullOrEmpty(question) &&
                          !string.IsNullOrEmpty(answer))
                 {
-                    QandAForm QandAform =
-                        new QandAForm(UserId, StudentSection, username);
-
                     this.Hide();
 
-                    QandAform.FormClosed += (s, e) =>
+                    using (QandAForm QandAform =
+                        new QandAForm(UserId, StudentSection, username))
                     {
-                        ReleaseCurrentSession();
-                        this.Show();
-                        txtUsername.Clear();
-                        txtPassword.Clear();
-                        txtUsername.Focus();
-                    };
+                        QandAform.ShowDialog(this);
+                    }
 
-                    QandAform.Show();
+                    ReleaseCurrentSession();
+                    this.Show();
+                    this.BringToFront();
+                    this.Activate();
+                    txtUsername.Clear();
+                    txtPassword.Clear();
+                    txtUsername.Focus();
                 }
                 else
                 {
-                    // Prevent leaving the account locked if the
-                    // security-question data is incomplete.
                     ReleaseCurrentSession();
 
                     MessageBox.Show(

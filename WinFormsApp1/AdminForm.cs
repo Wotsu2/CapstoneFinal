@@ -22,18 +22,6 @@ namespace WinFormsApp1
 {
     public partial class AdminForm : Form
     {
-        // USER DETAILS
-        private Panel overlayPanel;
-        private Panel userDetailsPanel;
-        private PictureBox detailsPhoto;
-        private Label detailsName;
-        private Label detailsRoleBadge;
-        private Label detailsUsername, detailsLastName, detailsFirstName,
-                      detailsMiddleName, detailsRole, detailsYear,
-                      detailsSection, detailsCourse;
-        private Button detailsInfoTab, detailsHistoryTab;
-        private Panel detailsInfoPage, detailsHistoryPage;
-
         // CONTEXT MENU
         private ContextMenuStrip userContextMenu;
         private int contextUserId = -1;
@@ -61,33 +49,20 @@ namespace WinFormsApp1
         private TcpListener authPhotoListener;
         private volatile bool adminIsRunning = true;
 
-        // BANNER MANAGEMENT
-        private Guna.UI2.WinForms.Guna2Button btnUploadBanner;
-        private Guna.UI2.WinForms.Guna2Button btnOpenBannersFolder;
+        // APP MENU (☰)
+        private Guna.UI2.WinForms.Guna2Button btnAppMenu;
+        private ContextMenuStrip appMenu;
 
-        // DATABASE NAV BUTTON
-        private Guna.UI2.WinForms.Guna2Button btnDatabaseNav;
-
-        // ANNOUNCEMENTS
-        private Guna.UI2.WinForms.Guna2Button btnAnnouncementNav;
-        private Panel pnlAnnouncements;
-        private TextBox txtAnnTitle;
-        private TextBox txtAnnBody;
-        private ComboBox cmbAnnPriority;
-        private ComboBox cmbAnnTarget;
-        private TextBox txtAnnSection;
-        private Label lblAnnSectionLabel;
-        private FlowLayoutPanel flpAnnouncements;
+        // FILE MANAGEMENT
         private Guna.UI2.WinForms.Guna2Button btnDeleteFile;
 
         public AdminForm()
         {
             InitializeComponent();
 
-            InitializeUserDetailsPanel();
             InitializeUserContextMenu();
 
-            UserDataList.CellClick += UserDataList_CellClick;
+            UserDataList.CellDoubleClick += UserDataList_CellDoubleClick;
             UserDataList.CellMouseDown += UserDataList_CellMouseDown;
 
             LoadUserData();
@@ -99,641 +74,271 @@ namespace WinFormsApp1
             isRunning = true;
             adminIsRunning = true;
 
-            lblTotalUsers.Text = TotalUsers().ToString();
+            RefreshDashboardCounts();
 
+            StyleUserDataGrid();
             LoadUserData();
 
             StartServer();
             StartScreenListener();
             _ = StartAuthPhotoListener();
 
-            InitializeBannerButtons();
+            InitializeAppMenu();
 
-            EnsureAnnouncementsTable();
-
-            // Add the Database button to the nav strip
-            InitializeDatabaseNavButton();
-
-            // Add the Announcements button to the nav strip
-            InitializeAnnouncementsNavButton();
             InitializeFileManagementButtons();
         }
 
         // =========================================================
-        // NAV STRIP — 6 BUTTONS
+        //  DASHBOARD COUNTS
         // =========================================================
-        private void InitializeDatabaseNavButton()
+        private void RefreshDashboardCounts()
+        {
+            lblTotalUsers.Text = TotalUsers().ToString();
+            lblTotalWorkstations.Text = workstationButtons.Count.ToString();
+
+            // Fire-and-forget file count (can be slow if folder is large)
+            Task.Run(() => CountFilesInServerFolder())
+                .ContinueWith(t =>
+                {
+                    if (this.IsDisposed) return;
+                    int count = t.Result;
+
+                    if (this.IsHandleCreated && !this.IsDisposed)
+                    {
+                        this.BeginInvoke(new Action(() =>
+                        {
+                            try { lblTotalFiles.Text = count.ToString(); }
+                            catch { }
+                        }));
+                    }
+                });
+        }
+
+        private int CountFilesInServerFolder()
         {
             try
             {
-                if (guna2Panel2 == null) return;
+                string root = SettingsManager.Current.SaveFolder;
+                if (string.IsNullOrEmpty(root) || !Directory.Exists(root))
+                    return 0;
 
-                int newWidth = 224;
-                int x = 0;
-
-                if (btnDashboard != null)
-                {
-                    btnDashboard.Location = new Point(x, 0);
-                    btnDashboard.Size = new Size(newWidth, 80);
-                    x += newWidth;
-                }
-
-                if (btnUserManagement != null)
-                {
-                    btnUserManagement.Location = new Point(x, 0);
-                    btnUserManagement.Size = new Size(newWidth, 80);
-                    x += newWidth;
-                }
-
-                if (btnFileManagement != null)
-                {
-                    btnFileManagement.Location = new Point(x, 0);
-                    btnFileManagement.Size = new Size(newWidth, 80);
-                    x += newWidth;
-                }
-
-                if (btnWorkstation != null)
-                {
-                    btnWorkstation.Location = new Point(x, 0);
-                    btnWorkstation.Size = new Size(newWidth, 80);
-                    x += newWidth;
-                }
-
-                btnAnnouncementNav = new Guna.UI2.WinForms.Guna2Button
-                {
-                    Text = "Announcements",
-                    Size = new Size(newWidth, 80),
-                    Location = new Point(x, 0),
-                    BorderRadius = 8,
-                    FillColor = Color.FromArgb(234, 234, 234),
-                    ForeColor = Color.FromArgb(123, 15, 23),
-                    Font = new Font("Segoe UI", 13F),
-                    Image = Properties.Resources.Announcement,
-                    ImageSize = new Size(28, 28),
-                    Animated = true,
-                    Name = "btnAnnouncementNav",
-                    Cursor = Cursors.Hand
-                };
-                btnAnnouncementNav.HoverState.FillColor = Color.FromArgb(250, 235, 235);
-                btnAnnouncementNav.Click += (s, ev) => ShowAnnouncementsPage();
-                guna2Panel2.Controls.Add(btnAnnouncementNav);
-                btnAnnouncementNav.BringToFront();
-                x += newWidth;
-
-                btnDatabaseNav = new Guna.UI2.WinForms.Guna2Button
-                {
-                    Text = "Database",
-                    Size = new Size(newWidth, 80),
-                    Location = new Point(x, 0),
-                    BorderRadius = 8,
-                    FillColor = Color.FromArgb(234, 234, 234),
-                    ForeColor = Color.FromArgb(123, 15, 23),
-                    Font = new Font("Segoe UI", 13F),
-                    Image = Properties.Resources.database,
-                    ImageSize = new Size(28, 28),
-                    Animated = true,
-                    Name = "btnDatabaseNav",
-                    Cursor = Cursors.Hand
-                };
-                btnDatabaseNav.HoverState.FillColor = Color.FromArgb(250, 235, 235);
-                btnDatabaseNav.Click += (s, ev) =>
-                {
-                    var dbForm = new DatabaseManagerForm();
-                    dbForm.ShowDialog(this);
-                };
-                guna2Panel2.Controls.Add(btnDatabaseNav);
-                btnDatabaseNav.BringToFront();
+                return Directory.EnumerateFiles(
+                    root,
+                    "*",
+                    SearchOption.AllDirectories).Count();
             }
             catch (Exception ex)
             {
-                Console.WriteLine("InitializeDatabaseNavButton error: " + ex.Message);
+                Console.WriteLine("CountFilesInServerFolder error: " + ex.Message);
+                return 0;
             }
         }
 
         // =========================================================
-        // ANNOUNCEMENTS
+        //  APP MENU (☰)
         // =========================================================
-        private void InitializeAnnouncementsNavButton()
+        private void InitializeAppMenu()
         {
-            BuildAnnouncementsPanel();
-        }
-
-        private void EnsureAnnouncementsTable()
-        {
-            try
+            btnAppMenu = new Guna.UI2.WinForms.Guna2Button
             {
-                string connStr = SettingsManager.Current.GetConnectionString();
-                using (var conn = new MySqlConnection(connStr))
-                {
-                    conn.Open();
-                    string q = @"
-                        CREATE TABLE IF NOT EXISTS announcements (
-                            announcement_id INT AUTO_INCREMENT PRIMARY KEY,
-                            title VARCHAR(255) NOT NULL,
-                            body TEXT NOT NULL,
-                            priority VARCHAR(20) DEFAULT 'Normal',
-                            target VARCHAR(50) DEFAULT 'All Users',
-                            section_filter VARCHAR(50) NULL,
-                            posted_by INT NOT NULL,
-                            posted_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                        );";
-                    using (var cmd = new MySqlCommand(q, conn))
-                        cmd.ExecuteNonQuery();
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("EnsureAnnouncementsTable error: " + ex.Message);
-            }
-        }
+                Text = "☰",
+                Size = new Size(46, 20),
+                Location = new Point(0, 0),
+                BorderRadius = 0,
+                FillColor = Color.White,
+                ForeColor = Color.FromArgb(123, 15, 23),
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Animated = true,
+                Name = "btnAppMenu"
+            };
+            btnAppMenu.HoverState.FillColor = Color.FromArgb(250, 235, 235);
 
-        private void BuildAnnouncementsPanel()
-        {
-            if (pnlAnnouncements != null) return;
-
-            pnlAnnouncements = new Panel
+            appMenu = new ContextMenuStrip
             {
-                Location = new Point(138, 338),
-                Size = new Size(1345, 590),
+                Font = new Font("Segoe UI", 9F),
+                ShowImageMargin = false,
                 BackColor = Color.White,
-                Visible = false
+                Renderer = new ToolStripProfessionalRenderer(new AppMenuColorTable())
             };
-            this.Controls.Add(pnlAnnouncements);
 
-            var leftCard = new Guna.UI2.WinForms.Guna2Panel
-            {
-                Location = new Point(20, 20),
-                Size = new Size(500, 545),
-                BorderRadius = 12,
-                FillColor = Color.FromArgb(252, 248, 248),
-                BorderColor = Color.FromArgb(230, 220, 220),
-                BorderThickness = 1
-            };
-            pnlAnnouncements.Controls.Add(leftCard);
+            var miUpload = new ToolStripMenuItem("Upload Banner");
+            miUpload.Click += BtnUploadBanner_Click;
 
-            var lblCompose = new Label
-            {
-                Text = "📢  Compose Announcement",
-                Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold),
-                ForeColor = Color.Maroon,
-                AutoSize = true,
-                Location = new Point(18, 14)
-            };
-            leftCard.Controls.Add(lblCompose);
+            var miOpenFolder = new ToolStripMenuItem("Open Banners Folder");
+            miOpenFolder.Click += BtnOpenBannersFolder_Click;
 
-            leftCard.Controls.Add(new Label
-            {
-                Text = "Title:",
-                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
-                AutoSize = true,
-                Location = new Point(20, 55)
-            });
-            txtAnnTitle = new TextBox
-            {
-                Location = new Point(20, 78),
-                Width = 460,
-                Font = new Font("Segoe UI", 10F),
-                BorderStyle = BorderStyle.FixedSingle
-            };
-            leftCard.Controls.Add(txtAnnTitle);
+            var sep = new ToolStripSeparator();
 
-            leftCard.Controls.Add(new Label
+            var miAnnouncements = new ToolStripMenuItem("Announcements");
+            miAnnouncements.Click += (s, e) =>
             {
-                Text = "Message:",
-                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
-                AutoSize = true,
-                Location = new Point(20, 112)
-            });
-            txtAnnBody = new TextBox
-            {
-                Location = new Point(20, 135),
-                Size = new Size(460, 200),
-                Font = new Font("Segoe UI", 10F),
-                Multiline = true,
-                ScrollBars = ScrollBars.Vertical,
-                BorderStyle = BorderStyle.FixedSingle
+                using (var annForm = new AnnouncementsForm())
+                {
+                    annForm.ShowDialog(this);
+                }
             };
-            leftCard.Controls.Add(txtAnnBody);
 
-            leftCard.Controls.Add(new Label
+            var miDatabase = new ToolStripMenuItem("Database");
+            miDatabase.Click += (s, e) =>
             {
-                Text = "Priority:",
-                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
-                AutoSize = true,
-                Location = new Point(20, 348)
-            });
-            cmbAnnPriority = new ComboBox
-            {
-                Location = new Point(20, 371),
-                Width = 220,
-                Font = new Font("Segoe UI", 10F),
-                DropDownStyle = ComboBoxStyle.DropDownList
+                var dbForm = new DatabaseManagerForm();
+                dbForm.ShowDialog(this);
             };
-            cmbAnnPriority.Items.AddRange(new object[] { "Normal", "Important", "Urgent" });
-            cmbAnnPriority.SelectedIndex = 0;
-            leftCard.Controls.Add(cmbAnnPriority);
 
-            leftCard.Controls.Add(new Label
-            {
-                Text = "Target audience:",
-                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
-                AutoSize = true,
-                Location = new Point(260, 348)
-            });
-            cmbAnnTarget = new ComboBox
-            {
-                Location = new Point(260, 371),
-                Width = 220,
-                Font = new Font("Segoe UI", 10F),
-                DropDownStyle = ComboBoxStyle.DropDownList
-            };
-            cmbAnnTarget.Items.AddRange(new object[] { "All Users", "Students Only", "Professors Only", "Specific Section" });
-            cmbAnnTarget.SelectedIndex = 0;
-            cmbAnnTarget.SelectedIndexChanged += (s, e) =>
-            {
-                bool showSection = cmbAnnTarget.Text == "Specific Section";
-                txtAnnSection.Enabled = showSection;
-                lblAnnSectionLabel.Enabled = showSection;
-            };
-            leftCard.Controls.Add(cmbAnnTarget);
+            appMenu.Items.Add(miUpload);
+            appMenu.Items.Add(miOpenFolder);
+            appMenu.Items.Add(sep);
+            appMenu.Items.Add(miAnnouncements);
+            appMenu.Items.Add(miDatabase);
 
-            lblAnnSectionLabel = new Label
+            btnAppMenu.Click += (s, e) =>
             {
-                Text = "Section (e.g. 4-1):",
-                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
-                AutoSize = true,
-                Location = new Point(20, 410),
-                Enabled = false
+                appMenu.Show(btnAppMenu, new Point(0, btnAppMenu.Height));
             };
-            leftCard.Controls.Add(lblAnnSectionLabel);
 
-            txtAnnSection = new TextBox
-            {
-                Location = new Point(20, 433),
-                Width = 220,
-                Font = new Font("Segoe UI", 10F),
-                BorderStyle = BorderStyle.FixedSingle,
-                Enabled = false
-            };
-            leftCard.Controls.Add(txtAnnSection);
+            this.Controls.Add(btnAppMenu);
+            btnAppMenu.BringToFront();
+        }
 
-            var btnPost = new Guna.UI2.WinForms.Guna2Button
+        private class AppMenuColorTable : ProfessionalColorTable
+        {
+            public override Color MenuItemSelected => Color.FromArgb(250, 235, 235);
+            public override Color MenuItemSelectedGradientBegin => Color.FromArgb(250, 235, 235);
+            public override Color MenuItemSelectedGradientEnd => Color.FromArgb(250, 235, 235);
+            public override Color MenuItemBorder => Color.FromArgb(200, 180, 180);
+            public override Color MenuBorder => Color.FromArgb(210, 200, 200);
+        }
+
+        // =========================================================
+        //  DATAGRIDVIEW STYLING
+        // =========================================================
+        private void StyleUserDataGrid()
+        {
+            UserDataList.BorderStyle = BorderStyle.None;
+            UserDataList.BackgroundColor = Color.White;
+            UserDataList.GridColor = Color.FromArgb(240, 235, 235);
+            UserDataList.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            UserDataList.EnableHeadersVisualStyles = false;
+            UserDataList.RowHeadersVisible = false;
+            UserDataList.AllowUserToResizeRows = false;
+            UserDataList.AllowUserToAddRows = false;
+            UserDataList.AllowUserToDeleteRows = false;
+            UserDataList.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            UserDataList.MultiSelect = true;
+            UserDataList.ReadOnly = true;
+            UserDataList.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            UserDataList.ScrollBars = ScrollBars.Both;
+            UserDataList.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+
+            UserDataList.ColumnHeadersHeight = 44;
+            UserDataList.ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
             {
-                Text = "Post Announcement",
-                Size = new Size(220, 44),
-                Location = new Point(260, 425),
-                BorderRadius = 10,
-                FillColor = Color.Maroon,
+                BackColor = Color.Maroon,
                 ForeColor = Color.White,
-                Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold)
+                Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
+                Alignment = DataGridViewContentAlignment.MiddleLeft,
+                Padding = new Padding(8, 0, 0, 0),
+                SelectionBackColor = Color.Maroon,
+                SelectionForeColor = Color.White,
+                WrapMode = DataGridViewTriState.False
             };
-            btnPost.HoverState.FillColor = Color.FromArgb(100, 0, 0);
-            btnPost.Click += (s, e) => PostAnnouncement();
-            leftCard.Controls.Add(btnPost);
 
-            var rightCard = new Guna.UI2.WinForms.Guna2Panel
+            UserDataList.DefaultCellStyle = new DataGridViewCellStyle
             {
-                Location = new Point(540, 20),
-                Size = new Size(785, 545),
-                BorderRadius = 12,
-                FillColor = Color.FromArgb(252, 248, 248),
-                BorderColor = Color.FromArgb(230, 220, 220),
-                BorderThickness = 1
-            };
-            pnlAnnouncements.Controls.Add(rightCard);
-
-            var lblRecent = new Label
-            {
-                Text = "📋  Recent Announcements",
-                Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold),
-                ForeColor = Color.Maroon,
-                AutoSize = true,
-                Location = new Point(18, 14)
-            };
-            rightCard.Controls.Add(lblRecent);
-
-            var btnRefresh = new Guna.UI2.WinForms.Guna2Button
-            {
-                Text = "🔄 Refresh",
-                Size = new Size(100, 32),
-                Location = new Point(665, 12),
-                BorderRadius = 8,
-                FillColor = Color.FromArgb(234, 234, 234),
-                ForeColor = Color.FromArgb(50, 50, 50),
-                Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold)
-            };
-            btnRefresh.Click += (s, e) => LoadAnnouncements();
-            rightCard.Controls.Add(btnRefresh);
-
-            flpAnnouncements = new FlowLayoutPanel
-            {
-                Location = new Point(18, 55),
-                Size = new Size(750, 475),
-                FlowDirection = FlowDirection.TopDown,
-                WrapContents = false,
-                AutoScroll = true,
-                BackColor = Color.Transparent
-            };
-            rightCard.Controls.Add(flpAnnouncements);
-
-            LoadAnnouncements();
-        }
-
-        private void ShowAnnouncementsPage()
-        {
-            panelDashoard.Visible = false;
-            pnlUserManagement.Visible = false;
-            pnlFileManagement.Visible = false;
-            pnlWorkstation.Visible = false;
-            pnlAnnouncements.Visible = true;
-            pnlAnnouncements.BringToFront();
-
-            navbarStyle.RemoveIndicator(PanelIndicator);
-            PanelIndicator = navbarStyle.CreateIndicator(btnAnnouncementNav);
-
-            LoadAnnouncements();
-        }
-
-        private void PostAnnouncement()
-        {
-            string title = txtAnnTitle.Text.Trim();
-            string body = txtAnnBody.Text.Trim();
-            string priority = cmbAnnPriority.Text;
-            string target = cmbAnnTarget.Text;
-            string sectionFilter = cmbAnnSection();
-
-            if (string.IsNullOrEmpty(title))
-            {
-                CustomMessageBox.Show("Please enter a title.", "Validation",
-                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
-                return;
-            }
-
-            if (string.IsNullOrEmpty(body))
-            {
-                CustomMessageBox.Show("Please enter a message.", "Validation",
-                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
-                return;
-            }
-
-            if (target == "Specific Section" && string.IsNullOrEmpty(sectionFilter))
-            {
-                CustomMessageBox.Show("Please enter a section.", "Validation",
-                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
-                return;
-            }
-
-            if (target != "Specific Section")
-                sectionFilter = null;
-
-            try
-            {
-                string connStr = SettingsManager.Current.GetConnectionString();
-                using (var conn = new MySqlConnection(connStr))
-                {
-                    conn.Open();
-                    string q = @"
-                        INSERT INTO announcements 
-                            (title, body, priority, target, section_filter, posted_by, posted_at)
-                        VALUES 
-                            (@title, @body, @priority, @target, @section_filter, @posted_by, NOW())";
-                    using (var cmd = new MySqlCommand(q, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@title", title);
-                        cmd.Parameters.AddWithValue("@body", body);
-                        cmd.Parameters.AddWithValue("@priority", priority);
-                        cmd.Parameters.AddWithValue("@target", target);
-                        cmd.Parameters.AddWithValue("@section_filter",
-                            (object)sectionFilter ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@posted_by", GetAdminUserId());
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-
-                CustomMessageBox.Show("Announcement posted!", "Success",
-                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
-
-                txtAnnTitle.Clear();
-                txtAnnBody.Clear();
-                cmbAnnPriority.SelectedIndex = 0;
-                cmbAnnTarget.SelectedIndex = 0;
-                txtAnnSection.Clear();
-
-                LoadAnnouncements();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("PostAnnouncement error: " + ex.Message);
-            }
-        }
-
-        private string cmbAnnSection()
-        {
-            return txtAnnSection.Text.Trim();
-        }
-
-        private int GetAdminUserId()
-        {
-            try
-            {
-                string connStr = SettingsManager.Current.GetConnectionString();
-                using (var conn = new MySqlConnection(connStr))
-                {
-                    conn.Open();
-                    using (var cmd = new MySqlCommand(
-                        "SELECT user_id FROM user_credential WHERE roles='Admin' LIMIT 1", conn))
-                    {
-                        object r = cmd.ExecuteScalar();
-                        if (r != null && r != DBNull.Value)
-                            return Convert.ToInt32(r);
-                    }
-                }
-            }
-            catch { }
-            return 1;
-        }
-
-        private void LoadAnnouncements()
-        {
-            if (flpAnnouncements == null) return;
-
-            flpAnnouncements.Controls.Clear();
-
-            try
-            {
-                string connStr = SettingsManager.Current.GetConnectionString();
-                using (var conn = new MySqlConnection(connStr))
-                {
-                    conn.Open();
-                    string q = @"
-                        SELECT announcement_id, title, body, priority, target,
-                               section_filter, posted_at
-                        FROM announcements
-                        ORDER BY posted_at DESC
-                        LIMIT 50";
-                    using (var cmd = new MySqlCommand(q, conn))
-                    using (var r = cmd.ExecuteReader())
-                    {
-                        bool any = false;
-                        while (r.Read())
-                        {
-                            any = true;
-
-                            int id = Convert.ToInt32(r["announcement_id"]);
-                            string title = r["title"].ToString();
-                            string body = r["body"].ToString();
-                            string priority = r["priority"].ToString();
-                            string target = r["target"].ToString();
-                            string sectionFilter = r["section_filter"] == DBNull.Value
-                                ? ""
-                                : r["section_filter"].ToString();
-                            DateTime postedAt = Convert.ToDateTime(r["posted_at"]);
-
-                            flpAnnouncements.Controls.Add(BuildAnnouncementCard(
-                                id, title, body, priority, target, sectionFilter, postedAt));
-                        }
-
-                        if (!any)
-                        {
-                            var empty = new Label
-                            {
-                                Text = "No announcements yet.",
-                                Font = new Font("Segoe UI", 10F, FontStyle.Italic),
-                                ForeColor = Color.Gray,
-                                AutoSize = true,
-                                Margin = new Padding(10)
-                            };
-                            flpAnnouncements.Controls.Add(empty);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("LoadAnnouncements error: " + ex.Message);
-            }
-        }
-
-        private Panel BuildAnnouncementCard(int id, string title, string body,
-            string priority, string target, string section, DateTime postedAt)
-        {
-            Color accent = priority == "Urgent" ? Color.FromArgb(200, 40, 40)
-                         : priority == "Important" ? Color.FromArgb(220, 150, 30)
-                         : Color.FromArgb(52, 120, 200);
-
-            var card = new Panel
-            {
-                Width = 720,
-                Height = 130,
-                Margin = new Padding(0, 0, 0, 10),
                 BackColor = Color.White,
-                Tag = id
-            };
-
-            card.Paint += (s, e) =>
-            {
-                var g = e.Graphics;
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-
-                using (var path = new GraphicsPath())
-                {
-                    int r = 10;
-                    var rect = new Rectangle(0, 0, card.Width - 1, card.Height - 1);
-                    path.AddArc(rect.X, rect.Y, r * 2, r * 2, 180, 90);
-                    path.AddArc(rect.Right - r * 2, rect.Y, r * 2, r * 2, 270, 90);
-                    path.AddArc(rect.Right - r * 2, rect.Bottom - r * 2, r * 2, r * 2, 0, 90);
-                    path.AddArc(rect.X, rect.Bottom - r * 2, r * 2, r * 2, 90, 90);
-                    path.CloseFigure();
-                    card.Region = new Region(path);
-                }
-
-                using (var border = new Pen(Color.FromArgb(230, 225, 225), 1))
-                    g.DrawRectangle(border, 0, 0, card.Width - 1, card.Height - 1);
-
-                using (var brush = new SolidBrush(accent))
-                    g.FillRectangle(brush, 0, 0, 6, card.Height);
-            };
-
-            var lblTitle = new Label
-            {
-                Text = title,
-                Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(30, 30, 30),
-                AutoSize = false,
-                Size = new Size(600, 24),
-                Location = new Point(20, 10)
-            };
-            card.Controls.Add(lblTitle);
-
-            var lblMeta = new Label
-            {
-                Text = $"Priority: {priority}   •   Target: {target}" +
-                       (string.IsNullOrEmpty(section) ? "" : $" ({section})") +
-                       $"   •   Posted: {postedAt:MMM dd, yyyy hh:mm tt}",
-                Font = new Font("Segoe UI", 8.5F),
-                ForeColor = Color.FromArgb(120, 120, 120),
-                AutoSize = false,
-                Size = new Size(600, 18),
-                Location = new Point(20, 36)
-            };
-            card.Controls.Add(lblMeta);
-
-            var lblBody = new Label
-            {
-                Text = body,
+                ForeColor = Color.FromArgb(50, 50, 50),
                 Font = new Font("Segoe UI", 9.5F),
-                ForeColor = Color.FromArgb(70, 70, 70),
-                AutoSize = false,
-                Size = new Size(600, 60),
-                Location = new Point(20, 58),
-                AutoEllipsis = true
+                SelectionBackColor = Color.FromArgb(255, 235, 235),
+                SelectionForeColor = Color.FromArgb(80, 0, 0),
+                Padding = new Padding(8, 0, 0, 0),
+                Alignment = DataGridViewContentAlignment.MiddleLeft
             };
-            card.Controls.Add(lblBody);
 
-            var btnDeleteAnn = new Guna.UI2.WinForms.Guna2Button
+            UserDataList.AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
             {
-                Text = "🗑",
-                Size = new Size(36, 36),
-                Location = new Point(670, 12),
-                BorderRadius = 18,
-                FillColor = Color.Transparent,
-                ForeColor = Color.FromArgb(180, 40, 40),
-                Font = new Font("Segoe UI Emoji", 12F, FontStyle.Bold),
-                Cursor = Cursors.Hand
+                BackColor = Color.FromArgb(252, 248, 248),
+                ForeColor = Color.FromArgb(50, 50, 50),
+                SelectionBackColor = Color.FromArgb(255, 235, 235),
+                SelectionForeColor = Color.FromArgb(80, 0, 0),
+                Font = new Font("Segoe UI", 9.5F),
+                Padding = new Padding(8, 0, 0, 0)
             };
-            btnDeleteAnn.HoverState.FillColor = Color.FromArgb(255, 240, 240);
-            btnDeleteAnn.Click += (s, e) =>
+
+            UserDataList.RowTemplate.Height = 40;
+
+            UserDataList.DataBindingComplete -= UserDataList_DataBindingComplete;
+            UserDataList.DataBindingComplete += UserDataList_DataBindingComplete;
+        }
+
+        private void UserDataList_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
+        {
+            if (UserDataList.Columns.Count == 0) return;
+
+            if (UserDataList.Columns.Contains("user_id"))
+                UserDataList.Columns["user_id"].Visible = false;
+            if (UserDataList.Columns.Contains("profile_picture"))
+                UserDataList.Columns["profile_picture"].Visible = false;
+
+            SetCol("username", "Username", 120);
+            SetCol("roles", "Role", 100);
+            SetCol("lastname", "Last Name", 130);
+            SetCol("firstname", "First Name", 130);
+            SetCol("middlename", "Middle Name", 120);
+            SetCol("email", "Email", 200);
+            SetCol("school_year", "Year", 90);
+            SetCol("school_section", "Section", 90);
+            SetCol("school_semester", "Semester", 120);
+            SetCol("school_course", "Course", 140);
+            SetCol("user_status", "Status", 90);
+
+            CenterCol("roles");
+            CenterCol("school_year");
+            CenterCol("school_section");
+            CenterCol("user_status");
+
+            if (UserDataList.Columns.Contains("user_status"))
             {
-                var confirm = CustomMessageBox.Show(
-                    $"Delete announcement \"{title}\"?",
-                    "Confirm Delete",
-                    CustomMessageBoxButtons.YesNo,
-                    CustomMessageBoxIcon.Warning);
-                if (confirm != CustomMessageBoxResult.Yes) return;
+                UserDataList.CellFormatting -= UserDataList_CellFormatting;
+                UserDataList.CellFormatting += UserDataList_CellFormatting;
+            }
+        }
 
-                try
-                {
-                    string connStr = SettingsManager.Current.GetConnectionString();
-                    using (var conn = new MySqlConnection(connStr))
-                    {
-                        conn.Open();
-                        using (var cmd = new MySqlCommand(
-                            "DELETE FROM announcements WHERE announcement_id = @id", conn))
-                        {
-                            cmd.Parameters.AddWithValue("@id", id);
-                            cmd.ExecuteNonQuery();
-                        }
-                    }
-                    LoadAnnouncements();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Delete announcement error: " + ex.Message);
-                }
-            };
-            card.Controls.Add(btnDeleteAnn);
+        private void SetCol(string name, string header, int minWidth)
+        {
+            if (!UserDataList.Columns.Contains(name)) return;
+            var c = UserDataList.Columns[name];
+            c.HeaderText = header;
+            c.MinimumWidth = minWidth;
+            c.FillWeight = minWidth;
+        }
 
-            return card;
+        private void CenterCol(string name)
+        {
+            if (!UserDataList.Columns.Contains(name)) return;
+            UserDataList.Columns[name].DefaultCellStyle.Alignment =
+                DataGridViewContentAlignment.MiddleCenter;
+        }
+
+        private void UserDataList_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+
+            if (UserDataList.Columns[e.ColumnIndex].Name == "user_status" && e.Value != null)
+            {
+                string status = e.Value.ToString();
+                if (string.Equals(status, "Active", StringComparison.OrdinalIgnoreCase))
+                {
+                    e.CellStyle.ForeColor = Color.FromArgb(30, 130, 70);
+                    e.CellStyle.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
+                }
+                else if (string.Equals(status, "Inactive", StringComparison.OrdinalIgnoreCase) ||
+                         string.Equals(status, "Disabled", StringComparison.OrdinalIgnoreCase))
+                {
+                    e.CellStyle.ForeColor = Color.FromArgb(180, 40, 40);
+                    e.CellStyle.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
+                }
+            }
         }
 
         // =========================================================
@@ -801,6 +406,8 @@ namespace WinFormsApp1
                         Directory.CreateDirectory(folder);
 
                         await File.WriteAllBytesAsync(Path.Combine(folder, fileName), bytes);
+
+                        RefreshFileCountAsync();
                         return;
                     }
 
@@ -829,6 +436,8 @@ namespace WinFormsApp1
                         string finalName = SanitizeFolderName($"{studentName}_{title}_{fileName}");
                         string localPath = Path.Combine(folder, finalName);
                         await File.WriteAllBytesAsync(localPath, bytes);
+
+                        RefreshFileCountAsync();
 
                         string uncPath = ToUnc(localPath);
                         try
@@ -862,6 +471,8 @@ namespace WinFormsApp1
                         string savePath = Path.Combine(folder, finalName);
                         await File.WriteAllBytesAsync(savePath, bytes);
 
+                        RefreshFileCountAsync();
+
                         string uncPath = ToUnc(savePath);
                         try
                         {
@@ -875,7 +486,6 @@ namespace WinFormsApp1
                         return;
                     }
 
-                    // AUTH PHOTO (default)
                     string authFileName = SanitizeFolderName(firstToken);
                     int authLength = reader.ReadInt32();
                     if (authLength <= 0 || authLength > 20 * 1024 * 1024) return;
@@ -888,12 +498,32 @@ namespace WinFormsApp1
                     Directory.CreateDirectory(authFolder);
 
                     await File.WriteAllBytesAsync(Path.Combine(authFolder, authFileName), authBytes);
+                    RefreshFileCountAsync();
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine("HandleIncomingFile error: " + ex.Message);
             }
+        }
+
+        private void RefreshFileCountAsync()
+        {
+            Task.Run(() => CountFilesInServerFolder())
+                .ContinueWith(t =>
+                {
+                    if (this.IsDisposed) return;
+                    int count = t.Result;
+
+                    if (this.IsHandleCreated && !this.IsDisposed)
+                    {
+                        this.BeginInvoke(new Action(() =>
+                        {
+                            try { lblTotalFiles.Text = count.ToString(); }
+                            catch { }
+                        }));
+                    }
+                });
         }
 
         private string ToUnc(string path)
@@ -957,41 +587,6 @@ namespace WinFormsApp1
         // =========================================================
         //  BANNER MANAGEMENT
         // =========================================================
-        private void InitializeBannerButtons()
-        {
-            btnUploadBanner = new Guna.UI2.WinForms.Guna2Button
-            {
-                Text = "Upload Banner",
-                Size = new Size(180, 45),
-                BorderRadius = 10,
-                FillColor = Color.Maroon,
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
-                Cursor = Cursors.Hand,
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
-                Location = new Point(1250, 150)
-            };
-            btnUploadBanner.Click += BtnUploadBanner_Click;
-            this.Controls.Add(btnUploadBanner);
-            btnUploadBanner.BringToFront();
-
-            btnOpenBannersFolder = new Guna.UI2.WinForms.Guna2Button
-            {
-                Text = "Open Folder",
-                Size = new Size(140, 45),
-                BorderRadius = 10,
-                FillColor = Color.Gray,
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
-                Cursor = Cursors.Hand,
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
-                Location = new Point(btnUploadBanner.Left - 150, btnUploadBanner.Top)
-            };
-            btnOpenBannersFolder.Click += BtnOpenBannersFolder_Click;
-            this.Controls.Add(btnOpenBannersFolder);
-            btnOpenBannersFolder.BringToFront();
-        }
-
         private void BtnUploadBanner_Click(object sender, EventArgs e)
         {
             string folder = BannerHelper.GetBannersFolder();
@@ -1035,8 +630,11 @@ namespace WinFormsApp1
                 }
 
                 if (copied > 0)
+                {
                     CustomMessageBox.Show($"{copied} banner(s) uploaded.", "Upload Complete",
                         CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
+                    RefreshFileCountAsync();
+                }
             }
         }
 
@@ -1063,9 +661,10 @@ namespace WinFormsApp1
             pnlUserManagement.Visible = false;
             pnlFileManagement.Visible = false;
             pnlWorkstation.Visible = false;
-            if (pnlAnnouncements != null) pnlAnnouncements.Visible = false;
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnDashboard);
+
+            RefreshDashboardCounts();
         }
 
         private void btnUserManagement_Click(object sender, EventArgs e)
@@ -1074,7 +673,6 @@ namespace WinFormsApp1
             panelDashoard.Visible = false;
             pnlFileManagement.Visible = false;
             pnlWorkstation.Visible = false;
-            if (pnlAnnouncements != null) pnlAnnouncements.Visible = false;
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnUserManagement);
             LoadUserData();
@@ -1086,7 +684,6 @@ namespace WinFormsApp1
             panelDashoard.Visible = false;
             pnlUserManagement.Visible = false;
             pnlWorkstation.Visible = false;
-            if (pnlAnnouncements != null) pnlAnnouncements.Visible = false;
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnFileManagement);
 
@@ -1108,20 +705,11 @@ namespace WinFormsApp1
             panelDashoard.Visible = false;
             pnlUserManagement.Visible = false;
             pnlFileManagement.Visible = false;
-            if (pnlAnnouncements != null) pnlAnnouncements.Visible = false;
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnWorkstation);
         }
 
         private void CreateButton_Click(object sender, EventArgs e) => CreateUser();
-
-        private void ContextRoleText_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            bool student = ContextRoleText.Text == "Student";
-            ContextYearText.Enabled = student;
-            ContextSectionText.Enabled = student;
-            ContextCourseText.Enabled = student;
-        }
 
         private void cmbSelection_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -1142,339 +730,18 @@ namespace WinFormsApp1
         private void BtnBack_Click(object sender, EventArgs e) => btnBack();
 
         // =========================================================
-        //  USER DETAILS MODAL
+        //  USER ROW DOUBLE-CLICK -> OPEN DETAILS FORM
         // =========================================================
-        private void InitializeUserDetailsPanel()
-        {
-            overlayPanel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                BackColor = Color.FromArgb(120, 0, 0, 0),
-                Visible = false
-            };
-            overlayPanel.Click += (s, e) => HideUserDetails();
-            this.Controls.Add(overlayPanel);
-            overlayPanel.BringToFront();
-
-            userDetailsPanel = new Panel
-            {
-                Size = new Size(680, 500),
-                BackColor = Color.White,
-                Visible = false,
-                BorderStyle = BorderStyle.FixedSingle
-            };
-
-            int modalWidth = userDetailsPanel.Width;
-
-            var header = new Panel
-            {
-                Dock = DockStyle.Top,
-                Height = 160,
-                BackColor = Color.FromArgb(13, 71, 161)
-            };
-            header.Width = modalWidth;
-
-            var btnClose = new Button
-            {
-                Text = "✕",
-                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
-                ForeColor = Color.White,
-                BackColor = Color.FromArgb(30, 30, 30),
-                FlatStyle = FlatStyle.Flat,
-                Size = new Size(36, 36),
-                Location = new Point(16, 16),
-                Cursor = Cursors.Hand
-            };
-            btnClose.FlatAppearance.BorderSize = 0;
-            btnClose.Click += (s, e) => HideUserDetails();
-
-            detailsRoleBadge = new Label
-            {
-                Text = "Student",
-                ForeColor = Color.White,
-                BackColor = Color.FromArgb(20, 20, 20),
-                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
-                TextAlign = ContentAlignment.MiddleCenter,
-                Size = new Size(90, 26),
-                Location = new Point(modalWidth - 110, 20),
-                Anchor = AnchorStyles.Top | AnchorStyles.Right
-            };
-
-            detailsName = new Label
-            {
-                Text = "Full Name",
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI", 15F, FontStyle.Bold),
-                AutoSize = true,
-                Location = new Point(210, 105),
-                BackColor = Color.Transparent
-            };
-
-            header.Controls.Add(btnClose);
-            header.Controls.Add(detailsRoleBadge);
-            header.Controls.Add(detailsName);
-
-            detailsPhoto = new PictureBox
-            {
-                Size = new Size(120, 120),
-                Location = new Point(60, 100),
-                BackColor = Color.FromArgb(0, 188, 212),
-                SizeMode = PictureBoxSizeMode.Zoom
-            };
-            detailsPhoto.Paint += (s, e) =>
-            {
-                var g = e.Graphics;
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                using (var path = new GraphicsPath())
-                {
-                    path.AddEllipse(0, 0, detailsPhoto.Width - 1, detailsPhoto.Height - 1);
-                    detailsPhoto.Region = new Region(path);
-                }
-            };
-
-            detailsInfoTab = new Button
-            {
-                Text = "Info",
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.White,
-                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
-                Size = new Size(80, 32),
-                Location = new Point(270, 175),
-                Cursor = Cursors.Hand
-            };
-            detailsHistoryTab = new Button
-            {
-                Text = "History",
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.White,
-                Font = new Font("Segoe UI", 9F),
-                Size = new Size(100, 32),
-                Location = new Point(352, 175),
-                Cursor = Cursors.Hand
-            };
-
-            detailsInfoPage = new Panel
-            {
-                Location = new Point(0, 217),
-                Size = new Size(modalWidth, 278),
-                BackColor = Color.White,
-                AutoScroll = true
-            };
-
-            int y = 15;
-            detailsUsername = MakeInfoRow(detailsInfoPage, "Username:", ref y);
-            detailsLastName = MakeInfoRow(detailsInfoPage, "Last Name:", ref y);
-            detailsFirstName = MakeInfoRow(detailsInfoPage, "First Name:", ref y);
-            detailsMiddleName = MakeInfoRow(detailsInfoPage, "Middle name:", ref y);
-            detailsRole = MakeInfoRow(detailsInfoPage, "Role:", ref y);
-            detailsYear = MakeInfoRow(detailsInfoPage, "Year:", ref y);
-            detailsSection = MakeInfoRow(detailsInfoPage, "Section:", ref y);
-            detailsCourse = MakeInfoRow(detailsInfoPage, "Course:", ref y);
-
-            detailsHistoryPage = new Panel
-            {
-                Location = new Point(0, 217),
-                Size = new Size(modalWidth, 278),
-                BackColor = Color.White,
-                Visible = false,
-                AutoScroll = true
-            };
-
-            var historyCard = new Panel
-            {
-                Location = new Point(30, 20),
-                Size = new Size(400, 70),
-                BackColor = Color.FromArgb(245, 245, 245),
-                BorderStyle = BorderStyle.FixedSingle
-            };
-            historyCard.Controls.Add(new Label
-            {
-                Text = "🕒  Account History",
-                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
-                Location = new Point(10, 10),
-                AutoSize = true
-            });
-            historyCard.Controls.Add(new Label
-            {
-                Text = "Create account last August 30, 2026",
-                Font = new Font("Segoe UI", 8F),
-                Location = new Point(10, 36),
-                AutoSize = true
-            });
-            detailsHistoryPage.Controls.Add(historyCard);
-
-            detailsInfoTab.Click += (s, e) =>
-            {
-                detailsInfoPage.Visible = true;
-                detailsHistoryPage.Visible = false;
-                detailsInfoTab.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-                detailsHistoryTab.Font = new Font("Segoe UI", 9F);
-            };
-            detailsHistoryTab.Click += (s, e) =>
-            {
-                detailsInfoPage.Visible = false;
-                detailsHistoryPage.Visible = true;
-                detailsInfoTab.Font = new Font("Segoe UI", 9F);
-                detailsHistoryTab.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            };
-
-            userDetailsPanel.Controls.Add(detailsInfoPage);
-            userDetailsPanel.Controls.Add(detailsHistoryPage);
-            userDetailsPanel.Controls.Add(detailsInfoTab);
-            userDetailsPanel.Controls.Add(detailsHistoryTab);
-            userDetailsPanel.Controls.Add(header);
-            userDetailsPanel.Controls.Add(detailsPhoto);
-            detailsPhoto.BringToFront();
-
-            this.Controls.Add(userDetailsPanel);
-            userDetailsPanel.BringToFront();
-        }
-
-        private Label MakeInfoRow(Panel parent, string label, ref int y)
-        {
-            var lbl = new Label
-            {
-                Text = label,
-                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
-                ForeColor = Color.Black,
-                Location = new Point(60, y),
-                AutoSize = true
-            };
-            var val = new Label
-            {
-                Text = "-",
-                Font = new Font("Segoe UI", 9.5F),
-                ForeColor = Color.DimGray,
-                Location = new Point(220, y),
-                AutoSize = false,
-                Size = new Size(420, 22)
-            };
-            parent.Controls.Add(lbl);
-            parent.Controls.Add(val);
-            y += 32;
-            return val;
-        }
-
-        private void ShowUserDetails()
-        {
-            overlayPanel.Visible = true;
-            overlayPanel.BringToFront();
-
-            userDetailsPanel.Visible = true;
-            userDetailsPanel.BringToFront();
-            CenterUserDetailsPanel();
-        }
-
-        private void HideUserDetails()
-        {
-            userDetailsPanel.Visible = false;
-            overlayPanel.Visible = false;
-        }
-
-        private void CenterUserDetailsPanel()
-        {
-            if (userDetailsPanel == null) return;
-            Control parent = UserDataList.Parent ?? this;
-            Point screenPt = parent.PointToScreen(Point.Empty);
-            Point formPt = this.PointToClient(screenPt);
-            userDetailsPanel.Left = formPt.X + (parent.ClientSize.Width - userDetailsPanel.Width) / 2;
-            userDetailsPanel.Top = formPt.Y + (parent.ClientSize.Height - userDetailsPanel.Height) / 2;
-        }
-
-        protected override void OnResize(EventArgs e)
-        {
-            base.OnResize(e);
-            if (userDetailsPanel != null && userDetailsPanel.Visible)
-                CenterUserDetailsPanel();
-        }
-
-        private void UserDataList_CellClick(object sender, DataGridViewCellEventArgs e)
+        private void UserDataList_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
 
             var row = UserDataList.Rows[e.RowIndex];
-
-            string fullName = $"{SafeCell(row, "firstname")} {SafeCell(row, "middlename")} {SafeCell(row, "lastname")}".Trim();
-            detailsName.Text = string.IsNullOrWhiteSpace(fullName) ? "Unknown" : fullName;
-
-            string role = SafeCell(row, "roles");
-            detailsRoleBadge.Text = string.IsNullOrEmpty(role) ? "User" : role;
-
-            detailsUsername.Text = SafeCell(row, "username");
-            detailsLastName.Text = SafeCell(row, "lastname");
-            detailsFirstName.Text = SafeCell(row, "firstname");
-            detailsMiddleName.Text = SafeCell(row, "middlename");
-            detailsRole.Text = SafeCell(row, "roles");
-            detailsYear.Text = SafeCell(row, "school_year");
-            detailsSection.Text = SafeCell(row, "school_section");
-            detailsCourse.Text = SafeCell(row, "school_course");
-
-            detailsPhoto.Image = LoadUserPhoto(row);
-
-            detailsInfoPage.Visible = true;
-            detailsHistoryPage.Visible = false;
-            detailsInfoTab.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            detailsHistoryTab.Font = new Font("Segoe UI", 9F);
-
-            ShowUserDetails();
-        }
-
-        private string SafeCell(DataGridViewRow row, string col)
-        {
-            if (!UserDataList.Columns.Contains(col)) return "";
-            var v = row.Cells[col].Value;
-            return (v == null || v == DBNull.Value) ? "" : v.ToString();
-        }
-
-        private Image LoadUserPhoto(DataGridViewRow row)
-        {
-            try
+            using (var dlg = new UserDetailsForm())
             {
-                if (UserDataList.Columns.Contains("profile_picture"))
-                {
-                    object raw = row.Cells["profile_picture"].Value;
-
-                    byte[] bytes = raw as byte[];
-                    if (bytes != null && bytes.Length > 0)
-                    {
-                        using (var ms = new MemoryStream(bytes))
-                        {
-                            var temp = Image.FromStream(ms);
-                            return new Bitmap(temp);
-                        }
-                    }
-
-                    string path = raw as string;
-                    if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
-                    {
-                        byte[] fileBytes = File.ReadAllBytes(path);
-                        using (var ms = new MemoryStream(fileBytes))
-                        {
-                            var temp = Image.FromStream(ms);
-                            return new Bitmap(temp);
-                        }
-                    }
-                }
+                dlg.LoadUser(row, UserDataList);
+                dlg.ShowDialog(this);
             }
-            catch { }
-
-            return MakePlaceholderAvatar();
-        }
-
-        private Image MakePlaceholderAvatar()
-        {
-            var bmp = new Bitmap(120, 120);
-            using (var g = Graphics.FromImage(bmp))
-            {
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                g.Clear(Color.FromArgb(0, 188, 212));
-                using (var b = new SolidBrush(Color.White))
-                {
-                    g.FillEllipse(b, 40, 20, 42, 42);
-                    g.FillPie(b, 22, 66, 76, 76, 180, 180);
-                }
-            }
-            return bmp;
         }
 
         // =========================================================
@@ -1814,9 +1081,6 @@ namespace WinFormsApp1
         private void LoadUserData(string filter = "")
         {
             string connStr = SettingsManager.Current.GetConnectionString();
-            UserDataList.ReadOnly = true;
-            UserDataList.MultiSelect = true;
-            UserDataList.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
 
             try
             {
@@ -1849,14 +1113,6 @@ namespace WinFormsApp1
                             var dt = new DataTable();
                             adapter.Fill(dt);
                             UserDataList.DataSource = dt;
-
-                            if (UserDataList.Columns.Contains("user_id"))
-                                UserDataList.Columns["user_id"].Visible = false;
-
-                            if (UserDataList.Columns.Contains("profile_picture"))
-                                UserDataList.Columns["profile_picture"].Visible = false;
-
-                            UserDataList.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
                         }
                     }
                 }
@@ -1929,9 +1185,9 @@ namespace WinFormsApp1
 
                     string Insertquery = @"
                         INSERT INTO user_information 
-                            (user_id, lastname, firstname, middlename, email, school_year, school_section, school_semester, school_course) 
+                            (user_id, lastname, firstname, middlename, email, school_semester) 
                         VALUES 
-                            (@user_id, @lastname, @firstname, @middlename, @email, @school_year, @school_section, @school_semester, @school_course)";
+                            (@user_id, @lastname, @firstname, @middlename, @email, @school_semester)";
 
                     using (MySqlCommand cmd = new MySqlCommand(Insertquery, conn))
                     {
@@ -1940,10 +1196,7 @@ namespace WinFormsApp1
                         cmd.Parameters.AddWithValue("@firstname", FirstnameText.Text.ToUpper());
                         cmd.Parameters.AddWithValue("@middlename", MiddlenameText.Text.ToUpper());
                         cmd.Parameters.AddWithValue("@email", EmailText.Text.Trim());
-                        cmd.Parameters.AddWithValue("@school_year", ContextYearText.Text.ToUpper());
-                        cmd.Parameters.AddWithValue("@school_section", ContextSectionText.Text.ToUpper());
                         cmd.Parameters.AddWithValue("@school_semester", semester);
-                        cmd.Parameters.AddWithValue("@school_course", ContextCourseText.Text.ToUpper());
                         cmd.ExecuteNonQuery();
                     }
 
@@ -2004,6 +1257,7 @@ namespace WinFormsApp1
 
                 ClearText();
                 LoadUserData();
+                RefreshDashboardCounts();
             }
             catch (Exception ex) { Console.WriteLine("CreateUser error: " + ex.Message); }
         }
@@ -2091,8 +1345,6 @@ namespace WinFormsApp1
             MiddlenameText.Clear();
             EmailText.Clear();
             ContextRoleText.SelectedIndex = -1;
-            ContextYearText.SelectedIndex = -1;
-            ContextSectionText.SelectedIndex = -1;
         }
 
         // =========================================================
@@ -2329,14 +1581,13 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        //  SERVER FOLDER MANAGEMENT  ← MODIFIED SECTION
+        //  SERVER FOLDER MANAGEMENT
         // =========================================================
         private void lsServerFolderSetup()
         {
             lvServerFolder.View = View.LargeIcon;
             lvServerFolder.MultiSelect = false;
 
-            // Configure the image list to hold our custom-drawn icons
             imageListIcon.ImageSize = new Size(48, 48);
             imageListIcon.ColorDepth = ColorDepth.Depth32Bit;
             imageListIcon.Images.Clear();
@@ -2355,13 +1606,11 @@ namespace WinFormsApp1
             lvServerFolder.Items.Clear();
             imageListIcon.Images.Clear();
 
-            // Make sure ImageSize is set every time
             if (imageListIcon.ImageSize.Width != 48 || imageListIcon.ImageSize.Height != 48)
                 imageListIcon.ImageSize = new Size(48, 48);
 
             int imageIndex = 0;
 
-            // ---------- Folders ----------
             foreach (string dir in Directory.GetDirectories(path))
             {
                 Image folderImg = CreateFolderIcon(48, 48);
@@ -2373,7 +1622,6 @@ namespace WinFormsApp1
                 imageIndex++;
             }
 
-            // ---------- Files ----------
             foreach (string file in Directory.GetFiles(path))
             {
                 string ext = Path.GetExtension(file);
@@ -2407,7 +1655,6 @@ namespace WinFormsApp1
                 int bodyH = (int)(height * 0.58);
                 int bodyW = width - pad * 2;
 
-                // Folder tab (behind)
                 var tabRect = new Rectangle(pad, bodyY - tabH, tabW, tabH + 6);
                 using (var tabBrush = new LinearGradientBrush(
                     tabRect,
@@ -2419,11 +1666,9 @@ namespace WinFormsApp1
                         g.FillPath(tabBrush, tabPath);
                 }
 
-                // Folder body
                 var bodyRect = new Rectangle(pad, bodyY, bodyW, bodyH);
                 using (var bodyPath = GetRoundedRect(bodyRect, 4))
                 {
-                    // Drop shadow
                     using (var shBrush = new SolidBrush(Color.FromArgb(50, 0, 0, 0)))
                     {
                         var shRect = new Rectangle(bodyRect.X + 2, bodyRect.Y + 2, bodyRect.Width, bodyRect.Height);
@@ -2444,14 +1689,12 @@ namespace WinFormsApp1
                         g.DrawPath(pen, bodyPath);
                 }
 
-                // Top highlight
                 using (var hl = new SolidBrush(Color.FromArgb(110, 255, 255, 255)))
                 {
                     var hlRect = new Rectangle(bodyRect.X + 3, bodyRect.Y + 2, bodyRect.Width - 6, 3);
                     g.FillRectangle(hl, hlRect);
                 }
 
-                // Bottom shadow
                 using (var sh = new SolidBrush(Color.FromArgb(35, 0, 0, 0)))
                 {
                     g.FillRectangle(sh, bodyRect.X + 4, bodyRect.Bottom - 3, bodyRect.Width - 8, 2);
@@ -2464,7 +1707,6 @@ namespace WinFormsApp1
         {
             string ext = (extension ?? "").ToLowerInvariant().TrimStart('.');
 
-            // Determine badge text + color
             string badge;
             Color badgeColor;
 
@@ -2513,18 +1755,15 @@ namespace WinFormsApp1
                 g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
                 g.Clear(Color.Transparent);
 
-                // Document geometry
                 int padX = (int)(width * 0.20);
                 int padY = (int)(height * 0.08);
                 int docW = width - padX * 2;
                 int docH = height - padY * 2;
                 int fold = (int)(docW * 0.34);
 
-                // Drop shadow
                 using (var shBrush = new SolidBrush(Color.FromArgb(50, 0, 0, 0)))
                     g.FillRectangle(shBrush, padX + 2, padY + 2, docW, docH);
 
-                // Document path (folded top-right corner)
                 using (var docPath = new GraphicsPath())
                 {
                     docPath.AddLine(padX, padY, padX + docW - fold, padY);
@@ -2547,7 +1786,6 @@ namespace WinFormsApp1
                     }
                 }
 
-                // Fold triangle
                 using (var foldPath = new GraphicsPath())
                 {
                     foldPath.AddLine(padX + docW - fold, padY,
@@ -2562,7 +1800,6 @@ namespace WinFormsApp1
                         g.DrawPath(foldPen, foldPath);
                 }
 
-                // Text lines (below fold)
                 using (var linePen = new Pen(Color.FromArgb(195, 200, 210), 1))
                 {
                     int lineY = padY + fold + 5;
@@ -2575,7 +1812,6 @@ namespace WinFormsApp1
                     }
                 }
 
-                // Badge strip at bottom
                 int badgeH = (int)(docH * 0.34);
                 int badgeY = padY + docH - badgeH;
                 var badgeRect = new Rectangle(padX, badgeY, docW, badgeH);
@@ -2583,11 +1819,9 @@ namespace WinFormsApp1
                 using (var badgeBrush = new SolidBrush(badgeColor))
                     g.FillRectangle(badgeBrush, badgeRect);
 
-                // Slight dark line above badge
                 using (var edgePen = new Pen(Color.FromArgb(80, 0, 0, 0), 1))
                     g.DrawLine(edgePen, badgeRect.Left, badgeRect.Top, badgeRect.Right, badgeRect.Top);
 
-                // Badge text
                 float fontSize = Math.Max(7f, badgeH * 0.58f);
                 using (var font = new Font("Segoe UI", fontSize, FontStyle.Bold, GraphicsUnit.Pixel))
                 using (var sf = new StringFormat
@@ -2787,6 +2021,8 @@ namespace WinFormsApp1
 
                 if (!string.IsNullOrEmpty(currentFolder) && Directory.Exists(currentFolder))
                     LoadServerFolder(currentFolder, addToHistory: false);
+
+                RefreshFileCountAsync();
             }
             catch (UnauthorizedAccessException)
             {
