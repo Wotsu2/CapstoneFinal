@@ -541,7 +541,7 @@ namespace WinFormsApp1
                     ClientSize.Height * 0.55f + slide,
                     ClientSize.Width,
                     30);
-                g.DrawString("CCS LABORATORY STYTEM", f, b, rect, sf);
+                g.DrawString("CCS LABORATORY SYSTEM", f, b, rect, sf);
             }
         }
 
