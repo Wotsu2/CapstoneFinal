@@ -32,6 +32,7 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges19 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges20 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges1 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ProfessorForm));
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges2 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges3 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges4 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -260,7 +261,6 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges215 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges216 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges217 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ProfessorForm));
             guna2Panel1 = new Guna.UI2.WinForms.Guna2Panel();
             btnQuizExam = new Guna.UI2.WinForms.Guna2Button();
             btnSubject = new Guna.UI2.WinForms.Guna2Button();
@@ -556,7 +556,7 @@
             btnQuizExam.FillColor = Color.Transparent;
             btnQuizExam.Font = new Font("Segoe UI", 9F);
             btnQuizExam.ForeColor = Color.White;
-            btnQuizExam.Image = Properties.Resources.Grades;
+            btnQuizExam.Image = (Image)resources.GetObject("btnQuizExam.Image");
             btnQuizExam.Location = new Point(12, 517);
             btnQuizExam.Name = "btnQuizExam";
             btnQuizExam.ShadowDecoration.CustomizableEdges = customizableEdges2;
@@ -767,7 +767,7 @@
             // 
             pictureBox1.BackColor = Color.Transparent;
             pictureBox1.Image = Properties.Resources.ChatGPT_Image_Aug_18__2026__07_20_15_PM_1;
-            pictureBox1.Location = new Point(12, 29);
+            pictureBox1.Location = new Point(11, 31);
             pictureBox1.Name = "pictureBox1";
             pictureBox1.Size = new Size(53, 36);
             pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;

@@ -963,7 +963,7 @@
             guna2PictureBox3.FillColor = Color.Transparent;
             guna2PictureBox3.Image = Properties.Resources._355823652_701491338448756_8639478619159832458_n_removebg_preview_1;
             guna2PictureBox3.ImageRotate = 0F;
-            guna2PictureBox3.Location = new Point(322, 72);
+            guna2PictureBox3.Location = new Point(322, 70);
             guna2PictureBox3.Name = "guna2PictureBox3";
             guna2PictureBox3.ShadowDecoration.CustomizableEdges = customizableEdges49;
             guna2PictureBox3.Size = new Size(35, 35);
@@ -978,7 +978,7 @@
             label19.BackColor = Color.Transparent;
             label19.Font = new Font("Segoe UI Black", 8.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label19.ForeColor = Color.FromArgb(35, 30, 30);
-            label19.Location = new Point(360, 84);
+            label19.Location = new Point(360, 83);
             label19.Name = "label19";
             label19.Size = new Size(160, 13);
             label19.TabIndex = 13;
