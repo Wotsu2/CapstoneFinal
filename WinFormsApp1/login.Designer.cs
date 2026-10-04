@@ -74,8 +74,10 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges44 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges45 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges46 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges47 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Login));
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges47 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges48 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges49 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             pnlLeftStripe = new Panel();
             pnlAccentBar = new Panel();
             label1 = new Label();
@@ -126,6 +128,8 @@
             label5 = new Label();
             btnConfigurationSetting = new Guna.UI2.WinForms.Guna2Button();
             guna2PictureBox2 = new Guna.UI2.WinForms.Guna2PictureBox();
+            guna2PictureBox3 = new Guna.UI2.WinForms.Guna2PictureBox();
+            label19 = new Label();
             ((System.ComponentModel.ISupportInitialize)guna2PictureBox1).BeginInit();
             pnlConfiguration.SuspendLayout();
             guna2TabControl1.SuspendLayout();
@@ -134,6 +138,7 @@
             tabPage3.SuspendLayout();
             tabPage4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)guna2PictureBox2).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)guna2PictureBox3).BeginInit();
             SuspendLayout();
             // 
             // pnlLeftStripe
@@ -156,13 +161,13 @@
             // 
             label1.AutoSize = true;
             label1.BackColor = Color.Transparent;
-            label1.Font = new Font("Segoe UI Semibold", 15F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label1.Font = new Font("Segoe UI Black", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label1.ForeColor = Color.FromArgb(35, 30, 30);
-            label1.Location = new Point(128, 79);
+            label1.Location = new Point(70, 79);
             label1.Name = "label1";
-            label1.Size = new Size(121, 28);
+            label1.Size = new Size(246, 20);
             label1.TabIndex = 1;
-            label1.Text = "CDSGA Hub";
+            label1.Text = "Colegio De San Gabriel Arcangel";
             // 
             // label2
             // 
@@ -280,10 +285,10 @@
             guna2PictureBox1.CustomizableEdges = customizableEdges7;
             guna2PictureBox1.Image = Properties.Resources.Picture1;
             guna2PictureBox1.ImageRotate = 0F;
-            guna2PictureBox1.Location = new Point(506, 0);
+            guna2PictureBox1.Location = new Point(526, 0);
             guna2PictureBox1.Name = "guna2PictureBox1";
             guna2PictureBox1.ShadowDecoration.CustomizableEdges = customizableEdges8;
-            guna2PictureBox1.Size = new Size(577, 755);
+            guna2PictureBox1.Size = new Size(557, 755);
             guna2PictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             guna2PictureBox1.TabIndex = 0;
             guna2PictureBox1.TabStop = false;
@@ -941,15 +946,44 @@
             guna2PictureBox2.BackColor = Color.Transparent;
             guna2PictureBox2.CustomizableEdges = customizableEdges46;
             guna2PictureBox2.FillColor = Color.Transparent;
-            guna2PictureBox2.Image = Properties.Resources.cdsga;
+            guna2PictureBox2.Image = (Image)resources.GetObject("guna2PictureBox2.Image");
             guna2PictureBox2.ImageRotate = 0F;
-            guna2PictureBox2.Location = new Point(68, 67);
+            guna2PictureBox2.Location = new Point(27, 67);
             guna2PictureBox2.Name = "guna2PictureBox2";
             guna2PictureBox2.ShadowDecoration.CustomizableEdges = customizableEdges47;
-            guna2PictureBox2.Size = new Size(50, 47);
+            guna2PictureBox2.Size = new Size(40, 40);
             guna2PictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
             guna2PictureBox2.TabIndex = 2;
             guna2PictureBox2.TabStop = false;
+            // 
+            // guna2PictureBox3
+            // 
+            guna2PictureBox3.BackColor = Color.Transparent;
+            guna2PictureBox3.CustomizableEdges = customizableEdges48;
+            guna2PictureBox3.FillColor = Color.Transparent;
+            guna2PictureBox3.Image = Properties.Resources._355823652_701491338448756_8639478619159832458_n_removebg_preview_1;
+            guna2PictureBox3.ImageRotate = 0F;
+            guna2PictureBox3.Location = new Point(322, 72);
+            guna2PictureBox3.Name = "guna2PictureBox3";
+            guna2PictureBox3.ShadowDecoration.CustomizableEdges = customizableEdges49;
+            guna2PictureBox3.Size = new Size(35, 35);
+            guna2PictureBox3.SizeMode = PictureBoxSizeMode.StretchImage;
+            guna2PictureBox3.TabIndex = 12;
+            guna2PictureBox3.TabStop = false;
+            guna2PictureBox3.Click += guna2PictureBox3_Click;
+            // 
+            // label19
+            // 
+            label19.AutoSize = true;
+            label19.BackColor = Color.Transparent;
+            label19.Font = new Font("Segoe UI Black", 8.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label19.ForeColor = Color.FromArgb(35, 30, 30);
+            label19.Location = new Point(360, 84);
+            label19.Name = "label19";
+            label19.Size = new Size(160, 13);
+            label19.TabIndex = 13;
+            label19.Text = "College of Computer Studies";
+            label19.Click += label19_Click;
             // 
             // Login
             // 
@@ -957,6 +991,8 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(251, 248, 244);
             ClientSize = new Size(1080, 743);
+            Controls.Add(label19);
+            Controls.Add(guna2PictureBox3);
             Controls.Add(pnlLeftStripe);
             Controls.Add(pnlAccentBar);
             Controls.Add(btnConfigurationSetting);
@@ -990,6 +1026,7 @@
             tabPage4.ResumeLayout(false);
             tabPage4.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)guna2PictureBox2).EndInit();
+            ((System.ComponentModel.ISupportInitialize)guna2PictureBox3).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -1049,5 +1086,7 @@
         // === NEW DECORATIVE CONTROLS ===
         private Panel pnlLeftStripe;
         private Panel pnlAccentBar;
+        private Guna.UI2.WinForms.Guna2PictureBox guna2PictureBox3;
+        private Label label19;
     }
 }

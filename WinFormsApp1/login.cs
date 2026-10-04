@@ -1122,5 +1122,15 @@ namespace WinFormsApp1
                     MessageBoxIcon.Warning);
             }
         }
+
+        private void guna2PictureBox3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label19_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

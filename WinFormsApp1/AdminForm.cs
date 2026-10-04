@@ -2043,5 +2043,30 @@ namespace WinFormsApp1
                     "Delete Failed", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
+
+        private void guna2Panel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void guna2Panel2_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void pnlCreateAccount_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void UserDataList_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void pnlUserList_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
     }
 }
