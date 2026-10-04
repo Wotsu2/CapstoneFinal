@@ -399,7 +399,7 @@
             guna2Panel2.Location = new Point(0, 0);
             guna2Panel2.Name = "guna2Panel2";
             guna2Panel2.ShadowDecoration.CustomizableEdges = customizableEdges4;
-            guna2Panel2.Size = new Size(1370, 83);
+            guna2Panel2.Size = new Size(1350, 83);
             guna2Panel2.TabIndex = 3;
             // 
             // label8
@@ -681,6 +681,7 @@
             // 
             // pnlHome
             // 
+            pnlHome.AutoScroll = true;
             pnlHome.BackColor = Color.SeaShell;
             pnlHome.BackgroundImage = Properties.Resources.Shade;
             pnlHome.BackgroundImageLayout = ImageLayout.Stretch;
@@ -696,7 +697,7 @@
             pnlHome.Location = new Point(80, 83);
             pnlHome.Name = "pnlHome";
             pnlHome.ShadowDecoration.CustomizableEdges = customizableEdges24;
-            pnlHome.Size = new Size(1312, 751);
+            pnlHome.Size = new Size(1270, 751);
             pnlHome.TabIndex = 16;
             // 
             // pictureboxBanner
@@ -705,7 +706,7 @@
             pictureboxBanner.Image = (Image)resources.GetObject("pictureboxBanner.Image");
             pictureboxBanner.Location = new Point(52, 54);
             pictureboxBanner.Name = "pictureboxBanner";
-            pictureboxBanner.Size = new Size(895, 352);
+            pictureboxBanner.Size = new Size(867, 352);
             pictureboxBanner.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureboxBanner.TabIndex = 22;
             pictureboxBanner.TabStop = false;
@@ -726,7 +727,7 @@
             flpPendingActivities.BackColor = Color.Transparent;
             flpPendingActivities.Location = new Point(52, 470);
             flpPendingActivities.Name = "flpPendingActivities";
-            flpPendingActivities.Size = new Size(895, 278);
+            flpPendingActivities.Size = new Size(867, 166);
             flpPendingActivities.TabIndex = 20;
             // 
             // guna2Panel9
@@ -741,7 +742,7 @@
             guna2Panel9.Controls.Add(pictureBox2);
             guna2Panel9.CustomizableEdges = customizableEdges21;
             guna2Panel9.FillColor = Color.White;
-            guna2Panel9.Location = new Point(977, 54);
+            guna2Panel9.Location = new Point(951, 54);
             guna2Panel9.Name = "guna2Panel9";
             guna2Panel9.ShadowDecoration.BorderRadius = 10;
             guna2Panel9.ShadowDecoration.CustomizableEdges = customizableEdges22;
@@ -828,7 +829,7 @@
             pnlActivity.Location = new Point(80, 83);
             pnlActivity.Name = "pnlActivity";
             pnlActivity.ShadowDecoration.CustomizableEdges = customizableEdges40;
-            pnlActivity.Size = new Size(1312, 751);
+            pnlActivity.Size = new Size(1270, 644);
             pnlActivity.TabIndex = 22;
             // 
             // guna2Panel8
@@ -839,10 +840,10 @@
             guna2Panel8.Controls.Add(guna2Panel11);
             guna2Panel8.CustomizableEdges = customizableEdges27;
             guna2Panel8.FillColor = Color.White;
-            guna2Panel8.Location = new Point(79, 126);
+            guna2Panel8.Location = new Point(62, 67);
             guna2Panel8.Name = "guna2Panel8";
             guna2Panel8.ShadowDecoration.CustomizableEdges = customizableEdges28;
-            guna2Panel8.Size = new Size(1143, 577);
+            guna2Panel8.Size = new Size(1143, 572);
             guna2Panel8.TabIndex = 21;
             // 
             // dgvStudentActivities
@@ -887,7 +888,7 @@
             dgvStudentActivities.RowHeadersDefaultCellStyle = dataGridViewCellStyle4;
             dgvStudentActivities.RowHeadersVisible = false;
             dgvStudentActivities.RowTemplate.Height = 45;
-            dgvStudentActivities.Size = new Size(1126, 509);
+            dgvStudentActivities.Size = new Size(1126, 506);
             dgvStudentActivities.TabIndex = 22;
             dgvStudentActivities.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White;
             dgvStudentActivities.ThemeStyle.AlternatingRowsStyle.Font = new Font("Segoe UI", 9F);
@@ -976,7 +977,7 @@
             guna2Panel7.Controls.Add(btnActivitiesAll);
             guna2Panel7.CustomizableEdges = customizableEdges37;
             guna2Panel7.FillColor = Color.White;
-            guna2Panel7.Location = new Point(106, 62);
+            guna2Panel7.Location = new Point(72, 18);
             guna2Panel7.Name = "guna2Panel7";
             guna2Panel7.ShadowDecoration.CustomizableEdges = customizableEdges38;
             guna2Panel7.Size = new Size(436, 43);
@@ -1075,7 +1076,7 @@
             pnlSubject.Location = new Point(80, 83);
             pnlSubject.Name = "pnlSubject";
             pnlSubject.ShadowDecoration.CustomizableEdges = customizableEdges52;
-            pnlSubject.Size = new Size(1312, 751);
+            pnlSubject.Size = new Size(1270, 647);
             pnlSubject.TabIndex = 23;
             // 
             // pnlCreateClass
@@ -1088,7 +1089,7 @@
             pnlCreateClass.Controls.Add(txtEnterCode);
             pnlCreateClass.Controls.Add(label9);
             pnlCreateClass.CustomizableEdges = customizableEdges47;
-            pnlCreateClass.Location = new Point(502, 114);
+            pnlCreateClass.Location = new Point(478, 104);
             pnlCreateClass.Name = "pnlCreateClass";
             pnlCreateClass.ShadowDecoration.CustomizableEdges = customizableEdges48;
             pnlCreateClass.Size = new Size(314, 220);
@@ -1165,7 +1166,7 @@
             // flpSubjectClass
             // 
             flpSubjectClass.BackColor = Color.White;
-            flpSubjectClass.Location = new Point(76, 135);
+            flpSubjectClass.Location = new Point(52, 125);
             flpSubjectClass.Name = "flpSubjectClass";
             flpSubjectClass.Size = new Size(1160, 488);
             flpSubjectClass.TabIndex = 22;
@@ -1183,7 +1184,7 @@
             btnJoinClass.Image = Properties.Resources.PlusSign2;
             btnJoinClass.ImageOffset = new Point(-4, 2);
             btnJoinClass.ImageSize = new Size(13, 13);
-            btnJoinClass.Location = new Point(1076, 72);
+            btnJoinClass.Location = new Point(1052, 62);
             btnJoinClass.Name = "btnJoinClass";
             btnJoinClass.ShadowDecoration.CustomizableEdges = customizableEdges50;
             btnJoinClass.Size = new Size(159, 43);
@@ -1214,10 +1215,10 @@
             guna2Panel18.Controls.Add(guna2Panel21);
             guna2Panel18.CustomizableEdges = customizableEdges55;
             guna2Panel18.FillColor = Color.White;
-            guna2Panel18.Location = new Point(87, 89);
+            guna2Panel18.Location = new Point(75, 77);
             guna2Panel18.Name = "guna2Panel18";
             guna2Panel18.ShadowDecoration.CustomizableEdges = customizableEdges56;
-            guna2Panel18.Size = new Size(1123, 577);
+            guna2Panel18.Size = new Size(1123, 565);
             guna2Panel18.TabIndex = 23;
             // 
             // dgvStudentGrades
@@ -1263,7 +1264,7 @@
             dgvStudentGrades.RowHeadersVisible = false;
             dgvStudentGrades.RowTemplate.Height = 45;
             dgvStudentGrades.RowTemplate.ReadOnly = true;
-            dgvStudentGrades.Size = new Size(1109, 503);
+            dgvStudentGrades.Size = new Size(1109, 491);
             dgvStudentGrades.TabIndex = 22;
             dgvStudentGrades.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White;
             dgvStudentGrades.ThemeStyle.AlternatingRowsStyle.Font = new Font("Segoe UI", 9F);
@@ -1360,7 +1361,7 @@
             guna2Panel22.Controls.Add(btnGradesAll);
             guna2Panel22.CustomizableEdges = customizableEdges63;
             guna2Panel22.FillColor = Color.White;
-            guna2Panel22.Location = new Point(115, 25);
+            guna2Panel22.Location = new Point(72, 20);
             guna2Panel22.Name = "guna2Panel22";
             guna2Panel22.ShadowDecoration.CustomizableEdges = customizableEdges64;
             guna2Panel22.Size = new Size(327, 43);
@@ -1444,7 +1445,7 @@
             pnlSetting.Controls.Add(pnlChangeUsername);
             pnlSetting.Location = new Point(80, 83);
             pnlSetting.Name = "pnlSetting";
-            pnlSetting.Size = new Size(1312, 751);
+            pnlSetting.Size = new Size(1270, 647);
             pnlSetting.TabIndex = 26;
             pnlSetting.Paint += pnlSetting_Paint;
             // 
@@ -2741,7 +2742,7 @@
             pnlQuizExam.Location = new Point(80, 83);
             pnlQuizExam.Name = "pnlQuizExam";
             pnlQuizExam.ShadowDecoration.CustomizableEdges = customizableEdges163;
-            pnlQuizExam.Size = new Size(1312, 751);
+            pnlQuizExam.Size = new Size(1270, 647);
             pnlQuizExam.TabIndex = 26;
             // 
             // QuizExamScore
@@ -2773,7 +2774,7 @@
             dataGridViewCellStyle11.WrapMode = DataGridViewTriState.False;
             QuizExamScore.DefaultCellStyle = dataGridViewCellStyle11;
             QuizExamScore.GridColor = Color.FromArgb(231, 229, 255);
-            QuizExamScore.Location = new Point(84, 60);
+            QuizExamScore.Location = new Point(68, 36);
             QuizExamScore.Name = "QuizExamScore";
             QuizExamScore.ReadOnly = true;
             QuizExamScore.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
@@ -2807,18 +2808,17 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1370, 749);
+            ClientSize = new Size(1350, 729);
             Controls.Add(guna2Panel1);
             Controls.Add(guna2Panel2);
+            Controls.Add(pnlHome);
             Controls.Add(pnlSetting);
             Controls.Add(pnlGrades);
             Controls.Add(pnlActivity);
             Controls.Add(pnlSubject);
             Controls.Add(pnlQuizExam);
-            Controls.Add(pnlHome);
             Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
-            MinimizeBox = false;
             Name = "StudentForm";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Cdsga Student";

@@ -3452,7 +3452,7 @@ namespace WinFormsApp1
             navToolTip.SetToolTip(btnAttendance, "Attendance");
             navToolTip.SetToolTip(btnSubject, "Subjects");
             navToolTip.SetToolTip(btnFile, "Files");
-            navToolTip.SetToolTip(btnAccount, "Settings");
+            navToolTip.SetToolTip(btnAccount, "Account");
             navToolTip.SetToolTip(btnQuizExam, "Quiz Exam Grades");
         }
 

@@ -36,6 +36,8 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges6 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges7 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges8 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges42 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges43 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges9 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges10 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges11 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -69,18 +71,13 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges39 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges40 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges41 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges42 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges43 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges44 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges45 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges46 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges47 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges48 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-
-            // --- NEW DECORATIVE PANELS ---
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Login));
             pnlLeftStripe = new Panel();
             pnlAccentBar = new Panel();
-
             label1 = new Label();
             label2 = new Label();
             label3 = new Label();
@@ -129,7 +126,6 @@
             label5 = new Label();
             btnConfigurationSetting = new Guna.UI2.WinForms.Guna2Button();
             guna2PictureBox2 = new Guna.UI2.WinForms.Guna2PictureBox();
-
             ((System.ComponentModel.ISupportInitialize)guna2PictureBox1).BeginInit();
             pnlConfiguration.SuspendLayout();
             guna2TabControl1.SuspendLayout();
@@ -139,27 +135,24 @@
             tabPage4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)guna2PictureBox2).BeginInit();
             SuspendLayout();
-
             // 
-            // pnlLeftStripe  (decorative maroon stripe on far left)
+            // pnlLeftStripe
             // 
             pnlLeftStripe.BackColor = Color.FromArgb(128, 0, 0);
             pnlLeftStripe.Location = new Point(0, 0);
             pnlLeftStripe.Name = "pnlLeftStripe";
             pnlLeftStripe.Size = new Size(7, 743);
             pnlLeftStripe.TabIndex = 0;
-
             // 
-            // pnlAccentBar  (small accent bar under the heading)
+            // pnlAccentBar
             // 
             pnlAccentBar.BackColor = Color.FromArgb(128, 0, 0);
-            pnlAccentBar.Location = new Point(68, 296);
+            pnlAccentBar.Location = new Point(51, 255);
             pnlAccentBar.Name = "pnlAccentBar";
             pnlAccentBar.Size = new Size(56, 4);
             pnlAccentBar.TabIndex = 0;
-
             // 
-            // label1  (brand name)
+            // label1
             // 
             label1.AutoSize = true;
             label1.BackColor = Color.Transparent;
@@ -170,40 +163,36 @@
             label1.Size = new Size(121, 28);
             label1.TabIndex = 1;
             label1.Text = "CDSGA Hub";
-
             // 
-            // label2  (main heading)
+            // label2
             // 
             label2.AutoSize = true;
             label2.BackColor = Color.Transparent;
             label2.Font = new Font("Segoe UI Semibold", 30F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label2.ForeColor = Color.FromArgb(28, 22, 22);
-            label2.Location = new Point(62, 224);
+            label2.Location = new Point(45, 183);
             label2.Name = "label2";
-            label2.Size = new Size(269, 54);
+            label2.Size = new Size(299, 54);
             label2.TabIndex = 3;
             label2.Text = "Welcome back!";
-
             // 
-            // label3  (subtitle)
+            // label3
             // 
             label3.AutoSize = true;
             label3.BackColor = Color.Transparent;
             label3.Font = new Font("Segoe UI", 10.5F, FontStyle.Regular, GraphicsUnit.Point, 0);
             label3.ForeColor = Color.FromArgb(130, 120, 120);
-            label3.Location = new Point(68, 316);
+            label3.Location = new Point(51, 275);
             label3.Name = "label3";
-            label3.Size = new Size(228, 19);
+            label3.Size = new Size(225, 19);
             label3.TabIndex = 4;
             label3.Text = "Sign in to continue to your account";
-
             // 
             // txtUsername
             // 
             txtUsername.BackColor = Color.Transparent;
             txtUsername.BorderColor = Color.FromArgb(225, 218, 210);
             txtUsername.BorderRadius = 14;
-            txtUsername.BorderThickness = 1;
             txtUsername.CustomizableEdges = customizableEdges1;
             txtUsername.DefaultText = "";
             txtUsername.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
@@ -220,24 +209,22 @@
             txtUsername.IconRight = Properties.Resources.Id;
             txtUsername.IconRightOffset = new Point(20, 0);
             txtUsername.IconRightSize = new Size(22, 20);
-            txtUsername.Location = new Point(68, 372);
+            txtUsername.Location = new Point(51, 331);
             txtUsername.Margin = new Padding(3, 4, 3, 4);
             txtUsername.Name = "txtUsername";
             txtUsername.PlaceholderForeColor = Color.FromArgb(165, 158, 152);
             txtUsername.PlaceholderText = "Username";
             txtUsername.SelectedText = "";
             txtUsername.ShadowDecoration.CustomizableEdges = customizableEdges2;
-            txtUsername.Size = new Size(422, 54);
+            txtUsername.Size = new Size(350, 40);
             txtUsername.TabIndex = 5;
             txtUsername.TextOffset = new Point(18, 0);
-
             // 
             // txtPassword
             // 
             txtPassword.BackColor = Color.Transparent;
             txtPassword.BorderColor = Color.FromArgb(225, 218, 210);
             txtPassword.BorderRadius = 14;
-            txtPassword.BorderThickness = 1;
             txtPassword.CustomizableEdges = customizableEdges3;
             txtPassword.DefaultText = "";
             txtPassword.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
@@ -254,7 +241,7 @@
             txtPassword.IconRight = Properties.Resources.Eye1;
             txtPassword.IconRightOffset = new Point(20, 0);
             txtPassword.IconRightSize = new Size(22, 20);
-            txtPassword.Location = new Point(68, 442);
+            txtPassword.Location = new Point(51, 389);
             txtPassword.Margin = new Padding(3, 4, 3, 4);
             txtPassword.Name = "txtPassword";
             txtPassword.PasswordChar = '*';
@@ -262,10 +249,9 @@
             txtPassword.PlaceholderText = "Password";
             txtPassword.SelectedText = "";
             txtPassword.ShadowDecoration.CustomizableEdges = customizableEdges4;
-            txtPassword.Size = new Size(422, 54);
+            txtPassword.Size = new Size(350, 40);
             txtPassword.TabIndex = 6;
             txtPassword.TextOffset = new Point(18, 0);
-
             // 
             // btnLogin
             // 
@@ -280,31 +266,29 @@
             btnLogin.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
             btnLogin.ForeColor = Color.White;
             btnLogin.HoverState.FillColor = Color.FromArgb(155, 20, 20);
-            btnLogin.Location = new Point(68, 528);
+            btnLogin.Location = new Point(51, 448);
             btnLogin.Name = "btnLogin";
             btnLogin.PressedColor = Color.FromArgb(100, 0, 0);
             btnLogin.ShadowDecoration.CustomizableEdges = customizableEdges6;
-            btnLogin.Size = new Size(422, 52);
+            btnLogin.Size = new Size(350, 38);
             btnLogin.TabIndex = 7;
             btnLogin.Text = "Log in";
             btnLogin.Click += btnLogin_Click;
-
             // 
-            // guna2PictureBox1  (right image — unchanged)
+            // guna2PictureBox1
             // 
             guna2PictureBox1.CustomizableEdges = customizableEdges7;
             guna2PictureBox1.Image = Properties.Resources.Picture1;
             guna2PictureBox1.ImageRotate = 0F;
-            guna2PictureBox1.Location = new Point(704, -7);
+            guna2PictureBox1.Location = new Point(506, 0);
             guna2PictureBox1.Name = "guna2PictureBox1";
             guna2PictureBox1.ShadowDecoration.CustomizableEdges = customizableEdges8;
-            guna2PictureBox1.Size = new Size(750, 755);
+            guna2PictureBox1.Size = new Size(577, 755);
             guna2PictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             guna2PictureBox1.TabIndex = 0;
             guna2PictureBox1.TabStop = false;
-
             // 
-            // pnlConfiguration  (UNCHANGED)
+            // pnlConfiguration
             // 
             pnlConfiguration.BackColor = Color.Transparent;
             pnlConfiguration.BorderColor = Color.Gray;
@@ -316,13 +300,12 @@
             pnlConfiguration.Controls.Add(guna2Button1);
             pnlConfiguration.Controls.Add(label5);
             pnlConfiguration.CustomizableEdges = customizableEdges42;
-            pnlConfiguration.Location = new Point(348, 177);
+            pnlConfiguration.Location = new Point(197, 168);
             pnlConfiguration.Name = "pnlConfiguration";
             pnlConfiguration.ShadowDecoration.CustomizableEdges = customizableEdges43;
             pnlConfiguration.Size = new Size(719, 389);
             pnlConfiguration.TabIndex = 10;
             pnlConfiguration.Visible = false;
-
             // 
             // btnSaveSetting
             // 
@@ -341,7 +324,6 @@
             btnSaveSetting.TabIndex = 20;
             btnSaveSetting.Text = "Save";
             btnSaveSetting.Click += btnSaveSetting_Click_1;
-
             // 
             // btnPnlConfigurationClose
             // 
@@ -362,7 +344,6 @@
             btnPnlConfigurationClose.Size = new Size(32, 29);
             btnPnlConfigurationClose.TabIndex = 19;
             btnPnlConfigurationClose.Click += btnPnlConfigurationClose_Click;
-
             // 
             // guna2TabControl1
             // 
@@ -394,7 +375,6 @@
             guna2TabControl1.TabButtonSize = new Size(180, 40);
             guna2TabControl1.TabIndex = 18;
             guna2TabControl1.TabMenuBackColor = Color.FromArgb(33, 42, 57);
-
             // 
             // tabPage1
             // 
@@ -418,7 +398,6 @@
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Networks";
             tabPage1.UseVisualStyleBackColor = true;
-
             // 
             // txtFileTransferPort
             // 
@@ -440,7 +419,6 @@
             txtFileTransferPort.Size = new Size(198, 25);
             txtFileTransferPort.TabIndex = 26;
             txtFileTransferPort.TextOffset = new Point(10, 0);
-
             // 
             // label12
             // 
@@ -451,7 +429,6 @@
             label12.Size = new Size(119, 21);
             label12.TabIndex = 24;
             label12.Text = "Command Port";
-
             // 
             // txtCommandPort
             // 
@@ -473,7 +450,6 @@
             txtCommandPort.Size = new Size(198, 25);
             txtCommandPort.TabIndex = 25;
             txtCommandPort.TextOffset = new Point(10, 0);
-
             // 
             // panel1
             // 
@@ -482,7 +458,6 @@
             panel1.Name = "panel1";
             panel1.Size = new Size(1, 225);
             panel1.TabIndex = 23;
-
             // 
             // label11
             // 
@@ -493,7 +468,6 @@
             label11.Size = new Size(132, 21);
             label11.TabIndex = 21;
             label11.Text = "File Transfer Port";
-
             // 
             // label10
             // 
@@ -504,7 +478,6 @@
             label10.Size = new Size(117, 21);
             label10.TabIndex = 19;
             label10.Text = "Broadcast Port";
-
             // 
             // txtBroadcastPort
             // 
@@ -526,7 +499,6 @@
             txtBroadcastPort.Size = new Size(198, 25);
             txtBroadcastPort.TabIndex = 20;
             txtBroadcastPort.TextOffset = new Point(10, 0);
-
             // 
             // label9
             // 
@@ -537,7 +509,6 @@
             label9.Size = new Size(153, 21);
             label9.TabIndex = 17;
             label9.Text = "Screen Sharing Port";
-
             // 
             // txtScreenSharingPort
             // 
@@ -559,7 +530,6 @@
             txtScreenSharingPort.Size = new Size(198, 25);
             txtScreenSharingPort.TabIndex = 18;
             txtScreenSharingPort.TextOffset = new Point(10, 0);
-
             // 
             // label8
             // 
@@ -570,7 +540,6 @@
             label8.Size = new Size(133, 21);
             label8.TabIndex = 15;
             label8.Text = "Workstation Port";
-
             // 
             // txtWorkStationPort
             // 
@@ -592,7 +561,6 @@
             txtWorkStationPort.Size = new Size(198, 25);
             txtWorkStationPort.TabIndex = 16;
             txtWorkStationPort.TextOffset = new Point(10, 0);
-
             // 
             // label7
             // 
@@ -603,7 +571,6 @@
             label7.Size = new Size(76, 21);
             label7.TabIndex = 13;
             label7.Text = "Server IP";
-
             // 
             // txtServerIP
             // 
@@ -625,7 +592,6 @@
             txtServerIP.Size = new Size(198, 25);
             txtServerIP.TabIndex = 14;
             txtServerIP.TextOffset = new Point(10, 0);
-
             // 
             // tabPage2
             // 
@@ -646,7 +612,6 @@
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Database";
             tabPage2.UseVisualStyleBackColor = true;
-
             // 
             // label16
             // 
@@ -657,7 +622,6 @@
             label16.Size = new Size(111, 21);
             label16.TabIndex = 18;
             label16.Text = "Database Port";
-
             // 
             // txtDatabasePort
             // 
@@ -679,7 +643,6 @@
             txtDatabasePort.Size = new Size(198, 28);
             txtDatabasePort.TabIndex = 19;
             txtDatabasePort.TextOffset = new Point(10, 0);
-
             // 
             // label15
             // 
@@ -690,7 +653,6 @@
             label15.Size = new Size(124, 21);
             label15.TabIndex = 16;
             label15.Text = "Database Name";
-
             // 
             // txtDatabaseName
             // 
@@ -712,7 +674,6 @@
             txtDatabaseName.Size = new Size(198, 28);
             txtDatabaseName.TabIndex = 17;
             txtDatabaseName.TextOffset = new Point(10, 0);
-
             // 
             // label14
             // 
@@ -723,7 +684,6 @@
             label14.Size = new Size(114, 21);
             label14.TabIndex = 14;
             label14.Text = "Database User";
-
             // 
             // txtDatabaseUser
             // 
@@ -745,7 +705,6 @@
             txtDatabaseUser.Size = new Size(198, 28);
             txtDatabaseUser.TabIndex = 15;
             txtDatabaseUser.TextOffset = new Point(10, 0);
-
             // 
             // label13
             // 
@@ -756,7 +715,6 @@
             label13.Size = new Size(150, 21);
             label13.TabIndex = 12;
             label13.Text = "Database Password";
-
             // 
             // txtDatabasePassword
             // 
@@ -778,7 +736,6 @@
             txtDatabasePassword.Size = new Size(198, 28);
             txtDatabasePassword.TabIndex = 13;
             txtDatabasePassword.TextOffset = new Point(10, 0);
-
             // 
             // label4
             // 
@@ -789,7 +746,6 @@
             label4.Size = new Size(116, 21);
             label4.TabIndex = 0;
             label4.Text = "Database Host";
-
             // 
             // txtDatabaseHost
             // 
@@ -811,7 +767,6 @@
             txtDatabaseHost.Size = new Size(198, 28);
             txtDatabaseHost.TabIndex = 11;
             txtDatabaseHost.TextOffset = new Point(10, 0);
-
             // 
             // tabPage3
             // 
@@ -823,7 +778,6 @@
             tabPage3.TabIndex = 2;
             tabPage3.Text = "File Storage";
             tabPage3.UseVisualStyleBackColor = true;
-
             // 
             // btnSelectFolder
             // 
@@ -844,7 +798,6 @@
             btnSelectFolder.TabIndex = 21;
             btnSelectFolder.Text = "Select Folder";
             btnSelectFolder.Click += btnSelectFolder_Click;
-
             // 
             // label6
             // 
@@ -855,7 +808,6 @@
             label6.Size = new Size(95, 21);
             label6.TabIndex = 17;
             label6.Text = "Save Folder";
-
             // 
             // tabPage4
             // 
@@ -869,7 +821,6 @@
             tabPage4.TabIndex = 3;
             tabPage4.Text = "Gmail";
             tabPage4.UseVisualStyleBackColor = true;
-
             // 
             // label17
             // 
@@ -880,7 +831,6 @@
             label17.Size = new Size(80, 21);
             label17.TabIndex = 23;
             label17.Text = "SmtpPass";
-
             // 
             // txtSmtpPass
             // 
@@ -902,7 +852,6 @@
             txtSmtpPass.Size = new Size(198, 25);
             txtSmtpPass.TabIndex = 24;
             txtSmtpPass.TextOffset = new Point(10, 0);
-
             // 
             // label18
             // 
@@ -913,7 +862,6 @@
             label18.Size = new Size(82, 21);
             label18.TabIndex = 21;
             label18.Text = "SmtpUser";
-
             // 
             // txtSmtpUser
             // 
@@ -935,7 +883,6 @@
             txtSmtpUser.Size = new Size(198, 25);
             txtSmtpUser.TabIndex = 22;
             txtSmtpUser.TextOffset = new Point(10, 0);
-
             // 
             // guna2Button1
             // 
@@ -955,7 +902,6 @@
             guna2Button1.Size = new Size(83, 37);
             guna2Button1.TabIndex = 17;
             guna2Button1.Text = "Save";
-
             // 
             // label5
             // 
@@ -967,7 +913,6 @@
             label5.Size = new Size(131, 25);
             label5.TabIndex = 10;
             label5.Text = "Configuration";
-
             // 
             // btnConfigurationSetting
             // 
@@ -984,19 +929,19 @@
             btnConfigurationSetting.ForeColor = Color.Transparent;
             btnConfigurationSetting.Image = Properties.Resources.setting;
             btnConfigurationSetting.ImageSize = new Size(25, 25);
-            btnConfigurationSetting.Location = new Point(653, 694);
+            btnConfigurationSetting.Location = new Point(11, 697);
             btnConfigurationSetting.Name = "btnConfigurationSetting";
             btnConfigurationSetting.ShadowDecoration.CustomizableEdges = customizableEdges45;
             btnConfigurationSetting.Size = new Size(45, 42);
             btnConfigurationSetting.TabIndex = 11;
             btnConfigurationSetting.Click += btnConfigurationSetting_Click_1;
-
             // 
-            // guna2PictureBox2  (logo)
+            // guna2PictureBox2
             // 
             guna2PictureBox2.BackColor = Color.Transparent;
             guna2PictureBox2.CustomizableEdges = customizableEdges46;
-            guna2PictureBox2.Image = Properties.Resources._519651826_1547683232876514_5721937903657253200_n_removebg_preview;
+            guna2PictureBox2.FillColor = Color.Transparent;
+            guna2PictureBox2.Image = Properties.Resources.cdsga;
             guna2PictureBox2.ImageRotate = 0F;
             guna2PictureBox2.Location = new Point(68, 67);
             guna2PictureBox2.Name = "guna2PictureBox2";
@@ -1005,14 +950,13 @@
             guna2PictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
             guna2PictureBox2.TabIndex = 2;
             guna2PictureBox2.TabStop = false;
-
             // 
             // Login
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(251, 248, 244);
-            ClientSize = new Size(1414, 743);
+            ClientSize = new Size(1080, 743);
             Controls.Add(pnlLeftStripe);
             Controls.Add(pnlAccentBar);
             Controls.Add(btnConfigurationSetting);
@@ -1026,7 +970,9 @@
             Controls.Add(label1);
             Controls.Add(guna2PictureBox1);
             FormBorderStyle = FormBorderStyle.None;
+            Icon = (Icon)resources.GetObject("$this.Icon");
             Margin = new Padding(3, 2, 3, 2);
+            MaximizeBox = false;
             Name = "Login";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Form3";

@@ -62,11 +62,89 @@ namespace WinFormsApp1
 
             LoadCurrentSettings();
             IsAnyCameraDetected();
+            BuildWindowButtons();
         }
 
         // =========================================================
         // PRESET UI
         // =========================================================
+        // =========================================================
+        // MINIMIZE + EXIT BUTTONS (top-right corner)
+        // =========================================================
+        private void BuildWindowButtons()
+        {
+            // Avoid duplicates on reload
+            if (this.Controls.Find("btnExit", true).Length > 0) return;
+
+            int btnW = 46;
+            int btnH = 32;
+            int top = 0;
+            int right = 0;
+
+            // =========================================================
+            // EXIT BUTTON (rightmost)
+            // =========================================================
+            Button btnExit = new Button
+            {
+                Name = "btnExit",
+                Text = "✕",
+                Size = new Size(btnW, btnH),
+                Location = new Point(this.ClientSize.Width - btnW - right, top),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(180, 30, 30),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                TabStop = false
+            };
+            btnExit.FlatAppearance.BorderSize = 0;
+            btnExit.FlatAppearance.MouseOverBackColor = Color.FromArgb(232, 17, 35);
+            btnExit.FlatAppearance.MouseDownBackColor = Color.FromArgb(140, 10, 20);
+            btnExit.Click += (s, e) =>
+            {
+                var confirm = MessageBox.Show(
+                    "Are you sure you want to exit?",
+                    "Exit Application",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (confirm == DialogResult.Yes)
+                {
+                    ReleaseCurrentSession();
+                    Application.Exit();
+                }
+            };
+            this.Controls.Add(btnExit);
+            btnExit.BringToFront();
+
+            // =========================================================
+            // MINIMIZE BUTTON (just left of Exit)
+            // =========================================================
+            Button btnMinimize = new Button
+            {
+                Name = "btnMinimize",
+                Text = "—",
+                Size = new Size(btnW, btnH),
+                Location = new Point(this.ClientSize.Width - (btnW * 2) - right, top),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(60, 60, 60),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                TabStop = false
+            };
+            btnMinimize.FlatAppearance.BorderSize = 0;
+            btnMinimize.FlatAppearance.MouseOverBackColor = Color.FromArgb(90, 90, 90);
+            btnMinimize.FlatAppearance.MouseDownBackColor = Color.FromArgb(40, 40, 40);
+            btnMinimize.Click += (s, e) =>
+            {
+                this.WindowState = FormWindowState.Minimized;
+            };
+            this.Controls.Add(btnMinimize);
+            btnMinimize.BringToFront();
+        }
         private void BuildPresetUi()
         {
             if (pnlConfiguration == null) return;

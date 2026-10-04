@@ -787,6 +787,14 @@ namespace WinFormsApp1
         {
             string connStr = SettingsManager.Current.GetConnectionString();
 
+            // =========================================================
+            // Vertical scroll layout — one card per row
+            // =========================================================
+            flpPendingActivities.AutoScroll = true;
+            flpPendingActivities.WrapContents = false;
+            flpPendingActivities.FlowDirection = FlowDirection.TopDown;
+            flpPendingActivities.Padding = new Padding(10, 5, 15, 10);   // extra right padding for the scrollbar
+
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -794,26 +802,26 @@ namespace WinFormsApp1
                     conn.Open();
 
                     string query = @"
-                        SELECT pa.activity_id,
-                               pa.title,
-                               pa.start_time,
-                               pa.due_date,
-                               pa.activity_subject,
-                               pa.activity_status,
-                               pa.section
-                        FROM professor_activity pa
-                        INNER JOIN student_class sc
-                            ON  sc.user_id      = @user_id
-                            AND sc.professor_id = pa.professor_id
-                            AND LOWER(TRIM(sc.section)) = LOWER(TRIM(pa.section))
-                        WHERE NOT EXISTS (
-                            SELECT 1 FROM submitted_activity sa
-                            WHERE sa.user_id = @user_id
-                              AND sa.prof_id = pa.professor_id
-                              AND sa.title   = pa.title
-                              AND sa.section = pa.section
-                        )
-                        ORDER BY pa.due_date ASC";
+                SELECT pa.activity_id,
+                       pa.title,
+                       pa.start_time,
+                       pa.due_date,
+                       pa.activity_subject,
+                       pa.activity_status,
+                       pa.section
+                FROM professor_activity pa
+                INNER JOIN student_class sc
+                    ON  sc.user_id      = @user_id
+                    AND sc.professor_id = pa.professor_id
+                    AND LOWER(TRIM(sc.section)) = LOWER(TRIM(pa.section))
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM submitted_activity sa
+                    WHERE sa.user_id = @user_id
+                      AND sa.prof_id = pa.professor_id
+                      AND sa.title   = pa.title
+                      AND sa.section = pa.section
+                )
+                ORDER BY pa.due_date ASC";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -829,40 +837,90 @@ namespace WinFormsApp1
 
                                 int activityId = reader.GetInt32("activity_id");
                                 string title = reader.GetString("title");
-                                string start_time = reader.GetString("start_time");
-                                string due_date = reader.GetString("due_date");
+                                string due_date = FormatDate(reader.GetString("due_date"));
                                 string className = reader.IsDBNull(reader.GetOrdinal("activity_subject"))
                                     ? "" : reader.GetString("activity_subject");
                                 string activity_status = reader.IsDBNull(reader.GetOrdinal("activity_status"))
                                     ? "" : reader.GetString("activity_status");
 
+                                // =========================================================
+                                // CARD — full-width horizontal row inside the panel
+                                // =========================================================
+                                int scrollbarWidth = SystemInformation.VerticalScrollBarWidth;
+                                int cardWidth = Math.Max(300, flpPendingActivities.ClientSize.Width - scrollbarWidth - 20);
+
                                 Guna.UI2.WinForms.Guna2Panel card = new Guna.UI2.WinForms.Guna2Panel();
-                                card.Width = 260;
-                                card.Height = 250;
-                                card.Margin = new Padding(10);
+                                card.Width = cardWidth;
+                                card.Height = 110;
+                                card.Margin = new Padding(0, 0, 0, 10);
                                 card.FillColor = _isNightMode ? NightCardBack : Color.White;
                                 card.BorderColor = _isNightMode ? NightBorder : Color.FromArgb(66, 133, 244);
                                 card.BorderThickness = 2;
-                                card.BorderRadius = 14;
+                                card.BorderRadius = 12;
                                 card.Cursor = Cursors.Hand;
                                 card.Tag = activityId;
 
                                 int capturedId = activityId;
                                 card.Click += (s, e) => InitializeHomeActivityButton(capturedId);
 
+                                // ---- COLORED ACCENT BAR ON LEFT ----
+                                Panel accentBar = new Panel();
+                                accentBar.Width = 5;
+                                accentBar.Dock = DockStyle.Left;
+                                accentBar.BackColor = Color.FromArgb(66, 133, 244);
+                                accentBar.Cursor = Cursors.Hand;
+                                card.Controls.Add(accentBar);
+
+                                // ---- SUBJECT ----
+                                Label lblSubject = new Label();
+                                lblSubject.Text = className.ToUpper();
+                                lblSubject.ForeColor = _isNightMode ? NightText : Color.FromArgb(30, 30, 30);
+                                lblSubject.BackColor = Color.Transparent;
+                                lblSubject.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+                                lblSubject.AutoSize = false;
+                                lblSubject.AutoEllipsis = true;
+                                lblSubject.Size = new Size(cardWidth - 200, 24);
+                                lblSubject.Location = new Point(18, 14);
+                                lblSubject.Cursor = Cursors.Hand;
+                                card.Controls.Add(lblSubject);
+
+                                // ---- TITLE ----
+                                Label lblTitle = new Label();
+                                lblTitle.Text = title;
+                                lblTitle.ForeColor = _isNightMode ? NightSubText : Color.FromArgb(70, 70, 70);
+                                lblTitle.BackColor = Color.Transparent;
+                                lblTitle.Font = new Font("Segoe UI", 10F, FontStyle.Regular);
+                                lblTitle.AutoSize = false;
+                                lblTitle.AutoEllipsis = true;
+                                lblTitle.Size = new Size(cardWidth - 200, 22);
+                                lblTitle.Location = new Point(18, 42);
+                                lblTitle.Cursor = Cursors.Hand;
+                                card.Controls.Add(lblTitle);
+
+                                // ---- STATUS ----
+                                Label lblStatus = new Label();
+                                lblStatus.Text = activity_status;
+                                lblStatus.ForeColor = _isNightMode ? NightSubText : Color.Gray;
+                                lblStatus.BackColor = Color.Transparent;
+                                lblStatus.Font = new Font("Segoe UI", 8.5F, FontStyle.Italic);
+                                lblStatus.AutoSize = true;
+                                lblStatus.Location = new Point(18, 72);
+                                lblStatus.Cursor = Cursors.Hand;
+                                card.Controls.Add(lblStatus);
+
+                                // ---- DUE BADGE (top-right) ----
                                 Guna.UI2.WinForms.Guna2Panel badge = new Guna.UI2.WinForms.Guna2Panel();
-                                badge.Size = new Size(150, 34);
-                                badge.Location = new Point(card.Width - 150, 0);
+                                badge.Size = new Size(160, 26);
+                                badge.Location = new Point(cardWidth - 175, 12);
                                 badge.FillColor = Color.FromArgb(199, 125, 226);
-                                badge.BorderRadius = 0;
-                                badge.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+                                badge.BorderRadius = 13;
                                 badge.Cursor = Cursors.Hand;
 
                                 Label lblDue = new Label();
-                                lblDue.Text = $"Due: {due_date}";
-                                lblDue.ForeColor = Color.Black;
+                                lblDue.Text = "Due: " + due_date;
+                                lblDue.ForeColor = Color.White;
                                 lblDue.BackColor = Color.Transparent;
-                                lblDue.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+                                lblDue.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
                                 lblDue.AutoSize = false;
                                 lblDue.TextAlign = ContentAlignment.MiddleCenter;
                                 lblDue.Dock = DockStyle.Fill;
@@ -870,55 +928,26 @@ namespace WinFormsApp1
                                 badge.Controls.Add(lblDue);
                                 card.Controls.Add(badge);
 
-                                Label lblSubject = new Label();
-                                lblSubject.Text = className.ToUpper();
-                                lblSubject.ForeColor = _isNightMode ? NightText : Color.Black;
-                                lblSubject.BackColor = Color.Transparent;
-                                lblSubject.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
-                                lblSubject.AutoSize = false;
-                                lblSubject.Size = new Size(card.Width - 30, 30);
-                                lblSubject.Location = new Point(20, 70);
-                                lblSubject.Cursor = Cursors.Hand;
-                                card.Controls.Add(lblSubject);
-
-                                Label lblTitle = new Label();
-                                lblTitle.Text = title;
-                                lblTitle.ForeColor = _isNightMode ? NightText : Color.FromArgb(30, 30, 30);
-                                lblTitle.BackColor = Color.Transparent;
-                                lblTitle.Font = new Font("Segoe UI", 12F, FontStyle.Regular);
-                                lblTitle.AutoSize = false;
-                                lblTitle.Size = new Size(card.Width - 30, 30);
-                                lblTitle.Location = new Point(20, 115);
-                                lblTitle.Cursor = Cursors.Hand;
-                                card.Controls.Add(lblTitle);
-
-                                Label lblStatus = new Label();
-                                lblStatus.Text = activity_status;
-                                lblStatus.ForeColor = _isNightMode ? NightSubText : Color.Gray;
-                                lblStatus.BackColor = Color.Transparent;
-                                lblStatus.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
-                                lblStatus.AutoSize = true;
-                                lblStatus.Location = new Point(20, 155);
-                                lblStatus.Cursor = Cursors.Hand;
-                                card.Controls.Add(lblStatus);
-
+                                // ---- VIEW LINK (bottom-right) ----
                                 Label lblView = new Label();
                                 lblView.Text = "View Activity   ›";
                                 lblView.ForeColor = _isNightMode ? Color.FromArgb(220, 130, 130) : Color.FromArgb(139, 0, 0);
                                 lblView.BackColor = Color.Transparent;
-                                lblView.Font = new Font("Segoe UI", 11F, FontStyle.Regular);
+                                lblView.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
                                 lblView.AutoSize = true;
-                                lblView.Location = new Point(card.Width - 145, card.Height - 45);
-                                lblView.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+                                lblView.Location = new Point(cardWidth - 130, 70);
                                 lblView.Cursor = Cursors.Hand;
                                 card.Controls.Add(lblView);
 
+                                // ---- CLICK HANDLERS ----
                                 EventHandler openActivity = (s, e) => InitializeHomeActivityButton(capturedId);
-                                badge.Click += openActivity;
-                                lblDue.Click += openActivity;
+                                card.Click += openActivity;
+                                accentBar.Click += openActivity;
                                 lblSubject.Click += openActivity;
                                 lblTitle.Click += openActivity;
                                 lblStatus.Click += openActivity;
+                                badge.Click += openActivity;
+                                lblDue.Click += openActivity;
                                 lblView.Click += openActivity;
 
                                 flpPendingActivities.Controls.Add(card);
@@ -933,6 +962,31 @@ namespace WinFormsApp1
             {
                 Console.WriteLine("InitializeCreateButtonActivity error: " + ex.Message);
             }
+        }
+        private string FormatDate(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return raw;
+
+            if (DateTime.TryParse(raw, out DateTime parsed))
+                return parsed.ToString("MMM dd, yyyy hh:mm tt");
+
+            try
+            {
+                int dot = raw.IndexOf('.');
+                if (dot > 0)
+                {
+                    int spaceAfter = raw.IndexOf(' ', dot);
+                    string cleaned = spaceAfter > 0
+                        ? raw.Substring(0, dot) + raw.Substring(spaceAfter)
+                        : raw.Substring(0, dot);
+
+                    if (DateTime.TryParse(cleaned, out DateTime p2))
+                        return p2.ToString("MMM dd, yyyy hh:mm tt");
+                }
+            }
+            catch { }
+
+            return raw;
         }
 
         private void InitializeHomeActivityButton(int ActivityId)
@@ -2292,8 +2346,8 @@ namespace WinFormsApp1
 
             assessmentsPanel = new Guna.UI2.WinForms.Guna2Panel
             {
-                Size = new Size(307, 390),
-                Location = new Point(977, 355),
+                Size = new Size(307, 290),
+                Location = new Point(951, 355),
                 FillColor = _isNightMode ? NightCardBack : Color.White,
                 BackColor = Color.Transparent,
                 BorderRadius = 10,

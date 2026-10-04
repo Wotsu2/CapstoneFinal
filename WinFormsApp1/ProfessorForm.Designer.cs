@@ -831,11 +831,11 @@
             // pictureBox5
             // 
             pictureBox5.BackColor = Color.Transparent;
-            pictureBox5.Image = Properties.Resources.Group_2371;
+            pictureBox5.Image = Properties.Resources.cdsga;
             pictureBox5.Location = new Point(135, 37);
             pictureBox5.Name = "pictureBox5";
             pictureBox5.Size = new Size(30, 30);
-            pictureBox5.SizeMode = PictureBoxSizeMode.AutoSize;
+            pictureBox5.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox5.TabIndex = 19;
             pictureBox5.TabStop = false;
             // 
@@ -886,7 +886,7 @@
             btnAccount.ForeColor = Color.White;
             btnAccount.Image = Properties.Resources.Avatar;
             btnAccount.ImageSize = new Size(40, 40);
-            btnAccount.Location = new Point(1286, 24);
+            btnAccount.Location = new Point(1275, 22);
             btnAccount.Name = "btnAccount";
             btnAccount.ShadowDecoration.CustomizableEdges = customizableEdges24;
             btnAccount.Size = new Size(52, 43);
