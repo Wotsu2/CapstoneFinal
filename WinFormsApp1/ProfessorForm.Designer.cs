@@ -2269,6 +2269,7 @@
             // 
             // btnActivityUploadFile
             // 
+            btnActivityUploadFile.AllowDrop = true;
             btnActivityUploadFile.BackColor = Color.Transparent;
             btnActivityUploadFile.BorderRadius = 10;
             btnActivityUploadFile.CustomizableEdges = customizableEdges111;

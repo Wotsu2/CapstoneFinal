@@ -82,7 +82,7 @@ namespace WinFormsApp1
         private readonly Dictionary<Control, ThemeSnapshot> _originalTheme
             = new Dictionary<Control, ThemeSnapshot>();
 
-        private bool _inNightForcePaint = false;   // <-- IDAGDAG MO ITO
+        private bool _inNightForcePaint = false;
 
         private sealed class ThemeSnapshot
         {
@@ -106,7 +106,7 @@ namespace WinFormsApp1
         private static readonly Color NightBorder = Color.FromArgb(60, 60, 60);
         private static readonly Color NightInputBack = Color.FromArgb(50, 50, 50);
 
-        // Containers whose children are re-created every toggle (skip snapshotting their children)
+        // Containers whose children are re-created every toggle
         private static readonly HashSet<string> DynamicContainers = new HashSet<string>
         {
             "flpPendingActivities",
@@ -527,6 +527,9 @@ namespace WinFormsApp1
             }
         }
 
+        // =========================================================
+        // WORKSTATION CONNECTION — Now sends student name
+        // =========================================================
         private void ConnectToServer()
         {
             _ = RunClientForever(
@@ -541,6 +544,34 @@ namespace WinFormsApp1
                 {
                     NetworkStream stream = c.GetStream();
 
+                    // =========================================================
+                    // NEW: Send this student's name to the Professor
+                    // so the workstation card can show who is connected.
+                    // =========================================================
+                    try
+                    {
+                        string myName = string.IsNullOrEmpty(studentname)
+                            ? StudentUsername
+                            : studentname;
+
+                        if (string.IsNullOrEmpty(myName))
+                            myName = "Unknown Student";
+
+                        byte[] nameBytes = Encoding.UTF8.GetBytes(myName);
+                        byte[] nameLen = BitConverter.GetBytes(nameBytes.Length);
+
+                        await stream.WriteAsync(nameLen, 0, nameLen.Length);
+                        await stream.WriteAsync(nameBytes, 0, nameBytes.Length);
+                        await stream.FlushAsync();
+
+                        Console.WriteLine("[Workstation] Sent name: " + myName);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("[Workstation] Failed to send name: " + ex.Message);
+                    }
+
+                    // Existing heartbeat loop
                     while (!isSignedOut)
                     {
                         try
@@ -3470,7 +3501,7 @@ namespace WinFormsApp1
         // =========================================================
         // NIGHT MODE — TOGGLE + THEMING
         // =========================================================
-        
+
 
         private void UpdateNightModeButton()
         {
@@ -3552,7 +3583,6 @@ namespace WinFormsApp1
         {
             if (c == Color.Transparent) return false;
             if (c.A < 30) return false;
-            // Consider any color with high brightness as light
             return c.GetBrightness() > 0.55;
         }
 
@@ -3742,7 +3772,6 @@ namespace WinFormsApp1
 
             foreach (Control c in parent.Controls)
             {
-                // Skip children of dynamic containers (they get themed on rebuild)
                 if (!IsDynamicContainer(c))
                     ForceNightTheme(c);
 
@@ -3754,9 +3783,8 @@ namespace WinFormsApp1
         private void ForceNightTheme(Control c)
         {
             if (c == null) return;
-            if (c == guna2Button4) return; // night toggle — leave alone
+            if (c == guna2Button4) return;
 
-            // ---- Skip maroon-branded controls ----
             bool brand = false;
             if (c is Guna.UI2.WinForms.Guna2Panel gpBrand
                 && gpBrand.FillColor != Color.Transparent
@@ -3773,7 +3801,6 @@ namespace WinFormsApp1
 
             if (brand) return;
 
-            // ---- Guna2CustomGradientPanel: darken all 4 fill stops ----
             if (c is Guna.UI2.WinForms.Guna2CustomGradientPanel gcp)
             {
                 gcp.FillColor = NightCardBack;
@@ -3785,7 +3812,6 @@ namespace WinFormsApp1
                 return;
             }
 
-            // ---- Guna2Panel ----
             if (c is Guna.UI2.WinForms.Guna2Panel gp)
             {
                 if (gp.FillColor.A > 0 && gp.FillColor != Color.Transparent && IsLight(gp.FillColor))
@@ -3796,7 +3822,6 @@ namespace WinFormsApp1
                 return;
             }
 
-            // ---- Guna2Button ----
             if (c is Guna.UI2.WinForms.Guna2Button btn)
             {
                 if (btn.FillColor.A > 0 && btn.FillColor != Color.Transparent && IsLight(btn.FillColor))
@@ -3810,14 +3835,12 @@ namespace WinFormsApp1
                 return;
             }
 
-            // ---- DataGridView ----
             if (c is DataGridView dgv)
             {
                 ApplyGridTheme(dgv);
                 return;
             }
 
-            // ---- Label ----
             if (c is Label lbl)
             {
                 if (lbl.ForeColor.A > 0 && lbl.ForeColor != Color.Transparent
@@ -3826,12 +3849,10 @@ namespace WinFormsApp1
                 return;
             }
 
-            // ---- Text inputs ----
             if (c is TextBox tb) { tb.BackColor = NightInputBack; tb.ForeColor = NightText; return; }
             if (c is RichTextBox rtb) { rtb.BackColor = NightInputBack; rtb.ForeColor = NightText; return; }
             if (c is ComboBox cb) { cb.BackColor = NightInputBack; cb.ForeColor = NightText; return; }
 
-            // ---- PictureBox ----
             if (c is PictureBox pb)
             {
                 if (pb.BackColor.A > 0 && pb.BackColor != Color.Transparent && IsLight(pb.BackColor))
@@ -3839,14 +3860,8 @@ namespace WinFormsApp1
                 return;
             }
 
-            // ============ UNIVERSAL FALLBACK ============
-            // Any remaining control — force any light BackColor to dark.
-            // This is what catches UserControls, ScrollableControls,
-            // SplitContainers, custom containers, and anything else.
             if (c.BackColor.A > 0 && c.BackColor != Color.Transparent && IsLight(c.BackColor))
             {
-                // Preserve non-panel controls (e.g. NumericUpDown, DateTimePicker)
-                // so their intended colors remain, only theme common containers.
                 if (c is Panel
                     || c is FlowLayoutPanel
                     || c is TableLayoutPanel
@@ -3900,7 +3915,7 @@ namespace WinFormsApp1
         private void pnlSetting_Paint(object sender, PaintEventArgs e)
         {
             if (!_isNightMode) return;
-            if (_inNightForcePaint) return; // guard para iwas infinite repaint loop
+            if (_inNightForcePaint) return;
 
             var ctl = sender as Control;
             if (ctl == null) return;
@@ -3909,14 +3924,9 @@ namespace WinFormsApp1
             {
                 _inNightForcePaint = true;
 
-                // 1) Force the panel surface itself to night background on EVERY repaint.
-                //    Ito ang sumasalo sa pinkish/cream na background na bumabalik
-                //    tuwing nagre-repaint ang pnlSetting.
                 using (var brush = new SolidBrush(NightFormBack))
                     e.Graphics.FillRectangle(brush, ctl.ClientRectangle);
 
-                // 2) Re-force the children, in case a designer or user code
-                //    repainted them with day colors.
                 foreach (Control child in ctl.Controls)
                 {
                     if (IsDynamicContainer(child)) continue;
