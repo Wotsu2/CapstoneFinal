@@ -402,7 +402,6 @@
             txtSearchGrades = new Guna.UI2.WinForms.Guna2TextBox();
             cmbSectionGrades = new Guna.UI2.WinForms.Guna2ComboBox();
             cmbSubjectGrades = new Guna.UI2.WinForms.Guna2ComboBox();
-            pnlAttendance = new Panel();
             pnlSubject = new Panel();
             btnShowPnlCreateClass = new Guna.UI2.WinForms.Guna2Button();
             flpSubjectClass = new FlowLayoutPanel();
@@ -422,7 +421,6 @@
             guna2Panel32 = new Guna.UI2.WinForms.Guna2Panel();
             btnDeleteFile = new Guna.UI2.WinForms.Guna2Button();
             btnAddFolder = new Guna.UI2.WinForms.Guna2Button();
-            imageList1 = new ImageList(components);
             pnlSetting = new Panel();
             btnSignOut = new Guna.UI2.WinForms.Guna2Button();
             guna2Button4 = new Guna.UI2.WinForms.Guna2Button();
@@ -464,6 +462,8 @@
             txtNewPassword = new Guna.UI2.WinForms.Guna2TextBox();
             label53 = new Label();
             txtCurrentPassword = new Guna.UI2.WinForms.Guna2TextBox();
+            pnlAttendance = new Panel();
+            imageList1 = new ImageList(components);
             guna2Panel1.SuspendLayout();
             guna2Panel3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
@@ -538,7 +538,7 @@
             guna2Panel1.Name = "guna2Panel1";
             guna2Panel1.ShadowDecoration.CustomizableEdges = customizableEdges20;
             guna2Panel1.ShadowDecoration.Enabled = true;
-            guna2Panel1.Size = new Size(78, 1008);
+            guna2Panel1.Size = new Size(78, 642);
             guna2Panel1.TabIndex = 0;
             // 
             // btnQuizExam
@@ -805,7 +805,7 @@
             guna2Panel2.Location = new Point(0, 0);
             guna2Panel2.Name = "guna2Panel2";
             guna2Panel2.ShadowDecoration.CustomizableEdges = customizableEdges26;
-            guna2Panel2.Size = new Size(1447, 89);
+            guna2Panel2.Size = new Size(1350, 89);
             guna2Panel2.TabIndex = 1;
             // 
             // label30
@@ -814,7 +814,7 @@
             label30.BackColor = Color.Transparent;
             label30.Font = new Font("Segoe UI", 9F);
             label30.ForeColor = Color.FromArgb(123, 15, 23);
-            label30.Location = new Point(424, 45);
+            label30.Location = new Point(170, 45);
             label30.Name = "label30";
             label30.Size = new Size(177, 15);
             label30.TabIndex = 22;
@@ -832,7 +832,7 @@
             // 
             pictureBox5.BackColor = Color.Transparent;
             pictureBox5.Image = Properties.Resources.Group_2371;
-            pictureBox5.Location = new Point(388, 37);
+            pictureBox5.Location = new Point(135, 37);
             pictureBox5.Name = "pictureBox5";
             pictureBox5.Size = new Size(30, 30);
             pictureBox5.SizeMode = PictureBoxSizeMode.AutoSize;
@@ -844,7 +844,7 @@
             label46.AutoSize = true;
             label46.BackColor = Color.Transparent;
             label46.ForeColor = Color.FromArgb(123, 15, 23);
-            label46.Location = new Point(178, 37);
+            label46.Location = new Point(444, 37);
             label46.Name = "label46";
             label46.Size = new Size(63, 15);
             label46.TabIndex = 21;
@@ -856,7 +856,7 @@
             label47.BackColor = Color.Transparent;
             label47.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             label47.ForeColor = Color.FromArgb(123, 15, 23);
-            label47.Location = new Point(178, 52);
+            label47.Location = new Point(444, 52);
             label47.Name = "label47";
             label47.Size = new Size(179, 15);
             label47.TabIndex = 20;
@@ -866,7 +866,7 @@
             // 
             pictureBox6.BackColor = Color.Transparent;
             pictureBox6.Image = Properties.Resources._355823652_701491338448756_8639478619159832458_n_removebg_preview_12;
-            pictureBox6.Location = new Point(136, 37);
+            pictureBox6.Location = new Point(402, 37);
             pictureBox6.Name = "pictureBox6";
             pictureBox6.Size = new Size(30, 30);
             pictureBox6.SizeMode = PictureBoxSizeMode.AutoSize;
@@ -886,7 +886,7 @@
             btnAccount.ForeColor = Color.White;
             btnAccount.Image = Properties.Resources.Avatar;
             btnAccount.ImageSize = new Size(40, 40);
-            btnAccount.Location = new Point(1321, 22);
+            btnAccount.Location = new Point(1286, 24);
             btnAccount.Name = "btnAccount";
             btnAccount.ShadowDecoration.CustomizableEdges = customizableEdges24;
             btnAccount.Size = new Size(52, 43);
@@ -901,7 +901,7 @@
             guna2Panel4.Controls.Add(label2);
             guna2Panel4.CustomizableEdges = customizableEdges27;
             guna2Panel4.FillColor = Color.White;
-            guna2Panel4.Location = new Point(85, 32);
+            guna2Panel4.Location = new Point(42, 8);
             guna2Panel4.Name = "guna2Panel4";
             guna2Panel4.ShadowDecoration.BorderRadius = 10;
             guna2Panel4.ShadowDecoration.CustomizableEdges = customizableEdges28;
@@ -939,7 +939,7 @@
             guna2Panel5.Controls.Add(label4);
             guna2Panel5.CustomizableEdges = customizableEdges29;
             guna2Panel5.FillColor = Color.White;
-            guna2Panel5.Location = new Point(554, 32);
+            guna2Panel5.Location = new Point(511, 8);
             guna2Panel5.Name = "guna2Panel5";
             guna2Panel5.ShadowDecoration.BorderRadius = 10;
             guna2Panel5.ShadowDecoration.CustomizableEdges = customizableEdges30;
@@ -982,7 +982,7 @@
             guna2Panel6.Controls.Add(label6);
             guna2Panel6.CustomizableEdges = customizableEdges35;
             guna2Panel6.FillColor = Color.White;
-            guna2Panel6.Location = new Point(86, 209);
+            guna2Panel6.Location = new Point(43, 185);
             guna2Panel6.Name = "guna2Panel6";
             guna2Panel6.ShadowDecoration.BorderRadius = 10;
             guna2Panel6.ShadowDecoration.CustomizableEdges = customizableEdges36;
@@ -1071,7 +1071,7 @@
             guna2Panel8.Controls.Add(label9);
             guna2Panel8.CustomizableEdges = customizableEdges39;
             guna2Panel8.FillColor = Color.White;
-            guna2Panel8.Location = new Point(1028, 32);
+            guna2Panel8.Location = new Point(985, 8);
             guna2Panel8.Name = "guna2Panel8";
             guna2Panel8.ShadowDecoration.BorderRadius = 10;
             guna2Panel8.ShadowDecoration.CustomizableEdges = customizableEdges40;
@@ -1124,7 +1124,7 @@
             guna2Panel9.Controls.Add(pictureBox2);
             guna2Panel9.CustomizableEdges = customizableEdges43;
             guna2Panel9.FillColor = Color.White;
-            guna2Panel9.Location = new Point(1028, 150);
+            guna2Panel9.Location = new Point(985, 126);
             guna2Panel9.Name = "guna2Panel9";
             guna2Panel9.ShadowDecoration.BorderRadius = 10;
             guna2Panel9.ShadowDecoration.CustomizableEdges = customizableEdges44;
@@ -1188,7 +1188,7 @@
             guna2Panel10.Controls.Add(pictureBox3);
             guna2Panel10.CustomizableEdges = customizableEdges47;
             guna2Panel10.FillColor = Color.White;
-            guna2Panel10.Location = new Point(1028, 428);
+            guna2Panel10.Location = new Point(985, 404);
             guna2Panel10.Name = "guna2Panel10";
             guna2Panel10.ShadowDecoration.BorderRadius = 10;
             guna2Panel10.ShadowDecoration.CustomizableEdges = customizableEdges48;
@@ -1272,7 +1272,7 @@
             btnHomeCreateActivity.Image = Properties.Resources.PlusSign;
             btnHomeCreateActivity.ImageOffset = new Point(78, 3);
             btnHomeCreateActivity.ImageSize = new Size(15, 15);
-            btnHomeCreateActivity.Location = new Point(566, 544);
+            btnHomeCreateActivity.Location = new Point(523, 520);
             btnHomeCreateActivity.Name = "btnHomeCreateActivity";
             btnHomeCreateActivity.ShadowDecoration.BorderRadius = 10;
             btnHomeCreateActivity.ShadowDecoration.CustomizableEdges = customizableEdges50;
@@ -1300,9 +1300,9 @@
             pnlHome.Controls.Add(guna2Panel5);
             pnlHome.Controls.Add(guna2Panel8);
             pnlHome.Controls.Add(guna2Panel6);
-            pnlHome.Location = new Point(84, 96);
+            pnlHome.Location = new Point(84, 88);
             pnlHome.Name = "pnlHome";
-            pnlHome.Size = new Size(1361, 727);
+            pnlHome.Size = new Size(1267, 642);
             pnlHome.TabIndex = 9;
             // 
             // btnHomeCreateSubject
@@ -1320,7 +1320,7 @@
             btnHomeCreateSubject.Image = Properties.Resources.PlusSign;
             btnHomeCreateSubject.ImageOffset = new Point(78, 3);
             btnHomeCreateSubject.ImageSize = new Size(15, 15);
-            btnHomeCreateSubject.Location = new Point(85, 544);
+            btnHomeCreateSubject.Location = new Point(42, 520);
             btnHomeCreateSubject.Name = "btnHomeCreateSubject";
             btnHomeCreateSubject.ShadowDecoration.BorderRadius = 10;
             btnHomeCreateSubject.ShadowDecoration.CustomizableEdges = customizableEdges52;
@@ -1340,9 +1340,9 @@
             pnlWorkstation.BackgroundImageLayout = ImageLayout.Center;
             pnlWorkstation.Controls.Add(pnlWorkStationMonitoring);
             pnlWorkstation.Controls.Add(guna2Panel15);
-            pnlWorkstation.Location = new Point(84, 96);
+            pnlWorkstation.Location = new Point(84, 88);
             pnlWorkstation.Name = "pnlWorkstation";
-            pnlWorkstation.Size = new Size(1361, 727);
+            pnlWorkstation.Size = new Size(1266, 642);
             pnlWorkstation.TabIndex = 10;
             // 
             // pnlWorkStationMonitoring
@@ -1365,7 +1365,7 @@
             pnlWorkStationMonitoring.ShadowDecoration.CustomizableEdges = customizableEdges58;
             pnlWorkStationMonitoring.ShadowDecoration.Enabled = true;
             pnlWorkStationMonitoring.ShadowDecoration.Shadow = new Padding(0, 0, 5, 5);
-            pnlWorkStationMonitoring.Size = new Size(1249, 594);
+            pnlWorkStationMonitoring.Size = new Size(1185, 528);
             pnlWorkStationMonitoring.TabIndex = 1;
             // 
             // guna2Panel20
@@ -1374,7 +1374,7 @@
             guna2Panel20.BorderRadius = 7;
             guna2Panel20.CustomizableEdges = customizableEdges53;
             guna2Panel20.FillColor = Color.Red;
-            guna2Panel20.Location = new Point(997, 32);
+            guna2Panel20.Location = new Point(933, 32);
             guna2Panel20.Name = "guna2Panel20";
             guna2Panel20.ShadowDecoration.CustomizableEdges = customizableEdges54;
             guna2Panel20.Size = new Size(10, 10);
@@ -1386,7 +1386,7 @@
             guna2Panel19.BorderRadius = 7;
             guna2Panel19.CustomizableEdges = customizableEdges55;
             guna2Panel19.FillColor = Color.Green;
-            guna2Panel19.Location = new Point(863, 32);
+            guna2Panel19.Location = new Point(799, 32);
             guna2Panel19.Name = "guna2Panel19";
             guna2Panel19.ShadowDecoration.CustomizableEdges = customizableEdges56;
             guna2Panel19.Size = new Size(10, 10);
@@ -1397,7 +1397,7 @@
             lblComputerOffline.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             lblComputerOffline.AutoSize = true;
             lblComputerOffline.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            lblComputerOffline.Location = new Point(1067, 27);
+            lblComputerOffline.Location = new Point(1003, 27);
             lblComputerOffline.Name = "lblComputerOffline";
             lblComputerOffline.Size = new Size(17, 19);
             lblComputerOffline.TabIndex = 18;
@@ -1408,7 +1408,7 @@
             label15.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label15.AutoSize = true;
             label15.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            label15.Location = new Point(1009, 27);
+            label15.Location = new Point(945, 27);
             label15.Name = "label15";
             label15.Size = new Size(54, 19);
             label15.TabIndex = 19;
@@ -1419,7 +1419,7 @@
             lblComputerOnline.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             lblComputerOnline.AutoSize = true;
             lblComputerOnline.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            lblComputerOnline.Location = new Point(934, 27);
+            lblComputerOnline.Location = new Point(870, 27);
             lblComputerOnline.Name = "lblComputerOnline";
             lblComputerOnline.Size = new Size(17, 19);
             lblComputerOnline.TabIndex = 17;
@@ -1431,7 +1431,7 @@
             flpMainWorkstations.AutoScroll = true;
             flpMainWorkstations.Location = new Point(11, 64);
             flpMainWorkstations.Name = "flpMainWorkstations";
-            flpMainWorkstations.Size = new Size(1223, 514);
+            flpMainWorkstations.Size = new Size(1157, 450);
             flpMainWorkstations.TabIndex = 18;
             // 
             // label14
@@ -1439,7 +1439,7 @@
             label14.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label14.AutoSize = true;
             label14.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            label14.Location = new Point(876, 27);
+            label14.Location = new Point(812, 27);
             label14.Name = "label14";
             label14.Size = new Size(52, 19);
             label14.TabIndex = 16;
@@ -1479,7 +1479,7 @@
             guna2Panel15.ShadowDecoration.CustomizableEdges = customizableEdges72;
             guna2Panel15.ShadowDecoration.Enabled = true;
             guna2Panel15.ShadowDecoration.Shadow = new Padding(0, 0, 5, 5);
-            guna2Panel15.Size = new Size(1249, 81);
+            guna2Panel15.Size = new Size(1185, 81);
             guna2Panel15.TabIndex = 1;
             // 
             // label27
@@ -1487,7 +1487,7 @@
             label27.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label27.AutoSize = true;
             label27.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            label27.Location = new Point(628, 58);
+            label27.Location = new Point(626, 56);
             label27.Name = "label27";
             label27.Size = new Size(75, 19);
             label27.TabIndex = 25;
@@ -1498,7 +1498,7 @@
             label26.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label26.AutoSize = true;
             label26.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            label26.Location = new Point(516, 58);
+            label26.Location = new Point(514, 56);
             label26.Name = "label26";
             label26.Size = new Size(56, 19);
             label26.TabIndex = 24;
@@ -1509,7 +1509,7 @@
             label20.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label20.AutoSize = true;
             label20.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            label20.Location = new Point(380, 58);
+            label20.Location = new Point(378, 56);
             label20.Name = "label20";
             label20.Size = new Size(97, 19);
             label20.TabIndex = 23;
@@ -1520,7 +1520,7 @@
             label13.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label13.AutoSize = true;
             label13.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            label13.Location = new Point(265, 58);
+            label13.Location = new Point(263, 56);
             label13.Name = "label13";
             label13.Size = new Size(84, 19);
             label13.TabIndex = 22;
@@ -1531,7 +1531,7 @@
             label10.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label10.AutoSize = true;
             label10.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            label10.Location = new Point(163, 58);
+            label10.Location = new Point(161, 56);
             label10.Name = "label10";
             label10.Size = new Size(49, 19);
             label10.TabIndex = 21;
@@ -1542,7 +1542,7 @@
             label5.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label5.AutoSize = true;
             label5.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            label5.Location = new Point(24, 58);
+            label5.Location = new Point(22, 56);
             label5.Name = "label5";
             label5.Size = new Size(84, 19);
             label5.TabIndex = 20;
@@ -1694,9 +1694,9 @@
             pnlStudent.BackgroundImage = Properties.Resources.Shade;
             pnlStudent.BackgroundImageLayout = ImageLayout.Stretch;
             pnlStudent.Controls.Add(guna2Panel23);
-            pnlStudent.Location = new Point(84, 96);
+            pnlStudent.Location = new Point(84, 88);
             pnlStudent.Name = "pnlStudent";
-            pnlStudent.Size = new Size(1361, 752);
+            pnlStudent.Size = new Size(1266, 642);
             pnlStudent.TabIndex = 11;
             // 
             // guna2Panel23
@@ -1721,13 +1721,13 @@
             guna2Panel23.Controls.Add(label21);
             guna2Panel23.CustomizableEdges = customizableEdges101;
             guna2Panel23.FillColor = Color.White;
-            guna2Panel23.Location = new Point(67, 20);
+            guna2Panel23.Location = new Point(21, 11);
             guna2Panel23.Name = "guna2Panel23";
             guna2Panel23.ShadowDecoration.BorderRadius = 10;
             guna2Panel23.ShadowDecoration.CustomizableEdges = customizableEdges102;
             guna2Panel23.ShadowDecoration.Enabled = true;
             guna2Panel23.ShadowDecoration.Shadow = new Padding(0, 0, 5, 5);
-            guna2Panel23.Size = new Size(1231, 685);
+            guna2Panel23.Size = new Size(1231, 628);
             guna2Panel23.TabIndex = 1;
             // 
             // btnCleanFilter
@@ -2117,7 +2117,7 @@
             dgvStudents.RowHeadersVisible = false;
             dgvStudents.RowTemplate.Height = 37;
             dgvStudents.ScrollBars = ScrollBars.Vertical;
-            dgvStudents.Size = new Size(1184, 499);
+            dgvStudents.Size = new Size(1184, 447);
             dgvStudents.TabIndex = 20;
             dgvStudents.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White;
             dgvStudents.ThemeStyle.AlternatingRowsStyle.Font = new Font("Segoe UI", 9F);
@@ -2166,7 +2166,7 @@
             pnlActivity.Controls.Add(guna2Panel21);
             pnlActivity.Location = new Point(84, 88);
             pnlActivity.Name = "pnlActivity";
-            pnlActivity.Size = new Size(1361, 760);
+            pnlActivity.Size = new Size(1267, 642);
             pnlActivity.TabIndex = 11;
             // 
             // label25
@@ -2174,7 +2174,7 @@
             label25.AutoSize = true;
             label25.BackColor = Color.Transparent;
             label25.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label25.Location = new Point(67, 566);
+            label25.Location = new Point(22, 483);
             label25.Name = "label25";
             label25.Size = new Size(52, 21);
             label25.TabIndex = 27;
@@ -2191,7 +2191,7 @@
             txtActivityScore.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
             txtActivityScore.Font = new Font("Segoe UI", 9F);
             txtActivityScore.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtActivityScore.Location = new Point(67, 598);
+            txtActivityScore.Location = new Point(22, 515);
             txtActivityScore.Name = "txtActivityScore";
             txtActivityScore.PlaceholderText = "";
             txtActivityScore.SelectedText = "";
@@ -2208,7 +2208,7 @@
             dtpActivityDeadline.FillColor = Color.White;
             dtpActivityDeadline.Font = new Font("Segoe UI", 9F);
             dtpActivityDeadline.Format = DateTimePickerFormat.Long;
-            dtpActivityDeadline.Location = new Point(507, 195);
+            dtpActivityDeadline.Location = new Point(460, 170);
             dtpActivityDeadline.MaxDate = new DateTime(9998, 12, 31, 0, 0, 0, 0);
             dtpActivityDeadline.MinDate = new DateTime(1753, 1, 1, 0, 0, 0, 0);
             dtpActivityDeadline.Name = "dtpActivityDeadline";
@@ -2216,7 +2216,7 @@
             dtpActivityDeadline.ShadowDecoration.CustomizableEdges = customizableEdges106;
             dtpActivityDeadline.ShadowDecoration.Enabled = true;
             dtpActivityDeadline.ShadowDecoration.Shadow = new Padding(0, 0, 5, 5);
-            dtpActivityDeadline.Size = new Size(463, 76);
+            dtpActivityDeadline.Size = new Size(415, 56);
             dtpActivityDeadline.TabIndex = 25;
             dtpActivityDeadline.TextAlign = HorizontalAlignment.Center;
             dtpActivityDeadline.Value = new DateTime(2026, 8, 30, 12, 57, 54, 954);
@@ -2232,14 +2232,14 @@
             cmbActivitySection.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
             cmbActivitySection.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
             cmbActivitySection.ForeColor = Color.FromArgb(68, 88, 112);
-            cmbActivitySection.ItemHeight = 70;
-            cmbActivitySection.Location = new Point(507, 103);
+            cmbActivitySection.ItemHeight = 50;
+            cmbActivitySection.Location = new Point(460, 103);
             cmbActivitySection.Name = "cmbActivitySection";
             cmbActivitySection.ShadowDecoration.BorderRadius = 10;
             cmbActivitySection.ShadowDecoration.CustomizableEdges = customizableEdges108;
             cmbActivitySection.ShadowDecoration.Enabled = true;
             cmbActivitySection.ShadowDecoration.Shadow = new Padding(0, 0, 5, 5);
-            cmbActivitySection.Size = new Size(463, 76);
+            cmbActivitySection.Size = new Size(415, 56);
             cmbActivitySection.TabIndex = 23;
             cmbActivitySection.TextAlign = HorizontalAlignment.Center;
             // 
@@ -2256,7 +2256,7 @@
             txtActivityPostDetails.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
             txtActivityPostDetails.Font = new Font("Segoe UI", 9F);
             txtActivityPostDetails.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtActivityPostDetails.Location = new Point(65, 383);
+            txtActivityPostDetails.Location = new Point(21, 319);
             txtActivityPostDetails.Multiline = true;
             txtActivityPostDetails.Name = "txtActivityPostDetails";
             txtActivityPostDetails.PlaceholderText = "";
@@ -2283,7 +2283,7 @@
             btnActivityUploadFile.Image = Properties.Resources.Upload;
             btnActivityUploadFile.ImageOffset = new Point(54, -20);
             btnActivityUploadFile.ImageSize = new Size(25, 20);
-            btnActivityUploadFile.Location = new Point(579, 383);
+            btnActivityUploadFile.Location = new Point(533, 323);
             btnActivityUploadFile.Name = "btnActivityUploadFile";
             btnActivityUploadFile.ShadowDecoration.BorderRadius = 10;
             btnActivityUploadFile.ShadowDecoration.CustomizableEdges = customizableEdges112;
@@ -2300,7 +2300,7 @@
             label22.AutoSize = true;
             label22.BackColor = Color.Transparent;
             label22.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label22.Location = new Point(579, 355);
+            label22.Location = new Point(535, 291);
             label22.Name = "label22";
             label22.Size = new Size(122, 21);
             label22.TabIndex = 20;
@@ -2311,7 +2311,7 @@
             label18.AutoSize = true;
             label18.BackColor = Color.Transparent;
             label18.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label18.Location = new Point(65, 355);
+            label18.Location = new Point(21, 291);
             label18.Name = "label18";
             label18.Size = new Size(40, 21);
             label18.TabIndex = 19;
@@ -2321,7 +2321,7 @@
             // 
             label17.AutoSize = true;
             label17.Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label17.Location = new Point(65, 309);
+            label17.Location = new Point(21, 245);
             label17.Name = "label17";
             label17.Size = new Size(124, 28);
             label17.TabIndex = 16;
@@ -2338,14 +2338,14 @@
             cmbActivitySubject.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
             cmbActivitySubject.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
             cmbActivitySubject.ForeColor = Color.FromArgb(68, 88, 112);
-            cmbActivitySubject.ItemHeight = 70;
-            cmbActivitySubject.Location = new Point(21, 195);
+            cmbActivitySubject.ItemHeight = 50;
+            cmbActivitySubject.Location = new Point(21, 170);
             cmbActivitySubject.Name = "cmbActivitySubject";
             cmbActivitySubject.ShadowDecoration.BorderRadius = 10;
             cmbActivitySubject.ShadowDecoration.CustomizableEdges = customizableEdges114;
             cmbActivitySubject.ShadowDecoration.Enabled = true;
             cmbActivitySubject.ShadowDecoration.Shadow = new Padding(0, 0, 5, 5);
-            cmbActivitySubject.Size = new Size(463, 76);
+            cmbActivitySubject.Size = new Size(422, 56);
             cmbActivitySubject.TabIndex = 16;
             cmbActivitySubject.TextAlign = HorizontalAlignment.Center;
             // 
@@ -2360,7 +2360,7 @@
             cmbActivityTitle.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
             cmbActivityTitle.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
             cmbActivityTitle.ForeColor = Color.FromArgb(68, 88, 112);
-            cmbActivityTitle.ItemHeight = 70;
+            cmbActivityTitle.ItemHeight = 50;
             cmbActivityTitle.Items.AddRange(new object[] { "Activity", "Performance Task" });
             cmbActivityTitle.Location = new Point(21, 103);
             cmbActivityTitle.Name = "cmbActivityTitle";
@@ -2368,7 +2368,7 @@
             cmbActivityTitle.ShadowDecoration.CustomizableEdges = customizableEdges116;
             cmbActivityTitle.ShadowDecoration.Enabled = true;
             cmbActivityTitle.ShadowDecoration.Shadow = new Padding(0, 0, 5, 5);
-            cmbActivityTitle.Size = new Size(463, 76);
+            cmbActivityTitle.Size = new Size(422, 56);
             cmbActivityTitle.TabIndex = 5;
             cmbActivityTitle.TextAlign = HorizontalAlignment.Center;
             // 
@@ -2380,12 +2380,12 @@
             guna2Panel28.Controls.Add(label23);
             guna2Panel28.CustomizableEdges = customizableEdges117;
             guna2Panel28.FillColor = Color.White;
-            guna2Panel28.Location = new Point(991, 25);
+            guna2Panel28.Location = new Point(925, 25);
             guna2Panel28.Name = "guna2Panel28";
             guna2Panel28.ShadowDecoration.CustomizableEdges = customizableEdges118;
             guna2Panel28.ShadowDecoration.Enabled = true;
             guna2Panel28.ShadowDecoration.Shadow = new Padding(0, 0, 5, 5);
-            guna2Panel28.Size = new Size(310, 656);
+            guna2Panel28.Size = new Size(325, 606);
             guna2Panel28.TabIndex = 3;
             // 
             // dgvRecentActivity
@@ -2417,7 +2417,7 @@
             dataGridViewCellStyle7.WrapMode = DataGridViewTriState.False;
             dgvRecentActivity.DefaultCellStyle = dataGridViewCellStyle7;
             dgvRecentActivity.GridColor = Color.FromArgb(231, 229, 255);
-            dgvRecentActivity.Location = new Point(11, 126);
+            dgvRecentActivity.Location = new Point(3, 126);
             dgvRecentActivity.MultiSelect = false;
             dgvRecentActivity.Name = "dgvRecentActivity";
             dgvRecentActivity.ReadOnly = true;
@@ -2432,7 +2432,7 @@
             dgvRecentActivity.RowHeadersDefaultCellStyle = dataGridViewCellStyle8;
             dgvRecentActivity.RowHeadersVisible = false;
             dgvRecentActivity.RowTemplate.Height = 37;
-            dgvRecentActivity.Size = new Size(287, 517);
+            dgvRecentActivity.Size = new Size(319, 466);
             dgvRecentActivity.TabIndex = 24;
             dgvRecentActivity.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White;
             dgvRecentActivity.ThemeStyle.AlternatingRowsStyle.Font = new Font("Segoe UI", 9F);
@@ -2470,7 +2470,7 @@
             btnPostActivity.FillColor = Color.White;
             btnPostActivity.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             btnPostActivity.ForeColor = Color.Black;
-            btnPostActivity.Location = new Point(808, 566);
+            btnPostActivity.Location = new Point(762, 529);
             btnPostActivity.Name = "btnPostActivity";
             btnPostActivity.ShadowDecoration.CustomizableEdges = customizableEdges120;
             btnPostActivity.ShadowDecoration.Enabled = true;
@@ -2492,7 +2492,7 @@
             guna2Panel21.ShadowDecoration.CustomizableEdges = customizableEdges122;
             guna2Panel21.ShadowDecoration.Enabled = true;
             guna2Panel21.ShadowDecoration.Shadow = new Padding(0, 0, 5, 5);
-            guna2Panel21.Size = new Size(949, 67);
+            guna2Panel21.Size = new Size(854, 67);
             guna2Panel21.TabIndex = 0;
             // 
             // label16
@@ -2523,9 +2523,9 @@
             pnlGrades.Controls.Add(txtSearchGrades);
             pnlGrades.Controls.Add(cmbSectionGrades);
             pnlGrades.Controls.Add(cmbSubjectGrades);
-            pnlGrades.Location = new Point(84, 96);
+            pnlGrades.Location = new Point(84, 88);
             pnlGrades.Name = "pnlGrades";
-            pnlGrades.Size = new Size(1361, 736);
+            pnlGrades.Size = new Size(1266, 642);
             pnlGrades.TabIndex = 11;
             // 
             // btnGradesClearFilter
@@ -2543,7 +2543,7 @@
             btnGradesClearFilter.Image = Properties.Resources.filter;
             btnGradesClearFilter.ImageOffset = new Point(1, 0);
             btnGradesClearFilter.ImageSize = new Size(16, 16);
-            btnGradesClearFilter.Location = new Point(1231, 59);
+            btnGradesClearFilter.Location = new Point(1180, 31);
             btnGradesClearFilter.Name = "btnGradesClearFilter";
             btnGradesClearFilter.ShadowDecoration.CustomizableEdges = customizableEdges124;
             btnGradesClearFilter.Size = new Size(45, 42);
@@ -2555,7 +2555,7 @@
             lblGradesActivity.AutoSize = true;
             lblGradesActivity.BackColor = Color.White;
             lblGradesActivity.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblGradesActivity.Location = new Point(575, 67);
+            lblGradesActivity.Location = new Point(524, 39);
             lblGradesActivity.Name = "lblGradesActivity";
             lblGradesActivity.Size = new Size(77, 21);
             lblGradesActivity.TabIndex = 31;
@@ -2566,7 +2566,7 @@
             lblGradesSection.AutoSize = true;
             lblGradesSection.BackColor = Color.White;
             lblGradesSection.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblGradesSection.Location = new Point(332, 67);
+            lblGradesSection.Location = new Point(281, 39);
             lblGradesSection.Name = "lblGradesSection";
             lblGradesSection.Size = new Size(65, 21);
             lblGradesSection.TabIndex = 30;
@@ -2577,7 +2577,7 @@
             lblGradesSubject.AutoSize = true;
             lblGradesSubject.BackColor = Color.White;
             lblGradesSubject.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblGradesSubject.Location = new Point(87, 67);
+            lblGradesSubject.Location = new Point(36, 39);
             lblGradesSubject.Name = "lblGradesSubject";
             lblGradesSubject.Size = new Size(65, 21);
             lblGradesSubject.TabIndex = 15;
@@ -2612,7 +2612,7 @@
             dataGridViewCellStyle11.WrapMode = DataGridViewTriState.False;
             dgvStudentActivitySubmitted.DefaultCellStyle = dataGridViewCellStyle11;
             dgvStudentActivitySubmitted.GridColor = Color.FromArgb(231, 229, 255);
-            dgvStudentActivitySubmitted.Location = new Point(75, 226);
+            dgvStudentActivitySubmitted.Location = new Point(24, 198);
             dgvStudentActivitySubmitted.Name = "dgvStudentActivitySubmitted";
             dgvStudentActivitySubmitted.ReadOnly = true;
             dgvStudentActivitySubmitted.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
@@ -2626,7 +2626,7 @@
             dgvStudentActivitySubmitted.RowHeadersDefaultCellStyle = dataGridViewCellStyle12;
             dgvStudentActivitySubmitted.RowHeadersVisible = false;
             dgvStudentActivitySubmitted.RowTemplate.Height = 37;
-            dgvStudentActivitySubmitted.Size = new Size(1220, 455);
+            dgvStudentActivitySubmitted.Size = new Size(1220, 425);
             dgvStudentActivitySubmitted.TabIndex = 29;
             dgvStudentActivitySubmitted.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White;
             dgvStudentActivitySubmitted.ThemeStyle.AlternatingRowsStyle.Font = new Font("Segoe UI", 9F);
@@ -2655,7 +2655,7 @@
             cmbActivityGrades.ForeColor = Color.FromArgb(68, 88, 112);
             cmbActivityGrades.ItemHeight = 40;
             cmbActivityGrades.Items.AddRange(new object[] { "Activity", "Performance Task" });
-            cmbActivityGrades.Location = new Point(566, 55);
+            cmbActivityGrades.Location = new Point(515, 27);
             cmbActivityGrades.Name = "cmbActivityGrades";
             cmbActivityGrades.ShadowDecoration.CustomizableEdges = customizableEdges126;
             cmbActivityGrades.Size = new Size(216, 46);
@@ -2670,7 +2670,7 @@
             guna2Panel25.Controls.Add(pictureBox12);
             guna2Panel25.CustomizableEdges = customizableEdges127;
             guna2Panel25.FillColor = Color.FromArgb(203, 15, 15);
-            guna2Panel25.Location = new Point(914, 115);
+            guna2Panel25.Location = new Point(863, 87);
             guna2Panel25.Name = "guna2Panel25";
             guna2Panel25.ShadowDecoration.CustomizableEdges = customizableEdges128;
             guna2Panel25.Size = new Size(380, 96);
@@ -2716,7 +2716,7 @@
             guna2Panel24.Controls.Add(pictureBox11);
             guna2Panel24.CustomizableEdges = customizableEdges129;
             guna2Panel24.FillColor = Color.FromArgb(10, 143, 30);
-            guna2Panel24.Location = new Point(490, 115);
+            guna2Panel24.Location = new Point(439, 87);
             guna2Panel24.Name = "guna2Panel24";
             guna2Panel24.ShadowDecoration.CustomizableEdges = customizableEdges130;
             guna2Panel24.Size = new Size(385, 96);
@@ -2762,7 +2762,7 @@
             guna2Panel22.Controls.Add(pictureBox10);
             guna2Panel22.CustomizableEdges = customizableEdges131;
             guna2Panel22.FillColor = Color.FromArgb(10, 143, 30);
-            guna2Panel22.Location = new Point(74, 115);
+            guna2Panel22.Location = new Point(23, 87);
             guna2Panel22.Name = "guna2Panel22";
             guna2Panel22.ShadowDecoration.CustomizableEdges = customizableEdges132;
             guna2Panel22.Size = new Size(380, 96);
@@ -2812,7 +2812,7 @@
             txtSearchGrades.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
             txtSearchGrades.Font = new Font("Segoe UI", 9F);
             txtSearchGrades.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
-            txtSearchGrades.Location = new Point(808, 55);
+            txtSearchGrades.Location = new Point(757, 27);
             txtSearchGrades.Name = "txtSearchGrades";
             txtSearchGrades.PlaceholderText = "Search";
             txtSearchGrades.SelectedText = "";
@@ -2834,7 +2834,7 @@
             cmbSectionGrades.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
             cmbSectionGrades.ForeColor = Color.FromArgb(68, 88, 112);
             cmbSectionGrades.ItemHeight = 40;
-            cmbSectionGrades.Location = new Point(320, 55);
+            cmbSectionGrades.Location = new Point(269, 27);
             cmbSectionGrades.Name = "cmbSectionGrades";
             cmbSectionGrades.ShadowDecoration.CustomizableEdges = customizableEdges136;
             cmbSectionGrades.Size = new Size(216, 46);
@@ -2853,21 +2853,12 @@
             cmbSubjectGrades.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold);
             cmbSubjectGrades.ForeColor = Color.FromArgb(68, 88, 112);
             cmbSubjectGrades.ItemHeight = 40;
-            cmbSubjectGrades.Location = new Point(75, 55);
+            cmbSubjectGrades.Location = new Point(24, 27);
             cmbSubjectGrades.Name = "cmbSubjectGrades";
             cmbSubjectGrades.ShadowDecoration.CustomizableEdges = customizableEdges138;
             cmbSubjectGrades.Size = new Size(216, 46);
             cmbSubjectGrades.TabIndex = 23;
             cmbSubjectGrades.SelectedIndexChanged += cmbSubjectGrades_SelectedIndexChanged;
-            // 
-            // pnlAttendance
-            // 
-            pnlAttendance.BackColor = Color.FromArgb(248, 248, 250);
-            pnlAttendance.BackgroundImageLayout = ImageLayout.Stretch;
-            pnlAttendance.Location = new Point(84, 96);
-            pnlAttendance.Name = "pnlAttendance";
-            pnlAttendance.Size = new Size(1361, 715);
-            pnlAttendance.TabIndex = 33;
             // 
             // pnlSubject
             // 
@@ -2877,9 +2868,9 @@
             pnlSubject.Controls.Add(btnShowPnlCreateClass);
             pnlSubject.Controls.Add(flpSubjectClass);
             pnlSubject.Controls.Add(pnlCreateClass);
-            pnlSubject.Location = new Point(84, 96);
+            pnlSubject.Location = new Point(84, 88);
             pnlSubject.Name = "pnlSubject";
-            pnlSubject.Size = new Size(1361, 697);
+            pnlSubject.Size = new Size(1266, 642);
             pnlSubject.TabIndex = 34;
             // 
             // btnShowPnlCreateClass
@@ -2895,7 +2886,7 @@
             btnShowPnlCreateClass.Image = Properties.Resources.PlusSign2;
             btnShowPnlCreateClass.ImageOffset = new Point(-4, 2);
             btnShowPnlCreateClass.ImageSize = new Size(13, 13);
-            btnShowPnlCreateClass.Location = new Point(1109, 99);
+            btnShowPnlCreateClass.Location = new Point(1067, 90);
             btnShowPnlCreateClass.Name = "btnShowPnlCreateClass";
             btnShowPnlCreateClass.ShadowDecoration.CustomizableEdges = customizableEdges140;
             btnShowPnlCreateClass.Size = new Size(180, 46);
@@ -3103,9 +3094,9 @@
             pnlFile.BackgroundImageLayout = ImageLayout.Stretch;
             pnlFile.Controls.Add(guna2Panel33);
             pnlFile.Controls.Add(guna2Panel32);
-            pnlFile.Location = new Point(84, 96);
+            pnlFile.Location = new Point(84, 88);
             pnlFile.Name = "pnlFile";
-            pnlFile.Size = new Size(1361, 712);
+            pnlFile.Size = new Size(1267, 642);
             pnlFile.TabIndex = 35;
             // 
             // guna2Panel33
@@ -3115,10 +3106,10 @@
             guna2Panel33.Controls.Add(FolderListView);
             guna2Panel33.CustomizableEdges = customizableEdges158;
             guna2Panel33.FillColor = Color.White;
-            guna2Panel33.Location = new Point(67, 118);
+            guna2Panel33.Location = new Point(45, 95);
             guna2Panel33.Name = "guna2Panel33";
             guna2Panel33.ShadowDecoration.CustomizableEdges = customizableEdges159;
-            guna2Panel33.Size = new Size(1213, 533);
+            guna2Panel33.Size = new Size(1180, 533);
             guna2Panel33.TabIndex = 5;
             // 
             // BtnBack
@@ -3144,7 +3135,7 @@
             // 
             FolderListView.Location = new Point(8, 53);
             FolderListView.Name = "FolderListView";
-            FolderListView.Size = new Size(1195, 477);
+            FolderListView.Size = new Size(1160, 473);
             FolderListView.TabIndex = 0;
             FolderListView.UseCompatibleStateImageBehavior = false;
             FolderListView.DoubleClick += FolderListView_DoubleClick;
@@ -3206,14 +3197,9 @@
             btnAddFolder.Text = "New Folder";
             btnAddFolder.Click += btnAddFolder_Click;
             // 
-            // imageList1
-            // 
-            imageList1.ColorDepth = ColorDepth.Depth32Bit;
-            imageList1.ImageSize = new Size(16, 16);
-            imageList1.TransparentColor = Color.Transparent;
-            // 
             // pnlSetting
             // 
+            pnlSetting.AutoScroll = true;
             pnlSetting.BackColor = Color.Transparent;
             pnlSetting.BackgroundImage = Properties.Resources.Shade;
             pnlSetting.BackgroundImageLayout = ImageLayout.Center;
@@ -3226,9 +3212,9 @@
             pnlSetting.Controls.Add(pnlChangePhoto);
             pnlSetting.Controls.Add(pnlChangeUsername);
             pnlSetting.Controls.Add(pnlChangePassword);
-            pnlSetting.Location = new Point(84, 96);
+            pnlSetting.Location = new Point(84, 88);
             pnlSetting.Name = "pnlSetting";
-            pnlSetting.Size = new Size(1361, 709);
+            pnlSetting.Size = new Size(1266, 717);
             pnlSetting.TabIndex = 11;
             // 
             // btnSignOut
@@ -3965,22 +3951,37 @@
             txtCurrentPassword.Size = new Size(214, 28);
             txtCurrentPassword.TabIndex = 0;
             // 
+            // pnlAttendance
+            // 
+            pnlAttendance.BackColor = Color.FromArgb(248, 248, 250);
+            pnlAttendance.BackgroundImageLayout = ImageLayout.Stretch;
+            pnlAttendance.Location = new Point(84, 88);
+            pnlAttendance.Name = "pnlAttendance";
+            pnlAttendance.Size = new Size(1266, 642);
+            pnlAttendance.TabIndex = 33;
+            // 
+            // imageList1
+            // 
+            imageList1.ColorDepth = ColorDepth.Depth32Bit;
+            imageList1.ImageSize = new Size(16, 16);
+            imageList1.TransparentColor = Color.Transparent;
+            // 
             // ProfessorForm
             // 
             AutoScaleMode = AutoScaleMode.None;
             BackColor = Color.FromArgb(244, 243, 246);
-            ClientSize = new Size(1447, 805);
-            Controls.Add(pnlActivity);
+            ClientSize = new Size(1350, 729);
+            Controls.Add(pnlHome);
             Controls.Add(guna2Panel1);
             Controls.Add(guna2Panel2);
+            Controls.Add(pnlGrades);
+            Controls.Add(pnlAttendance);
+            Controls.Add(pnlStudent);
+            Controls.Add(pnlActivity);
             Controls.Add(pnlSubject);
             Controls.Add(pnlWorkstation);
             Controls.Add(pnlFile);
             Controls.Add(pnlSetting);
-            Controls.Add(pnlGrades);
-            Controls.Add(pnlAttendance);
-            Controls.Add(pnlHome);
-            Controls.Add(pnlStudent);
             Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             MinimizeBox = false;
@@ -4203,7 +4204,6 @@
         private Guna.UI2.WinForms.Guna2TextBox txtClassName;
         private Guna.UI2.WinForms.Guna2ComboBox guna2ComboBox8;
         private Guna.UI2.WinForms.Guna2ComboBox guna2ComboBox9;
-        private Panel pnlAttendance;
         private Panel pnlSubject;
         private FlowLayoutPanel flpSubjectClass;
         private Guna.UI2.WinForms.Guna2Button btnShowPnlCreateClass;
@@ -4230,7 +4230,6 @@
         private Label label25;
         private ListView FolderListView;
         private Guna.UI2.WinForms.Guna2CircleButton BtnBack;
-        private ImageList imageList1;
         private Guna.UI2.WinForms.Guna2Button btnGradesClearFilter;
         private Guna.UI2.WinForms.Guna2Button btnShutdown;
         private Guna.UI2.WinForms.Guna2Button btnReboot;
@@ -4302,5 +4301,7 @@
         private Label label47;
         private PictureBox pictureBox6;
         private Label lblPanelName;
+        private Panel pnlAttendance;
+        private ImageList imageList1;
     }
 }
