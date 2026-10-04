@@ -1672,6 +1672,13 @@ namespace WinFormsApp1
                 return;
             }
 
+            // ✅ READ UI VALUES ON THE UI THREAD (before Task.Run)
+            string classCode = txtClassCode.Text.Trim();
+            string className = txtClassName.Text.Trim();
+            string classSection = txtClassSection.Text.Trim();
+            string classTime = txtClassTime.Text.Trim();
+            string classDate = cmbClassDate.Text.Trim();
+
             string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
@@ -1683,24 +1690,28 @@ namespace WinFormsApp1
                         {
                             conn.Open();
                             string query = @"INSERT INTO professor_class 
-                                    (professor_id, class_code, class_name, class_section, class_time, class_date) 
-                                    VALUES (@professor_id, @class_code, @class_name, @class_section, @class_time, @class_date)";
+                            (professor_id, class_code, class_name, class_section, class_time, class_date) 
+                            VALUES (@professor_id, @class_code, @class_name, @class_section, @class_time, @class_date)";
 
                             using (var cmd = new MySqlCommand(query, conn))
                             {
                                 cmd.Parameters.AddWithValue("@professor_id", ProfessorID);
-                                cmd.Parameters.AddWithValue("@class_code", txtClassCode.Text.Trim());
-                                cmd.Parameters.AddWithValue("@class_name", txtClassName.Text.Trim());
-                                cmd.Parameters.AddWithValue("@class_section", txtClassSection.Text.Trim());
-                                cmd.Parameters.AddWithValue("@class_time", txtClassTime.Text.Trim());
-                                cmd.Parameters.AddWithValue("@class_date", cmbClassDate.Text.Trim());
+
+                                // ✅ USE LOCAL VARIABLES — no UI controls touched here
+                                cmd.Parameters.AddWithValue("@class_code", classCode);
+                                cmd.Parameters.AddWithValue("@class_name", className);
+                                cmd.Parameters.AddWithValue("@class_section", classSection);
+                                cmd.Parameters.AddWithValue("@class_time", classTime);
+                                cmd.Parameters.AddWithValue("@class_date", classDate);
+
                                 cmd.ExecuteNonQuery();
                             }
                         }
                     });
                 });
 
-                string folderName = txtClassSection.Text.Trim();
+                // ✅ Use the local variable, not the control
+                string folderName = classSection;
                 AutoCreateClassBtn();
                 CreateFolderForSection(folderName);
 
@@ -2025,22 +2036,39 @@ namespace WinFormsApp1
         // =========================================================
         // MODIFIED: btnPostActivity_Click - WITH LOADING
         // =========================================================
+        // =========================================================
+        // FIXED: btnPostActivity_Click
+        // =========================================================
         private async void btnPostActivity_Click(object sender, EventArgs e)
         {
             string connStr = SettingsManager.Current.GetConnectionString();
             DateTime now = DateTime.Now;
             string FullDateTime = now.ToString("MMM-dd HH:mm:ss");
 
+            // =========================================================
+            // STEP 1: READ ALL UI VALUES ON THE UI THREAD
+            // (Before Task.Run — this is what prevents the crash)
+            // =========================================================
+            string title = cmbActivityTitle.Text.Trim();
+            string description = txtActivityPostDetails.Text.Trim();
+            string sectionRaw = cmbActivitySection.Text.Trim();
+            string subject = cmbActivitySubject.Text.Trim();
+            string score = txtActivityScore.Text.Trim();
+            DateTime dueDate = dtpActivityDeadline.Value;
+
             string pdfName = null;
             byte[] fileBytes = null;
             string uncPath = null;
-            string section = SanitizeFolderName(cmbActivitySection.Text.Trim());
+            string section = SanitizeFolderName(sectionRaw);
 
             if (string.IsNullOrEmpty(ProfessorName))
                 NameGet();
 
             string professorFolder = SanitizeFolderName(ProfessorName);
 
+            // =========================================================
+            // STEP 2: READ AND UPLOAD FILE (if any)
+            // =========================================================
             if (!string.IsNullOrEmpty(selectedFilePath) && File.Exists(selectedFilePath))
             {
                 try
@@ -2090,6 +2118,14 @@ namespace WinFormsApp1
 
             try
             {
+                // Capture in local variables so the lambda doesn't capture UI controls
+                string finalUncPath = uncPath;
+                string finalPdfName = pdfName;
+
+                // =========================================================
+                // STEP 3: RUN DB INSERT ON BACKGROUND THREAD
+                // Only strings/numbers/DateTime are used — NO UI CONTROLS
+                // =========================================================
                 await RunWithLoadingAsync("Posting activity", async () =>
                 {
                     await Task.Run(() =>
@@ -2108,16 +2144,16 @@ namespace WinFormsApp1
                             using (var cmd = new MySqlCommand(query, conn))
                             {
                                 cmd.Parameters.AddWithValue("@professor_id", ProfessorID);
-                                cmd.Parameters.AddWithValue("@title", cmbActivityTitle.Text.Trim());
-                                cmd.Parameters.AddWithValue("@description", txtActivityPostDetails.Text.Trim());
-                                cmd.Parameters.AddWithValue("@section", cmbActivitySection.Text.Trim());
-                                cmd.Parameters.AddWithValue("@activity_subject", cmbActivitySubject.Text.Trim());
+                                cmd.Parameters.AddWithValue("@title", title);              // ✅ local variable
+                                cmd.Parameters.AddWithValue("@description", description); // ✅ local variable
+                                cmd.Parameters.AddWithValue("@section", sectionRaw);       // ✅ local variable
+                                cmd.Parameters.AddWithValue("@activity_subject", subject); // ✅ local variable
                                 cmd.Parameters.AddWithValue("@start_time", FullDateTime);
-                                cmd.Parameters.AddWithValue("@due_date", dtpActivityDeadline.Value);
+                                cmd.Parameters.AddWithValue("@due_date", dueDate);
                                 cmd.Parameters.AddWithValue("@activity_status", "Pending");
-                                cmd.Parameters.AddWithValue("@score", txtActivityScore.Text.Trim());
-                                cmd.Parameters.AddWithValue("@activity_file", (object)uncPath ?? DBNull.Value);
-                                cmd.Parameters.AddWithValue("@activity_filename", (object)pdfName ?? DBNull.Value);
+                                cmd.Parameters.AddWithValue("@score", score);              // ✅ local variable
+                                cmd.Parameters.AddWithValue("@activity_file", (object)finalUncPath ?? DBNull.Value);
+                                cmd.Parameters.AddWithValue("@activity_filename", (object)finalPdfName ?? DBNull.Value);
                                 cmd.ExecuteNonQuery();
                             }
                         }

@@ -3969,13 +3969,13 @@
             AutoScaleMode = AutoScaleMode.None;
             BackColor = Color.FromArgb(244, 243, 246);
             ClientSize = new Size(1447, 805);
+            Controls.Add(pnlActivity);
             Controls.Add(guna2Panel1);
             Controls.Add(guna2Panel2);
             Controls.Add(pnlSubject);
             Controls.Add(pnlWorkstation);
             Controls.Add(pnlFile);
             Controls.Add(pnlSetting);
-            Controls.Add(pnlActivity);
             Controls.Add(pnlGrades);
             Controls.Add(pnlAttendance);
             Controls.Add(pnlHome);
