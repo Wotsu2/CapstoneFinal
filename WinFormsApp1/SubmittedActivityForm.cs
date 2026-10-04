@@ -20,6 +20,7 @@ namespace WinFormsApp1
         private int _professorId;
 
         // Controls
+        private Guna2Panel mainCard;
         private Guna2Panel header;
         private Guna2Panel infoStrip;
         private Guna2Panel pdfCard;
@@ -31,6 +32,7 @@ namespace WinFormsApp1
 
         /// <summary>
         /// Displays a student's submitted activity with PDF preview and score editing.
+        /// Optimized to fit 1366x768 screens.
         /// </summary>
         public SubmittedActivityForm(
             int professorId,
@@ -62,18 +64,21 @@ namespace WinFormsApp1
         {
             // ---- FORM ----
             this.Text = "Submitted Activity - " + _name;
-            this.Size = new Size(1050, 950);
+            this.Size = new Size(1200, 700);
+            this.MinimumSize = new Size(900, 600);
             this.StartPosition = FormStartPosition.CenterParent;
+            this.WindowState = FormWindowState.Maximized;   // maximize to fit any screen
             this.BackColor = Color.FromArgb(245, 245, 248);
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
+            this.FormBorderStyle = FormBorderStyle.Sizable;
+            this.MaximizeBox = true;
+            this.MinimizeBox = true;
             this.ShowIcon = false;
 
-            // ---- MAIN CARD ----
-            Guna2Panel mainCard = new Guna2Panel();
-            mainCard.Size = new Size(1010, 900);
-            mainCard.Location = new Point(20, 15);
+            // ---- MAIN CARD (docked to fill the form) ----
+            mainCard = new Guna2Panel();
+            mainCard.Dock = DockStyle.Fill;
+            mainCard.Margin = new Padding(15);
+            mainCard.Padding = new Padding(20);
             mainCard.BorderRadius = 16;
             mainCard.FillColor = Color.White;
             mainCard.BorderColor = Color.FromArgb(225, 225, 225);
@@ -81,13 +86,14 @@ namespace WinFormsApp1
             mainCard.ShadowDecoration.Enabled = true;
             mainCard.ShadowDecoration.Depth = 15;
             mainCard.ShadowDecoration.Color = Color.FromArgb(40, 0, 0, 0);
+            this.Padding = new Padding(15);
             this.Controls.Add(mainCard);
 
-            // ---- HEADER ----
+            // ---- HEADER (top) ----
             header = new Guna2Panel
             {
                 Dock = DockStyle.Top,
-                Height = 90,
+                Height = 80,
                 FillColor = Color.Maroon,
                 BorderRadius = 0
             };
@@ -96,34 +102,35 @@ namespace WinFormsApp1
             Label lblTitle = new Label
             {
                 Text = _title,
-                Font = new Font("Segoe UI Semibold", 16F, FontStyle.Bold),
+                Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold),
                 ForeColor = Color.White,
                 BackColor = Color.Transparent,
                 AutoSize = false,
                 AutoEllipsis = true,
-                Size = new Size(760, 34),
-                Location = new Point(24, 18)
+                Size = new Size(900, 30),
+                Location = new Point(24, 14),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             header.Controls.Add(lblTitle);
 
             Label lblSubtitle = new Label
             {
                 Text = _className + "  •  " + _section,
-                Font = new Font("Segoe UI", 10F),
+                Font = new Font("Segoe UI", 9.5F),
                 ForeColor = Color.FromArgb(255, 220, 220),
                 BackColor = Color.Transparent,
                 AutoSize = true,
-                Location = new Point(26, 55)
+                Location = new Point(26, 48)
             };
             header.Controls.Add(lblSubtitle);
 
             btnClose = new Guna2CircleButton
             {
-                Size = new Size(40, 40),
-                Location = new Point(mainCard.Width - 60, 25),
+                Size = new Size(36, 36),
+                Location = new Point(mainCard.Width - 60, 22),
                 Anchor = AnchorStyles.Top | AnchorStyles.Right,
                 FillColor = Color.FromArgb(60, 0, 0, 0),
-                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
                 ForeColor = Color.White,
                 Text = "✕"
             };
@@ -132,18 +139,19 @@ namespace WinFormsApp1
             header.Controls.Add(btnClose);
             btnClose.BringToFront();
 
-            // ---- INFO STRIP ----
+            // ---- INFO STRIP (below header) ----
             infoStrip = new Guna2Panel
             {
-                Size = new Size(mainCard.Width - 40, 70),
-                Location = new Point(20, 110),
+                Dock = DockStyle.Top,
+                Height = 60,
+                Margin = new Padding(0, 10, 0, 10),
                 BorderRadius = 12,
                 FillColor = Color.FromArgb(250, 245, 245),
                 BorderColor = Color.FromArgb(240, 230, 230),
-                BorderThickness = 1,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+                BorderThickness = 1
             };
             mainCard.Controls.Add(infoStrip);
+            infoStrip.BringToFront();
 
             string initials = "";
             if (!string.IsNullOrWhiteSpace(_name))
@@ -156,11 +164,11 @@ namespace WinFormsApp1
 
             Guna2CircleButton avatar = new Guna2CircleButton
             {
-                Size = new Size(46, 46),
-                Location = new Point(14, 12),
+                Size = new Size(42, 42),
+                Location = new Point(14, 9),
                 FillColor = Color.Maroon,
                 ForeColor = Color.White,
-                Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold),
+                Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold),
                 Text = initials,
                 Enabled = false
             };
@@ -169,11 +177,11 @@ namespace WinFormsApp1
             infoStrip.Controls.Add(new Label
             {
                 Text = _name,
-                Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold),
+                Font = new Font("Segoe UI Semibold", 10.5F, FontStyle.Bold),
                 ForeColor = Color.FromArgb(30, 30, 30),
                 BackColor = Color.Transparent,
                 AutoSize = true,
-                Location = new Point(72, 14)
+                Location = new Point(68, 10)
             });
 
             infoStrip.Controls.Add(new Label
@@ -183,41 +191,21 @@ namespace WinFormsApp1
                 ForeColor = Color.FromArgb(110, 110, 110),
                 BackColor = Color.Transparent,
                 AutoSize = true,
-                Location = new Point(72, 38)
+                Location = new Point(68, 32)
             });
 
-            // ---- PDF CARD ----
-            pdfCard = new Guna2Panel
-            {
-                Size = new Size(mainCard.Width - 40, 620),
-                Location = new Point(20, 195),
-                BorderRadius = 12,
-                FillColor = Color.FromArgb(245, 245, 248),
-                BorderColor = Color.FromArgb(225, 225, 225),
-                BorderThickness = 1,
-                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
-            };
-            mainCard.Controls.Add(pdfCard);
-
-            pdfViewer = new PdfViewer
-            {
-                Dock = DockStyle.Fill,
-                Location = new Point(1, 1)
-            };
-            pdfCard.Controls.Add(pdfViewer);
-
-            // ---- FOOTER ----
+            // ---- FOOTER (bottom, added FIRST so it docks to the bottom) ----
             footer = new Guna2Panel
             {
-                Size = new Size(mainCard.Width - 40, 80),
-                Location = new Point(20, 830),
+                Dock = DockStyle.Bottom,
+                Height = 70,
                 BorderRadius = 12,
                 FillColor = Color.FromArgb(250, 245, 245),
                 BorderColor = Color.FromArgb(240, 230, 230),
-                BorderThickness = 1,
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+                BorderThickness = 1
             };
             mainCard.Controls.Add(footer);
+            footer.BringToFront();
 
             footer.Controls.Add(new Label
             {
@@ -226,14 +214,14 @@ namespace WinFormsApp1
                 ForeColor = Color.FromArgb(50, 50, 50),
                 BackColor = Color.Transparent,
                 AutoSize = true,
-                Location = new Point(24, 28)
+                Location = new Point(24, 22)
             });
 
             txtScore = new Guna2TextBox
             {
                 Width = 110,
-                Height = 40,
-                Location = new Point(90, 20),
+                Height = 38,
+                Location = new Point(90, 16),
                 BorderRadius = 8,
                 Font = new Font("Segoe UI", 11F),
                 PlaceholderText = "0",
@@ -244,8 +232,8 @@ namespace WinFormsApp1
             btnSaveScore = new Guna2Button
             {
                 Text = "Save Score",
-                Size = new Size(150, 40),
-                Location = new Point(220, 20),
+                Size = new Size(150, 38),
+                Location = new Point(220, 16),
                 BorderRadius = 8,
                 FillColor = Color.Maroon,
                 Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
@@ -254,6 +242,25 @@ namespace WinFormsApp1
             btnSaveScore.HoverState.FillColor = Color.FromArgb(100, 0, 0);
             btnSaveScore.Click += BtnSaveScore_Click;
             footer.Controls.Add(btnSaveScore);
+
+            // ---- PDF CARD (fills remaining space between info strip and footer) ----
+            pdfCard = new Guna2Panel
+            {
+                Dock = DockStyle.Fill,
+                BorderRadius = 12,
+                FillColor = Color.FromArgb(245, 245, 248),
+                BorderColor = Color.FromArgb(225, 225, 225),
+                BorderThickness = 1,
+                Padding = new Padding(1)
+            };
+            mainCard.Controls.Add(pdfCard);
+            pdfCard.BringToFront();
+
+            pdfViewer = new PdfViewer
+            {
+                Dock = DockStyle.Fill
+            };
+            pdfCard.Controls.Add(pdfViewer);
         }
 
         // =========================================================
@@ -272,7 +279,8 @@ namespace WinFormsApp1
                 {
                     Label lblNoFile = new Label
                     {
-                        Text = "📄   No PDF preview available",
+                        Text = "📄   No PDF preview available\n\n" +
+                               "Path: " + (string.IsNullOrEmpty(trimmedPath) ? "(empty)" : trimmedPath),
                         Font = new Font("Segoe UI", 11F, FontStyle.Italic),
                         ForeColor = Color.Gray,
                         BackColor = Color.Transparent,
@@ -286,6 +294,18 @@ namespace WinFormsApp1
             catch (Exception ex)
             {
                 Console.WriteLine("LoadPdf error: " + ex.Message);
+
+                Label lblError = new Label
+                {
+                    Text = "⚠  Could not load PDF:\n\n" + ex.Message,
+                    Font = new Font("Segoe UI", 11F, FontStyle.Italic),
+                    ForeColor = Color.Firebrick,
+                    BackColor = Color.Transparent,
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Dock = DockStyle.Fill
+                };
+                pdfCard.Controls.Add(lblError);
+                lblError.BringToFront();
             }
         }
 
