@@ -85,12 +85,12 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges45 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges48 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges49 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges50 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges51 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges52 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges53 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges54 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges55 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges52 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges53 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges50 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges51 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges60 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges61 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges58 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -195,9 +195,9 @@
             panelDashoard.Controls.Add(guna2Panel5);
             panelDashoard.Controls.Add(guna2Panel4);
             panelDashoard.Controls.Add(guna2Panel3);
-            panelDashoard.Location = new Point(49, 81);
+            panelDashoard.Location = new Point(0, 81);
             panelDashoard.Name = "panelDashoard";
-            panelDashoard.Size = new Size(1257, 555);
+            panelDashoard.Size = new Size(1252, 611);
             panelDashoard.TabIndex = 8;
             panelDashoard.Visible = false;
             // 
@@ -223,7 +223,7 @@
             guna2ComboBox4.MaxDropDownItems = 100;
             guna2ComboBox4.Name = "guna2ComboBox4";
             guna2ComboBox4.ShadowDecoration.CustomizableEdges = customizableEdges2;
-            guna2ComboBox4.Size = new Size(1139, 41);
+            guna2ComboBox4.Size = new Size(1293, 41);
             guna2ComboBox4.TabIndex = 174;
             // 
             // guna2Panel6
@@ -377,7 +377,7 @@
             pnlUserManagement.Controls.Add(pnlUserList);
             pnlUserManagement.Location = new Point(0, 81);
             pnlUserManagement.Name = "pnlUserManagement";
-            pnlUserManagement.Size = new Size(1247, 633);
+            pnlUserManagement.Size = new Size(1255, 633);
             pnlUserManagement.TabIndex = 9;
             // 
             // pnlCreateAccount
@@ -398,7 +398,7 @@
             pnlCreateAccount.Controls.Add(label20);
             pnlCreateAccount.Location = new Point(0, 48);
             pnlCreateAccount.Name = "pnlCreateAccount";
-            pnlCreateAccount.Size = new Size(1198, 660);
+            pnlCreateAccount.Size = new Size(1255, 660);
             pnlCreateAccount.TabIndex = 80;
             pnlCreateAccount.Paint += pnlCreateAccount_Paint;
             // 
@@ -658,7 +658,7 @@
             pnlUserList.Controls.Add(UserDataList);
             pnlUserList.Location = new Point(0, 0);
             pnlUserList.Name = "pnlUserList";
-            pnlUserList.Size = new Size(1247, 633);
+            pnlUserList.Size = new Size(1255, 633);
             pnlUserList.TabIndex = 81;
             pnlUserList.Paint += pnlUserList_Paint;
             // 
@@ -705,7 +705,7 @@
             UserDataList.RowHeadersDefaultCellStyle = dataGridViewCellStyle4;
             UserDataList.RowHeadersVisible = false;
             UserDataList.RowTemplate.Height = 40;
-            UserDataList.Size = new Size(1139, 513);
+            UserDataList.Size = new Size(1244, 513);
             UserDataList.TabIndex = 164;
             UserDataList.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White;
             UserDataList.ThemeStyle.AlternatingRowsStyle.Font = new Font("Segoe UI", 9F);
@@ -825,21 +825,21 @@
             guna2Panel2.Controls.Add(btnFileManagement);
             guna2Panel2.Controls.Add(pnlWorkstation);
             guna2Panel2.Controls.Add(pnlFileManagement);
-            guna2Panel2.Controls.Add(btnWorkstation);
-            guna2Panel2.Controls.Add(btnUserManagement);
             guna2Panel2.Controls.Add(btnDashboard);
+            guna2Panel2.Controls.Add(btnUserManagement);
             guna2Panel2.Controls.Add(guna2Panel9);
+            guna2Panel2.Controls.Add(btnWorkstation);
             guna2Panel2.Controls.Add(cmbSelection);
             guna2Panel2.CustomizableEdges = customizableEdges56;
             guna2Panel2.FillColor = SystemColors.Window;
-            guna2Panel2.Location = new Point(50, 308);
+            guna2Panel2.Location = new Point(38, 236);
             guna2Panel2.Name = "guna2Panel2";
             guna2Panel2.ShadowDecoration.BorderRadius = 10;
             guna2Panel2.ShadowDecoration.Color = Color.FromArgb(158, 153, 153);
             guna2Panel2.ShadowDecoration.CustomizableEdges = customizableEdges57;
             guna2Panel2.ShadowDecoration.Depth = 20;
             guna2Panel2.ShadowDecoration.Enabled = true;
-            guna2Panel2.Size = new Size(1247, 613);
+            guna2Panel2.Size = new Size(1255, 692);
             guna2Panel2.TabIndex = 6;
             guna2Panel2.Paint += guna2Panel2_Paint;
             // 
@@ -879,9 +879,9 @@
             pnlWorkstation.Controls.Add(guna2Panel7);
             pnlWorkstation.Controls.Add(guna2Panel8);
             pnlWorkstation.Controls.Add(guna2ComboBox3);
-            pnlWorkstation.Location = new Point(49, 81);
+            pnlWorkstation.Location = new Point(0, 81);
             pnlWorkstation.Name = "pnlWorkstation";
-            pnlWorkstation.Size = new Size(1257, 555);
+            pnlWorkstation.Size = new Size(1255, 608);
             pnlWorkstation.TabIndex = 175;
             pnlWorkstation.Visible = false;
             // 
@@ -897,7 +897,7 @@
             guna2Panel7.Margin = new Padding(3, 2, 3, 2);
             guna2Panel7.Name = "guna2Panel7";
             guna2Panel7.ShadowDecoration.CustomizableEdges = customizableEdges38;
-            guna2Panel7.Size = new Size(262, 586);
+            guna2Panel7.Size = new Size(291, 586);
             guna2Panel7.TabIndex = 182;
             // 
             // guna2PictureBox4
@@ -938,11 +938,11 @@
             guna2Panel8.Controls.Add(label43);
             guna2Panel8.CustomizableEdges = customizableEdges41;
             guna2Panel8.FillColor = Color.White;
-            guna2Panel8.Location = new Point(0, 45);
+            guna2Panel8.Location = new Point(30, 45);
             guna2Panel8.Margin = new Padding(3, 2, 3, 2);
             guna2Panel8.Name = "guna2Panel8";
             guna2Panel8.ShadowDecoration.CustomizableEdges = customizableEdges42;
-            guna2Panel8.Size = new Size(786, 586);
+            guna2Panel8.Size = new Size(756, 586);
             guna2Panel8.TabIndex = 181;
             // 
             // MainWorkstationFLP
@@ -1003,7 +1003,7 @@
             guna2ComboBox3.MaxDropDownItems = 100;
             guna2ComboBox3.Name = "guna2ComboBox3";
             guna2ComboBox3.ShadowDecoration.CustomizableEdges = customizableEdges44;
-            guna2ComboBox3.Size = new Size(1093, 36);
+            guna2ComboBox3.Size = new Size(1247, 36);
             guna2ComboBox3.TabIndex = 173;
             // 
             // pnlFileManagement
@@ -1011,9 +1011,9 @@
             pnlFileManagement.BackColor = Color.Transparent;
             pnlFileManagement.Controls.Add(guna2Panel10);
             pnlFileManagement.Controls.Add(guna2ComboBox1);
-            pnlFileManagement.Location = new Point(49, 81);
+            pnlFileManagement.Location = new Point(0, 81);
             pnlFileManagement.Name = "pnlFileManagement";
-            pnlFileManagement.Size = new Size(1257, 555);
+            pnlFileManagement.Size = new Size(1255, 598);
             pnlFileManagement.TabIndex = 82;
             pnlFileManagement.Visible = false;
             // 
@@ -1069,9 +1069,9 @@
             // 
             lvServerFolder.BackColor = Color.White;
             lvServerFolder.ForeColor = Color.Black;
-            lvServerFolder.Location = new Point(0, 62);
+            lvServerFolder.Location = new Point(58, 62);
             lvServerFolder.Name = "lvServerFolder";
-            lvServerFolder.Size = new Size(1093, 514);
+            lvServerFolder.Size = new Size(1035, 514);
             lvServerFolder.TabIndex = 20;
             lvServerFolder.UseCompatibleStateImageBehavior = false;
             lvServerFolder.View = View.Details;
@@ -1110,7 +1110,7 @@
             btnWorkstation.BorderRadius = 1;
             btnWorkstation.BorderThickness = 1;
             btnWorkstation.CustomBorderColor = Color.White;
-            btnWorkstation.CustomizableEdges = customizableEdges50;
+            btnWorkstation.CustomizableEdges = customizableEdges54;
             btnWorkstation.DisabledState.BorderColor = Color.DarkGray;
             btnWorkstation.DisabledState.CustomBorderColor = Color.DarkGray;
             btnWorkstation.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -1126,7 +1126,7 @@
             btnWorkstation.Location = new Point(627, 3);
             btnWorkstation.Name = "btnWorkstation";
             btnWorkstation.PressedColor = Color.White;
-            btnWorkstation.ShadowDecoration.CustomizableEdges = customizableEdges51;
+            btnWorkstation.ShadowDecoration.CustomizableEdges = customizableEdges55;
             btnWorkstation.Size = new Size(316, 76);
             btnWorkstation.TabIndex = 2;
             btnWorkstation.Text = "Workstation";
@@ -1170,7 +1170,7 @@
             btnDashboard.BorderRadius = 1;
             btnDashboard.BorderThickness = 1;
             btnDashboard.CustomBorderColor = Color.White;
-            btnDashboard.CustomizableEdges = customizableEdges54;
+            btnDashboard.CustomizableEdges = customizableEdges50;
             btnDashboard.DisabledState.BorderColor = Color.DarkGray;
             btnDashboard.DisabledState.CustomBorderColor = Color.DarkGray;
             btnDashboard.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -1186,7 +1186,7 @@
             btnDashboard.Location = new Point(3, 3);
             btnDashboard.Name = "btnDashboard";
             btnDashboard.PressedColor = Color.White;
-            btnDashboard.ShadowDecoration.CustomizableEdges = customizableEdges55;
+            btnDashboard.ShadowDecoration.CustomizableEdges = customizableEdges51;
             btnDashboard.Size = new Size(309, 76);
             btnDashboard.TabIndex = 0;
             btnDashboard.Text = "Dashboard";
@@ -1211,7 +1211,7 @@
             guna2Panel1.Name = "guna2Panel1";
             guna2Panel1.ShadowDecoration.CustomizableEdges = customizableEdges61;
             guna2Panel1.ShadowDecoration.Enabled = true;
-            guna2Panel1.Size = new Size(1333, 93);
+            guna2Panel1.Size = new Size(1333, 100);
             guna2Panel1.TabIndex = 5;
             guna2Panel1.Paint += guna2Panel1_Paint;
             // 
