@@ -379,7 +379,6 @@ namespace WinFormsApp1
             pnlGrades.Visible = false;
             pnlSetting.Visible = false;
             pnlQuizExam.Visible = false;
-            lblhometitle.Text = "Home";
 
             btnHome.Checked = true;
             btnQuizExam.Checked = false;
@@ -400,7 +399,6 @@ namespace WinFormsApp1
             pnlGrades.Visible = false;
             pnlSetting.Visible = false;
             pnlQuizExam.Visible = false;
-            lblhometitle.Text = "Activity";
 
             btnHome.Checked = false;
             btnQuizExam.Checked = false;
@@ -420,7 +418,6 @@ namespace WinFormsApp1
             pnlGrades.Visible = false;
             pnlSetting.Visible = false;
             pnlQuizExam.Visible = false;
-            lblhometitle.Text = "Subject";
 
             btnHome.Checked = false;
             btnQuizExam.Checked = false;
@@ -438,7 +435,6 @@ namespace WinFormsApp1
             pnlGrades.Visible = true;
             pnlSetting.Visible = false;
             pnlQuizExam.Visible = false;
-            lblhometitle.Text = "Grade";
 
             btnHome.Checked = false;
             btnQuizExam.Checked = false;
@@ -455,7 +451,6 @@ namespace WinFormsApp1
             pnlSubject.Visible = false;
             pnlGrades.Visible = false;
             pnlSetting.Visible = true;
-            lblhometitle.Text = "Settings";
             pnlQuizExam.Visible = false;
 
             btnHome.Checked = false;
@@ -474,7 +469,6 @@ namespace WinFormsApp1
             pnlGrades.Visible = false;
             pnlQuizExam.Visible = true;
             pnlSetting.Visible = false;
-            lblhometitle.Text = "Grade";
 
             btnHome.Checked = false;
             btnQuizExam.Checked = true;
@@ -2327,7 +2321,7 @@ namespace WinFormsApp1
             assessmentsPanel = new Guna.UI2.WinForms.Guna2Panel
             {
                 Size = new Size(307, 290),
-                Location = new Point(951, 355),
+                Location = new Point(941, 355),
                 FillColor = _isNightMode ? NightCardBack : Color.White,
                 BackColor = Color.Transparent,
                 BorderRadius = 10,
@@ -2706,6 +2700,46 @@ namespace WinFormsApp1
 
             string connStr = SettingsManager.Current.GetConnectionString();
 
+            // =========================================================
+            // ASK: overwrite if already saved
+            // =========================================================
+            bool alreadyExists = false;
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    using (var cmd = new MySqlCommand(
+                        "SELECT COUNT(*) FROM question_answer_security WHERE username = @username", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@username", StudentUsername);
+                        alreadyExists = Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Database error while checking existing questions:\n\n" + ex.Message,
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (alreadyExists)
+            {
+                var result = CustomMessageBox.Show(
+                    "You already saved security questions before.\n\n" +
+                    "Do you want to replace them with the new ones?",
+                    "Overwrite Security Questions",
+                    CustomMessageBoxButtons.YesNo,
+                    CustomMessageBoxIcon.Question);
+
+                if (result != CustomMessageBoxResult.Yes)
+                    return;
+            }
+
+            // =========================================================
+            // DELETE old rows, then INSERT the new three
+            // =========================================================
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -2714,17 +2748,27 @@ namespace WinFormsApp1
 
                     using (var tx = conn.BeginTransaction())
                     {
-                        const string query =
+                        // Wipe previous answers for this user
+                        using (var delCmd = new MySqlCommand(
+                            "DELETE FROM question_answer_security WHERE username = @username", conn, tx))
+                        {
+                            delCmd.Parameters.AddWithValue("@username", StudentUsername);
+                            delCmd.ExecuteNonQuery();
+                        }
+
+                        // Insert the three new questions + answers
+                        const string insertQuery =
                             "INSERT INTO question_answer_security (username, question, answer) " +
                             "VALUES (@username, @question, @answer)";
 
-                        using (var cmd = new MySqlCommand(query, conn, tx))
+                        using (var cmd = new MySqlCommand(insertQuery, conn, tx))
                         {
                             cmd.Parameters.Add("@username", MySqlDbType.VarChar);
                             cmd.Parameters.Add("@question", MySqlDbType.VarChar);
                             cmd.Parameters.Add("@answer", MySqlDbType.VarChar);
 
                             cmd.Parameters["@username"].Value = StudentUsername;
+
                             cmd.Parameters["@question"].Value = cmbFirstQuestion.Text;
                             cmd.Parameters["@answer"].Value = firstAnswer;
                             cmd.ExecuteNonQuery();
@@ -2744,19 +2788,6 @@ namespace WinFormsApp1
 
                 MessageBox.Show("Security questions saved successfully.",
                     "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            catch (MySqlException ex)
-            {
-                if (ex.Number == 1062)
-                {
-                    MessageBox.Show("You already saved these security questions.",
-                        "Duplicate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                }
-                else
-                {
-                    MessageBox.Show("Database error: " + ex.Message,
-                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
             }
             catch (Exception ex)
             {

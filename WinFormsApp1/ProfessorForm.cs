@@ -546,28 +546,50 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = "SELECT u.username, " +
-                                   "i.lastname, i.firstname, i.middlename, " +
-                                   "i.school_year, i.school_section, i.school_course " +
-                                   "FROM user_credential u " +
-                                   "LEFT JOIN user_information i ON u.user_id = i.user_id " +
-                                   "WHERE u.roles = 'Student'";
+
+                    // =========================================================
+                    // FIX: Only students who joined one of THIS professor's
+                    // classes (via student_class) should appear.
+                    // =========================================================
+                    string query = @"
+                SELECT DISTINCT
+                       u.username,
+                       i.lastname,
+                       i.firstname,
+                       i.middlename,
+                       i.school_year,
+                       i.school_section,
+                       i.school_course
+                FROM student_class sc
+                INNER JOIN user_credential u  ON u.user_id = sc.user_id
+                INNER JOIN user_information i ON i.user_id = sc.user_id
+                WHERE sc.professor_id = @professor_id
+                  AND u.roles = 'Student'";
 
                     if (!string.IsNullOrEmpty(filter))
-                        query += " AND (u.user_id LIKE @f1 OR i.lastname LIKE @f2 OR i.firstname LIKE @f3)";
+                        query += " AND (u.username LIKE @f1 OR i.lastname LIKE @f2 OR i.firstname LIKE @f3)";
+
                     if (!string.IsNullOrEmpty(cmbSemester.Text) && cmbSemester.Text != "Select Semester")
                         query += " AND i.school_semester = @semester";
+
                     if (!string.IsNullOrEmpty(cmbSection.Text) && cmbSection.Text != "Select Section")
                         query += " AND i.school_section = @section";
+
                     if (!string.IsNullOrEmpty(cmbYear.Text) && cmbYear.Text != "Select Year")
                         query += " AND i.school_year = @year";
 
+                    query += " ORDER BY i.lastname, i.firstname";
+
                     using (var cmd = new MySqlCommand(query, conn))
                     {
+                        cmd.Parameters.AddWithValue("@professor_id", ProfessorID);
+
                         if (!string.IsNullOrEmpty(cmbYear.Text) && cmbYear.Text != "Select Year")
                             cmd.Parameters.AddWithValue("@year", cmbYear.Text.Trim());
+
                         if (!string.IsNullOrEmpty(cmbSection.Text) && cmbSection.Text != "Select Section")
                             cmd.Parameters.AddWithValue("@section", cmbSection.Text.Trim());
+
                         if (!string.IsNullOrEmpty(cmbSemester.Text) && cmbSemester.Text != "Select Semester")
                             cmd.Parameters.AddWithValue("@semester", cmbSemester.Text.Trim());
 
@@ -586,7 +608,10 @@ namespace WinFormsApp1
                     }
                 }
             }
-            catch (Exception ex) { Console.WriteLine("LoadAllStudent error: " + ex.Message); }
+            catch (Exception ex)
+            {
+                Console.WriteLine("LoadAllStudent error: " + ex.Message);
+            }
         }
 
         private void txtBoxSearch_TextChanged(object sender, EventArgs e) => LoadAllStudent(txtBoxSearch.Text);

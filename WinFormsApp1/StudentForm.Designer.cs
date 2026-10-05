@@ -1422,7 +1422,7 @@
             pnlSetting.Controls.Add(pnlChangeUsername);
             pnlSetting.Location = new Point(80, 83);
             pnlSetting.Name = "pnlSetting";
-            pnlSetting.Size = new Size(1270, 647);
+            pnlSetting.Size = new Size(1270, 706);
             pnlSetting.TabIndex = 26;
             // 
             // pnlSettingQandA
@@ -1452,7 +1452,7 @@
             pnlSettingQandA.Controls.Add(label27);
             pnlSettingQandA.CustomizableEdges = customizableEdges91;
             pnlSettingQandA.FillColor = Color.White;
-            pnlSettingQandA.Location = new Point(209, 36);
+            pnlSettingQandA.Location = new Point(169, 89);
             pnlSettingQandA.Name = "pnlSettingQandA";
             pnlSettingQandA.ShadowDecoration.BorderRadius = 20;
             pnlSettingQandA.ShadowDecoration.CustomizableEdges = customizableEdges92;
@@ -1902,7 +1902,7 @@
             btnQandA.ImageAlign = HorizontalAlignment.Left;
             btnQandA.ImageOffset = new Point(15, 0);
             btnQandA.ImageSize = new Size(15, 15);
-            btnQandA.Location = new Point(66, 550);
+            btnQandA.Location = new Point(62, 484);
             btnQandA.Name = "btnQandA";
             btnQandA.ShadowDecoration.CustomizableEdges = customizableEdges98;
             btnQandA.Size = new Size(231, 42);
@@ -1929,7 +1929,7 @@
             btnOpenUploadAuthenticationPhoto.ImageAlign = HorizontalAlignment.Left;
             btnOpenUploadAuthenticationPhoto.ImageOffset = new Point(15, 0);
             btnOpenUploadAuthenticationPhoto.ImageSize = new Size(15, 15);
-            btnOpenUploadAuthenticationPhoto.Location = new Point(62, 454);
+            btnOpenUploadAuthenticationPhoto.Location = new Point(62, 436);
             btnOpenUploadAuthenticationPhoto.Name = "btnOpenUploadAuthenticationPhoto";
             btnOpenUploadAuthenticationPhoto.ShadowDecoration.CustomizableEdges = customizableEdges100;
             btnOpenUploadAuthenticationPhoto.Size = new Size(231, 42);
@@ -1956,7 +1956,7 @@
             btnSettingChangePhoto.ImageAlign = HorizontalAlignment.Left;
             btnSettingChangePhoto.ImageOffset = new Point(15, 0);
             btnSettingChangePhoto.ImageSize = new Size(15, 15);
-            btnSettingChangePhoto.Location = new Point(62, 406);
+            btnSettingChangePhoto.Location = new Point(62, 388);
             btnSettingChangePhoto.Name = "btnSettingChangePhoto";
             btnSettingChangePhoto.ShadowDecoration.CustomizableEdges = customizableEdges102;
             btnSettingChangePhoto.Size = new Size(231, 42);
@@ -1983,7 +1983,7 @@
             btnSettingChangePassword.ImageAlign = HorizontalAlignment.Left;
             btnSettingChangePassword.ImageOffset = new Point(15, 0);
             btnSettingChangePassword.ImageSize = new Size(15, 15);
-            btnSettingChangePassword.Location = new Point(62, 360);
+            btnSettingChangePassword.Location = new Point(62, 342);
             btnSettingChangePassword.Name = "btnSettingChangePassword";
             btnSettingChangePassword.ShadowDecoration.CustomizableEdges = customizableEdges104;
             btnSettingChangePassword.Size = new Size(231, 42);
@@ -2732,9 +2732,9 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1350, 729);
             Controls.Add(pnlHome);
+            Controls.Add(pnlSetting);
             Controls.Add(guna2Panel1);
             Controls.Add(guna2Panel2);
-            Controls.Add(pnlSetting);
             Controls.Add(pnlGrades);
             Controls.Add(pnlActivity);
             Controls.Add(pnlSubject);
