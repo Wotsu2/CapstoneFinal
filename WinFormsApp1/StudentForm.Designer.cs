@@ -207,7 +207,6 @@
             pictureBox4 = new PictureBox();
             btnAccount = new Guna.UI2.WinForms.Guna2Button();
             label7 = new Label();
-            lblhometitle = new Label();
             guna2Panel1 = new Guna.UI2.WinForms.Guna2Panel();
             pictureBox5 = new PictureBox();
             btnQuizExam = new Guna.UI2.WinForms.Guna2Button();
@@ -476,7 +475,7 @@
             btnAccount.Image = Properties.Resources.Avatar;
             btnAccount.ImageOffset = new Point(1, 0);
             btnAccount.ImageSize = new Size(50, 50);
-            btnAccount.Location = new Point(1285, 12);
+            btnAccount.Location = new Point(1269, 12);
             btnAccount.Name = "btnAccount";
             btnAccount.ShadowDecoration.BorderRadius = 10;
             btnAccount.ShadowDecoration.CustomizableEdges = customizableEdges2;
@@ -494,18 +493,6 @@
             label7.Size = new Size(0, 28);
             label7.TabIndex = 15;
             // 
-            // lblhometitle
-            // 
-            lblhometitle.AutoSize = true;
-            lblhometitle.Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblhometitle.Location = new Point(6, 101);
-            lblhometitle.Name = "lblhometitle";
-            lblhometitle.Size = new Size(68, 28);
-            lblhometitle.TabIndex = 14;
-            lblhometitle.Text = "Home";
-            lblhometitle.Visible = false;
-            lblhometitle.Click += lblhometitle_Click;
-            // 
             // guna2Panel1
             // 
             guna2Panel1.BackColor = Color.White;
@@ -515,7 +502,6 @@
             guna2Panel1.Controls.Add(btnGrades);
             guna2Panel1.Controls.Add(btnActivities);
             guna2Panel1.Controls.Add(btnHome);
-            guna2Panel1.Controls.Add(lblhometitle);
             guna2Panel1.CustomizableEdges = customizableEdges15;
             guna2Panel1.FillColor = Color.FromArgb(97, 30, 32);
             guna2Panel1.Location = new Point(0, 0);
@@ -734,7 +720,7 @@
             guna2Panel9.Controls.Add(pictureBox2);
             guna2Panel9.CustomizableEdges = customizableEdges19;
             guna2Panel9.FillColor = Color.White;
-            guna2Panel9.Location = new Point(951, 54);
+            guna2Panel9.Location = new Point(941, 54);
             guna2Panel9.Name = "guna2Panel9";
             guna2Panel9.ShadowDecoration.BorderRadius = 10;
             guna2Panel9.ShadowDecoration.CustomizableEdges = customizableEdges20;
@@ -792,7 +778,7 @@
             lblStudentName.AutoSize = true;
             lblStudentName.BackColor = Color.Transparent;
             lblStudentName.Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblStudentName.Location = new Point(321, 20);
+            lblStudentName.Location = new Point(343, 20);
             lblStudentName.Name = "lblStudentName";
             lblStudentName.Size = new Size(143, 28);
             lblStudentName.TabIndex = 16;
@@ -2745,6 +2731,7 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1350, 729);
+            Controls.Add(pnlHome);
             Controls.Add(guna2Panel1);
             Controls.Add(guna2Panel2);
             Controls.Add(pnlSetting);
@@ -2752,7 +2739,6 @@
             Controls.Add(pnlActivity);
             Controls.Add(pnlSubject);
             Controls.Add(pnlQuizExam);
-            Controls.Add(pnlHome);
             Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             Name = "StudentForm";
@@ -2764,7 +2750,6 @@
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox4).EndInit();
             guna2Panel1.ResumeLayout(false);
-            guna2Panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox5).EndInit();
             pnlHome.ResumeLayout(false);
             pnlHome.PerformLayout();
