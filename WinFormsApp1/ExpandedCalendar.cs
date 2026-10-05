@@ -76,6 +76,23 @@ public class ExpandedCalendar : UserControl
         lblDate.ForeColor = Color.FromArgb(120, 180, 240);
         lblDate.Location = new Point(22, 68);
 
+        // =========================================================
+        // HIDE AGENDA BUTTON — MOVED TO TOP-RIGHT
+        // =========================================================
+
+        btnClose.Text = "Hide agenda  ⌃";
+        btnClose.FlatStyle = FlatStyle.Flat;
+        btnClose.FlatAppearance.BorderSize = 0;
+        btnClose.FlatAppearance.MouseOverBackColor = Color.FromArgb(70, 80, 95);
+        btnClose.FlatAppearance.MouseDownBackColor = Color.FromArgb(90, 100, 115);
+        btnClose.BackColor = Color.Transparent;
+        btnClose.ForeColor = Color.FromArgb(120, 180, 240);
+        btnClose.AutoSize = true;
+        btnClose.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        btnClose.Location = new Point(Width - 130, 14);
+        btnClose.Cursor = Cursors.Hand;
+        btnClose.Click += (s, e) => CloseRequested?.Invoke(this, EventArgs.Empty);
+
         // Month + arrows
         lblMonth.AutoSize = true;
         lblMonth.Font = new Font("Segoe UI", 10.5f);
@@ -102,7 +119,7 @@ public class ExpandedCalendar : UserControl
         {
             cells[i] = MakeCell("", true);
             cells[i].Click += Cell_Click;
-            cells[i].Paint += Cell_Paint;      // dito iguguhit ang mga dots
+            cells[i].Paint += Cell_Paint;
             grid.Controls.Add(cells[i], i % 7, i / 7 + 1);
         }
 
@@ -118,7 +135,7 @@ public class ExpandedCalendar : UserControl
         txtEvent.BackColor = Color.FromArgb(45, 52, 64);
         txtEvent.ForeColor = Color.White;
         txtEvent.BorderStyle = BorderStyle.FixedSingle;
-        txtEvent.PlaceholderText = "Add an event or reminder"; // .NET 5+
+        txtEvent.PlaceholderText = "Add an event or reminder";
         txtEvent.KeyDown += TxtEvent_KeyDown;
 
         // Listahan ng events (may scroll)
@@ -130,23 +147,9 @@ public class ExpandedCalendar : UserControl
         pnlEvents.BackColor = Color.Transparent;
         pnlEvents.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 
-        // Isara
-        btnClose.Text = "Hide agenda  ⌄";
-        btnClose.FlatStyle = FlatStyle.Flat;
-        btnClose.FlatAppearance.BorderSize = 0;
-        btnClose.FlatAppearance.MouseOverBackColor = Color.FromArgb(70, 80, 95);
-        btnClose.FlatAppearance.MouseDownBackColor = Color.FromArgb(90, 100, 115);
-        btnClose.BackColor = Color.Transparent;
-        btnClose.ForeColor = Color.FromArgb(120, 180, 240);
-        btnClose.AutoSize = true;
-        btnClose.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-        btnClose.Location = new Point(210, Height - 40);
-        btnClose.Cursor = Cursors.Hand;
-        btnClose.Click += (s, e) => CloseRequested?.Invoke(this, EventArgs.Empty);
-
         Controls.AddRange(new Control[] {
-            lblTime, lblDate, lblMonth, btnPrev, btnNext, grid,
-            lblToday, txtEvent, pnlEvents, btnClose });
+            lblTime, lblDate, btnClose, lblMonth, btnPrev, btnNext, grid,
+            lblToday, txtEvent, pnlEvents });
 
         grid.BackColor = Color.Transparent;
         foreach (var l in new[] { lblTime, lblDate, lblMonth, lblToday })
@@ -159,13 +162,14 @@ public class ExpandedCalendar : UserControl
         RefreshGrid();
         ShowEvents();
         UpdateClock();
+
+        // Ensure the top-right position updates on first layout
+        this.Resize += (s, e) =>
+        {
+            btnClose.Location = new Point(Width - btnClose.Width - 15, 14);
+        };
     }
 
-    // =====================================================
-    // PUBLIC
-    // =====================================================
-
-    // Ipasa dito ang mga quiz / exam / activity galing database
     public void SetEvents(IEnumerable<CalEvent> items)
     {
         external = (items ?? Enumerable.Empty<CalEvent>()).ToList();
@@ -176,22 +180,21 @@ public class ExpandedCalendar : UserControl
 
     public void ShowOn(Control parent)
     {
-        Visible = false;                      // itago muna para hindi makuha sa snapshot
+        Visible = false;
         if (Parent != parent) parent.Controls.Add(this);
 
         Size = new Size(340, parent.ClientSize.Height);
         Location = new Point(parent.ClientSize.Width - Width, 0);
         Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
 
+        // Reposition Hide agenda button after resize
+        btnClose.Location = new Point(Width - btnClose.Width - 15, 14);
+
         CaptureBackdrop(parent);
 
         Visible = true;
         BringToFront();
     }
-
-    // =====================================================
-    // TRANSLUCENT BACKGROUND
-    // =====================================================
 
     private void CaptureBackdrop(Control parent)
     {
@@ -249,18 +252,14 @@ public class ExpandedCalendar : UserControl
             e.Graphics.DrawLine(edge, 0, 0, 0, Height);
     }
 
-    // =====================================================
-    // EVENTS / DOTS
-    // =====================================================
-
     private static Color ColorFor(string kind)
     {
         switch (kind)
         {
-            case "Exam": return Color.FromArgb(231, 76, 60);      // pula
-            case "Quiz": return Color.FromArgb(175, 122, 197);    // lila
-            case "Activity": return Color.FromArgb(243, 156, 18); // kahel
-            default: return Color.FromArgb(46, 204, 113);         // berde (reminder)
+            case "Exam": return Color.FromArgb(231, 76, 60);
+            case "Quiz": return Color.FromArgb(175, 122, 197);
+            case "Activity": return Color.FromArgb(243, 156, 18);
+            default: return Color.FromArgb(46, 204, 113);
         }
     }
 
@@ -277,7 +276,6 @@ public class ExpandedCalendar : UserControl
         return byDate.TryGetValue(d.Date, out var list) ? list : new List<CalEvent>();
     }
 
-    // Maliliit na bilog sa TAAS ng numero. Puno = may pending, guwang = tapos na lahat.
     private void Cell_Paint(object? sender, PaintEventArgs e)
     {
         var cell = (Label)sender!;
@@ -341,8 +339,6 @@ public class ExpandedCalendar : UserControl
 
     private Control MakeEventRow(CalEvent ev)
     {
-        // Student: clickable ang Activity, at ang Quiz/Exam na hindi pa na-submit
-        // Professor (AllClickable): lahat maliban sa Reminder
         bool clickable = AllClickable
             ? ev.Kind != "Reminder"
             : (ev.Kind == "Activity" || ((ev.Kind == "Quiz" || ev.Kind == "Exam") && !ev.Done));
@@ -401,10 +397,6 @@ public class ExpandedCalendar : UserControl
         return row;
     }
 
-    // =====================================================
-    // GRID / CLOCK
-    // =====================================================
-
     private static void StyleArrow(Button b, string text, Point loc)
     {
         b.Text = text;
@@ -461,7 +453,7 @@ public class ExpandedCalendar : UserControl
                         : isSel ? Color.FromArgb(75, 85, 100)
                         : Color.Transparent;
             c.ForeColor = inMonth || isToday ? Color.White : Color.FromArgb(120, 120, 120);
-            c.Invalidate();   // para ma-redraw ang dots
+            c.Invalidate();
         }
     }
 

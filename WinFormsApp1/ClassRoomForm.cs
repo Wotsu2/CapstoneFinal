@@ -528,10 +528,22 @@ namespace WinFormsApp1
                 quizzesPage.Controls.Add(MakeEmptyCard("No quizzes or exams posted for this class yet.", 90));
         }
 
+        // =========================================================
+        // FIXED: Guard against re-opening a submitted quiz
+        // =========================================================
         private void OpenQuiz(int quizId)
         {
             try
             {
+                // Guard: block re-opening quizzes the student already submitted
+                if (HasQuizBeenSubmitted(quizId))
+                {
+                    CustomMessageBox.Show("You have already submitted this assessment.",
+                        "Already Submitted", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
+                    BuildQuizzesPage();
+                    return;
+                }
+
                 var form = new StudentQuizForm(studentId, quizId);
                 form.ShowDialog(this);
                 BuildQuizzesPage();
@@ -541,6 +553,33 @@ namespace WinFormsApp1
                 CustomMessageBox.Show("Unable to open quiz: " + ex.Message,
                     "Open Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
+        }
+
+        // Helper — check if the student already submitted this quiz
+        private bool HasQuizBeenSubmitted(int quizId)
+        {
+            string connStr = SettingsManager.Current.GetConnectionString();
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    using (var cmd = new MySqlCommand(
+                        @"SELECT COUNT(*) FROM quiz_attempts
+                          WHERE quiz_id = @quiz_id
+                            AND user_id = @user_id
+                            AND status  = 'SUBMITTED'", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@quiz_id", quizId);
+                        cmd.Parameters.AddWithValue("@user_id", studentId);
+
+                        object result = cmd.ExecuteScalar();
+                        if (result == null || result == DBNull.Value) return false;
+                        return Convert.ToInt32(result) > 0;
+                    }
+                }
+            }
+            catch { return false; }
         }
 
         // =========================================================
@@ -688,6 +727,9 @@ namespace WinFormsApp1
             return list;
         }
 
+        // =========================================================
+        // FIXED: Filter out submitted quizzes + limit to this professor
+        // =========================================================
         private List<SimpleItem> LoadQuizItems()
         {
             var list = new List<SimpleItem>();
@@ -700,14 +742,24 @@ namespace WinFormsApp1
                     conn.Open();
 
                     string q = @"
-                        SELECT quiz_id, quiz_title, subject, assessment_type, exam_period
-                        FROM quizzes
-                        WHERE subject = @subject
-                        ORDER BY created_at DESC";
+                        SELECT q.quiz_id, q.quiz_title, q.subject,
+                               q.assessment_type, q.exam_period
+                        FROM quizzes q
+                        WHERE q.subject = @subject
+                          AND q.created_by = @prof_id
+                          AND NOT EXISTS (
+                              SELECT 1 FROM quiz_attempts qa
+                              WHERE qa.quiz_id = q.quiz_id
+                                AND qa.user_id = @user_id
+                                AND qa.status  = 'SUBMITTED'
+                          )
+                        ORDER BY q.created_at DESC";
 
                     using (var cmd = new MySqlCommand(q, conn))
                     {
                         cmd.Parameters.AddWithValue("@subject", className);
+                        cmd.Parameters.AddWithValue("@prof_id", professorId);
+                        cmd.Parameters.AddWithValue("@user_id", studentId);
 
                         using (var r = cmd.ExecuteReader())
                         {

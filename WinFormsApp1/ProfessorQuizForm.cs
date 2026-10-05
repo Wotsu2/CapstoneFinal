@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -18,7 +17,7 @@ namespace WinFormsApp1
         private ComboBox cmbExamPeriod;
 
         private TextBox txtQuizTitle;
-        private TextBox txtSubject;
+        private ComboBox cmbSubject;  // <-- changed from TextBox to ComboBox
 
         // =========================================================
         // TIME LIMIT
@@ -58,8 +57,6 @@ namespace WinFormsApp1
         private List<QuizQuestion> importedQuestions =
             new List<QuizQuestion>();
 
-        // Maps ListBox item index to the actual QuizQuestion
-        // This allows the professor to edit the selected question.
         private Dictionary<int, QuizQuestion> questionItemMap =
             new Dictionary<int, QuizQuestion>();
 
@@ -111,8 +108,69 @@ namespace WinFormsApp1
 
             BuildProfessorInterface();
 
+            this.Load += (s, e) => LoadProfessorSubjects();
+
             this.FormClosed +=
                 ProfessorQuizForm_FormClosed;
+        }
+
+        // =========================================================
+        // LOAD PROFESSOR'S SUBJECTS INTO THE DROPDOWN
+        // =========================================================
+
+        private void LoadProfessorSubjects()
+        {
+            if (cmbSubject == null) return;
+
+            try
+            {
+                cmbSubject.Items.Clear();
+
+                string connStr = SettingsManager.Current.GetConnectionString();
+
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    string query = @"
+                        SELECT DISTINCT class_name
+                        FROM professor_class
+                        WHERE professor_id = @prof_id
+                          AND class_name IS NOT NULL
+                          AND class_name <> ''
+                        ORDER BY class_name";
+
+                    using (var cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@prof_id", professorUserId);
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                string name = reader["class_name"]?.ToString()?.Trim();
+                                if (!string.IsNullOrEmpty(name) && !cmbSubject.Items.Contains(name))
+                                {
+                                    cmbSubject.Items.Add(name);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (cmbSubject.Items.Count > 0)
+                    cmbSubject.SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("LoadProfessorSubjects error: " + ex.Message);
+
+                CustomMessageBox.Show(
+                    "Unable to load your subjects.\n\n" + ex.Message,
+                    "Subjects",
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Warning);
+            }
         }
 
         // =========================================================
@@ -527,7 +585,7 @@ namespace WinFormsApp1
                 cmbExamPeriod);
 
             // =====================================================
-            // SUBJECT / TIME LIMIT
+            // SUBJECT (DROPDOWN) / TIME LIMIT
             // =====================================================
 
             Label lblSubject =
@@ -584,29 +642,30 @@ namespace WinFormsApp1
             Controls.Add(
                 lblDuration);
 
-            txtSubject =
-                new TextBox();
+            // SUBJECT: ComboBox instead of TextBox
+            cmbSubject =
+                new ComboBox();
 
-            txtSubject.Font =
+            cmbSubject.DropDownStyle =
+                ComboBoxStyle.DropDownList;
+
+            cmbSubject.Font =
                 new Font(
                     "Segoe UI",
                     10);
 
-            txtSubject.BorderStyle =
-                BorderStyle.FixedSingle;
-
-            txtSubject.Location =
+            cmbSubject.Location =
                 new Point(
                     pad,
                     248 + yShift);
 
-            txtSubject.Size =
+            cmbSubject.Size =
                 new Size(
                     halfWidth,
                     30);
 
             Controls.Add(
-                txtSubject);
+                cmbSubject);
 
             // =====================================================
             // TIME LIMIT
@@ -952,7 +1011,6 @@ namespace WinFormsApp1
             Controls.Add(
                 lstQuestions);
 
-            // Double click question to edit
             lstQuestions.DoubleClick +=
                 LstQuestions_DoubleClick;
 
@@ -1838,11 +1896,24 @@ namespace WinFormsApp1
                             result.Title;
                     }
 
-                    if (!string.IsNullOrWhiteSpace(
-                        result.Subject))
+                    // If the DOCX had a subject, try to auto-select it
+                    // in the subject dropdown if it exists in the list.
+                    if (!string.IsNullOrWhiteSpace(result.Subject) &&
+                        cmbSubject != null)
                     {
-                        txtSubject.Text =
-                            result.Subject;
+                        string match = null;
+
+                        foreach (var item in cmbSubject.Items)
+                        {
+                            if (string.Equals(item?.ToString(), result.Subject.Trim(), StringComparison.OrdinalIgnoreCase))
+                            {
+                                match = item.ToString();
+                                break;
+                            }
+                        }
+
+                        if (match != null)
+                            cmbSubject.SelectedItem = match;
                     }
 
                     importedQuestions =
@@ -2260,18 +2331,26 @@ namespace WinFormsApp1
                 return;
             }
 
+            // =====================================================
+            // SUBJECT: read from the dropdown
+            // =====================================================
+
             string subject =
-                txtSubject.Text.Trim();
+                cmbSubject.SelectedItem == null
+                    ? ""
+                    : cmbSubject.SelectedItem.ToString().Trim();
 
             if (string.IsNullOrWhiteSpace(subject))
             {
                 CustomMessageBox.Show(
-                    "Please enter the subject.",
+                    "Please select a subject.\n\n" +
+                    "If the dropdown is empty, you have no classes " +
+                    "assigned yet. Create a class first.",
                     "Missing Subject",
                     CustomMessageBoxButtons.OK,
                     CustomMessageBoxIcon.Warning);
 
-                txtSubject.Focus();
+                cmbSubject.Focus();
 
                 return;
             }
@@ -3491,7 +3570,8 @@ namespace WinFormsApp1
         {
             txtQuizTitle.Clear();
 
-            txtSubject.Clear();
+            if (cmbSubject != null && cmbSubject.Items.Count > 0)
+                cmbSubject.SelectedIndex = 0;
 
             cmbAssessmentType.SelectedIndex =
                 0;
@@ -4615,4 +4695,3 @@ namespace WinFormsApp1
     // Huwag magdagdag ng panibagong RoundedButton class dito
     // para maiwasan ang duplicate/ambiguous class error.
 }
-

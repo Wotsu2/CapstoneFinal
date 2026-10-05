@@ -97,7 +97,6 @@ namespace WinFormsApp1
             public bool HasGrid = false;
         }
 
-        // Night palette
         private static readonly Color NightFormBack = Color.FromArgb(18, 18, 18);
         private static readonly Color NightPanelBack = Color.FromArgb(30, 30, 30);
         private static readonly Color NightCardBack = Color.FromArgb(42, 42, 42);
@@ -106,7 +105,6 @@ namespace WinFormsApp1
         private static readonly Color NightBorder = Color.FromArgb(60, 60, 60);
         private static readonly Color NightInputBack = Color.FromArgb(50, 50, 50);
 
-        // Containers whose children are re-created every toggle
         private static readonly HashSet<string> DynamicContainers = new HashSet<string>
         {
             "flpPendingActivities",
@@ -169,7 +167,6 @@ namespace WinFormsApp1
 
                 StartSlideshow();
 
-                // ---------- NOTIFICATIONS ----------
                 try { BuildNotificationsUi(); }
                 catch (Exception ex) { Console.WriteLine("BuildNotificationsUi: " + ex.Message); }
 
@@ -199,16 +196,14 @@ namespace WinFormsApp1
                 };
                 activitiesRefreshTimer.Start();
 
-
                 CustomMessageBox.Show(
-            $"Welcome back, {StudentUsername}!\n\n" +
-            $"Your dashboard is ready.\n" +
-            $"Section: {StudentSection}\n" +
-            $"Pending activities and assessments have been loaded.",
-            "Login Successful",
-            CustomMessageBoxButtons.OK,
-            CustomMessageBoxIcon.Information);
-
+                    $"Welcome back, {StudentUsername}!\n\n" +
+                    $"Your dashboard is ready.\n" +
+                    $"Section: {StudentSection}\n" +
+                    $"Pending activities and assessments have been loaded.",
+                    "Login Successful",
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -527,9 +522,6 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // WORKSTATION CONNECTION — Now sends student name
-        // =========================================================
         private void ConnectToServer()
         {
             _ = RunClientForever(
@@ -544,10 +536,6 @@ namespace WinFormsApp1
                 {
                     NetworkStream stream = c.GetStream();
 
-                    // =========================================================
-                    // NEW: Send this student's name to the Professor
-                    // so the workstation card can show who is connected.
-                    // =========================================================
                     try
                     {
                         string myName = string.IsNullOrEmpty(studentname)
@@ -571,7 +559,6 @@ namespace WinFormsApp1
                         Console.WriteLine("[Workstation] Failed to send name: " + ex.Message);
                     }
 
-                    // Existing heartbeat loop
                     while (!isSignedOut)
                     {
                         try
@@ -787,13 +774,10 @@ namespace WinFormsApp1
         {
             string connStr = SettingsManager.Current.GetConnectionString();
 
-            // =========================================================
-            // Vertical scroll layout — one card per row
-            // =========================================================
             flpPendingActivities.AutoScroll = true;
             flpPendingActivities.WrapContents = false;
             flpPendingActivities.FlowDirection = FlowDirection.TopDown;
-            flpPendingActivities.Padding = new Padding(10, 5, 15, 10);   // extra right padding for the scrollbar
+            flpPendingActivities.Padding = new Padding(10, 5, 15, 10);
 
             try
             {
@@ -843,9 +827,6 @@ namespace WinFormsApp1
                                 string activity_status = reader.IsDBNull(reader.GetOrdinal("activity_status"))
                                     ? "" : reader.GetString("activity_status");
 
-                                // =========================================================
-                                // CARD — full-width horizontal row inside the panel
-                                // =========================================================
                                 int scrollbarWidth = SystemInformation.VerticalScrollBarWidth;
                                 int cardWidth = Math.Max(300, flpPendingActivities.ClientSize.Width - scrollbarWidth - 20);
 
@@ -863,7 +844,6 @@ namespace WinFormsApp1
                                 int capturedId = activityId;
                                 card.Click += (s, e) => InitializeHomeActivityButton(capturedId);
 
-                                // ---- COLORED ACCENT BAR ON LEFT ----
                                 Panel accentBar = new Panel();
                                 accentBar.Width = 5;
                                 accentBar.Dock = DockStyle.Left;
@@ -871,7 +851,6 @@ namespace WinFormsApp1
                                 accentBar.Cursor = Cursors.Hand;
                                 card.Controls.Add(accentBar);
 
-                                // ---- SUBJECT ----
                                 Label lblSubject = new Label();
                                 lblSubject.Text = className.ToUpper();
                                 lblSubject.ForeColor = _isNightMode ? NightText : Color.FromArgb(30, 30, 30);
@@ -884,7 +863,6 @@ namespace WinFormsApp1
                                 lblSubject.Cursor = Cursors.Hand;
                                 card.Controls.Add(lblSubject);
 
-                                // ---- TITLE ----
                                 Label lblTitle = new Label();
                                 lblTitle.Text = title;
                                 lblTitle.ForeColor = _isNightMode ? NightSubText : Color.FromArgb(70, 70, 70);
@@ -897,7 +875,6 @@ namespace WinFormsApp1
                                 lblTitle.Cursor = Cursors.Hand;
                                 card.Controls.Add(lblTitle);
 
-                                // ---- STATUS ----
                                 Label lblStatus = new Label();
                                 lblStatus.Text = activity_status;
                                 lblStatus.ForeColor = _isNightMode ? NightSubText : Color.Gray;
@@ -908,7 +885,6 @@ namespace WinFormsApp1
                                 lblStatus.Cursor = Cursors.Hand;
                                 card.Controls.Add(lblStatus);
 
-                                // ---- DUE BADGE (top-right) ----
                                 Guna.UI2.WinForms.Guna2Panel badge = new Guna.UI2.WinForms.Guna2Panel();
                                 badge.Size = new Size(160, 26);
                                 badge.Location = new Point(cardWidth - 175, 12);
@@ -928,7 +904,6 @@ namespace WinFormsApp1
                                 badge.Controls.Add(lblDue);
                                 card.Controls.Add(badge);
 
-                                // ---- VIEW LINK (bottom-right) ----
                                 Label lblView = new Label();
                                 lblView.Text = "View Activity   ›";
                                 lblView.ForeColor = _isNightMode ? Color.FromArgb(220, 130, 130) : Color.FromArgb(139, 0, 0);
@@ -939,7 +914,6 @@ namespace WinFormsApp1
                                 lblView.Cursor = Cursors.Hand;
                                 card.Controls.Add(lblView);
 
-                                // ---- CLICK HANDLERS ----
                                 EventHandler openActivity = (s, e) => InitializeHomeActivityButton(capturedId);
                                 card.Click += openActivity;
                                 accentBar.Click += openActivity;
@@ -963,6 +937,7 @@ namespace WinFormsApp1
                 Console.WriteLine("InitializeCreateButtonActivity error: " + ex.Message);
             }
         }
+
         private string FormatDate(string raw)
         {
             if (string.IsNullOrWhiteSpace(raw)) return raw;
@@ -1167,9 +1142,6 @@ namespace WinFormsApp1
             RefreshPendingActivities();
         }
 
-        // =========================================================
-        // *** FIXED FetchActivityPdf ***
-        // =========================================================
         private string FetchActivityPdf(int activityId, int profId, string title, string section, string className)
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -1202,12 +1174,9 @@ namespace WinFormsApp1
                         object result = cmd.ExecuteScalar();
                         if (result == null || result == DBNull.Value) return null;
 
-                        // Case 1: The database returned a STRING (ideal case)
                         if (result is string s && !string.IsNullOrWhiteSpace(s))
                             return s.Trim();
 
-                        // Case 2: The database returned a BYTE array (because column type is BLOB)
-                        // Convert the bytes back into the original string path.
                         if (result is byte[] bytes && bytes.Length > 0)
                         {
                             try
@@ -1215,7 +1184,6 @@ namespace WinFormsApp1
                                 string decoded = Encoding.UTF8.GetString(bytes)
                                                           .Trim('\0', ' ', '\r', '\n', '\t');
 
-                                // If the decoded string looks like a real path (UNC or local), return it
                                 if (!string.IsNullOrEmpty(decoded) &&
                                     (decoded.StartsWith(@"\\") || decoded.Contains(":")))
                                 {
@@ -1224,7 +1192,6 @@ namespace WinFormsApp1
                             }
                             catch { }
 
-                            // Fallback: If it really is a raw PDF byte stream, save it as a temp file
                             string tempFolder = Path.Combine(Path.GetTempPath(), "cdsga_activities", userId);
                             Directory.CreateDirectory(tempFolder);
                             string tempPath = Path.Combine(tempFolder, $"activity_{activityId}.pdf");
@@ -1242,9 +1209,6 @@ namespace WinFormsApp1
                 return null;
             }
         }
-        // =========================================================
-        // *** END FIX ***
-        // =========================================================
 
         private void NameGet()
         {
@@ -1485,7 +1449,6 @@ namespace WinFormsApp1
         private void InitializeCreadeClass(string classname = "", string classSection = "",
                            string classTime = "", string classDate = "")
         {
-            // Legacy stub — actual UI is built by LoadJoinedClasses()
         }
 
         private void LoadJoinedClasses()
@@ -1548,7 +1511,6 @@ namespace WinFormsApp1
                                 if (string.IsNullOrEmpty(profFullName))
                                     profFullName = "Unknown Professor";
 
-                                // ===== CARD =====
                                 var cardPanel = new Guna.UI2.WinForms.Guna2Panel
                                 {
                                     Size = new Size(350, 250),
@@ -1563,7 +1525,6 @@ namespace WinFormsApp1
                                     ShadowDecoration = { Enabled = true, Depth = 8, BorderRadius = 16, Color = Color.FromArgb(60, 0, 0, 0) }
                                 };
 
-                                // ===== HEADER =====
                                 var header = new Guna.UI2.WinForms.Guna2Panel
                                 {
                                     Size = new Size(350, 80),
@@ -1602,7 +1563,6 @@ namespace WinFormsApp1
                                 };
                                 header.Controls.Add(lblMenu);
 
-                                // ===== AVATAR =====
                                 string initials = "";
                                 if (!string.IsNullOrWhiteSpace(profFirst)) initials += char.ToUpper(profFirst.Trim()[0]);
                                 if (!string.IsNullOrWhiteSpace(profLast)) initials += char.ToUpper(profLast.Trim()[0]);
@@ -1653,7 +1613,6 @@ namespace WinFormsApp1
                                     Cursor = Cursors.Hand
                                 });
 
-                                // ===== DIVIDER =====
                                 cardPanel.Controls.Add(new Panel
                                 {
                                     Size = new Size(310, 1),
@@ -1661,7 +1620,6 @@ namespace WinFormsApp1
                                     BackColor = _isNightMode ? NightBorder : Color.FromArgb(235, 235, 235)
                                 });
 
-                                // ===== SCHEDULE =====
                                 cardPanel.Controls.Add(new Label
                                 {
                                     Text = "📅  " + rClassDate,
@@ -1684,7 +1642,6 @@ namespace WinFormsApp1
                                     Cursor = Cursors.Hand
                                 });
 
-                                // ===== SECTION PILL =====
                                 var sectionPill = new Guna.UI2.WinForms.Guna2Panel
                                 {
                                     Size = new Size(80, 32),
@@ -1705,7 +1662,6 @@ namespace WinFormsApp1
                                 });
                                 cardPanel.Controls.Add(sectionPill);
 
-                                // ===== UNJOIN =====
                                 string capturedClassName = rClassName;
                                 string capturedSection = rClassSection;
                                 string capturedTime = rClassTime;
@@ -1729,7 +1685,6 @@ namespace WinFormsApp1
                                     try { RefreshPendingActivities(); } catch { }
                                 };
 
-                                // ===== OPEN CLASSROOM =====
                                 int capturedProfId = rProfId;
                                 Action openClassroom = () =>
                                 {
@@ -1758,7 +1713,6 @@ namespace WinFormsApp1
                                 avatar.Click += (s, e) => openClassroom();
                                 sectionPill.Click += (s, e) => openClassroom();
 
-                                // ===== HOVER =====
                                 cardPanel.MouseEnter += (s, e) => cardPanel.BorderColor = maroon;
                                 cardPanel.MouseLeave += (s, e) => cardPanel.BorderColor = borderIdle;
 
@@ -2045,9 +1999,6 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // PROFILE PHOTO
-        // =========================================================
         private async void btnSubmitChangePhoto_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(CurrentProfilePath))
@@ -2240,14 +2191,10 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // FIXED: Send auth photo with command header + read reply
-        // =========================================================
         private async Task<string> SendAuthenticationPhotoToAdmin(byte[] imageBytes, string fileName)
         {
             try
             {
-                // Clean the IP just in case
                 string adminIp = SettingsManager.Current.ServerIp
                                                .Trim()
                                                .Replace("(null)", "")
@@ -2285,14 +2232,12 @@ namespace WinFormsApp1
                     using (NetworkStream stream = client.GetStream())
                     using (BinaryWriter writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
                     {
-                        // Command header FIRST
                         writer.Write("AUTH_PHOTO");
                         writer.Write(fileName);
                         writer.Write(imageBytes.Length);
                         writer.Write(imageBytes);
                         writer.Flush();
 
-                        // Wait for the server's reply
                         try
                         {
                             using (var reader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true))
@@ -2322,9 +2267,6 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // FIXED: Submit handler uses the server's reply path
-        // =========================================================
         private async void btnSubmitAuthenticationPhoto_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(AuthenticationPhoto))
@@ -2460,12 +2402,27 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
-                    string query = @"SELECT q.quiz_id, q.quiz_title, q.subject, q.assessment_type,
-                                            q.exam_period, q.created_at
-                                     FROM quizzes q ORDER BY q.created_at DESC";
+                    string query = @"
+                        SELECT q.quiz_id, q.quiz_title, q.subject,
+                               q.assessment_type, q.exam_period, q.created_at
+                        FROM quizzes q
+                        WHERE q.created_by IN (
+                            SELECT DISTINCT sc.professor_id
+                            FROM student_class sc
+                            WHERE sc.user_id = @user_id
+                        )
+                        AND NOT EXISTS (
+                            SELECT 1 FROM quiz_attempts qa
+                            WHERE qa.quiz_id = q.quiz_id
+                              AND qa.user_id = @user_id
+                              AND qa.status  = 'SUBMITTED'
+                        )
+                        ORDER BY q.created_at DESC";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
+                        cmd.Parameters.AddWithValue("@user_id", userId);
+
                         using (var reader = cmd.ExecuteReader())
                         {
                             bool any = false;
@@ -2478,13 +2435,8 @@ namespace WinFormsApp1
                                 string type = reader["assessment_type"]?.ToString() ?? "quiz";
                                 string period = reader["exam_period"]?.ToString() ?? "";
 
-                                bool submitted = HasSubmitted(quizId);
-
-                                if (submitted)
-                                    continue;
-
                                 any = true;
-                                AddAssessmentRow(quizId, title, subject, type, period, submitted);
+                                AddAssessmentRow(quizId, title, subject, type, period, false);
                             }
 
                             if (!any)
@@ -2664,6 +2616,14 @@ namespace WinFormsApp1
         {
             try
             {
+                if (HasSubmitted(quizId))
+                {
+                    MessageBox.Show("You have already submitted this assessment.",
+                        "Already Submitted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    LoadAssessments();
+                    return;
+                }
+
                 StudentQuizForm quizForm = new StudentQuizForm(int.Parse(userId), quizId);
                 quizForm.ShowDialog();
 
@@ -2854,9 +2814,7 @@ namespace WinFormsApp1
         // =========================================================
         // UTILITIES
         // =========================================================
-
         private static string SanitizeFolderName(string name)
-
         {
             if (string.IsNullOrWhiteSpace(name)) return "Untitled";
 
@@ -2869,7 +2827,6 @@ namespace WinFormsApp1
         // =========================================================
         // EXPANDED CALENDAR
         // =========================================================
-
         private ExpandedCalendar expandedCal;
 
         private static bool TryParseCalDate(string s, out DateTime dt)
@@ -2894,7 +2851,6 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
-                    // ---- ACTIVITIES (sa mga section na sinalihan ng student) ----
                     const string qAct = @"
                 SELECT pa.activity_id, pa.title, pa.activity_subject, pa.due_date,
                        EXISTS (SELECT 1 FROM submitted_activity sa
@@ -2937,14 +2893,24 @@ namespace WinFormsApp1
                         }
                     }
 
-                    // ---- QUIZZES / EXAMS ----
                     const string qQuiz = @"
                 SELECT q.quiz_id, q.quiz_title, q.subject, q.assessment_type, q.created_at,
                        EXISTS (SELECT 1 FROM quiz_attempts qa
                                WHERE qa.quiz_id = q.quiz_id
                                  AND qa.user_id = @user_id
                                  AND qa.status  = 'SUBMITTED') AS submitted
-                FROM quizzes q";
+                FROM quizzes q
+                WHERE q.created_by IN (
+                    SELECT DISTINCT sc.professor_id
+                    FROM student_class sc
+                    WHERE sc.user_id = @user_id
+                )
+                AND NOT EXISTS (
+                    SELECT 1 FROM quiz_attempts qa2
+                    WHERE qa2.quiz_id = q.quiz_id
+                      AND qa2.user_id = @user_id
+                      AND qa2.status  = 'SUBMITTED'
+                )";
 
                     using (var cmd = new MySqlCommand(qQuiz, conn))
                     {
@@ -2986,10 +2952,9 @@ namespace WinFormsApp1
                 expandedCal = new ExpandedCalendar();
                 expandedCal.CloseRequested += (s, a) => expandedCal.Visible = false;
 
-                // Pag may na-click na event sa listahan
                 expandedCal.EventOpened += (s, ev) =>
                 {
-                    expandedCal.Visible = false;   // isara muna ang flyout
+                    expandedCal.Visible = false;
 
                     BeginInvoke(new Action(() =>
                     {
@@ -3001,16 +2966,13 @@ namespace WinFormsApp1
                 };
             }
 
-            expandedCal.SetEvents(LoadCalendarEvents());   // laging bago ang data pag binuksan
+            expandedCal.SetEvents(LoadCalendarEvents());
             expandedCal.ShowOn(pnlHome);
         }
 
-
         private void guna2Panel1_Paint(object sender, PaintEventArgs e)
         {
-
         }
-
 
         private void BuildNotificationsUi()
         {
@@ -3140,7 +3102,6 @@ namespace WinFormsApp1
             this.Controls.Add(notificationPanel);
             notificationPanel.BringToFront();
 
-            // Close the panel when clicking anywhere outside it
             this.Click += (s, e) => CloseNotificationPanel();
             foreach (Control ctrl in this.Controls)
             {
@@ -3384,7 +3345,6 @@ namespace WinFormsApp1
                 card.Controls.Add(lblTime);
             }
 
-            // ---------- CLICK HANDLER ----------
             Action openItem = () =>
             {
                 readNotificationKeys.Add(item.Key);
@@ -3503,18 +3463,29 @@ namespace WinFormsApp1
                         SELECT q.quiz_id, q.quiz_title, q.subject,
                                q.assessment_type, q.created_at
                         FROM quizzes q
+                        WHERE q.created_by IN (
+                            SELECT DISTINCT sc.professor_id
+                            FROM student_class sc
+                            WHERE sc.user_id = @user_id
+                        )
+                        AND NOT EXISTS (
+                            SELECT 1 FROM quiz_attempts qa
+                            WHERE qa.quiz_id = q.quiz_id
+                              AND qa.user_id = @user_id
+                              AND qa.status  = 'SUBMITTED'
+                        )
                         ORDER BY q.created_at DESC
                         LIMIT 20";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
+                        cmd.Parameters.AddWithValue("@user_id", userId);
+
                         using (var r = cmd.ExecuteReader())
                         {
                             while (r.Read())
                             {
                                 int quizId = Convert.ToInt32(r["quiz_id"]);
-
-                                if (HasSubmitted(quizId)) continue;
 
                                 DateTime? posted = null;
                                 try
@@ -3576,6 +3547,15 @@ namespace WinFormsApp1
         {
             try
             {
+                if (HasSubmitted(quizId))
+                {
+                    MessageBox.Show("You have already submitted this assessment.",
+                        "Already Submitted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    LoadNotifications();
+                    LoadAssessments();
+                    return;
+                }
+
                 var form = new StudentQuizForm(int.Parse(userId), quizId);
                 form.ShowDialog(this);
                 LoadNotifications();
@@ -3588,13 +3568,9 @@ namespace WinFormsApp1
             }
         }
 
-
-
         // =========================================================
         // NIGHT MODE — TOGGLE + THEMING
         // =========================================================
-
-
         private void RebuildDynamicContent()
         {
             try
@@ -3650,7 +3626,6 @@ namespace WinFormsApp1
             try { ApplyGridTheme(dgvStudentGrades); } catch { }
         }
 
-        // ============ HELPERS ============
         private static bool IsMaroonish(Color c)
             => c.A > 200 && c.R > 80 && c.R < 190 && c.G < 90 && c.B < 90;
 
@@ -3667,7 +3642,6 @@ namespace WinFormsApp1
         private bool IsDynamicContainer(Control c)
             => c != null && !string.IsNullOrEmpty(c.Name) && DynamicContainers.Contains(c.Name);
 
-        // Names of top-level design controls that MUST be forced dark
         private static readonly string[] ForcedDarkControls =
         {
             "pnlSetting", "pnlChangeUsername", "pnlChangePassword", "pnlChangePhoto",
@@ -3861,12 +3835,10 @@ namespace WinFormsApp1
 
         private void label8_Click(object sender, EventArgs e)
         {
-
         }
 
         private void lblhometitle_Click(object sender, EventArgs e)
         {
-
         }
     }
 }
