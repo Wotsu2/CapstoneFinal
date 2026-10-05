@@ -179,6 +179,11 @@ namespace WinFormsApp1
             }
         }
 
+        // =========================================================
+        // SUBMIT AUTHENTICATION PHOTO
+        // Sends "AUTH_PHOTO" command header so the server can route it.
+        // Waits for the server's reply to get the actual saved path.
+        // =========================================================
         private async void btnSubmitAuthenticationPhoto_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(AuthenticationPhoto))
@@ -195,41 +200,26 @@ namespace WinFormsApp1
                 string ext = Path.GetExtension(AuthenticationPhoto);
                 string fileName = $"{StudentId}_{StudentUsername}_{DateTime.Now:yyyyMMddHHmmss}{ext}";
 
-                bool sent = await SendAuthenticationPhotoToAdmin(imageBytes, fileName);
-                if (!sent) return;
-
-                // Build the UNC path that the ADMIN saved to
-                string saveRoot = SettingsManager.Current.SaveFolder;
-                string authSub = SettingsManager.Current.AuthPhotoSubfolder ?? "";
-                string uncPath;
-
-                if (!string.IsNullOrEmpty(saveRoot) && saveRoot.StartsWith(@"\\"))
+                string savedPath = await SendAuthenticationPhotoToAdmin(imageBytes, fileName);
+                if (string.IsNullOrEmpty(savedPath))
                 {
-                    // SaveFolder is already UNC — just append
-                    uncPath = Path.Combine(saveRoot, authSub, fileName);
-                }
-                else
-                {
-                    // SaveFolder is local — build UNC from sanitized ServerIp
-                    string ip = CleanIp(SettingsManager.Current.ServerIp);
-                    string shared = !string.IsNullOrEmpty(saveRoot)
-                                    ? new DirectoryInfo(saveRoot).Name
-                                    : "SharedFolder";
-                    uncPath = $@"\\{ip}\{shared}\{authSub}\{fileName}";
+                    CustomMessageBox.Show("Failed to send authentication photo to server.",
+                        "Send Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
+                    return;
                 }
 
-                Console.WriteLine("authPhoto uncPath = " + uncPath);
+                Console.WriteLine("authPhoto savedPath = " + savedPath);
 
                 string connStr = SettingsManager.Current.GetConnectionString();
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
                     string query = @"UPDATE user_credential 
-                             SET authentication_photo = @path 
-                             WHERE username = @username";
+                                     SET authentication_photo = @path 
+                                     WHERE username = @username";
                     using (var cmd = new MySqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@path", uncPath);
+                        cmd.Parameters.AddWithValue("@path", savedPath);
                         cmd.Parameters.AddWithValue("@username", StudentUsername);
                         cmd.ExecuteNonQuery();
                     }
@@ -257,14 +247,17 @@ namespace WinFormsApp1
                           .TrimStart('\\')
                           .TrimEnd('\\');
 
-            // If it's like "192.168.100.4\SharedFolder" — take only the IP part
             int slash = s.IndexOf('\\');
             if (slash > 0) s = s.Substring(0, slash);
 
             return s;
         }
 
-        private async Task<bool> SendAuthenticationPhotoToAdmin(byte[] imageBytes, string fileName)
+        // =========================================================
+        // Send auth photo and RETURN the server's saved path.
+        // Sends "AUTH_PHOTO" as the first string (command header).
+        // =========================================================
+        private async Task<string> SendAuthenticationPhotoToAdmin(byte[] imageBytes, string fileName)
         {
             try
             {
@@ -282,7 +275,7 @@ namespace WinFormsApp1
                     if (completed == timeoutTask)
                     {
                         Console.WriteLine($"Admin ({adminIp}:{adminPort}) not reachable (timeout).");
-                        return false;
+                        return null;
                     }
 
                     await connectTask;
@@ -290,29 +283,52 @@ namespace WinFormsApp1
                     if (!client.Connected)
                     {
                         Console.WriteLine($"Admin ({adminIp}:{adminPort}) refused the connection.");
-                        return false;
+                        return null;
                     }
 
+                    string returnedPath = null;
+
                     using (NetworkStream stream = client.GetStream())
-                    using (BinaryWriter writer = new BinaryWriter(stream))
+                    using (BinaryWriter writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
                     {
-                        writer.Write(fileName);          // <- admin treats 1st string as filename
+                        // =========================================================
+                        // Command header FIRST so the server knows what this is
+                        // =========================================================
+                        writer.Write("AUTH_PHOTO");
+                        writer.Write(fileName);
                         writer.Write(imageBytes.Length);
                         writer.Write(imageBytes);
                         writer.Flush();
+
+                        // =========================================================
+                        // Wait for the server to reply with the saved path
+                        // =========================================================
+                        try
+                        {
+                            using (var reader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true))
+                            {
+                                returnedPath = reader.ReadString();
+                                Console.WriteLine("[AUTH SEND] Server replied: " + returnedPath);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("[AUTH SEND] No reply from server: " + ex.Message);
+                        }
                     }
+
+                    return returnedPath;
                 }
-                return true;
             }
             catch (SocketException sex)
             {
                 Console.WriteLine($"Network error: {sex.SocketErrorCode} — {sex.Message}");
-                return false;
+                return null;
             }
             catch (Exception ex)
             {
                 Console.WriteLine("SendAuthenticationPhotoToAdmin error: " + ex.Message);
-                return false;
+                return null;
             }
         }
     }

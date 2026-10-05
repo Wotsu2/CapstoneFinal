@@ -2240,11 +2240,24 @@ namespace WinFormsApp1
             }
         }
 
-        private async Task<bool> SendAuthenticationPhotoToAdmin(byte[] imageBytes, string fileName)
+        // =========================================================
+        // FIXED: Send auth photo with command header + read reply
+        // =========================================================
+        private async Task<string> SendAuthenticationPhotoToAdmin(byte[] imageBytes, string fileName)
         {
             try
             {
-                string adminIp = SettingsManager.Current.ServerIp;
+                // Clean the IP just in case
+                string adminIp = SettingsManager.Current.ServerIp
+                                               .Trim()
+                                               .Replace("(null)", "")
+                                               .Replace(" ", "")
+                                               .TrimStart('\\')
+                                               .TrimEnd('\\');
+
+                int slash = adminIp.IndexOf('\\');
+                if (slash > 0) adminIp = adminIp.Substring(0, slash);
+
                 int adminPort = SettingsManager.Current.FileTransferPort;
 
                 using (TcpClient client = new TcpClient())
@@ -2256,7 +2269,7 @@ namespace WinFormsApp1
                     if (completed == timeoutTask)
                     {
                         MessageBox.Show($"Admin ({adminIp}:{adminPort}) not reachable (timeout).");
-                        return false;
+                        return null;
                     }
 
                     await connectTask;
@@ -2264,33 +2277,54 @@ namespace WinFormsApp1
                     if (!client.Connected)
                     {
                         MessageBox.Show($"Admin ({adminIp}:{adminPort}) refused the connection.");
-                        return false;
+                        return null;
                     }
 
+                    string returnedPath = null;
+
                     using (NetworkStream stream = client.GetStream())
-                    using (BinaryWriter writer = new BinaryWriter(stream))
+                    using (BinaryWriter writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
                     {
+                        // Command header FIRST
+                        writer.Write("AUTH_PHOTO");
                         writer.Write(fileName);
                         writer.Write(imageBytes.Length);
                         writer.Write(imageBytes);
                         writer.Flush();
+
+                        // Wait for the server's reply
+                        try
+                        {
+                            using (var reader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true))
+                            {
+                                returnedPath = reader.ReadString();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("[AUTH] No reply from server: " + ex.Message);
+                        }
                     }
+
+                    return returnedPath;
                 }
-                return true;
             }
             catch (SocketException sex)
             {
                 MessageBox.Show($"Network error: {sex.SocketErrorCode}\n{sex.Message}");
-                return false;
+                return null;
             }
             catch (Exception ex)
             {
                 Console.WriteLine("SendAuthenticationPhotoToAdmin error: " + ex.Message);
                 MessageBox.Show("Failed to send photo to admin: " + ex.Message);
-                return false;
+                return null;
             }
         }
 
+        // =========================================================
+        // FIXED: Submit handler uses the server's reply path
+        // =========================================================
         private async void btnSubmitAuthenticationPhoto_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(AuthenticationPhoto))
@@ -2306,11 +2340,15 @@ namespace WinFormsApp1
                 string ext = Path.GetExtension(AuthenticationPhoto);
                 string fileName = $"{userId}_{StudentUsername}_{DateTime.Now:yyyyMMddHHmmss}{ext}";
 
-                bool sent = await SendAuthenticationPhotoToAdmin(imageBytes, fileName);
-                if (!sent) return;
+                string savedPath = await SendAuthenticationPhotoToAdmin(imageBytes, fileName);
+                if (string.IsNullOrEmpty(savedPath))
+                {
+                    MessageBox.Show("Failed to send authentication photo to server.",
+                        "Send Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
 
-                string sharedFolderName = new DirectoryInfo(SettingsManager.Current.SaveFolder).Name;
-                string uncPath = $@"\\{SettingsManager.Current.ServerIp}\{sharedFolderName}\{SettingsManager.Current.AuthPhotoSubfolder}\{fileName}";
+                Console.WriteLine("authPhoto savedPath = " + savedPath);
 
                 string connStr = SettingsManager.Current.GetConnectionString();
                 using (var conn = new MySqlConnection(connStr))
@@ -2319,13 +2357,13 @@ namespace WinFormsApp1
                     using (var cmd = new MySqlCommand(
                         "UPDATE user_credential SET authentication_photo = @path WHERE username = @u", conn))
                     {
-                        cmd.Parameters.AddWithValue("@path", uncPath);
+                        cmd.Parameters.AddWithValue("@path", savedPath);
                         cmd.Parameters.AddWithValue("@u", StudentUsername);
                         cmd.ExecuteNonQuery();
                     }
                 }
 
-                Isauthentication_photoEmpty = uncPath;
+                Isauthentication_photoEmpty = savedPath;
 
                 MessageBox.Show("Authentication photo sent to admin successfully.");
                 pnlSettingAuthenticationPhoto.Visible = false;

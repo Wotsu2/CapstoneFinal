@@ -383,10 +383,14 @@ namespace WinFormsApp1
             {
                 using (client)
                 using (NetworkStream stream = client.GetStream())
-                using (BinaryReader reader = new BinaryReader(stream))
+                using (BinaryReader reader = new BinaryReader(stream, Encoding.UTF8))
                 {
                     string firstToken = reader.ReadString();
+                    Console.WriteLine("[Admin] FileTransfer command: " + firstToken);
 
+                    // =========================================================
+                    // ACTIVITY_FILE
+                    // =========================================================
                     if (firstToken == "ACTIVITY_FILE")
                     {
                         string professorFolder = reader.ReadString();
@@ -405,12 +409,16 @@ namespace WinFormsApp1
                         string folder = Path.Combine(root, professorFolder, section, "ActivityFiles");
                         Directory.CreateDirectory(folder);
 
-                        await File.WriteAllBytesAsync(Path.Combine(folder, fileName), bytes);
+                        string savePath = Path.Combine(folder, fileName);
+                        await File.WriteAllBytesAsync(savePath, bytes);
 
                         RefreshFileCountAsync();
                         return;
                     }
 
+                    // =========================================================
+                    // STUDENT_SUBMISSION
+                    // =========================================================
                     if (firstToken == "STUDENT_SUBMISSION")
                     {
                         string professorFolder = reader.ReadString();
@@ -452,6 +460,9 @@ namespace WinFormsApp1
                         return;
                     }
 
+                    // =========================================================
+                    // PROFILE_PHOTO
+                    // =========================================================
                     if (firstToken == "PROFILE_PHOTO")
                     {
                         string username = reader.ReadString();
@@ -486,18 +497,82 @@ namespace WinFormsApp1
                         return;
                     }
 
-                    string authFileName = SanitizeFolderName(firstToken);
-                    int authLength = reader.ReadInt32();
-                    if (authLength <= 0 || authLength > 20 * 1024 * 1024) return;
+                    // =========================================================
+                    // AUTH_PHOTO  —  MISSING BRANCH (this is what you need to add)
+                    // =========================================================
+                    if (firstToken == "AUTH_PHOTO")
+                    {
+                        string fileName = reader.ReadString();
+                        int length = reader.ReadInt32();
 
-                    byte[] authBytes = reader.ReadBytes(authLength);
+                        if (length <= 0 || length > 20 * 1024 * 1024)
+                        {
+                            Console.WriteLine("[Admin] Invalid auth photo length: " + length);
+                            return;
+                        }
 
-                    string authRoot = SettingsManager.Current.SaveFolder;
-                    string authSub = SettingsManager.Current.AuthPhotoSubfolder ?? "";
-                    string authFolder = Path.Combine(authRoot, authSub);
-                    Directory.CreateDirectory(authFolder);
+                        byte[] bytes = reader.ReadBytes(length);
+                        fileName = SanitizeFolderName(fileName);
 
-                    await File.WriteAllBytesAsync(Path.Combine(authFolder, authFileName), authBytes);
+                        string root = SettingsManager.Current.SaveFolder;
+                        if (string.IsNullOrEmpty(root))
+                        {
+                            Console.WriteLine("[Admin] SaveFolder is not configured.");
+                            return;
+                        }
+
+                        string authSub = SettingsManager.Current.AuthPhotoSubfolder;
+                        if (string.IsNullOrEmpty(authSub)) authSub = "AuthPhotos";
+
+                        string folder = Path.Combine(root, authSub);
+                        Directory.CreateDirectory(folder);
+
+                        string savePath = Path.Combine(folder, fileName);
+                        await File.WriteAllBytesAsync(savePath, bytes);
+                        Console.WriteLine("[Admin] Auth photo saved: " + savePath);
+
+                        RefreshFileCountAsync();
+
+                        // Reply with the saved path so the student can store it in DB
+                        try
+                        {
+                            string uncPath = ToUnc(savePath);
+                            using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
+                            {
+                                writer.Write(uncPath);
+                                writer.Flush();
+                            }
+                            Console.WriteLine("[Admin] Replied with auth path: " + uncPath);
+                        }
+                        catch (Exception exReply)
+                        {
+                            Console.WriteLine("[Admin] Failed to send auth reply: " + exReply.Message);
+                        }
+                        return;
+                    }
+
+                    // =========================================================
+                    // LEGACY fallback — anything else
+                    // =========================================================
+                    Console.WriteLine("[Admin] Unknown FileTransfer command: " + firstToken);
+
+                    // Only treat as legacy auth photo if the first token looks like a filename
+                    // (no spaces, has an extension). Otherwise, just close.
+                    string legacyName = SanitizeFolderName(firstToken);
+                    int legacyLength;
+                    try { legacyLength = reader.ReadInt32(); }
+                    catch { return; }
+
+                    if (legacyLength <= 0 || legacyLength > 20 * 1024 * 1024) return;
+
+                    byte[] legacyBytes = reader.ReadBytes(legacyLength);
+
+                    string legacyRoot = SettingsManager.Current.SaveFolder;
+                    string legacySub = SettingsManager.Current.AuthPhotoSubfolder ?? "";
+                    string legacyFolder = Path.Combine(legacyRoot, legacySub);
+                    Directory.CreateDirectory(legacyFolder);
+
+                    await File.WriteAllBytesAsync(Path.Combine(legacyFolder, legacyName), legacyBytes);
                     RefreshFileCountAsync();
                 }
             }
