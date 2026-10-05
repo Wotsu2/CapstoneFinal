@@ -44,6 +44,10 @@ namespace WinFormsApp1
 
         private const int PersistEveryNSeconds = 10;
 
+        // Track which warnings were already shown
+        private bool _warnedHalfTime = false;
+        private bool _warnedOneMinute = false;
+
         // =========================================================
         // HEARTBEAT
         // =========================================================
@@ -202,9 +206,9 @@ namespace WinFormsApp1
         {
             this.Text = "Student Examination System";
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.Size = new Size(1366, 720);                          // fits 1366×768 screens
+            this.Size = new Size(1366, 720);
             this.MinimumSize = new Size(1180, 640);
-            this.WindowState = FormWindowState.Maximized;             // start maximized for best fit
+            this.WindowState = FormWindowState.Maximized;
             this.BackColor = BackgroundColor;
             this.FormBorderStyle = FormBorderStyle.Sizable;
             this.KeyPreview = true;
@@ -419,7 +423,6 @@ namespace WinFormsApp1
             }
 
             int availableWidth = scrollPanel.ClientSize.Width;
-            // Wider content now — uses 1180 max, shrinks to 900 min on smaller screens.
             int contentWidth = Math.Max(900, Math.Min(1180, availableWidth - 60));
 
             contentPanel.Width = contentWidth;
@@ -914,15 +917,48 @@ namespace WinFormsApp1
 
             UpdateTimerLabel();
 
+            // ---- Warnings ----
+            if (!_warnedHalfTime && ExamDurationSeconds > 120)
+            {
+                if (remainingSeconds <= ExamDurationSeconds / 2)
+                {
+                    _warnedHalfTime = true;
+                    CustomMessageBox.Show(
+                        $"Half of your time is up.\n\n" +
+                        $"Remaining: {FormatTime(remainingSeconds)}",
+                        "Time Warning",
+                        CustomMessageBoxButtons.OK,
+                        CustomMessageBoxIcon.Warning);
+                }
+            }
+
+            if (!_warnedOneMinute && remainingSeconds == 60)
+            {
+                _warnedOneMinute = true;
+                CustomMessageBox.Show(
+                    "You have 1 minute remaining!",
+                    "Time Warning",
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Warning);
+            }
+
             if (remainingSeconds % PersistEveryNSeconds == 0)
                 SaveRemainingSecondsToDb(remainingSeconds);
 
+            // ---- Auto-submit when time expires ----
             if (remainingSeconds <= 0)
             {
                 SaveRemainingSecondsToDb(0);
                 StopExamTimer();
                 AutoSubmitWhenTimeExpires();
             }
+        }
+
+        private string FormatTime(int seconds)
+        {
+            int m = seconds / 60;
+            int s = seconds % 60;
+            return $"{m:00}:{s:00}";
         }
 
         private void UpdateTimerLabel()
@@ -934,9 +970,12 @@ namespace WinFormsApp1
 
             lblTimer.Text = $"TIME: {minutes:00}:{seconds:00}";
 
-            lblTimer.BackColor = remainingSeconds <= 300
-                ? Color.FromArgb(185, 28, 28)
-                : MaroonColor;
+            if (remainingSeconds <= 60)
+                lblTimer.BackColor = Color.FromArgb(185, 28, 28);
+            else if (remainingSeconds <= 300)
+                lblTimer.BackColor = Color.FromArgb(200, 120, 20);
+            else
+                lblTimer.BackColor = MaroonColor;
         }
 
         private void SaveRemainingSecondsToDb(int seconds)
@@ -980,6 +1019,10 @@ namespace WinFormsApp1
             examTimer = null;
         }
 
+        // =========================================================
+        // AUTO-SUBMIT WHEN TIME EXPIRES
+        // =========================================================
+
         private void AutoSubmitWhenTimeExpires()
         {
             if (isSubmitting) return;
@@ -989,8 +1032,31 @@ namespace WinFormsApp1
 
             try
             {
+                // Disable the UI so the student cannot keep answering
+                if (scrollPanel != null) scrollPanel.Enabled = false;
+                if (btnSubmit != null) btnSubmit.Enabled = false;
+                if (lblInstruction != null)
+                    lblInstruction.Text = "Time is up. Submitting your answers automatically...";
+
+                // Give the UI a moment to update
+                Application.DoEvents();
+
+                // Collect and save all current answers
                 SaveAllAnswers();
+
+                // Submit as an automatic submission
                 SaveQuizResult(true);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("AutoSubmitWhenTimeExpires error: " + ex.Message);
+
+                CustomMessageBox.Show(
+                    "Time is up, but the automatic submission encountered an error:\n\n" +
+                    ex.Message,
+                    "Auto-Submit Error",
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Error);
             }
             finally
             {
@@ -1808,6 +1874,16 @@ namespace WinFormsApp1
             try
             {
                 StopExamTimer();
+                StopAutoSave();
+                StopHeartbeat();
+
+                if (scrollPanel != null) scrollPanel.Enabled = false;
+                if (btnSubmit != null) btnSubmit.Enabled = false;
+                if (lblInstruction != null)
+                    lblInstruction.Text = "Submitting your examination...";
+
+                Application.DoEvents();
+
                 SaveQuizResult(false);
             }
             finally
@@ -1842,12 +1918,15 @@ namespace WinFormsApp1
 
             if (!SaveAnswersToDatabase())
             {
-                CustomMessageBox.Show(
-                    "Your answers could not be saved.\n\n" +
-                    "Please check the database connection and try submitting again.",
-                    "Unable to Save Answers",
-                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
-                return;
+                if (!automaticSubmit)
+                {
+                    CustomMessageBox.Show(
+                        "Your answers could not be saved.\n\n" +
+                        "Please check the database connection and try submitting again.",
+                        "Unable to Save Answers",
+                        CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
+                    return;
+                }
             }
 
             SaveAttemptToDatabase(score, questions.Count, automaticSubmit);

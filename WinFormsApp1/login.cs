@@ -68,12 +68,10 @@ namespace WinFormsApp1
         // =========================================================
         // PRESET UI
         // =========================================================
-        // =========================================================
         // MINIMIZE + EXIT BUTTONS (top-right corner)
         // =========================================================
         private void BuildWindowButtons()
         {
-            // Avoid duplicates on reload
             if (this.Controls.Find("btnExit", true).Length > 0) return;
 
             int btnW = 46;
@@ -145,6 +143,7 @@ namespace WinFormsApp1
             this.Controls.Add(btnMinimize);
             btnMinimize.BringToFront();
         }
+
         private void BuildPresetUi()
         {
             if (pnlConfiguration == null) return;
@@ -651,7 +650,6 @@ namespace WinFormsApp1
                                 livenessForm.ShowDialog(this);
                             }
 
-                            // After liveness closes, check whether another form is still visible.
                             bool anyOtherVisible = false;
 
                             foreach (Form f in Application.OpenForms)
@@ -962,7 +960,6 @@ namespace WinFormsApp1
 
                                 if (storedPassword == password)
                                 {
-                                    // Session claim BEFORE opening any role form.
                                     if (!TryAcquireSession(UserId, username))
                                         return;
 
@@ -1009,6 +1006,9 @@ namespace WinFormsApp1
             }
         }
 
+        // =========================================================
+        // DECIDE WHICH FORM TO OPEN (ADMIN / PROF / STUDENT)
+        // =========================================================
         private void OpenAppropriateForm(
             string role,
             string username,
@@ -1053,34 +1053,35 @@ namespace WinFormsApp1
             }
             else if (role.Equals("Student", StringComparison.OrdinalIgnoreCase))
             {
+                // =====================================================
+                // DECISION LOGIC:
+                //
+                //   Webcam exists + reference photo exists
+                //      -> facial recognition (LivenessCheckForm)
+                //
+                //   Webcam missing (or no reference photo)
+                //      -> Q&A security form (QandAForm)
+                //
+                //   Webcam missing AND no Q&A on file
+                //      -> go straight to StudentForm
+                // =====================================================
+
                 bool cameraDetected = IsAnyCameraDetected();
 
+                // -------------------------------------------------
+                // Priority 1: Facial recognition
+                // -------------------------------------------------
                 if (cameraDetected && !string.IsNullOrEmpty(authenticationPhoto))
                 {
                     FaceAuthentication(username);
                     return;
                 }
 
-                if (string.IsNullOrEmpty(question) && string.IsNullOrEmpty(answer))
-                {
-                    this.Hide();
-
-                    using (StudentForm studentform =
-                        new StudentForm(UserId, StudentSection, username))
-                    {
-                        studentform.ShowDialog(this);
-                    }
-
-                    ReleaseCurrentSession();
-                    this.Show();
-                    this.BringToFront();
-                    this.Activate();
-                    txtUsername.Clear();
-                    txtPassword.Clear();
-                    txtUsername.Focus();
-                }
-                else if (!string.IsNullOrEmpty(question) &&
-                         !string.IsNullOrEmpty(answer))
+                // -------------------------------------------------
+                // Priority 2: Q&A security
+                // -------------------------------------------------
+                if (!string.IsNullOrEmpty(question) &&
+                    !string.IsNullOrEmpty(answer))
                 {
                     this.Hide();
 
@@ -1098,17 +1099,27 @@ namespace WinFormsApp1
                     txtPassword.Clear();
                     txtUsername.Focus();
                 }
+                // -------------------------------------------------
+                // Priority 3: Fallback — straight to StudentForm
+                //   (no webcam AND no Q&A setup yet)
+                // -------------------------------------------------
                 else
                 {
+                    this.Hide();
+
+                    using (StudentForm studentform =
+                        new StudentForm(UserId, StudentSection, username))
+                    {
+                        studentform.ShowDialog(this);
+                    }
+
                     ReleaseCurrentSession();
-
-                    MessageBox.Show(
-                        "Your account security-question information is incomplete.",
-                        "Login Error",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Warning);
-
                     this.Show();
+                    this.BringToFront();
+                    this.Activate();
+                    txtUsername.Clear();
+                    txtPassword.Clear();
+                    txtUsername.Focus();
                 }
             }
             else
@@ -1125,12 +1136,10 @@ namespace WinFormsApp1
 
         private void guna2PictureBox3_Click(object sender, EventArgs e)
         {
-
         }
 
         private void label19_Click(object sender, EventArgs e)
         {
-
         }
     }
 }
