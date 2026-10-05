@@ -3595,23 +3595,6 @@ namespace WinFormsApp1
         // =========================================================
 
 
-        private void UpdateNightModeButton()
-        {
-            if (guna2Button4 == null) return;
-            try
-            {
-                guna2Button4.Text = _isNightMode ? "☀️" : "🌙";
-                guna2Button4.FillColor = _isNightMode
-                    ? Color.FromArgb(255, 193, 7)
-                    : Color.FromArgb(240, 240, 240);
-                guna2Button4.ForeColor = _isNightMode ? Color.Black : Color.Maroon;
-                guna2Button4.BackColor = _isNightMode
-                    ? Color.FromArgb(255, 193, 7)
-                    : Color.FromArgb(240, 240, 240);
-            }
-            catch { }
-        }
-
         private void RebuildDynamicContent()
         {
             try
@@ -3777,18 +3760,6 @@ namespace WinFormsApp1
                     return;
                 }
 
-                if (c is Guna.UI2.WinForms.Guna2Button gb)
-                {
-                    if (c == guna2Button4) return;
-                    if (s.HasFill && IsLight(s.FillColor) && !IsMaroonish(s.FillColor))
-                        gb.FillColor = NightCardBack;
-                    if (IsLight(gb.BackColor) && !IsMaroonish(gb.BackColor))
-                        gb.BackColor = NightCardBack;
-                    if (IsDark(s.ForeColor))
-                        gb.ForeColor = NightText;
-                    return;
-                }
-
                 if (c is FlowLayoutPanel flp)
                 {
                     if (IsLight(s.BackColor) && !IsMaroonish(s.BackColor))
@@ -3854,122 +3825,6 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // AGGRESSIVE FORCE PASS — catches EVERYTHING
-        // =========================================================
-        private void ForceNightThemeRecursive(Control parent)
-        {
-            if (!_isNightMode) return;
-            if (parent == null) return;
-
-            foreach (Control c in parent.Controls)
-            {
-                if (!IsDynamicContainer(c))
-                    ForceNightTheme(c);
-
-                if (c.HasChildren && !IsDynamicContainer(c))
-                    ForceNightThemeRecursive(c);
-            }
-        }
-
-        private void ForceNightTheme(Control c)
-        {
-            if (c == null) return;
-            if (c == guna2Button4) return;
-
-            bool brand = false;
-            if (c is Guna.UI2.WinForms.Guna2Panel gpBrand
-                && gpBrand.FillColor != Color.Transparent
-                && IsMaroonish(gpBrand.FillColor))
-                brand = true;
-            else if (c is Guna.UI2.WinForms.Guna2Button gbBrand
-                && gbBrand.FillColor != Color.Transparent
-                && IsMaroonish(gbBrand.FillColor))
-                brand = true;
-            else if (c.BackColor.A > 0
-                && c.BackColor != Color.Transparent
-                && IsMaroonish(c.BackColor))
-                brand = true;
-
-            if (brand) return;
-
-            if (c is Guna.UI2.WinForms.Guna2CustomGradientPanel gcp)
-            {
-                gcp.FillColor = NightCardBack;
-                gcp.FillColor2 = NightCardBack;
-                gcp.FillColor3 = NightCardBack;
-                gcp.FillColor4 = NightCardBack;
-                if (gcp.BackColor.A > 0 && gcp.BackColor != Color.Transparent && IsLight(gcp.BackColor))
-                    gcp.BackColor = NightPanelBack;
-                return;
-            }
-
-            if (c is Guna.UI2.WinForms.Guna2Panel gp)
-            {
-                if (gp.FillColor.A > 0 && gp.FillColor != Color.Transparent && IsLight(gp.FillColor))
-                    gp.FillColor = NightCardBack;
-
-                if (gp.BackColor.A > 0 && gp.BackColor != Color.Transparent && IsLight(gp.BackColor))
-                    gp.BackColor = NightPanelBack;
-                return;
-            }
-
-            if (c is Guna.UI2.WinForms.Guna2Button btn)
-            {
-                if (btn.FillColor.A > 0 && btn.FillColor != Color.Transparent && IsLight(btn.FillColor))
-                    btn.FillColor = NightCardBack;
-
-                if (btn.BackColor.A > 0 && btn.BackColor != Color.Transparent && IsLight(btn.BackColor))
-                    btn.BackColor = NightCardBack;
-
-                if (IsDark(btn.ForeColor))
-                    btn.ForeColor = NightText;
-                return;
-            }
-
-            if (c is DataGridView dgv)
-            {
-                ApplyGridTheme(dgv);
-                return;
-            }
-
-            if (c is Label lbl)
-            {
-                if (lbl.ForeColor.A > 0 && lbl.ForeColor != Color.Transparent
-                    && lbl.ForeColor.GetBrightness() < 0.6)
-                    lbl.ForeColor = NightText;
-                return;
-            }
-
-            if (c is TextBox tb) { tb.BackColor = NightInputBack; tb.ForeColor = NightText; return; }
-            if (c is RichTextBox rtb) { rtb.BackColor = NightInputBack; rtb.ForeColor = NightText; return; }
-            if (c is ComboBox cb) { cb.BackColor = NightInputBack; cb.ForeColor = NightText; return; }
-
-            if (c is PictureBox pb)
-            {
-                if (pb.BackColor.A > 0 && pb.BackColor != Color.Transparent && IsLight(pb.BackColor))
-                    pb.BackColor = NightPanelBack;
-                return;
-            }
-
-            if (c.BackColor.A > 0 && c.BackColor != Color.Transparent && IsLight(c.BackColor))
-            {
-                if (c is Panel
-                    || c is FlowLayoutPanel
-                    || c is TableLayoutPanel
-                    || c is UserControl
-                    || c is SplitContainer
-                    || c is SplitterPanel
-                    || c is TabControl
-                    || c is TabPage
-                    || c is GroupBox
-                    || c is Form)
-                {
-                    c.BackColor = NightPanelBack;
-                }
-            }
-        }
-
         private void ApplyGridTheme(DataGridView dgv)
         {
             if (dgv == null) return;
@@ -4001,37 +3856,6 @@ namespace WinFormsApp1
                 dgv.RowHeadersDefaultCellStyle.BackColor = Color.White;
                 dgv.RowHeadersDefaultCellStyle.ForeColor = Color.Black;
                 dgv.EnableHeadersVisualStyles = true;
-            }
-        }
-
-        private void pnlSetting_Paint(object sender, PaintEventArgs e)
-        {
-            if (!_isNightMode) return;
-            if (_inNightForcePaint) return;
-
-            var ctl = sender as Control;
-            if (ctl == null) return;
-
-            try
-            {
-                _inNightForcePaint = true;
-
-                using (var brush = new SolidBrush(NightFormBack))
-                    e.Graphics.FillRectangle(brush, ctl.ClientRectangle);
-
-                foreach (Control child in ctl.Controls)
-                {
-                    if (IsDynamicContainer(child)) continue;
-
-                    ForceNightTheme(child);
-
-                    if (child.HasChildren)
-                        ForceNightThemeRecursive(child);
-                }
-            }
-            finally
-            {
-                _inNightForcePaint = false;
             }
         }
 

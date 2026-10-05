@@ -1438,7 +1438,6 @@
             pnlSetting.Name = "pnlSetting";
             pnlSetting.Size = new Size(1270, 647);
             pnlSetting.TabIndex = 26;
-            pnlSetting.Paint += pnlSetting_Paint;
             // 
             // pnlSettingQandA
             // 
