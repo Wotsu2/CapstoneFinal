@@ -52,7 +52,6 @@ namespace WinFormsApp1
             this.Load += (s, e) => InstallHooks();
             this.FormClosing += (s, e) => ForceRemoveHooks();
             this.FormClosed += (s, e) => ForceRemoveHooks();
-            this.Disposed += (s, e) => ForceRemoveHooks();
 
             // Failsafe: auto-remove after 4 hours in case something goes wrong
             _failsafeTimer = new System.Windows.Forms.Timer { Interval = 4 * 60 * 60 * 1000 };
@@ -128,18 +127,6 @@ namespace WinFormsApp1
                 return (IntPtr)1;
 
             return CallNextHookEx(IntPtr.Zero, nCode, wParam, lParam);
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                try { _failsafeTimer?.Stop(); } catch { }
-                try { _failsafeTimer?.Dispose(); } catch { }
-                _failsafeTimer = null;
-            }
-            ForceRemoveHooks();
-            base.Dispose(disposing);
         }
     }
 }
