@@ -6,14 +6,17 @@ using System.Windows.Forms;
 
 namespace WinFormsApp1
 {
+    // "Freeze" mode: the student can still SEE their screen,
+    // but keyboard and mouse input is swallowed until unlocked.
     public class LockScreenForm : Form
     {
-        // ---- low-level keyboard hook (blocks Win key, Alt+Tab, Ctrl+Esc, etc.) ----
         private const int WH_KEYBOARD_LL = 13;
-        private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
+        private const int WH_MOUSE_LL = 14;
+
+        private delegate IntPtr LowLevelProc(int nCode, IntPtr wParam, IntPtr lParam);
 
         [DllImport("user32.dll", SetLastError = true)]
-        private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
+        private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelProc lpfn, IntPtr hMod, uint dwThreadId);
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool UnhookWindowsHookEx(IntPtr hhk);
@@ -22,66 +25,82 @@ namespace WinFormsApp1
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
         private static extern IntPtr GetModuleHandle(string lpModuleName);
 
-        private readonly LowLevelKeyboardProc _hookProc;   // keep a reference so GC doesn't collect it
-        private IntPtr _hookId = IntPtr.Zero;
+        private readonly LowLevelProc _kbProc;
+        private readonly LowLevelProc _mouseProc;
+        private IntPtr _kbHook = IntPtr.Zero;
+        private IntPtr _mouseHook = IntPtr.Zero;
 
-        private readonly System.Windows.Forms.Timer _keepOnTop = new System.Windows.Forms.Timer { Interval = 500 };
+        private readonly System.Windows.Forms.Timer _keepOnTop = new System.Windows.Forms.Timer { Interval = 1000 };
         private readonly System.Windows.Forms.Timer _failsafe;
         private bool _allowClose = false;
 
         public LockScreenForm(string message, int failsafeMinutes = 120)
         {
-            _hookProc = HookCallback;
+            _kbProc = HookCallback;
+            _mouseProc = HookCallback;
 
+            // Small banner at top-center instead of a full-screen cover
             FormBorderStyle = FormBorderStyle.None;
             StartPosition = FormStartPosition.Manual;
-            Bounds = SystemInformation.VirtualScreen;      // covers all monitors
             TopMost = true;
             ShowInTaskbar = false;
             ControlBox = false;
-            BackColor = Color.FromArgb(20, 20, 24);
+            BackColor = Color.FromArgb(150, 20, 20);
+            Opacity = 0.92;
+            Size = new Size(560, 56);
 
-            var lbl = new Label
+            Rectangle wa = Screen.PrimaryScreen.WorkingArea;
+            Location = new Point(wa.Left + (wa.Width - Width) / 2, wa.Top + 8);
+
+            Controls.Add(new Label
             {
                 Dock = DockStyle.Fill,
-                Text = "🔒\r\n\r\n" + message,
+                Text = "🔒  " + message,
                 ForeColor = Color.White,
-                Font = new Font("Segoe UI", 28F, FontStyle.Bold),
+                Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold),
                 TextAlign = ContentAlignment.MiddleCenter,
                 BackColor = Color.Transparent
-            };
-            Controls.Add(lbl);
+            });
 
-            _keepOnTop.Tick += (s, e) =>
-            {
-                TopMost = true;
-                BringToFront();
-                Activate();
-            };
+            _keepOnTop.Tick += (s, e) => { TopMost = true; };
 
-            // Failsafe: never stay locked forever if the professor's app dies
+            // Failsafe so nobody stays frozen forever if the professor app dies
             _failsafe = new System.Windows.Forms.Timer { Interval = Math.Max(1, failsafeMinutes) * 60 * 1000 };
             _failsafe.Tick += (s, e) => Unlock();
+        }
+
+        // Show the banner without stealing focus
+        protected override bool ShowWithoutActivation => true;
+
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                const int WS_EX_NOACTIVATE = 0x08000000;
+                const int WS_EX_TOOLWINDOW = 0x00000080;
+                var cp = base.CreateParams;
+                cp.ExStyle |= WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW;
+                return cp;
+            }
         }
 
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
-            Activate();
             _keepOnTop.Start();
             _failsafe.Start();
-            InstallHook();
+            InstallHooks();
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            if (!_allowClose) e.Cancel = true;   // blocks Alt+F4
+            if (!_allowClose) e.Cancel = true;
             base.OnFormClosing(e);
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
-            RemoveHook();
+            RemoveHooks();
             _keepOnTop.Stop(); _keepOnTop.Dispose();
             _failsafe.Stop(); _failsafe.Dispose();
             base.OnFormClosed(e);
@@ -90,30 +109,36 @@ namespace WinFormsApp1
         public void Unlock()
         {
             _allowClose = true;
-            RemoveHook();
+            RemoveHooks();   // input works again immediately
             if (!IsDisposed) Close();
         }
 
-        private void InstallHook()
+        private void InstallHooks()
         {
             try
             {
                 using (var p = Process.GetCurrentProcess())
                 using (var m = p.MainModule)
-                    _hookId = SetWindowsHookEx(WH_KEYBOARD_LL, _hookProc, GetModuleHandle(m.ModuleName), 0);
+                {
+                    IntPtr h = GetModuleHandle(m.ModuleName);
+                    _kbHook = SetWindowsHookEx(WH_KEYBOARD_LL, _kbProc, h, 0);
+                    _mouseHook = SetWindowsHookEx(WH_MOUSE_LL, _mouseProc, h, 0);
+                }
             }
-            catch (Exception ex) { Console.WriteLine("[LockScreen] hook failed: " + ex.Message); }
+            catch (Exception ex) { Console.WriteLine("[Freeze] hook failed: " + ex.Message); }
         }
 
-        private void RemoveHook()
+        private void RemoveHooks()
         {
-            if (_hookId != IntPtr.Zero) { UnhookWindowsHookEx(_hookId); _hookId = IntPtr.Zero; }
+            if (_kbHook != IntPtr.Zero) { UnhookWindowsHookEx(_kbHook); _kbHook = IntPtr.Zero; }
+            if (_mouseHook != IntPtr.Zero) { UnhookWindowsHookEx(_mouseHook); _mouseHook = IntPtr.Zero; }
         }
 
+        // Swallow every key press and every mouse move/click/scroll
         private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
-            if (nCode >= 0) return (IntPtr)1;   // swallow every key while locked
-            return CallNextHookEx(_hookId, nCode, wParam, lParam);
+            if (nCode >= 0) return (IntPtr)1;
+            return CallNextHookEx(IntPtr.Zero, nCode, wParam, lParam);
         }
     }
 }
