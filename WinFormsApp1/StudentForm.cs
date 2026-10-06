@@ -27,10 +27,7 @@ namespace WinFormsApp1
         // =========================================================
         // WINDOWS API — LOCK WORKSTATION
         // =========================================================
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern bool BlockInput(bool fBlockIt);
-        private static extern bool LockWorkStation();
-        private System.Windows.Forms.Timer _lockTimer;
+        private LockScreenForm _lockScreen;
 
         private TcpClient client;
         private TcpClient screenClient;
@@ -254,7 +251,20 @@ namespace WinFormsApp1
                 catch (Exception ex) { Console.WriteLine("InitializeAssessmentsCard error: " + ex.Message); }
             }
         }
+        private void ApplyLock()
+        {
+            if (_lockScreen != null && !_lockScreen.IsDisposed) return;
+            _lockScreen = new LockScreenForm("This computer has been locked by your professor.");
+            _lockScreen.FormClosed += (s, e) => _lockScreen = null;
+            _lockScreen.Show();
+        }
 
+        private void ApplyUnlock()
+        {
+            try { if (_lockScreen != null && !_lockScreen.IsDisposed) _lockScreen.Unlock(); }
+            catch { }
+            _lockScreen = null;
+        }
         private void initializeShowReminderForm()
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -768,74 +778,22 @@ namespace WinFormsApp1
                     Console.WriteLine("[Student] Command received: '" + command + "'");
 
                     // ============ LOCK COMMAND ============
-                    if (command == "LOCK")
+                    if (command == "LOCK" || command == "UNLOCK")
                     {
                         try
                         {
-                            client.Close();
-                            System.Threading.Thread.Sleep(50);
-
-                            // Store the timer so we can cancel it on UNLOCK
-                            this.BeginInvoke(new Action(() =>
-                            {
-                                _lockTimer?.Stop();
-                                _lockTimer?.Dispose();
-
-                                _lockTimer = new System.Windows.Forms.Timer();
-                                _lockTimer.Interval = 200;  // Re-block every 200ms
-                                _lockTimer.Tick += (s, ev) =>
-                                {
-                                    BlockInput(true);  // Keep forcing the block
-                                };
-                                _lockTimer.Start();
-
-                                Console.WriteLine("[Student] ✅ Continuous LOCK started.");
-
-                                // Auto-stop after 30 seconds
-                                var stopTimer = new System.Windows.Forms.Timer();
-                                stopTimer.Interval = 30000;
-                                stopTimer.Tick += (s, ev) =>
-                                {
-                                    stopTimer.Stop();
-                                    stopTimer.Dispose();
-
-                                    _lockTimer?.Stop();
-                                    _lockTimer?.Dispose();
-                                    _lockTimer = null;
-
-                                    BlockInput(false);
-                                    Console.WriteLine("[Student] ⏰ Auto-unlocked after 30s.");
-                                };
-                                stopTimer.Start();
-                            }));
+                            // Reply first so the professor knows it arrived
+                            byte[] ok = Encoding.UTF8.GetBytes("OK");
+                            stream.Write(ok, 0, ok.Length);
+                            stream.Flush();
                         }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine("[Student] LOCK error: " + ex.Message);
-                        }
-                        continue;
-                    }
+                        catch { }
+                        client.Close();
 
-                    // ============ UNLOCK COMMAND ============
-                    if (command == "UNLOCK")
-                    {
-                        try
+                        if (this.IsHandleCreated && !this.IsDisposed)
                         {
-                            client.Close();
-
-                            this.BeginInvoke(new Action(() =>
-                            {
-                                _lockTimer?.Stop();
-                                _lockTimer?.Dispose();
-                                _lockTimer = null;
-
-                                BlockInput(false);
-                                Console.WriteLine("[Student] ✅ Manual UNLOCK.");
-                            }));
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine("[Student] UNLOCK error: " + ex.Message);
+                            Action act = command == "LOCK" ? (Action)ApplyLock : ApplyUnlock;
+                            this.BeginInvoke(act);
                         }
                         continue;
                     }

@@ -1,278 +1,121 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
-using System.Net.Sockets;
-using System.Text;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace WinFormsApp1
 {
-    public class LockForm : Form
+    public class LockScreenForm : Form
     {
-        private Panel panelHeader;
-        private Label lblTitle;
-        private Panel panelFooter;
-        private Button btnLock;
-        private Button btnUnlock;
-        private CheckBox chkSelectAll;
-        private FlowLayoutPanel flowLayoutPanelPCs;
+        // ---- low-level keyboard hook (blocks Win key, Alt+Tab, Ctrl+Esc, etc.) ----
+        private const int WH_KEYBOARD_LL = 13;
+        private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
 
-        private List<CheckBox> pcToggles = new List<CheckBox>();
-        private List<string> _onlinePCs;
-        private int _commandPort;
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool UnhookWindowsHookEx(IntPtr hhk);
+        [DllImport("user32.dll")]
+        private static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+        private static extern IntPtr GetModuleHandle(string lpModuleName);
 
-        public LockForm(List<string> onlinePCs, int commandPort)
+        private readonly LowLevelKeyboardProc _hookProc;   // keep a reference so GC doesn't collect it
+        private IntPtr _hookId = IntPtr.Zero;
+
+        private readonly System.Windows.Forms.Timer _keepOnTop = new System.Windows.Forms.Timer { Interval = 500 };
+        private readonly System.Windows.Forms.Timer _failsafe;
+        private bool _allowClose = false;
+
+        public LockScreenForm(string message, int failsafeMinutes = 120)
         {
-            _onlinePCs = onlinePCs ?? new List<string>();
-            _commandPort = commandPort;
+            _hookProc = HookCallback;
 
-            InitializeCustomUI();
-            this.Load += (s, e) => LoadPCs();
-        }
+            FormBorderStyle = FormBorderStyle.None;
+            StartPosition = FormStartPosition.Manual;
+            Bounds = SystemInformation.VirtualScreen;      // covers all monitors
+            TopMost = true;
+            ShowInTaskbar = false;
+            ControlBox = false;
+            BackColor = Color.FromArgb(20, 20, 24);
 
-        private void InitializeCustomUI()
-        {
-            this.Text = "Remote Lock Control";
-            this.Size = new Size(520, 520);
-            this.StartPosition = FormStartPosition.CenterParent;
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
-            this.BackColor = Color.FromArgb(45, 45, 48);
-
-            // ============ Header ============
-            this.panelHeader = new Panel
-            {
-                Dock = DockStyle.Top,
-                Height = 60,
-                BackColor = Color.FromArgb(30, 30, 30)
-            };
-
-            this.lblTitle = new Label
-            {
-                Text = "🔒 Lock Workstations",
-                Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold),
-                ForeColor = Color.White,
-                AutoSize = true,
-                Location = new Point(20, 15)
-            };
-            this.panelHeader.Controls.Add(this.lblTitle);
-
-            // ============ Footer ============
-            this.panelFooter = new Panel
-            {
-                Dock = DockStyle.Bottom,
-                Height = 80,
-                BackColor = Color.FromArgb(30, 30, 30)
-            };
-
-            this.chkSelectAll = new CheckBox
-            {
-                Text = "Select All PCs",
-                Font = new Font("Segoe UI", 10F),
-                ForeColor = Color.White,
-                AutoSize = true,
-                Location = new Point(25, 30)
-            };
-            this.chkSelectAll.CheckedChanged += ChkSelectAll_CheckedChanged;
-
-            this.btnUnlock = new Button
-            {
-                Text = "UNLOCK",
-                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                ForeColor = Color.White,
-                BackColor = Color.FromArgb(40, 130, 200),
-                FlatStyle = FlatStyle.Flat,
-                Size = new Size(110, 40),
-                Location = new Point(230, 20),
-                Cursor = Cursors.Hand
-            };
-            this.btnUnlock.FlatAppearance.BorderSize = 0;
-            this.btnUnlock.Click += BtnUnlock_Click;
-
-            this.btnLock = new Button
-            {
-                Text = "LOCK NOW",
-                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                ForeColor = Color.White,
-                BackColor = Color.FromArgb(220, 53, 69),
-                FlatStyle = FlatStyle.Flat,
-                Size = new Size(120, 40),
-                Location = new Point(350, 20),
-                Cursor = Cursors.Hand
-            };
-            this.btnLock.FlatAppearance.BorderSize = 0;
-            this.btnLock.Click += BtnLock_Click;
-
-            this.panelFooter.Controls.Add(this.chkSelectAll);
-            this.panelFooter.Controls.Add(this.btnUnlock);
-            this.panelFooter.Controls.Add(this.btnLock);
-
-            // ============ PC List ============
-            this.flowLayoutPanelPCs = new FlowLayoutPanel
+            var lbl = new Label
             {
                 Dock = DockStyle.Fill,
-                AutoScroll = true,
-                Padding = new Padding(15),
-                BackColor = Color.FromArgb(45, 45, 48)
+                Text = "🔒\r\n\r\n" + message,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 28F, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleCenter,
+                BackColor = Color.Transparent
+            };
+            Controls.Add(lbl);
+
+            _keepOnTop.Tick += (s, e) =>
+            {
+                TopMost = true;
+                BringToFront();
+                Activate();
             };
 
-            this.Controls.Add(this.flowLayoutPanelPCs);
-            this.Controls.Add(this.panelFooter);
-            this.Controls.Add(this.panelHeader);
+            // Failsafe: never stay locked forever if the professor's app dies
+            _failsafe = new System.Windows.Forms.Timer { Interval = Math.Max(1, failsafeMinutes) * 60 * 1000 };
+            _failsafe.Tick += (s, e) => Unlock();
         }
 
-        private void LoadPCs()
+        protected override void OnShown(EventArgs e)
         {
-            if (_onlinePCs.Count == 0)
-            {
-                Label lblEmpty = new Label
-                {
-                    Text = "No online workstations found.",
-                    Font = new Font("Segoe UI", 12F, FontStyle.Italic),
-                    ForeColor = Color.Gray,
-                    AutoSize = false,
-                    Size = new Size(flowLayoutPanelPCs.Width - 40, 100),
-                    TextAlign = ContentAlignment.MiddleCenter
-                };
-                flowLayoutPanelPCs.Controls.Add(lblEmpty);
-                return;
-            }
-
-            foreach (string pc in _onlinePCs)
-            {
-                CheckBox chk = new CheckBox
-                {
-                    Text = pc,
-                    Appearance = Appearance.Button,
-                    TextAlign = ContentAlignment.MiddleCenter,
-                    Width = 150,
-                    Height = 55,
-                    Margin = new Padding(10),
-                    FlatStyle = FlatStyle.Flat,
-                    BackColor = Color.FromArgb(60, 60, 60),
-                    ForeColor = Color.White,
-                    Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
-                    Cursor = Cursors.Hand
-                };
-                chk.FlatAppearance.BorderSize = 0;
-                chk.CheckedChanged += PcToggle_CheckedChanged;
-
-                flowLayoutPanelPCs.Controls.Add(chk);
-                pcToggles.Add(chk);
-            }
+            base.OnShown(e);
+            Activate();
+            _keepOnTop.Start();
+            _failsafe.Start();
+            InstallHook();
         }
 
-        private void PcToggle_CheckedChanged(object sender, EventArgs e)
+        protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            CheckBox chk = (CheckBox)sender;
-            chk.BackColor = chk.Checked
-                ? Color.FromArgb(40, 167, 69)
-                : Color.FromArgb(60, 60, 60);
+            if (!_allowClose) e.Cancel = true;   // blocks Alt+F4
+            base.OnFormClosing(e);
         }
 
-        private void ChkSelectAll_CheckedChanged(object sender, EventArgs e)
+        protected override void OnFormClosed(FormClosedEventArgs e)
         {
-            bool state = chkSelectAll.Checked;
-            foreach (var chk in pcToggles)
-                chk.Checked = state;
+            RemoveHook();
+            _keepOnTop.Stop(); _keepOnTop.Dispose();
+            _failsafe.Stop(); _failsafe.Dispose();
+            base.OnFormClosed(e);
         }
 
-        // =========================================================
-        // LOCK
-        // =========================================================
-        private void BtnLock_Click(object sender, EventArgs e)
+        public void Unlock()
         {
-            var ips = GetSelectedIPs();
-            if (ips.Count == 0)
-            {
-                MessageBox.Show("Please select at least one PC.",
-                    "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            int success = 0;
-            foreach (string ip in ips)
-                if (SendCommand(ip, "LOCK")) success++;
-
-            MessageBox.Show($"LOCK sent to {success} of {ips.Count} PC(s).",
-                "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            this.Close();
+            _allowClose = true;
+            RemoveHook();
+            if (!IsDisposed) Close();
         }
 
-        // =========================================================
-        // UNLOCK
-        // =========================================================
-        private void BtnUnlock_Click(object sender, EventArgs e)
-        {
-            var ips = GetSelectedIPs();
-            if (ips.Count == 0)
-            {
-                MessageBox.Show("Please select at least one PC.",
-                    "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            int success = 0;
-            foreach (string ip in ips)
-                if (SendCommand(ip, "UNLOCK")) success++;
-
-            MessageBox.Show($"UNLOCK sent to {success} of {ips.Count} PC(s).",
-                "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            this.Close();
-        }
-
-        // =========================================================
-        // HELPERS
-        // =========================================================
-        private List<string> GetSelectedIPs()
-        {
-            var ips = new List<string>();
-
-            foreach (var chk in pcToggles)
-            {
-                if (!chk.Checked) continue;
-
-                string ip = chk.Text;
-                int start = chk.Text.LastIndexOf('(');
-                int end = chk.Text.LastIndexOf(')');
-                if (start >= 0 && end > start)
-                    ip = chk.Text.Substring(start + 1, end - start - 1).Trim();
-
-                ips.Add(ip);
-            }
-
-            return ips;
-        }
-
-        private bool SendCommand(string ip, string command)
+        private void InstallHook()
         {
             try
             {
-                using (TcpClient client = new TcpClient())
-                {
-                    var connectTask = client.ConnectAsync(ip, _commandPort);
-                    if (!connectTask.Wait(3000))
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[{command}] Timeout: {ip}");
-                        return false;
-                    }
-
-                    using (NetworkStream stream = client.GetStream())
-                    {
-                        byte[] data = Encoding.UTF8.GetBytes(command);
-                        stream.Write(data, 0, data.Length);
-                        stream.Flush();
-                    }
-                }
-                System.Diagnostics.Debug.WriteLine($"[{command}] Sent to {ip}");
-                return true;
+                using (var p = Process.GetCurrentProcess())
+                using (var m = p.MainModule)
+                    _hookId = SetWindowsHookEx(WH_KEYBOARD_LL, _hookProc, GetModuleHandle(m.ModuleName), 0);
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[{command}] Failed {ip}: {ex.Message}");
-                return false;
-            }
+            catch (Exception ex) { Console.WriteLine("[LockScreen] hook failed: " + ex.Message); }
         }
+
+        private void RemoveHook()
+        {
+            if (_hookId != IntPtr.Zero) { UnhookWindowsHookEx(_hookId); _hookId = IntPtr.Zero; }
+        }
+
+        private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
+        {
+            if (nCode >= 0) return (IntPtr)1;   // swallow every key while locked
+            return CallNextHookEx(_hookId, nCode, wParam, lParam);
+        }
+
+
     }
 }
