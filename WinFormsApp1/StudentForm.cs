@@ -27,8 +27,8 @@ namespace WinFormsApp1
         // =========================================================
         // WINDOWS API — LOCK WORKSTATION
         // =========================================================
-        [DllImport("user32.dll")]
-        private static extern bool LockWorkStation();
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool BlockInput(bool fBlockIt);
 
         private TcpClient client;
         private TcpClient screenClient;
@@ -756,15 +756,52 @@ namespace WinFormsApp1
                         try
                         {
                             client.Close();
-                            System.Threading.Thread.Sleep(200);
+                            System.Threading.Thread.Sleep(100);
 
-                            // This is the actual Windows lock — shows the login screen
-                            bool result = LockWorkStation();
-                            Console.WriteLine("[Student] LockWorkStation returned: " + result);
+                            // Block mouse + keyboard
+                            bool blocked = BlockInput(true);
+                            Console.WriteLine("[Student] BlockInput(true) returned: " + blocked);
+
+                            if (!blocked)
+                            {
+                                int err = Marshal.GetLastWin32Error();
+                                Console.WriteLine($"[Student] BlockInput failed. Win32Error={err}. Run Student as Administrator.");
+                                return;
+                            }
+
+                            // Auto-unblock after 30 seconds so we don't lock the student out forever.
+                            // Change 30000 to whatever duration you want (in milliseconds).
+                            System.Threading.Tasks.Task.Run(async () =>
+                            {
+                                await System.Threading.Tasks.Task.Delay(30000);
+                                try
+                                {
+                                    BlockInput(false);
+                                    Console.WriteLine("[Student] Auto-unblocked after timeout.");
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine("[Student] Unblock failed: " + ex.Message);
+                                }
+                            });
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine("[Student] Lock failed: " + ex.Message);
+                            Console.WriteLine("[Student] LOCK failed: " + ex.Message);
+                        }
+                        continue;
+                    }
+                    if (command == "UNLOCK")
+                    {
+                        try
+                        {
+                            client.Close();
+                            bool unblocked = BlockInput(false);
+                            Console.WriteLine("[Student] BlockInput(false) returned: " + unblocked);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("[Student] UNLOCK failed: " + ex.Message);
                         }
                         continue;
                     }

@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Windows.Forms;
 
-namespace WinFormsApp1 // Match your project namespace
+namespace WinFormsApp1
 {
     public class LockForm : Form
     {
@@ -13,6 +13,7 @@ namespace WinFormsApp1 // Match your project namespace
         private Label lblTitle;
         private Panel panelFooter;
         private Button btnLock;
+        private Button btnUnlock;
         private CheckBox chkSelectAll;
         private FlowLayoutPanel flowLayoutPanelPCs;
 
@@ -75,6 +76,20 @@ namespace WinFormsApp1 // Match your project namespace
             };
             this.chkSelectAll.CheckedChanged += ChkSelectAll_CheckedChanged;
 
+            this.btnUnlock = new Button
+            {
+                Text = "UNLOCK",
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                ForeColor = Color.White,
+                BackColor = Color.FromArgb(40, 130, 200),
+                FlatStyle = FlatStyle.Flat,
+                Size = new Size(110, 40),
+                Location = new Point(230, 20),
+                Cursor = Cursors.Hand
+            };
+            this.btnUnlock.FlatAppearance.BorderSize = 0;
+            this.btnUnlock.Click += BtnUnlock_Click;
+
             this.btnLock = new Button
             {
                 Text = "LOCK NOW",
@@ -83,13 +98,14 @@ namespace WinFormsApp1 // Match your project namespace
                 BackColor = Color.FromArgb(220, 53, 69),
                 FlatStyle = FlatStyle.Flat,
                 Size = new Size(120, 40),
-                Location = new Point(360, 20),
+                Location = new Point(350, 20),
                 Cursor = Cursors.Hand
             };
             this.btnLock.FlatAppearance.BorderSize = 0;
             this.btnLock.Click += BtnLock_Click;
 
             this.panelFooter.Controls.Add(this.chkSelectAll);
+            this.panelFooter.Controls.Add(this.btnUnlock);
             this.panelFooter.Controls.Add(this.btnLock);
 
             // ============ PC List ============
@@ -162,43 +178,74 @@ namespace WinFormsApp1 // Match your project namespace
                 chk.Checked = state;
         }
 
+        // =========================================================
+        // LOCK
+        // =========================================================
         private void BtnLock_Click(object sender, EventArgs e)
         {
-            List<string> ipsToLock = new List<string>();
+            var ips = GetSelectedIPs();
+            if (ips.Count == 0)
+            {
+                MessageBox.Show("Please select at least one PC.",
+                    "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            int success = 0;
+            foreach (string ip in ips)
+                if (SendCommand(ip, "LOCK")) success++;
+
+            MessageBox.Show($"LOCK sent to {success} of {ips.Count} PC(s).",
+                "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            this.Close();
+        }
+
+        // =========================================================
+        // UNLOCK
+        // =========================================================
+        private void BtnUnlock_Click(object sender, EventArgs e)
+        {
+            var ips = GetSelectedIPs();
+            if (ips.Count == 0)
+            {
+                MessageBox.Show("Please select at least one PC.",
+                    "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            int success = 0;
+            foreach (string ip in ips)
+                if (SendCommand(ip, "UNLOCK")) success++;
+
+            MessageBox.Show($"UNLOCK sent to {success} of {ips.Count} PC(s).",
+                "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            this.Close();
+        }
+
+        // =========================================================
+        // HELPERS
+        // =========================================================
+        private List<string> GetSelectedIPs()
+        {
+            var ips = new List<string>();
 
             foreach (var chk in pcToggles)
             {
                 if (!chk.Checked) continue;
 
-                // Extract IP from "StudentName (192.168.1.50)"
                 string ip = chk.Text;
                 int start = chk.Text.LastIndexOf('(');
                 int end = chk.Text.LastIndexOf(')');
                 if (start >= 0 && end > start)
                     ip = chk.Text.Substring(start + 1, end - start - 1).Trim();
 
-                ipsToLock.Add(ip);
+                ips.Add(ip);
             }
 
-            if (ipsToLock.Count == 0)
-            {
-                MessageBox.Show("Please select at least one PC to lock.",
-                    "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            int successCount = 0;
-            foreach (string ip in ipsToLock)
-            {
-                if (LockRemotePC(ip)) successCount++;
-            }
-
-            MessageBox.Show($"Lock command sent to {successCount} of {ipsToLock.Count} PC(s).",
-                "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            this.Close();
+            return ips;
         }
 
-        private bool LockRemotePC(string ip)
+        private bool SendCommand(string ip, string command)
         {
             try
             {
@@ -207,23 +254,23 @@ namespace WinFormsApp1 // Match your project namespace
                     var connectTask = client.ConnectAsync(ip, _commandPort);
                     if (!connectTask.Wait(3000))
                     {
-                        System.Diagnostics.Debug.WriteLine($"[Lock] Timeout: {ip}");
+                        System.Diagnostics.Debug.WriteLine($"[{command}] Timeout: {ip}");
                         return false;
                     }
 
                     using (NetworkStream stream = client.GetStream())
                     {
-                        byte[] data = Encoding.UTF8.GetBytes("LOCK");
+                        byte[] data = Encoding.UTF8.GetBytes(command);
                         stream.Write(data, 0, data.Length);
                         stream.Flush();
                     }
                 }
-                System.Diagnostics.Debug.WriteLine($"[Lock] Sent to {ip}");
+                System.Diagnostics.Debug.WriteLine($"[{command}] Sent to {ip}");
                 return true;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[Lock] Failed {ip}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[{command}] Failed {ip}: {ex.Message}");
                 return false;
             }
         }
