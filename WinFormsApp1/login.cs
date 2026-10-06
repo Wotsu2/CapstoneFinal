@@ -58,6 +58,7 @@ namespace WinFormsApp1
         {
             txtUsername.Clear();
             txtPassword.Clear();
+            SetPasswordVisible(false);
             txtUsername.Focus();
         }
 
@@ -69,6 +70,10 @@ namespace WinFormsApp1
             LoadCurrentSettings();
             IsAnyCameraDetected();
             BuildWindowButtons();
+
+            BuildPasswordToggle();        // <-- idagdag
+            SetPasswordVisible(false);    // <-- idagdag
+        
         }
 
         // =========================================================
@@ -1149,6 +1154,56 @@ namespace WinFormsApp1
         private void label19_Click(object sender, EventArgs e)
         {
 
+        }
+
+        // =========================================================
+        // SHOW / HIDE PASSWORD (icon inside the textbox)
+        // =========================================================
+        private Image eyeOpenIcon;
+        private Image eyeClosedIcon;
+        private bool passwordVisible = false;
+
+        private static Image MakeGlyph(string glyph, Color color, int size = 24)
+        {
+            var bmp = new Bitmap(size, size);
+
+            using (var g = Graphics.FromImage(bmp))
+            using (var f = new Font("Segoe MDL2 Assets", 12F))
+            using (var br = new SolidBrush(color))
+            {
+                g.Clear(Color.Transparent);
+                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+
+                SizeF sz = g.MeasureString(glyph, f);
+                g.DrawString(glyph, f, br, (size - sz.Width) / 2f, (size - sz.Height) / 2f);
+            }
+
+            return bmp;
+        }
+
+        private void BuildPasswordToggle()
+        {
+            Color iconColor = Color.FromArgb(110, 110, 110);
+
+            eyeClosedIcon = MakeGlyph("\uED1A", iconColor);
+            eyeOpenIcon = MakeGlyph("\uE7B3", iconColor);
+
+            txtPassword.IconRight = eyeClosedIcon;
+            txtPassword.IconRightSize = new Size(22, 22);
+            txtPassword.IconRightOffset = new Point(8, 0);
+            txtPassword.IconRightCursor = Cursors.Hand;
+
+            txtPassword.IconRightClick += (s, e) => SetPasswordVisible(!passwordVisible);
+        }
+
+        private void SetPasswordVisible(bool visible)
+        {
+            passwordVisible = visible;
+
+            txtPassword.UseSystemPasswordChar = !visible;
+            if (visible) txtPassword.PasswordChar = '\0';
+
+            txtPassword.IconRight = visible ? eyeOpenIcon : eyeClosedIcon;
         }
     }
 }

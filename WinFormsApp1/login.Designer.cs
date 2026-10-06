@@ -305,7 +305,7 @@
             pnlConfiguration.Controls.Add(guna2Button1);
             pnlConfiguration.Controls.Add(label5);
             pnlConfiguration.CustomizableEdges = customizableEdges42;
-            pnlConfiguration.Location = new Point(197, 168);
+            pnlConfiguration.Location = new Point(407, 132);
             pnlConfiguration.Name = "pnlConfiguration";
             pnlConfiguration.ShadowDecoration.CustomizableEdges = customizableEdges43;
             pnlConfiguration.Size = new Size(719, 389);

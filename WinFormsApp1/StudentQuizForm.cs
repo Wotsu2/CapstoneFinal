@@ -62,19 +62,34 @@ namespace WinFormsApp1
         private bool isAutoSaving = false;
 
         // =========================================================
-        // COLORS
+        // PAPER SIZE (A4 at 96 DPI)
         // =========================================================
 
-        private readonly Color BackgroundColor = Color.FromArgb(250, 247, 239);
-        private readonly Color CardColor = Color.White;
+        private const int PaperWidth = 794;
+        private const int PaperHeight = 1123;
+        private const int PaperMargin = 20;
+
+        // =========================================================
+        // THEME (LIGHT / DARK)
+        // =========================================================
+
+        private bool isDarkMode = false;
+
+        private Color BackgroundColor = Color.FromArgb(232, 228, 218);   // desk behind the paper
+        private Color PaperColor = Color.FromArgb(255, 253, 248);        // the exam paper
+        private Color CardColor = Color.White;
+        private Color HeadingColor = Color.FromArgb(15, 23, 42);
+        private Color TextColor = Color.FromArgb(51, 65, 85);
+        private Color MutedColor = Color.FromArgb(100, 116, 139);
+        private Color OptionBackColor = Color.FromArgb(248, 250, 252);
+        private Color SoftColor = Color.FromArgb(250, 242, 216);
+        private Color AccentText = Color.FromArgb(128, 45, 58);
+        private Color HeaderColor = Color.FromArgb(128, 45, 58);
+
         private readonly Color DarkColor = Color.FromArgb(15, 23, 42);
-        private readonly Color TextColor = Color.FromArgb(51, 65, 85);
-        private readonly Color MutedColor = Color.FromArgb(100, 116, 139);
         private readonly Color GreenColor = Color.FromArgb(22, 163, 74);
         private readonly Color BorderColor = Color.FromArgb(198, 156, 53);
         private readonly Color MaroonColor = Color.FromArgb(128, 45, 58);
-        private readonly Color MaroonSoft = Color.FromArgb(250, 242, 216);
-        private readonly Color OptionBackColor = Color.FromArgb(248, 250, 252);
         private readonly Color GoldColor = Color.FromArgb(198, 156, 53);
         private readonly Color GoldDark = Color.FromArgb(163, 126, 36);
 
@@ -126,6 +141,13 @@ namespace WinFormsApp1
 
         private ProgressBar progressBar;
         private Button btnSubmit;
+        private Button btnDarkMode;
+
+        // Exam permit
+        private Panel permitPanel;
+        private TextBox txtPermit;
+
+        private Panel submitPanel;
 
         // =========================================================
         // QUESTION CONTROLS
@@ -206,17 +228,23 @@ namespace WinFormsApp1
         {
             this.Text = "Student Examination System";
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.Size = new Size(1366, 720);
-            this.MinimumSize = new Size(1180, 640);
-            this.WindowState = FormWindowState.Maximized;
+
+            // Fullscreen, borderless: no title bar, no minimize/maximize/close buttons
+            this.FormBorderStyle = FormBorderStyle.None;
+            this.ControlBox = false;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
+            this.ShowInTaskbar = false;
+            this.StartPosition = FormStartPosition.Manual;
+            this.WindowState = FormWindowState.Normal;
+            this.Bounds = Screen.PrimaryScreen.Bounds;
             this.BackColor = BackgroundColor;
-            this.FormBorderStyle = FormBorderStyle.Sizable;
             this.KeyPreview = true;
 
             headerPanel = new SmoothPanel();
             headerPanel.Dock = DockStyle.Top;
             headerPanel.Height = 120;
-            headerPanel.BackColor = MaroonColor;
+            headerPanel.BackColor = HeaderColor;
             this.Controls.Add(headerPanel);
 
             Panel headerAccent = new Panel();
@@ -270,6 +298,24 @@ namespace WinFormsApp1
             headerPanel.Controls.Add(lblTimer);
             lblTimer.BringToFront();
 
+            // Dark mode toggle (beside the timer)
+            btnDarkMode = new Button();
+            btnDarkMode.Text = "☾  DARK";
+            btnDarkMode.Size = new Size(110, 42);
+            btnDarkMode.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnDarkMode.BackColor = DarkColor;
+            btnDarkMode.ForeColor = Color.White;
+            btnDarkMode.FlatStyle = FlatStyle.Flat;
+            btnDarkMode.FlatAppearance.BorderSize = 2;
+            btnDarkMode.FlatAppearance.BorderColor = GoldColor;
+            btnDarkMode.Cursor = Cursors.Hand;
+            btnDarkMode.TabStop = false;
+            btnDarkMode.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnDarkMode.Location = new Point(lblTimer.Left - btnDarkMode.Width - 12, lblTimer.Top);
+            btnDarkMode.Click += (s, e) => ApplyTheme(!isDarkMode);
+            headerPanel.Controls.Add(btnDarkMode);
+            btnDarkMode.BringToFront();
+
             scrollPanel = new SmoothPanel();
             scrollPanel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom |
                                   AnchorStyles.Left | AnchorStyles.Right;
@@ -282,26 +328,29 @@ namespace WinFormsApp1
             this.Controls.Add(scrollPanel);
             headerPanel.BringToFront();
 
+            // The "paper"
             contentPanel = new SmoothPanel();
-            contentPanel.BackColor = BackgroundColor;
-            contentPanel.Size = new Size(1180, 500);
+            contentPanel.BackColor = PaperColor;
+            contentPanel.Size = new Size(PaperWidth, 500);
             contentPanel.Location = new Point(40, 20);
+            contentPanel.Paint += ContentPanel_Paint;
             scrollPanel.Controls.Add(contentPanel);
 
             lblQuestionCount = new Label();
             lblQuestionCount.Text = "0 Questions";
             lblQuestionCount.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
-            lblQuestionCount.ForeColor = DarkColor;
+            lblQuestionCount.ForeColor = HeadingColor;
+            lblQuestionCount.Tag = "heading";
             lblQuestionCount.AutoSize = true;
-            lblQuestionCount.Location = new Point(5, 0);
+            lblQuestionCount.Location = new Point(PaperMargin, 18);
             contentPanel.Controls.Add(lblQuestionCount);
 
             progressBar = new ProgressBar();
             progressBar.Minimum = 0;
             progressBar.Maximum = 100;
             progressBar.Value = 0;
-            progressBar.Location = new Point(5, 28);
-            progressBar.Size = new Size(1170, 10);
+            progressBar.Location = new Point(PaperMargin, 46);
+            progressBar.Size = new Size(PaperWidth - 2 * PaperMargin, 10);
             contentPanel.Controls.Add(progressBar);
 
             btnSubmit = new Button();
@@ -326,6 +375,17 @@ namespace WinFormsApp1
             EnableAntiCheat();
         }
 
+        private void ContentPanel_Paint(object sender, PaintEventArgs e)
+        {
+            Panel p = sender as Panel;
+            if (p == null) return;
+
+            using (Pen pen = new Pen(isDarkMode ? Color.FromArgb(70, 78, 98) : Color.FromArgb(205, 198, 180), 1f))
+            {
+                e.Graphics.DrawRectangle(pen, 0, 0, p.Width - 1, p.Height - 1);
+            }
+        }
+
         private void LblTimer_Paint(object sender, PaintEventArgs e)
         {
             Label label = sender as Label;
@@ -339,6 +399,118 @@ namespace WinFormsApp1
                     1,
                     label.Width - 3,
                     label.Height - 3);
+            }
+        }
+
+        // =========================================================
+        // THEME
+        // =========================================================
+
+        private void ApplyTheme(bool dark)
+        {
+            isDarkMode = dark;
+
+            if (dark)
+            {
+                BackgroundColor = Color.FromArgb(17, 20, 30);
+                PaperColor = Color.FromArgb(26, 31, 44);
+                CardColor = Color.FromArgb(33, 40, 58);
+                HeadingColor = Color.FromArgb(241, 245, 249);
+                TextColor = Color.FromArgb(203, 213, 225);
+                MutedColor = Color.FromArgb(148, 163, 184);
+                OptionBackColor = Color.FromArgb(44, 53, 74);
+                SoftColor = Color.FromArgb(78, 36, 48);
+                AccentText = Color.FromArgb(244, 167, 180);
+                HeaderColor = Color.FromArgb(62, 25, 34);
+            }
+            else
+            {
+                BackgroundColor = Color.FromArgb(232, 228, 218);
+                PaperColor = Color.FromArgb(255, 253, 248);
+                CardColor = Color.White;
+                HeadingColor = Color.FromArgb(15, 23, 42);
+                TextColor = Color.FromArgb(51, 65, 85);
+                MutedColor = Color.FromArgb(100, 116, 139);
+                OptionBackColor = Color.FromArgb(248, 250, 252);
+                SoftColor = Color.FromArgb(250, 242, 216);
+                AccentText = Color.FromArgb(128, 45, 58);
+                HeaderColor = Color.FromArgb(128, 45, 58);
+            }
+
+            this.SuspendLayout();
+
+            this.BackColor = BackgroundColor;
+            if (headerPanel != null) headerPanel.BackColor = HeaderColor;
+            if (scrollPanel != null) scrollPanel.BackColor = BackgroundColor;
+            if (contentPanel != null) contentPanel.BackColor = PaperColor;
+            if (lblQuestionCount != null) lblQuestionCount.ForeColor = HeadingColor;
+            if (btnDarkMode != null) btnDarkMode.Text = dark ? "☀  LIGHT" : "☾  DARK";
+
+            UpdateTimerLabel();
+
+            if (contentPanel != null)
+            {
+                RecolorControls(contentPanel);
+                contentPanel.Invalidate();
+            }
+
+            this.ResumeLayout(true);
+            this.Invalidate(true);
+        }
+
+        private void RecolorControls(Control parent)
+        {
+            foreach (Control c in parent.Controls)
+            {
+                if (c is Button) continue;
+
+                if (c is RadioButton)
+                {
+                    StyleOption((RadioButton)c);
+                    continue;
+                }
+
+                if (c is TextBox)
+                {
+                    c.BackColor = OptionBackColor;
+                    c.ForeColor = TextColor;
+                    continue;
+                }
+
+                if (c is Label)
+                {
+                    string role = c.Tag as string;
+                    if (role == "heading") c.ForeColor = HeadingColor;
+                    else if (role == "accent") c.ForeColor = AccentText;
+                    else if (role == "muted") c.ForeColor = MutedColor;
+                    else if (role == "text") c.ForeColor = TextColor;
+                    continue;
+                }
+
+                if (c is Panel)
+                {
+                    c.BackColor = (c.Tag as string) == "soft" ? SoftColor : CardColor;
+                    RecolorControls(c);
+                    c.Invalidate();
+                }
+            }
+        }
+
+        private void StyleOption(RadioButton rb)
+        {
+            if (rb.Checked)
+            {
+                rb.BackColor = SoftColor;
+                rb.ForeColor = AccentText;
+                if (rb.Font.Style != FontStyle.Bold)
+                    rb.Font = new Font(rb.Font.FontFamily, rb.Font.Size, FontStyle.Bold);
+            }
+            else
+            {
+                rb.BackColor = OptionBackColor;
+                rb.ForeColor = TextColor;
+                if (rb.Font.Style != FontStyle.Regular)
+                    rb.Font = new Font(rb.Font.FontFamily, rb.Font.Size, FontStyle.Regular);
             }
         }
 
@@ -422,18 +594,29 @@ namespace WinFormsApp1
                     Math.Max(10, headerPanel.ClientSize.Width - lblTimer.Width - 25), 32);
             }
 
+            if (btnDarkMode != null && lblTimer != null)
+            {
+                btnDarkMode.Location = new Point(
+                    lblTimer.Left - btnDarkMode.Width - 12, lblTimer.Top);
+            }
+
+            // The paper keeps its A4 width and stays centered
             int availableWidth = scrollPanel.ClientSize.Width;
-            int contentWidth = Math.Max(900, Math.Min(1180, availableWidth - 60));
+            int contentWidth = Math.Max(600, Math.Min(PaperWidth, availableWidth - 30));
 
             contentPanel.Width = contentWidth;
-            contentPanel.Left = Math.Max(20, (availableWidth - contentPanel.Width) / 2);
+            contentPanel.Left = Math.Max(10, (availableWidth - contentPanel.Width) / 2);
 
-            progressBar.Width = contentPanel.Width - 10;
+            int inner = contentPanel.Width - 2 * PaperMargin;
+
+            progressBar.Width = inner;
+
+            if (permitPanel != null) permitPanel.Width = inner;
 
             foreach (Panel header in sectionHeaders)
             {
                 if (header == null) continue;
-                header.Width = contentPanel.Width - 10;
+                header.Width = inner;
                 ResizeSectionHeader(header);
                 header.Invalidate();
             }
@@ -441,15 +624,19 @@ namespace WinFormsApp1
             foreach (Panel card in questionCards)
             {
                 if (card == null) continue;
-                card.Width = contentPanel.Width - 10;
+                card.Width = inner;
                 ResizeQuestionCard(card);
                 card.Invalidate();
             }
 
-            if (btnSubmit != null)
+            if (submitPanel != null) submitPanel.Width = inner;
+
+            if (btnSubmit != null && btnSubmit.Parent != null)
             {
-                btnSubmit.Left = (contentPanel.Width - btnSubmit.Width) / 2;
+                btnSubmit.Left = (btnSubmit.Parent.Width - btnSubmit.Width) / 2;
             }
+
+            contentPanel.Invalidate();
         }
 
         // =========================================================
@@ -465,6 +652,24 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
+
+                    // Scheduled quizzes stay hidden until the professor's deploy time
+                    DateTime? deployAt;
+                    if (!IsQuizDeployed(conn, quizId, out deployAt))
+                    {
+                        string when = deployAt.HasValue
+                            ? deployAt.Value.ToString("MMMM dd, yyyy 'at' hh:mm tt")
+                            : "the schedule set by your professor";
+
+                        CustomMessageBox.Show(
+                            "This quiz/exam is not available yet.\n\nIt will open on " + when + ".",
+                            "Not Yet Available",
+                            CustomMessageBoxButtons.OK,
+                            CustomMessageBoxIcon.Information);
+
+                        DisableQuiz();
+                        return;
+                    }
 
                     string query = @"
                         SELECT quiz_id, quiz_title, subject, exam_period, assessment_type, duration_minutes
@@ -528,6 +733,40 @@ namespace WinFormsApp1
             }
         }
 
+        // True when the quiz has no schedule, or its deploy time has already passed
+        // (compared using the database clock). If the deploy_at column does not exist, treat as deployed.
+        private bool IsQuizDeployed(MySqlConnection conn, int quizId, out DateTime? deployAt)
+        {
+            deployAt = null;
+
+            try
+            {
+                using (var cmd = new MySqlCommand(
+                    @"SELECT deploy_at,
+                             (deploy_at IS NULL OR deploy_at <= NOW()) AS is_open
+                      FROM quizzes
+                      WHERE quiz_id = @id
+                      LIMIT 1", conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", quizId);
+
+                    using (var r = cmd.ExecuteReader())
+                    {
+                        if (!r.Read()) return true;   // "not found" is handled by the next query
+
+                        if (r["deploy_at"] != DBNull.Value)
+                            deployAt = Convert.ToDateTime(r["deploy_at"]);
+
+                        return Convert.ToInt32(r["is_open"]) == 1;
+                    }
+                }
+            }
+            catch
+            {
+                return true;
+            }
+        }
+
         private string GetExamPeriodDisplay(string examPeriod)
         {
             switch (examPeriod)
@@ -557,6 +796,9 @@ namespace WinFormsApp1
             identificationControls.Clear();
             essayControls.Clear();
             contentPanel.Controls.Clear();
+            permitPanel = null;
+            txtPermit = null;
+            submitPanel = null;
 
             contentPanel.Controls.Add(lblQuestionCount);
             contentPanel.Controls.Add(progressBar);
@@ -975,7 +1217,7 @@ namespace WinFormsApp1
             else if (remainingSeconds <= 300)
                 lblTimer.BackColor = Color.FromArgb(200, 120, 20);
             else
-                lblTimer.BackColor = MaroonColor;
+                lblTimer.BackColor = HeaderColor;
         }
 
         private void SaveRemainingSecondsToDb(int seconds)
@@ -1205,7 +1447,7 @@ namespace WinFormsApp1
 
         private void BuildAllQuestions()
         {
-            int y = 50;
+            int y = 70;
 
             questionCards.Clear();
             sectionHeaders.Clear();
@@ -1222,6 +1464,12 @@ namespace WinFormsApp1
                 identificationControls.Add(null);
                 essayControls.Add(null);
             }
+
+            // ---- Exam permit (top of the examination) ----
+            permitPanel = CreatePermitPanel();
+            permitPanel.Location = new Point(PaperMargin, y);
+            contentPanel.Controls.Add(permitPanel);
+            y += permitPanel.Height + 16;
 
             string[] typeOrder = { "multiple_choice", "true_false", "identification", "essay" };
             string[] sectionTitles = { "MULTIPLE CHOICE", "TRUE OR FALSE", "IDENTIFICATION", "ESSAY" };
@@ -1259,7 +1507,7 @@ namespace WinFormsApp1
                     sectionTitles[t],
                     sectionDirections[t]);
 
-                header.Location = new Point(5, y);
+                header.Location = new Point(PaperMargin, y);
                 contentPanel.Controls.Add(header);
                 sectionHeaders.Add(header);
                 y += header.Height + 12;
@@ -1273,18 +1521,19 @@ namespace WinFormsApp1
                         originalIndex,
                         displayNumber);
 
-                    card.Location = new Point(5, y);
+                    card.Location = new Point(PaperMargin, y);
                     contentPanel.Controls.Add(card);
                     questionCards[originalIndex] = card;
                     y += card.Height + 16;
                 }
             }
 
-            Panel submitPanel = new RoundedPanel();
+            submitPanel = new RoundedPanel();
+            submitPanel.Tag = "card";
             submitPanel.BackColor = CardColor;
             submitPanel.BorderStyle = BorderStyle.None;
-            submitPanel.Size = new Size(contentPanel.Width - 10, 100);
-            submitPanel.Location = new Point(5, y);
+            submitPanel.Size = new Size(contentPanel.Width - 2 * PaperMargin, 100);
+            submitPanel.Location = new Point(PaperMargin, y);
             StyleRoundedPanel(submitPanel, false);
             contentPanel.Controls.Add(submitPanel);
 
@@ -1292,6 +1541,7 @@ namespace WinFormsApp1
             submitLabel.Text = "You have reached the end of the examination.";
             submitLabel.Font = new Font("Segoe UI", 10F, FontStyle.Regular);
             submitLabel.ForeColor = MutedColor;
+            submitLabel.Tag = "muted";
             submitLabel.AutoSize = true;
             submitLabel.Location = new Point(20, 16);
             submitPanel.Controls.Add(submitLabel);
@@ -1314,6 +1564,69 @@ namespace WinFormsApp1
                 indices[i] = indices[j];
                 indices[j] = temp;
             }
+        }
+
+        // =========================================================
+        // EXAM PERMIT PANEL
+        // =========================================================
+
+        private Panel CreatePermitPanel()
+        {
+            Panel panel = new RoundedPanel();
+            panel.Tag = "card";
+            panel.BackColor = CardColor;
+            panel.Width = contentPanel.Width - 2 * PaperMargin;
+            panel.Height = 118;
+            StyleRoundedPanel(panel, true);
+
+            Label lblPermitTitle = new Label();
+            lblPermitTitle.Text = "EXAM PERMIT";
+            lblPermitTitle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblPermitTitle.ForeColor = AccentText;
+            lblPermitTitle.Tag = "accent";
+            lblPermitTitle.AutoSize = true;
+            lblPermitTitle.Location = new Point(24, 14);
+            panel.Controls.Add(lblPermitTitle);
+
+            Label lblPermitName = new Label();
+            lblPermitName.Text = "Student:  " + studentName.Replace("_", " ");
+            lblPermitName.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            lblPermitName.ForeColor = HeadingColor;
+            lblPermitName.Tag = "heading";
+            lblPermitName.AutoSize = true;
+            lblPermitName.Location = new Point(24, 38);
+            panel.Controls.Add(lblPermitName);
+
+            Label lblPermitNo = new Label();
+            lblPermitNo.Text = "Permit No.:";
+            lblPermitNo.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            lblPermitNo.ForeColor = TextColor;
+            lblPermitNo.Tag = "text";
+            lblPermitNo.AutoSize = true;
+            lblPermitNo.Location = new Point(24, 78);
+            panel.Controls.Add(lblPermitNo);
+
+            txtPermit = new TextBox();
+            txtPermit.Font = new Font("Segoe UI", 11F);
+            txtPermit.ForeColor = TextColor;
+            txtPermit.BackColor = OptionBackColor;
+            txtPermit.BorderStyle = BorderStyle.FixedSingle;
+            txtPermit.Location = new Point(112, 73);
+            txtPermit.Size = new Size(260, 30);
+            txtPermit.MaxLength = 50;
+            panel.Controls.Add(txtPermit);
+            BlockTextEditingShortcuts(txtPermit);
+
+            Label lblPermitHint = new Label();
+            lblPermitHint.Text = "Required before you can submit.";
+            lblPermitHint.Font = new Font("Segoe UI", 9F, FontStyle.Italic);
+            lblPermitHint.ForeColor = MutedColor;
+            lblPermitHint.Tag = "muted";
+            lblPermitHint.AutoSize = true;
+            lblPermitHint.Location = new Point(388, 79);
+            panel.Controls.Add(lblPermitHint);
+
+            return panel;
         }
 
         // =========================================================
@@ -1347,12 +1660,10 @@ namespace WinFormsApp1
             }
         }
 
-        private void StyleRoundedPanel(Panel panel, bool showAccent,
-                                       Color? fillColor = null, int accentHeight = 44)
+        // Fill color follows the current theme: Tag == "soft" uses SoftColor, otherwise CardColor
+        private void StyleRoundedPanel(Panel panel, bool showAccent, int accentHeight = 44)
         {
             panel.BorderStyle = BorderStyle.None;
-
-            Color actualFill = fillColor.HasValue ? fillColor.Value : CardColor;
 
             ApplyRoundedRegion(panel);
             panel.Resize += (s, e) => ApplyRoundedRegion(panel);
@@ -1363,10 +1674,11 @@ namespace WinFormsApp1
                 g.SmoothingMode = SmoothingMode.AntiAlias;
 
                 Rectangle rect = new Rectangle(0, 0, panel.Width - 1, panel.Height - 1);
+                Color fill = (panel.Tag as string) == "soft" ? SoftColor : CardColor;
 
                 using (GraphicsPath path = GetRoundedRectPath(rect, 14))
                 {
-                    using (SolidBrush backBrush = new SolidBrush(actualFill))
+                    using (SolidBrush backBrush = new SolidBrush(fill))
                     {
                         g.FillPath(backBrush, path);
                     }
@@ -1396,14 +1708,17 @@ namespace WinFormsApp1
         private Panel CreateSectionHeader(string romanNumeral, string sectionTitle, string direction)
         {
             Panel header = new RoundedPanel();
-            header.Width = contentPanel.Width - 10;
+            header.Tag = "soft";
+            header.BackColor = SoftColor;
+            header.Width = contentPanel.Width - 2 * PaperMargin;
             header.Height = 78;
-            StyleRoundedPanel(header, true, MaroonSoft, header.Height);
+            StyleRoundedPanel(header, true, header.Height);
 
             Label lblTitle = new Label();
             lblTitle.Text = romanNumeral + ".  " + sectionTitle;
             lblTitle.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
-            lblTitle.ForeColor = MaroonColor;
+            lblTitle.ForeColor = AccentText;
+            lblTitle.Tag = "accent";
             lblTitle.AutoSize = true;
             lblTitle.Location = new Point(24, 12);
             header.Controls.Add(lblTitle);
@@ -1412,6 +1727,7 @@ namespace WinFormsApp1
             lblDirection.Text = direction;
             lblDirection.Font = new Font("Segoe UI", 9.5F, FontStyle.Italic);
             lblDirection.ForeColor = TextColor;
+            lblDirection.Tag = "text";
             lblDirection.AutoSize = false;
             lblDirection.Location = new Point(24, 42);
             lblDirection.Size = new Size(header.Width - 48, 28);
@@ -1438,16 +1754,30 @@ namespace WinFormsApp1
         private Panel CreateQuestionCard(QuizQuestion q, int originalIndex, int displayNumber)
         {
             Panel card = new RoundedPanel();
+            card.Tag = "card";
             card.BackColor = CardColor;
-            card.Width = contentPanel.Width - 10;
+            card.Width = contentPanel.Width - 2 * PaperMargin;
 
             string questionType = NormalizeQuestionType(q.QuestionType);
 
-            int height = 210;
-            if (questionType == "multiple_choice") height = 420;
-            else if (questionType == "true_false") height = 300;
-            else if (questionType == "identification") height = 260;
-            else if (questionType == "essay") height = 360;
+            // Height of the question text depends on how long it is
+            Font questionFont = new Font("Segoe UI", 13F, FontStyle.Bold);
+            int questionWidth = card.Width - 48;
+            Size measured = TextRenderer.MeasureText(
+                q.Question ?? "", questionFont,
+                new Size(questionWidth, int.MaxValue),
+                TextFormatFlags.WordBreak);
+            int questionHeight = Math.Max(30, measured.Height + 8);
+
+            int top = 62 + questionHeight + 16;   // where the answer area starts
+            int optionWidth = card.Width - 48;
+
+            int height;
+            if (questionType == "multiple_choice") height = top + 168 + 46 + 30;
+            else if (questionType == "true_false") height = top + 56 + 46 + 30;
+            else if (questionType == "identification") height = top + 26 + 36 + 30;
+            else if (questionType == "essay") height = top + 195 + 30;
+            else height = top + 60;
 
             card.Height = height;
             StyleRoundedPanel(card, true);
@@ -1455,7 +1785,8 @@ namespace WinFormsApp1
             Label numberLabel = new Label();
             numberLabel.Text = "QUESTION " + displayNumber;
             numberLabel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            numberLabel.ForeColor = MaroonColor;
+            numberLabel.ForeColor = AccentText;
+            numberLabel.Tag = "accent";
             numberLabel.AutoSize = true;
             numberLabel.Location = new Point(24, 16);
             card.Controls.Add(numberLabel);
@@ -1469,26 +1800,28 @@ namespace WinFormsApp1
 
             typeLabel.Font = new Font("Segoe UI", 8F, FontStyle.Bold);
             typeLabel.ForeColor = MutedColor;
+            typeLabel.Tag = "muted";
             typeLabel.AutoSize = true;
             typeLabel.Location = new Point(24, 38);
             card.Controls.Add(typeLabel);
 
             Label questionLabel = new Label();
             questionLabel.Text = q.Question;
-            questionLabel.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
-            questionLabel.ForeColor = DarkColor;
+            questionLabel.Font = questionFont;
+            questionLabel.ForeColor = HeadingColor;
+            questionLabel.Tag = "heading";
             questionLabel.Location = new Point(24, 62);
-            questionLabel.Size = new Size(card.Width - 48, 62);
+            questionLabel.Size = new Size(questionWidth, questionHeight);
             questionLabel.AutoEllipsis = false;
             card.Controls.Add(questionLabel);
 
             if (questionType == "multiple_choice")
             {
                 RadioButton[] radios = new RadioButton[4];
-                radios[0] = CreateOption("A. " + q.ChoiceA, 24, 140);
-                radios[1] = CreateOption("B. " + q.ChoiceB, 24, 196);
-                radios[2] = CreateOption("C. " + q.ChoiceC, 24, 252);
-                radios[3] = CreateOption("D. " + q.ChoiceD, 24, 308);
+                radios[0] = CreateOption("A. " + q.ChoiceA, 24, top, optionWidth);
+                radios[1] = CreateOption("B. " + q.ChoiceB, 24, top + 56, optionWidth);
+                radios[2] = CreateOption("C. " + q.ChoiceC, 24, top + 112, optionWidth);
+                radios[3] = CreateOption("D. " + q.ChoiceD, 24, top + 168, optionWidth);
 
                 radios[0].Tag = "A";
                 radios[1].Tag = "B";
@@ -1501,8 +1834,8 @@ namespace WinFormsApp1
             else if (questionType == "true_false")
             {
                 RadioButton[] radios = new RadioButton[2];
-                radios[0] = CreateOption("True", 24, 140);
-                radios[1] = CreateOption("False", 24, 196);
+                radios[0] = CreateOption("True", 24, top, optionWidth);
+                radios[1] = CreateOption("False", 24, top + 56, optionWidth);
 
                 radios[0].Tag = "TRUE";
                 radios[1].Tag = "FALSE";
@@ -1517,8 +1850,9 @@ namespace WinFormsApp1
                 answerLabel.Text = "Your Answer:";
                 answerLabel.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
                 answerLabel.ForeColor = TextColor;
+                answerLabel.Tag = "text";
                 answerLabel.AutoSize = true;
-                answerLabel.Location = new Point(24, 140);
+                answerLabel.Location = new Point(24, top);
                 card.Controls.Add(answerLabel);
 
                 TextBox identification = new TextBox();
@@ -1526,7 +1860,7 @@ namespace WinFormsApp1
                 identification.ForeColor = TextColor;
                 identification.BackColor = OptionBackColor;
                 identification.BorderStyle = BorderStyle.FixedSingle;
-                identification.Location = new Point(24, 166);
+                identification.Location = new Point(24, top + 26);
                 identification.Size = new Size(card.Width - 48, 36);
                 identification.MaxLength = 500;
                 identification.Multiline = false;
@@ -1541,12 +1875,13 @@ namespace WinFormsApp1
             {
                 TextBox essay = new TextBox();
                 essay.Multiline = true;
-                essay.ScrollBars = ScrollBars.Vertical;
+                essay.WordWrap = true;
+                essay.ScrollBars = ScrollBars.None;   // scrollbar only appears when text overflows
                 essay.Font = new Font("Segoe UI", 11F);
                 essay.ForeColor = TextColor;
                 essay.BackColor = OptionBackColor;
                 essay.BorderStyle = BorderStyle.FixedSingle;
-                essay.Location = new Point(24, 140);
+                essay.Location = new Point(24, top);
                 essay.Size = new Size(card.Width - 48, 195);
                 essay.MaxLength = 5000;
                 card.Controls.Add(essay);
@@ -1554,13 +1889,13 @@ namespace WinFormsApp1
                 essayControls[originalIndex] = essay;
 
                 BlockTextEditingShortcuts(essay);
-                essay.TextChanged += Identification_TextChanged;
+                essay.TextChanged += Essay_TextChanged;
             }
 
             return card;
         }
 
-        private RadioButton CreateOption(string text, int x, int y)
+        private RadioButton CreateOption(string text, int x, int y, int width)
         {
             RadioButton rb = new RadioButton();
             rb.Text = text;
@@ -1568,7 +1903,7 @@ namespace WinFormsApp1
             rb.ForeColor = TextColor;
             rb.BackColor = OptionBackColor;
             rb.Location = new Point(x, y);
-            rb.Size = new Size(contentPanel.Width - 58, 46);
+            rb.Size = new Size(width, 46);
             rb.AutoSize = false;
             rb.Padding = new Padding(12, 0, 8, 0);
             rb.Cursor = Cursors.Hand;
@@ -1584,19 +1919,7 @@ namespace WinFormsApp1
             RadioButton rb = sender as RadioButton;
             if (rb == null) return;
 
-            if (rb.Checked)
-            {
-                rb.BackColor = MaroonSoft;
-                rb.ForeColor = MaroonColor;
-                rb.Font = new Font(rb.Font, FontStyle.Bold);
-            }
-            else
-            {
-                rb.BackColor = OptionBackColor;
-                rb.ForeColor = TextColor;
-                rb.Font = new Font(rb.Font.FontFamily, rb.Font.Size, FontStyle.Regular);
-            }
-
+            StyleOption(rb);
             UpdateProgress();
         }
 
@@ -1605,11 +1928,47 @@ namespace WinFormsApp1
             UpdateProgress();
         }
 
+        // =========================================================
+        // ESSAY: SCROLLBAR ONLY WHEN TEXT OVERFLOWS THE BOX
+        // =========================================================
+
+        private void Essay_TextChanged(object sender, EventArgs e)
+        {
+            TextBox essay = sender as TextBox;
+            if (essay != null) UpdateEssayScroll(essay);
+
+            UpdateProgress();
+        }
+
+        private void UpdateEssayScroll(TextBox essay)
+        {
+            // "x" makes a trailing newline count as a real (empty) line
+            Size measured = TextRenderer.MeasureText(
+                essay.Text + "x",
+                essay.Font,
+                new Size(Math.Max(10, essay.ClientSize.Width - 8), int.MaxValue),
+                TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl | TextFormatFlags.NoPadding);
+
+            bool needsScroll = measured.Height > essay.ClientSize.Height - 6;
+            ScrollBars wanted = needsScroll ? ScrollBars.Vertical : ScrollBars.None;
+
+            if (essay.ScrollBars == wanted) return;
+
+            int selStart = essay.SelectionStart;
+            int selLength = essay.SelectionLength;
+
+            essay.ScrollBars = wanted;
+
+            essay.SelectionStart = selStart;
+            essay.SelectionLength = selLength;
+            essay.ScrollToCaret();
+        }
+
         private void ResizeQuestionCard(Panel card)
         {
             foreach (Control control in card.Controls)
             {
-                if (control is RadioButton) control.Width = card.Width - 58;
+                if (control is RadioButton) control.Width = card.Width - 48;
                 else if (control is TextBox) control.Width = card.Width - 48;
                 else if (control is Label)
                 {
@@ -1625,6 +1984,17 @@ namespace WinFormsApp1
 
         private bool ValidateAllAnswers()
         {
+            // Exam permit is required
+            if (txtPermit == null || string.IsNullOrWhiteSpace(txtPermit.Text))
+            {
+                CustomMessageBox.Show("Please enter your Exam Permit number before submitting.",
+                    "Exam Permit Required", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
+
+                if (permitPanel != null) scrollPanel.ScrollControlIntoView(permitPanel);
+                if (txtPermit != null) txtPermit.Focus();
+                return false;
+            }
+
             for (int i = 0; i < questions.Count; i++)
             {
                 QuizQuestion q = questions[i];
@@ -2006,6 +2376,9 @@ namespace WinFormsApp1
                     }
 
                     DisableQuiz();
+
+                    // Submitted: close the exam and go back to the dashboard
+                    this.Close();
                 }
                 catch (Exception ex)
                 {
@@ -2191,12 +2564,26 @@ namespace WinFormsApp1
 
         }
 
+        // Set when the exam cannot be taken (not found, not yet deployed, load error...)
+        private bool closeOnShown = false;
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+
+            if (closeOnShown)
+                this.Close();
+        }
+
         // =========================================================
         // DISABLE QUIZ
         // =========================================================
 
         private void DisableQuiz()
         {
+            // The form has no close button, so close it automatically once it is shown
+            closeOnShown = true;
+
             StopExamTimer();
             StopAutoSave();
             StopHeartbeat();
