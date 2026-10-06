@@ -27,10 +27,8 @@ namespace WinFormsApp1
         // =========================================================
         // WINDOWS API — LOCK WORKSTATION
         // =========================================================
-        [DllImport("user32.dll", SetLastError = true)]
+        [[DllImport("user32.dll", SetLastError = true)]
         private static extern bool BlockInput(bool fBlockIt);
-
-        [DllImport("user32.dll", SetLastError = true)]
         private static extern bool LockWorkStation();
 
         private TcpClient client;
@@ -774,47 +772,42 @@ namespace WinFormsApp1
                         try
                         {
                             client.Close();
-                            System.Threading.Thread.Sleep(50);
 
-                            bool isAdmin = new System.Security.Principal.WindowsPrincipal(
-                                System.Security.Principal.WindowsIdentity.GetCurrent())
-                                .IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
-
-                            Console.WriteLine("[Student] LOCK — Admin: " + isAdmin);
-
-                            // =========================================================
-                            // PRIMARY: LockWorkStation — works from any thread
-                            // =========================================================
-                            bool locked = LockWorkStation();
-                            int err = Marshal.GetLastWin32Error();
-                            Console.WriteLine($"[Student] LockWorkStation() = {locked}, Win32Error = {err}");
-
-                            // =========================================================
-                            // SECONDARY: Also try BlockInput on the UI thread as backup
-                            // =========================================================
-                            try
+                            // Run BlockInput on the UI thread — CRITICAL
+                            // BlockInput needs a message pump to stay active
+                            this.BeginInvoke(new Action(() =>
                             {
-                                this.BeginInvoke(new Action(() =>
+                                try
                                 {
                                     bool blocked = BlockInput(true);
-                                    Console.WriteLine("[Student] BlockInput(true) on UI thread = " + blocked);
+                                    int err = Marshal.GetLastWin32Error();
+                                    Console.WriteLine($"[Student] BlockInput(true) = {blocked}, Win32Error = {err}");
 
-                                    // Auto-unblock after 30s
-                                    System.Windows.Forms.Timer t = new System.Windows.Forms.Timer { Interval = 30000 };
-                                    t.Tick += (s, ev) =>
+                                    if (!blocked)
                                     {
-                                        t.Stop();
-                                        t.Dispose();
+                                        Console.WriteLine("[Student] ❌ BlockInput failed. Running as admin?");
+                                        return;
+                                    }
+
+                                    Console.WriteLine("[Student] ✅ Mouse + keyboard FROZEN for 30 seconds");
+
+                                    // Auto-unblock after 30 seconds
+                                    System.Windows.Forms.Timer unlockTimer = new System.Windows.Forms.Timer();
+                                    unlockTimer.Interval = 30000;
+                                    unlockTimer.Tick += (s, ev) =>
+                                    {
+                                        unlockTimer.Stop();
+                                        unlockTimer.Dispose();
                                         BlockInput(false);
-                                        Console.WriteLine("[Student] Auto-unblocked after 30s.");
+                                        Console.WriteLine("[Student] ⏰ Auto-unblocked after 30s.");
                                     };
-                                    t.Start();
-                                }));
-                            }
-                            catch (Exception exUI)
-                            {
-                                Console.WriteLine("[Student] BeginInvoke error: " + exUI.Message);
-                            }
+                                    unlockTimer.Start();
+                                }
+                                catch (Exception exUI)
+                                {
+                                    Console.WriteLine("[Student] BlockInput UI error: " + exUI.Message);
+                                }
+                            }));
                         }
                         catch (Exception ex)
                         {
@@ -829,8 +822,19 @@ namespace WinFormsApp1
                         try
                         {
                             client.Close();
-                            bool unblocked = BlockInput(false);
-                            Console.WriteLine($"[Student] BlockInput(false) = {unblocked}");
+
+                            this.BeginInvoke(new Action(() =>
+                            {
+                                try
+                                {
+                                    bool unblocked = BlockInput(false);
+                                    Console.WriteLine($"[Student] BlockInput(false) = {unblocked}");
+                                }
+                                catch (Exception exUI)
+                                {
+                                    Console.WriteLine("[Student] Unblock UI error: " + exUI.Message);
+                                }
+                            }));
                         }
                         catch (Exception ex)
                         {
@@ -859,13 +863,11 @@ namespace WinFormsApp1
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("[Student] Listener outer error: " + ex.Message);
+                    Console.WriteLine("[Student] Listener error: " + ex.Message);
                     System.Threading.Thread.Sleep(500);
-                    // Do NOT break — keep the listener alive
+                    // Don't break — keep listener alive
                 }
             }
-
-            Console.WriteLine("[Student] Command listener stopped.");
         }
 
         // =========================================================
@@ -2926,6 +2928,12 @@ namespace WinFormsApp1
             slideshowImages.Clear();
 
             base.OnFormClosing(e);
+
+            // Unblock input in case the app closes while locked
+            try { BlockInput(false); } catch { }
+
+            try { assessmentsRefreshTimer?.Stop(); } catch { }
+            // ... rest of your existing code
         }
 
         private void InitializeNavTooltips()
