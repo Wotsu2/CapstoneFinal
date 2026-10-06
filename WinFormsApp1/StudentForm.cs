@@ -693,15 +693,24 @@ namespace WinFormsApp1
                     {
                         try
                         {
-                            if (this.IsHandleCreated)
-                                this.Invoke(new Action(() =>
+                            if (this.IsHandleCreated && !this.IsDisposed)
+                            {
+                                this.BeginInvoke(new Action(() =>
                                 {
-                                    if (broadcastViewer != null && !broadcastViewer.IsDisposed)
+                                    try
                                     {
-                                        broadcastViewer.Close();
-                                        broadcastViewer = null;
+                                        if (broadcastViewer != null && !broadcastViewer.IsDisposed)
+                                        {
+                                            broadcastViewer.Close();
+                                            broadcastViewer = null;
+                                        }
                                     }
+                                    catch { }
+
+                                    // Make sure the hooks are gone, even if the form didn't fire FormClosed
+                                    try { BroadcastViewerForm.ForceRemoveHooks(); } catch { }
                                 }));
+                            }
                         }
                         catch { }
                     }

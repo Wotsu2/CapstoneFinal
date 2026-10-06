@@ -2713,7 +2713,23 @@ namespace WinFormsApp1
             return bitmap;
         }
 
-        private void btnStopSharing_Click(object sender, EventArgs e) { broadcastTimer?.Stop(); }
+        private void btnStopSharing_Click(object sender, EventArgs e)
+        {
+            // 1) Stop the broadcast timer
+            try { broadcastTimer?.Stop(); } catch { }
+
+            // 2) Close every broadcast client — this makes the student's
+            //    ConnectBroadcastReceiver loop exit, which closes the
+            //    BroadcastViewerForm and releases the input hooks.
+            foreach (var kvp in broadcastClients.ToList())
+            {
+                try { kvp.Value.Close(); } catch { }
+                try { kvp.Value.Dispose(); } catch { }
+            }
+            broadcastClients.Clear();
+
+            Console.WriteLine("[Demo] Stopped. All broadcast clients closed.");
+        }
 
         private void ShutdownStartListener(string clientIp)
         {
