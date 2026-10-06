@@ -30,6 +30,7 @@ namespace WinFormsApp1
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool BlockInput(bool fBlockIt);
         private static extern bool LockWorkStation();
+        private System.Windows.Forms.Timer _lockTimer;
 
         private TcpClient client;
         private TcpClient screenClient;
@@ -769,78 +770,48 @@ namespace WinFormsApp1
                     // ============ LOCK COMMAND ============
                     if (command == "LOCK")
                     {
-                        // =========================================================
-                        // STEP 1: Confirm the command arrived
-                        // =========================================================
-                        MessageBox.Show(
-                            "✅ LOCK command received!",
-                            "Step 1 — Command Received",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Information);
-
                         try
                         {
                             client.Close();
                             System.Threading.Thread.Sleep(50);
 
-                            // =========================================================
-                            // STEP 2: Confirm we're about to invoke on UI thread
-                            // =========================================================
-                            MessageBox.Show(
-                                "Sending BlockInput to UI thread...",
-                                "Step 2 — Before BeginInvoke",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Information);
-
+                            // Store the timer so we can cancel it on UNLOCK
                             this.BeginInvoke(new Action(() =>
                             {
-                                // =========================================================
-                                // STEP 3: On UI thread — check admin
-                                // =========================================================
-                                bool isAdmin = new System.Security.Principal.WindowsPrincipal(
-                                    System.Security.Principal.WindowsIdentity.GetCurrent())
-                                    .IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+                                _lockTimer?.Stop();
+                                _lockTimer?.Dispose();
 
-                                MessageBox.Show(
-                                    $"Now on UI thread.\n\n" +
-                                    $"Running as Admin: {isAdmin}",
-                                    "Step 3 — On UI Thread",
-                                    MessageBoxButtons.OK,
-                                    MessageBoxIcon.Information);
-
-                                // =========================================================
-                                // STEP 4: Call BlockInput
-                                // =========================================================
-                                bool blocked = BlockInput(true);
-                                int err = Marshal.GetLastWin32Error();
-
-                                MessageBox.Show(
-                                    $"BlockInput(true) called.\n\n" +
-                                    $"Returned: {blocked}\n" +
-                                    $"Win32Error: {err}\n\n" +
-                                    "Try moving the mouse RIGHT NOW — while you click OK, it should still be frozen.",
-                                    "Step 4 — BlockInput Result",
-                                    MessageBoxButtons.OK,
-                                    MessageBoxIcon.Information);
-
-                                // =========================================================
-                                // STEP 5: Auto-unblock after 30 seconds
-                                // =========================================================
-                                System.Windows.Forms.Timer unlockTimer = new System.Windows.Forms.Timer();
-                                unlockTimer.Interval = 30000;
-                                unlockTimer.Tick += (s, ev) =>
+                                _lockTimer = new System.Windows.Forms.Timer();
+                                _lockTimer.Interval = 200;  // Re-block every 200ms
+                                _lockTimer.Tick += (s, ev) =>
                                 {
-                                    unlockTimer.Stop();
-                                    unlockTimer.Dispose();
-                                    BlockInput(false);
-                                    Console.WriteLine("[Student] Auto-unblocked.");
+                                    BlockInput(true);  // Keep forcing the block
                                 };
-                                unlockTimer.Start();
+                                _lockTimer.Start();
+
+                                Console.WriteLine("[Student] ✅ Continuous LOCK started.");
+
+                                // Auto-stop after 30 seconds
+                                var stopTimer = new System.Windows.Forms.Timer();
+                                stopTimer.Interval = 30000;
+                                stopTimer.Tick += (s, ev) =>
+                                {
+                                    stopTimer.Stop();
+                                    stopTimer.Dispose();
+
+                                    _lockTimer?.Stop();
+                                    _lockTimer?.Dispose();
+                                    _lockTimer = null;
+
+                                    BlockInput(false);
+                                    Console.WriteLine("[Student] ⏰ Auto-unlocked after 30s.");
+                                };
+                                stopTimer.Start();
                             }));
                         }
                         catch (Exception ex)
                         {
-                            MessageBox.Show("LOCK handler error: " + ex.Message);
+                            Console.WriteLine("[Student] LOCK error: " + ex.Message);
                         }
                         continue;
                     }
@@ -848,31 +819,23 @@ namespace WinFormsApp1
                     // ============ UNLOCK COMMAND ============
                     if (command == "UNLOCK")
                     {
-                        MessageBox.Show(
-                            "✅ UNLOCK command received!",
-                            "Step 1 — Command Received",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Information);
                         try
                         {
                             client.Close();
 
                             this.BeginInvoke(new Action(() =>
                             {
-                                try
-                                {
-                                    bool unblocked = BlockInput(false);
-                                    Console.WriteLine($"[Student] BlockInput(false) = {unblocked}");
-                                }
-                                catch (Exception exUI)
-                                {
-                                    Console.WriteLine("[Student] Unblock UI error: " + exUI.Message);
-                                }
+                                _lockTimer?.Stop();
+                                _lockTimer?.Dispose();
+                                _lockTimer = null;
+
+                                BlockInput(false);
+                                Console.WriteLine("[Student] ✅ Manual UNLOCK.");
                             }));
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine("[Student] UNLOCK handler error: " + ex.Message);
+                            Console.WriteLine("[Student] UNLOCK error: " + ex.Message);
                         }
                         continue;
                     }
