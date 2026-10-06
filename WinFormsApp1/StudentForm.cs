@@ -30,6 +30,9 @@ namespace WinFormsApp1
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool BlockInput(bool fBlockIt);
 
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool LockWorkStation();
+
         private TcpClient client;
         private TcpClient screenClient;
         private bool isSharingScreen = false;
@@ -202,14 +205,21 @@ namespace WinFormsApp1
                 };
                 activitiesRefreshTimer.Start();
 
-                CustomMessageBox.Show(
-                    $"Welcome back, {StudentUsername}!\n\n" +
-                    $"Your dashboard is ready.\n" +
-                    $"Section: {StudentSection}\n" +
-                    $"Pending activities and assessments have been loaded.",
-                    "Login Successful",
-                    CustomMessageBoxButtons.OK,
-                    CustomMessageBoxIcon.Information);
+                bool isAdmin = new System.Security.Principal.WindowsPrincipal(
+    System.Security.Principal.WindowsIdentity.GetCurrent())
+    .IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+
+                Console.WriteLine("[Student] Running as Admin: " + isAdmin);
+                if (!isAdmin)
+                {
+                    MessageBox.Show(
+                        "⚠ Student app is NOT running as Administrator.\n\n" +
+                        "The LOCK feature will not work.\n" +
+                        "Please close and run as administrator.",
+                        "Admin Required",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                }
             }
             catch (Exception ex)
             {
@@ -764,54 +774,47 @@ namespace WinFormsApp1
                         try
                         {
                             client.Close();
+                            System.Threading.Thread.Sleep(50);
 
-                            // Check admin rights FIRST
                             bool isAdmin = new System.Security.Principal.WindowsPrincipal(
                                 System.Security.Principal.WindowsIdentity.GetCurrent())
                                 .IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
 
-                            Console.WriteLine("[Student] Running as Admin: " + isAdmin);
+                            Console.WriteLine("[Student] LOCK — Admin: " + isAdmin);
 
-                            if (!isAdmin)
-                            {
-                                Console.WriteLine("[Student] ❌ NOT RUNNING AS ADMIN - BlockInput will fail!");
-                                MessageBox.Show(
-                                    "LOCK command received but Student app is NOT running as Administrator.\n\n" +
-                                    "BlockInput requires admin rights.\n" +
-                                    "Right-click the .exe → Run as administrator.",
-                                    "Admin Required",
-                                    MessageBoxButtons.OK,
-                                    MessageBoxIcon.Warning);
-                                continue; // don't kill the thread
-                            }
-
-                            // Try BlockInput
-                            bool blocked = BlockInput(true);
+                            // =========================================================
+                            // PRIMARY: LockWorkStation — works from any thread
+                            // =========================================================
+                            bool locked = LockWorkStation();
                             int err = Marshal.GetLastWin32Error();
-                            Console.WriteLine($"[Student] BlockInput(true) = {blocked}, Win32Error = {err}");
+                            Console.WriteLine($"[Student] LockWorkStation() = {locked}, Win32Error = {err}");
 
-                            if (!blocked)
+                            // =========================================================
+                            // SECONDARY: Also try BlockInput on the UI thread as backup
+                            // =========================================================
+                            try
                             {
-                                Console.WriteLine("[Student] ❌ BlockInput returned FALSE. Error: " + err);
-                                continue;
+                                this.BeginInvoke(new Action(() =>
+                                {
+                                    bool blocked = BlockInput(true);
+                                    Console.WriteLine("[Student] BlockInput(true) on UI thread = " + blocked);
+
+                                    // Auto-unblock after 30s
+                                    System.Windows.Forms.Timer t = new System.Windows.Forms.Timer { Interval = 30000 };
+                                    t.Tick += (s, ev) =>
+                                    {
+                                        t.Stop();
+                                        t.Dispose();
+                                        BlockInput(false);
+                                        Console.WriteLine("[Student] Auto-unblocked after 30s.");
+                                    };
+                                    t.Start();
+                                }));
                             }
-
-                            Console.WriteLine("[Student] ✅ Mouse + keyboard BLOCKED for 30 seconds");
-
-                            // Auto-unblock after 30s
-                            System.Threading.Tasks.Task.Run(async () =>
+                            catch (Exception exUI)
                             {
-                                await System.Threading.Tasks.Task.Delay(30000);
-                                try
-                                {
-                                    BlockInput(false);
-                                    Console.WriteLine("[Student] Auto-unblocked after 30s.");
-                                }
-                                catch (Exception ex)
-                                {
-                                    Console.WriteLine("[Student] Auto-unblock failed: " + ex.Message);
-                                }
-                            });
+                                Console.WriteLine("[Student] BeginInvoke error: " + exUI.Message);
+                            }
                         }
                         catch (Exception ex)
                         {
