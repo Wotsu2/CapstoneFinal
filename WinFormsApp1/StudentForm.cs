@@ -138,10 +138,10 @@ namespace WinFormsApp1
                 isSharingScreen = true;
                 lblProfUsername.Text = StudentUsername;
 
-                Task.Run(() => ConnectToServer());
-                Task.Run(() => StartScreenShare());
-                Task.Run(() => ConnectBroadcastReceiver());
-                Task.Run(() => StartListening());
+                new System.Threading.Thread(() => ConnectToServer()) { IsBackground = true }.Start();
+                new System.Threading.Thread(() => StartScreenShare()) { IsBackground = true }.Start();
+                new System.Threading.Thread(() => ConnectBroadcastReceiver()) { IsBackground = true }.Start();
+                new System.Threading.Thread(() => StartListening()) { IsBackground = true }.Start();
 
                 NameGet();
                 InitializeSaveDirectory();
