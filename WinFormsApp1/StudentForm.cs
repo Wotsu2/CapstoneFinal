@@ -24,6 +24,12 @@ namespace WinFormsApp1
 {
     public partial class StudentForm : Form
     {
+        // =========================================================
+        // WINDOWS API — LOCK WORKSTATION
+        // =========================================================
+        [DllImport("user32.dll")]
+        private static extern bool LockWorkStation();
+
         private TcpClient client;
         private TcpClient screenClient;
         private bool isSharingScreen = false;
@@ -726,6 +732,9 @@ namespace WinFormsApp1
             }
         }
 
+        // =========================================================
+        // COMMAND LISTENER — handles SHUTDOWN, RESTART, and LOCK
+        // =========================================================
         private void ListenForCommands()
         {
             while (isSharingScreen && !isSignedOut)
@@ -738,6 +747,28 @@ namespace WinFormsApp1
                     byte[] buffer = new byte[1024];
                     int bytesRead = stream.Read(buffer, 0, buffer.Length);
                     string command = Encoding.UTF8.GetString(buffer, 0, bytesRead).Trim();
+
+                    Console.WriteLine("[Student] Command received: " + command);
+
+                    // ============ LOCK COMMAND ============
+                    if (command == "LOCK")
+                    {
+                        try
+                        {
+                            client.Close();
+                            System.Threading.Thread.Sleep(200);
+
+                            // This is the actual Windows lock — shows the login screen
+                            bool result = LockWorkStation();
+                            Console.WriteLine("[Student] LockWorkStation returned: " + result);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("[Student] Lock failed: " + ex.Message);
+                        }
+                        continue;
+                    }
+                    // ======================================
 
                     if (command == "SHUTDOWN")
                     {

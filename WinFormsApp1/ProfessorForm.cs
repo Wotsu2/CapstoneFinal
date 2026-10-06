@@ -4138,6 +4138,40 @@ namespace WinFormsApp1
             if (span.TotalDays < 7) return (int)span.TotalDays + "d ago";
             return dt.ToString("MMM dd, yyyy");
         }
+
+        private void btnLockPC_Click(object sender, EventArgs e)
+        {
+            // 1. Collect all ONLINE PCs (only LightGreen = connected)
+            List<string> onlinePCs = new List<string>();
+
+            foreach (var kvp in workstationButtons)
+            {
+                if (kvp.Value.BackColor != Color.LightGreen) continue;
+
+                string ip = kvp.Key;
+                string displayName = ip;
+
+                if (miniWorkstationButtons.ContainsKey(ip))
+                {
+                    string btnText = miniWorkstationButtons[ip].Text;
+                    if (!string.IsNullOrEmpty(btnText))
+                        displayName = btnText.Split('(')[0].Trim();
+                }
+
+                onlinePCs.Add($"{displayName} ({ip})");
+            }
+
+            if (onlinePCs.Count == 0)
+            {
+                CustomMessageBox.Show("No online workstations to lock.",
+                    "No PCs Online", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
+                return;
+            }
+
+            // 2. Open LockForm and pass online PCs + command port
+            LockForm lockPanel = new LockForm(onlinePCs, SettingsManager.Current.CommandPort);
+            lockPanel.ShowDialog(this);
+        }
     }
 
     public class ClassCardPanel : Panel
