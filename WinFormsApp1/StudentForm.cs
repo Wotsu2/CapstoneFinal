@@ -722,13 +722,18 @@ namespace WinFormsApp1
                 Shutdownlistener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 Shutdownlistener.Start();
 
+                Console.WriteLine("[Student] TcpListener started on port " + SettingsManager.Current.CommandPort);
+
                 System.Threading.Thread t = new System.Threading.Thread(ListenForCommands);
                 t.IsBackground = true;
+                t.Name = "CommandListener";
                 t.Start();
             }
             catch (Exception ex)
             {
-                Console.WriteLine("StartListening error: " + ex.Message);
+                Console.WriteLine("StartListening FAILED: " + ex.Message);
+                MessageBox.Show("Could not start command listener on port " + SettingsManager.Current.CommandPort +
+                    "\n\n" + ex.Message, "Listener Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -737,6 +742,8 @@ namespace WinFormsApp1
         // =========================================================
         private void ListenForCommands()
         {
+            Console.WriteLine("[Student] Command listener started on port " + SettingsManager.Current.CommandPort);
+
             while (isSharingScreen && !isSignedOut)
             {
                 try
@@ -746,9 +753,10 @@ namespace WinFormsApp1
 
                     byte[] buffer = new byte[1024];
                     int bytesRead = stream.Read(buffer, 0, buffer.Length);
-                    string command = Encoding.UTF8.GetString(buffer, 0, bytesRead).Trim();
+                    if (bytesRead == 0) { client.Close(); continue; }
 
-                    Console.WriteLine("[Student] Command received: " + command);
+                    string command = Encoding.UTF8.GetString(buffer, 0, bytesRead).Trim();
+                    Console.WriteLine("[Student] Command received: '" + command + "'");
 
                     // ============ LOCK COMMAND ============
                     if (command == "LOCK")
@@ -756,57 +764,79 @@ namespace WinFormsApp1
                         try
                         {
                             client.Close();
-                            System.Threading.Thread.Sleep(100);
 
-                            // Block mouse + keyboard
+                            // Check admin rights FIRST
+                            bool isAdmin = new System.Security.Principal.WindowsPrincipal(
+                                System.Security.Principal.WindowsIdentity.GetCurrent())
+                                .IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+
+                            Console.WriteLine("[Student] Running as Admin: " + isAdmin);
+
+                            if (!isAdmin)
+                            {
+                                Console.WriteLine("[Student] ❌ NOT RUNNING AS ADMIN - BlockInput will fail!");
+                                MessageBox.Show(
+                                    "LOCK command received but Student app is NOT running as Administrator.\n\n" +
+                                    "BlockInput requires admin rights.\n" +
+                                    "Right-click the .exe → Run as administrator.",
+                                    "Admin Required",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Warning);
+                                continue; // don't kill the thread
+                            }
+
+                            // Try BlockInput
                             bool blocked = BlockInput(true);
-                            Console.WriteLine("[Student] BlockInput(true) returned: " + blocked);
+                            int err = Marshal.GetLastWin32Error();
+                            Console.WriteLine($"[Student] BlockInput(true) = {blocked}, Win32Error = {err}");
 
                             if (!blocked)
                             {
-                                int err = Marshal.GetLastWin32Error();
-                                Console.WriteLine($"[Student] BlockInput failed. Win32Error={err}. Run Student as Administrator.");
-                                return;
+                                Console.WriteLine("[Student] ❌ BlockInput returned FALSE. Error: " + err);
+                                continue;
                             }
 
-                            // Auto-unblock after 30 seconds so we don't lock the student out forever.
-                            // Change 30000 to whatever duration you want (in milliseconds).
+                            Console.WriteLine("[Student] ✅ Mouse + keyboard BLOCKED for 30 seconds");
+
+                            // Auto-unblock after 30s
                             System.Threading.Tasks.Task.Run(async () =>
                             {
                                 await System.Threading.Tasks.Task.Delay(30000);
                                 try
                                 {
                                     BlockInput(false);
-                                    Console.WriteLine("[Student] Auto-unblocked after timeout.");
+                                    Console.WriteLine("[Student] Auto-unblocked after 30s.");
                                 }
                                 catch (Exception ex)
                                 {
-                                    Console.WriteLine("[Student] Unblock failed: " + ex.Message);
+                                    Console.WriteLine("[Student] Auto-unblock failed: " + ex.Message);
                                 }
                             });
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine("[Student] LOCK failed: " + ex.Message);
+                            Console.WriteLine("[Student] LOCK handler error: " + ex.Message);
                         }
                         continue;
                     }
+
+                    // ============ UNLOCK COMMAND ============
                     if (command == "UNLOCK")
                     {
                         try
                         {
                             client.Close();
                             bool unblocked = BlockInput(false);
-                            Console.WriteLine("[Student] BlockInput(false) returned: " + unblocked);
+                            Console.WriteLine($"[Student] BlockInput(false) = {unblocked}");
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine("[Student] UNLOCK failed: " + ex.Message);
+                            Console.WriteLine("[Student] UNLOCK handler error: " + ex.Message);
                         }
                         continue;
                     }
-                    // ======================================
 
+                    // ============ SHUTDOWN / RESTART ============
                     if (command == "SHUTDOWN")
                     {
                         client.Close();
@@ -819,14 +849,20 @@ namespace WinFormsApp1
                         System.Threading.Thread.Sleep(1000);
                         System.Diagnostics.Process.Start("shutdown", "/r /f /t 0");
                     }
-
-                    client.Close();
+                    else
+                    {
+                        client.Close();
+                    }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    break;
+                    Console.WriteLine("[Student] Listener outer error: " + ex.Message);
+                    System.Threading.Thread.Sleep(500);
+                    // Do NOT break — keep the listener alive
                 }
             }
+
+            Console.WriteLine("[Student] Command listener stopped.");
         }
 
         // =========================================================

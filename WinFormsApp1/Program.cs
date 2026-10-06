@@ -10,9 +10,6 @@ namespace WinFormsApp1
         [STAThread]
         static void Main()
         {
-            // =========================================================
-            // 1) CHECK FOR ADMIN RIGHTS — if not, relaunch elevated
-            // =========================================================
             if (!IsRunAsAdmin())
             {
                 try
@@ -22,42 +19,34 @@ namespace WinFormsApp1
                         UseShellExecute = true,
                         WorkingDirectory = Environment.CurrentDirectory,
                         FileName = Application.ExecutablePath,
-                        Verb = "runas" // Triggers UAC prompt
+                        Verb = "runas"
                     };
-
                     Process.Start(proc);
                 }
-                catch (Exception)
+                catch
                 {
-                    // User clicked "No" on the UAC prompt
-                    MessageBox.Show(
-                        "This application requires Administrator privileges to run correctly.\n\n" +
-                        "Please restart the application and click 'Yes' on the UAC prompt.",
-                        "Administrator Required",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Warning);
+                    MessageBox.Show("This app requires Administrator privileges.");
                 }
-
-                // Exit the non-elevated instance
                 return;
             }
 
-            // =========================================================
-            // 2) NORMAL STARTUP — running as Admin now
-            // =========================================================
+            // ✅ DEBUG: Confirm we're admin
+            MessageBox.Show(
+                "✅ Running as ADMINISTRATOR",
+                "Startup Check",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+
             ApplicationConfiguration.Initialize();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-
             SettingsManager.Load();
 
-            // Splash — blocking until 5s animation + fade out finishes
             using (SplashForm splash = new SplashForm())
             {
                 splash.ShowDialog();
             }
 
-            // Login — main form of the app
             Application.Run(new Login());
         }
 
