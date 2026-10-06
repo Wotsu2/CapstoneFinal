@@ -30,12 +30,6 @@ namespace WinFormsApp1
                 return;
             }
 
-            // ✅ DEBUG: Confirm we're admin
-            MessageBox.Show(
-                "✅ Running as ADMINISTRATOR",
-                "Startup Check",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
 
             ApplicationConfiguration.Initialize();
             Application.EnableVisualStyles();

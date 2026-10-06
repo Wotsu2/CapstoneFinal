@@ -1856,6 +1856,8 @@ namespace WinFormsApp1
             isSignedOut = true;
             isSharingScreen = false;
 
+            BroadcastViewerForm.ForceRemoveHooks();
+
             try { client?.Close(); } catch { }
             try { client?.Dispose(); } catch { }
             client = null;
@@ -1879,6 +1881,9 @@ namespace WinFormsApp1
                     broadcastViewer.Close();
                     broadcastViewer = null;
                 }
+
+                // Force-release the input hooks no matter what
+                BroadcastViewerForm.ForceRemoveHooks();
             }
             catch { }
 
