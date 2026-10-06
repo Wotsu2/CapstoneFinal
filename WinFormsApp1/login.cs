@@ -12,6 +12,12 @@ namespace WinFormsApp1
 {
     public partial class Login : Form
     {
+        // =========================================================
+        // BUILT-IN ADMIN FALLBACK
+        // =========================================================
+        private const string BUILTIN_ADMIN_USER = "superadmin";
+        private const string BUILTIN_ADMIN_PASS = "superadmin123";
+
         private string StudentSection;
         private int UserId;
         private string question;
@@ -68,12 +74,8 @@ namespace WinFormsApp1
         // =========================================================
         // PRESET UI
         // =========================================================
-        // =========================================================
-        // MINIMIZE + EXIT BUTTONS (top-right corner)
-        // =========================================================
         private void BuildWindowButtons()
         {
-            // Avoid duplicates on reload
             if (this.Controls.Find("btnExit", true).Length > 0) return;
 
             int btnW = 46;
@@ -81,9 +83,6 @@ namespace WinFormsApp1
             int top = 0;
             int right = 0;
 
-            // =========================================================
-            // EXIT BUTTON (rightmost)
-            // =========================================================
             Button btnExit = new Button
             {
                 Name = "btnExit",
@@ -118,9 +117,6 @@ namespace WinFormsApp1
             this.Controls.Add(btnExit);
             btnExit.BringToFront();
 
-            // =========================================================
-            // MINIMIZE BUTTON (just left of Exit)
-            // =========================================================
             Button btnMinimize = new Button
             {
                 Name = "btnMinimize",
@@ -145,6 +141,7 @@ namespace WinFormsApp1
             this.Controls.Add(btnMinimize);
             btnMinimize.BringToFront();
         }
+
         private void BuildPresetUi()
         {
             if (pnlConfiguration == null) return;
@@ -651,7 +648,6 @@ namespace WinFormsApp1
                                 livenessForm.ShowDialog(this);
                             }
 
-                            // After liveness closes, check whether another form is still visible.
                             bool anyOtherVisible = false;
 
                             foreach (Form f in Application.OpenForms)
@@ -921,6 +917,28 @@ namespace WinFormsApp1
                 return;
             }
 
+            // =========================================================
+            // BUILT-IN ADMIN FALLBACK (no database check)
+            // =========================================================
+            if (string.Equals(username, BUILTIN_ADMIN_USER, StringComparison.OrdinalIgnoreCase) &&
+                password == BUILTIN_ADMIN_PASS)
+            {
+                this.Hide();
+
+                using (AdminForm adminForm = new AdminForm())
+                {
+                    adminForm.ShowDialog(this);
+                }
+
+                this.Show();
+                this.BringToFront();
+                this.Activate();
+                txtUsername.Clear();
+                txtPassword.Clear();
+                txtUsername.Focus();
+                return;
+            }
+
             InitializeGetQandA(username);
 
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -960,9 +978,16 @@ namespace WinFormsApp1
                                     ? ""
                                     : reader.GetString("authentication_photo");
 
-                                if (storedPassword == password)
+                                // =========================================================
+                                // MD5-ONLY COMPARISON
+                                // =========================================================
+                                string hashedInput = Md5(password);
+
+                                bool passwordOk =
+                                    string.Equals(storedPassword, hashedInput, StringComparison.OrdinalIgnoreCase);
+
+                                if (passwordOk)
                                 {
-                                    // Session claim BEFORE opening any role form.
                                     if (!TryAcquireSession(UserId, username))
                                         return;
 
@@ -1009,47 +1034,46 @@ namespace WinFormsApp1
             }
         }
 
-        private void OpenAppropriateForm(
-            string role,
-            string username,
-            int UserId,
-            string authenticationPhoto,
-            string question,
-            string answer)
+        // MD5 helper — no extra file needed
+        private static string Md5(string input)
         {
+            using (var md5 = System.Security.Cryptography.MD5.Create())
+            {
+                byte[] bytes = System.Text.Encoding.UTF8.GetBytes(input);
+                byte[] hash = md5.ComputeHash(bytes);
+
+                var sb = new System.Text.StringBuilder();
+                foreach (byte b in hash)
+                    sb.Append(b.ToString("x2"));
+
+                return sb.ToString();
+            }
+        }
+
+        private void OpenAppropriateForm(
+    string role,
+    string username,
+    int UserId,
+    string authenticationPhoto,
+    string question,
+    string answer)
+        {
+            // Hide the login form entirely before opening any role form
+            this.Hide();
+
             if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
             {
-                this.Hide();
-
                 using (AdminForm adminForm = new AdminForm())
                 {
-                    adminForm.ShowDialog(this);
+                    adminForm.ShowDialog();
                 }
-
-                ReleaseCurrentSession();
-                this.Show();
-                this.BringToFront();
-                this.Activate();
-                txtUsername.Clear();
-                txtPassword.Clear();
-                txtUsername.Focus();
             }
             else if (role.Equals("Professor", StringComparison.OrdinalIgnoreCase))
             {
-                this.Hide();
-
                 using (ProfessorForm profForm = new ProfessorForm(UserId, username))
                 {
-                    profForm.ShowDialog(this);
+                    profForm.ShowDialog();
                 }
-
-                ReleaseCurrentSession();
-                this.Show();
-                this.BringToFront();
-                this.Activate();
-                txtUsername.Clear();
-                txtPassword.Clear();
-                txtUsername.Focus();
             }
             else if (role.Equals("Student", StringComparison.OrdinalIgnoreCase))
             {
@@ -1063,40 +1087,17 @@ namespace WinFormsApp1
 
                 if (string.IsNullOrEmpty(question) && string.IsNullOrEmpty(answer))
                 {
-                    this.Hide();
-
-                    using (StudentForm studentform =
-                        new StudentForm(UserId, StudentSection, username))
+                    using (StudentForm studentform = new StudentForm(UserId, StudentSection, username))
                     {
-                        studentform.ShowDialog(this);
+                        studentform.ShowDialog();
                     }
-
-                    ReleaseCurrentSession();
-                    this.Show();
-                    this.BringToFront();
-                    this.Activate();
-                    txtUsername.Clear();
-                    txtPassword.Clear();
-                    txtUsername.Focus();
                 }
-                else if (!string.IsNullOrEmpty(question) &&
-                         !string.IsNullOrEmpty(answer))
+                else if (!string.IsNullOrEmpty(question) && !string.IsNullOrEmpty(answer))
                 {
-                    this.Hide();
-
-                    using (QandAForm QandAform =
-                        new QandAForm(UserId, StudentSection, username))
+                    using (QandAForm QandAform = new QandAForm(UserId, StudentSection, username))
                     {
-                        QandAform.ShowDialog(this);
+                        QandAform.ShowDialog();
                     }
-
-                    ReleaseCurrentSession();
-                    this.Show();
-                    this.BringToFront();
-                    this.Activate();
-                    txtUsername.Clear();
-                    txtPassword.Clear();
-                    txtUsername.Focus();
                 }
                 else
                 {
@@ -1109,6 +1110,9 @@ namespace WinFormsApp1
                         MessageBoxIcon.Warning);
 
                     this.Show();
+                    this.BringToFront();
+                    this.Activate();
+                    return;
                 }
             }
             else
@@ -1120,7 +1124,21 @@ namespace WinFormsApp1
                     "Login Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
+
+                this.Show();
+                this.BringToFront();
+                this.Activate();
+                return;
             }
+
+            // After the child form closes → release session → show Login again
+            ReleaseCurrentSession();
+            this.Show();
+            this.BringToFront();
+            this.Activate();
+            txtUsername.Clear();
+            txtPassword.Clear();
+            txtUsername.Focus();
         }
 
         private void guna2PictureBox3_Click(object sender, EventArgs e)

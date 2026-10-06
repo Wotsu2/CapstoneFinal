@@ -1359,7 +1359,7 @@ namespace WinFormsApp1
 
                     string Insertquery2 = @"
                         INSERT INTO user_credential (username, p_word, roles, user_status, authentication_condition, remaining_limit)
-                        VALUES (@Uname, @Password, @UserRole, @Status, @authentication_condition, @remaining_limit);
+                        VALUES (@Uname, MD5(@Password), @UserRole, @Status, @authentication_condition, @remaining_limit);
                         SELECT LAST_INSERT_ID();";
 
                     using (MySqlCommand cmd2 = new MySqlCommand(Insertquery2, conn))

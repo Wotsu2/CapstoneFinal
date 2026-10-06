@@ -3099,7 +3099,7 @@ namespace WinFormsApp1
                         using (var conn = new MySqlConnection(connStr))
                         {
                             conn.Open();
-                            string query = @"UPDATE user_credential SET p_word = @new_password WHERE username = @current_username";
+                            string query = @"UPDATE user_credential SET p_word = MD5(@new_password) WHERE username = @current_username";
                             using (var cmd = new MySqlCommand(query, conn))
                             {
                                 cmd.Parameters.AddWithValue("@new_password", newPassword);

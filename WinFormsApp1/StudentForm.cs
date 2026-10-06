@@ -2012,7 +2012,7 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    using (var cmd = new MySqlCommand("UPDATE user_credential SET p_word = @new_password WHERE username = @current_username", conn))
+                    using (var cmd = new MySqlCommand("UPDATE user_credential SET p_word = MD5(@new_password) WHERE username = @current_username", conn))
                     {
                         cmd.Parameters.AddWithValue("@new_password", txtNewPassword.Text.Trim());
                         cmd.Parameters.AddWithValue("@current_username", StudentUsername);
