@@ -2884,11 +2884,6 @@ namespace WinFormsApp1
 
             base.OnFormClosing(e);
 
-            // Unblock input in case the app closes while locked
-            try { BlockInput(false); } catch { }
-
-            try { assessmentsRefreshTimer?.Stop(); } catch { }
-            // ... rest of your existing code
         }
 
         private void InitializeNavTooltips()
