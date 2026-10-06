@@ -1,6 +1,6 @@
 ﻿namespace WinFormsApp1
 {
-    partial class DatabaseManagerForm
+    partial class DashboardControl
     {
         /// <summary> 
         /// Required designer variable.

@@ -11,11 +11,8 @@ using System.Windows.Forms;
 
 namespace WinFormsApp1
 {
-    public partial class DatabaseManagerForm : Form
+    public partial class DatabaseManagerForm : UserControl
     {
-        // =========================================================
-        // CONTROLS
-        // =========================================================
         private ComboBox cmbTables;
         private DataGridView dgvDatabase;
         private Guna2Button btnRefresh;
@@ -30,28 +27,134 @@ namespace WinFormsApp1
 
         private string currentDbTable = "";
 
-        // =========================================================
-        // CTOR
-        // =========================================================
         public DatabaseManagerForm()
         {
             BuildUi();
             LoadTableList();
         }
 
-        // =========================================================
-        // UI
-        // =========================================================
         private void BuildUi()
         {
-            this.Text = "CDSGA Database Manager";
-            this.Size = new Size(1280, 800);
-            this.MinimumSize = new Size(1000, 600);
-            this.StartPosition = FormStartPosition.CenterParent;
             this.BackColor = Color.FromArgb(245, 245, 248);
-            this.ShowIcon = false;
+            this.Dock = DockStyle.Fill;
+            this.AutoScroll = false;
 
-            // ---------------- TOP BAR ----------------
+            // IMPORTANT: add the FILL control first, then bottom, then top.
+            // WinForms docks the last-added control first.
+
+            // ---------------- FILL: grid area ----------------
+            var gridHolder = new Guna2Panel
+            {
+                Dock = DockStyle.Fill,
+                BorderRadius = 12,
+                FillColor = Color.White,
+                BorderColor = Color.FromArgb(230, 225, 225),
+                BorderThickness = 1,
+                Padding = new Padding(10)
+            };
+            this.Controls.Add(gridHolder);
+
+            dgvDatabase = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                BackgroundColor = Color.White,
+                BorderStyle = BorderStyle.None,
+                RowHeadersVisible = false,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                AllowUserToResizeRows = false,
+                ReadOnly = true,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                MultiSelect = true,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells,
+                ScrollBars = ScrollBars.Both,
+                EnableHeadersVisualStyles = false,
+                ColumnHeadersHeight = 42,
+                Font = new Font("Segoe UI", 9.5F)
+            };
+
+            dgvDatabase.ColumnHeadersDefaultCellStyle.BackColor = Color.Maroon;
+            dgvDatabase.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+            dgvDatabase.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            dgvDatabase.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.Maroon;
+            dgvDatabase.DefaultCellStyle.Font = new Font("Segoe UI", 9.5F);
+            dgvDatabase.DefaultCellStyle.SelectionBackColor = Color.FromArgb(250, 235, 235);
+            dgvDatabase.DefaultCellStyle.SelectionForeColor = Color.FromArgb(120, 20, 40);
+            dgvDatabase.RowTemplate.Height = 32;
+            dgvDatabase.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(252, 248, 245);
+
+            dgvDatabase.CellDoubleClick += DgvDatabase_CellDoubleClick;
+            dgvDatabase.DataError += DgvDatabase_DataError;
+
+            gridHolder.Controls.Add(dgvDatabase);
+
+            // ---------------- BOTTOM bar ----------------
+            var bottomBar = new Guna2Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 86,
+                BorderRadius = 12,
+                FillColor = Color.White,
+                BorderColor = Color.FromArgb(230, 225, 225),
+                BorderThickness = 1
+            };
+            this.Controls.Add(bottomBar);
+
+            var lblQuery = new Label
+            {
+                Text = "Run SELECT query:",
+                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
+                AutoSize = true,
+                Location = new Point(20, 10),
+                ForeColor = Color.FromArgb(80, 80, 80)
+            };
+            bottomBar.Controls.Add(lblQuery);
+
+            txtCustomQuery = new TextBox
+            {
+                Location = new Point(20, 38),
+                Size = new Size(600, 30),
+                Font = new Font("Consolas", 10F),
+                Text = "SELECT * FROM user_credential LIMIT 100;"
+            };
+            bottomBar.Controls.Add(txtCustomQuery);
+
+            btnRunQuery = new Guna2Button
+            {
+                Text = "▶  Run Query",
+                Size = new Size(150, 36),
+                BorderRadius = 8,
+                FillColor = Color.Maroon,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold)
+            };
+            btnRunQuery.HoverState.FillColor = Color.FromArgb(100, 0, 0);
+            btnRunQuery.Click += (s, e) => RunCustomQuery();
+            bottomBar.Controls.Add(btnRunQuery);
+
+            lblDbStatus = new Label
+            {
+                Text = "Ready.",
+                Font = new Font("Segoe UI", 8.5F, FontStyle.Italic),
+                AutoSize = true,
+                ForeColor = Color.FromArgb(120, 120, 120)
+            };
+            bottomBar.Controls.Add(lblDbStatus);
+
+            // Position bottom-bar controls from the REAL width (no Anchor needed)
+            Action layoutBottom = () =>
+            {
+                int w = bottomBar.ClientSize.Width;
+                if (w <= 0) return;
+                btnRunQuery.Location = new Point(Math.Max(20, w - btnRunQuery.Width - 20), 36);
+                txtCustomQuery.Width = Math.Max(200, btnRunQuery.Left - 20 - txtCustomQuery.Left);
+                lblDbStatus.Location = new Point(Math.Max(20, w - lblDbStatus.Width - 20), 12);
+            };
+            bottomBar.Resize += (s, e) => layoutBottom();
+            lblDbStatus.TextChanged += (s, e) => layoutBottom();
+            layoutBottom();
+
+            // ---------------- TOP bar (added LAST) ----------------
             var topBar = new Guna2Panel
             {
                 Dock = DockStyle.Top,
@@ -61,7 +164,7 @@ namespace WinFormsApp1
             };
             this.Controls.Add(topBar);
 
-            var lblTitle = new Label
+            topBar.Controls.Add(new Label
             {
                 Text = "🗄️  Database Manager",
                 Font = new Font("Segoe UI Semibold", 20F, FontStyle.Bold),
@@ -69,10 +172,9 @@ namespace WinFormsApp1
                 BackColor = Color.Transparent,
                 AutoSize = true,
                 Location = new Point(24, 18)
-            };
-            topBar.Controls.Add(lblTitle);
+            });
 
-            var lblSub = new Label
+            topBar.Controls.Add(new Label
             {
                 Text = "Browse, edit, add, delete rows — with export and reset utilities",
                 Font = new Font("Segoe UI", 9.5F),
@@ -80,18 +182,16 @@ namespace WinFormsApp1
                 BackColor = Color.Transparent,
                 AutoSize = true,
                 Location = new Point(26, 52)
-            };
-            topBar.Controls.Add(lblSub);
+            });
 
-            var lblTable = new Label
+            topBar.Controls.Add(new Label
             {
                 Text = "Table:",
                 Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
                 AutoSize = true,
                 Location = new Point(24, 78),
                 ForeColor = Color.FromArgb(80, 80, 80)
-            };
-            topBar.Controls.Add(lblTable);
+            });
 
             cmbTables = new ComboBox
             {
@@ -107,7 +207,6 @@ namespace WinFormsApp1
             };
             topBar.Controls.Add(cmbTables);
 
-            // Buttons laid out horizontally
             btnRefresh = MakeTopButton("🔄 Refresh", 360, 72);
             btnRefresh.Click += (s, e) => LoadTable(currentDbTable);
             topBar.Controls.Add(btnRefresh);
@@ -132,131 +231,11 @@ namespace WinFormsApp1
             btnExport.Click += (s, e) => ShowExportMenu();
             topBar.Controls.Add(btnExport);
 
-            btnTruncate = MakeTopButton("⚠ Reset Numbering", 910, 72);
-            btnTruncate.Size = new Size(160, 34);
+            btnTruncate = MakeTopButton("⚠ Reset", 910, 72);
+            btnTruncate.Size = new Size(120, 34);
             btnTruncate.FillColor = Color.FromArgb(180, 40, 40);
             btnTruncate.Click += (s, e) => ResetTableNumbering();
             topBar.Controls.Add(btnTruncate);
-
-            // ---------------- GRID ----------------
-            var gridHolder = new Guna2Panel
-            {
-                Location = new Point(20, 130),
-                Size = new Size(this.ClientSize.Width - 40, this.ClientSize.Height - 260),
-                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
-                BorderRadius = 12,
-                FillColor = Color.White,
-                BorderColor = Color.FromArgb(230, 225, 225),
-                BorderThickness = 1,
-                Padding = new Padding(10)
-            };
-            this.Controls.Add(gridHolder);
-
-            dgvDatabase = new DataGridView
-            {
-                Dock = DockStyle.Fill,
-                BackgroundColor = Color.White,
-                BorderStyle = BorderStyle.None,
-                RowHeadersVisible = false,
-                AllowUserToAddRows = false,
-                AllowUserToDeleteRows = false,
-                AllowUserToResizeRows = false,
-                ReadOnly = true,
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                MultiSelect = true,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells,
-                EnableHeadersVisualStyles = false,
-                ColumnHeadersHeight = 42,
-                Font = new Font("Segoe UI", 9.5F)
-            };
-
-            dgvDatabase.ColumnHeadersDefaultCellStyle.BackColor = Color.Maroon;
-            dgvDatabase.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
-            dgvDatabase.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
-            dgvDatabase.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.Maroon;
-            dgvDatabase.DefaultCellStyle.Font = new Font("Segoe UI", 9.5F);
-            dgvDatabase.DefaultCellStyle.SelectionBackColor = Color.FromArgb(250, 235, 235);
-            dgvDatabase.DefaultCellStyle.SelectionForeColor = Color.FromArgb(120, 20, 40);
-            dgvDatabase.RowTemplate.Height = 32;
-            dgvDatabase.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(252, 248, 245);
-
-            dgvDatabase.CellDoubleClick += DgvDatabase_CellDoubleClick;
-            dgvDatabase.DataError += DgvDatabase_DataError;
-
-            gridHolder.Controls.Add(dgvDatabase);
-
-            // ---------------- BOTTOM BAR ----------------
-            var bottomBar = new Guna2Panel
-            {
-                Location = new Point(20, this.ClientSize.Height - 120),
-                Size = new Size(this.ClientSize.Width - 40, 100),
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
-                BorderRadius = 12,
-                FillColor = Color.White,
-                BorderColor = Color.FromArgb(230, 225, 225),
-                BorderThickness = 1
-            };
-            this.Controls.Add(bottomBar);
-
-            var lblQuery = new Label
-            {
-                Text = "Run SELECT query:",
-                Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
-                AutoSize = true,
-                Location = new Point(20, 12),
-                ForeColor = Color.FromArgb(80, 80, 80)
-            };
-            bottomBar.Controls.Add(lblQuery);
-
-            txtCustomQuery = new TextBox
-            {
-                Location = new Point(20, 40),
-                Size = new Size(bottomBar.Width - 220, 34),
-                Font = new Font("Consolas", 10F),
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
-                Text = "SELECT * FROM user_credential LIMIT 100;"
-            };
-            bottomBar.Controls.Add(txtCustomQuery);
-
-            btnRunQuery = new Guna2Button
-            {
-                Text = "▶  Run Query",
-                Size = new Size(150, 40),
-                Location = new Point(bottomBar.Width - 170, 36),
-                Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                BorderRadius = 8,
-                FillColor = Color.Maroon,
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold)
-            };
-            btnRunQuery.HoverState.FillColor = Color.FromArgb(100, 0, 0);
-            btnRunQuery.Click += (s, e) => RunCustomQuery();
-            bottomBar.Controls.Add(btnRunQuery);
-
-            lblDbStatus = new Label
-            {
-                Text = "Ready.",
-                Font = new Font("Segoe UI", 8.5F, FontStyle.Italic),
-                AutoSize = true,
-                Location = new Point(bottomBar.Width - 400, 14),
-                Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                ForeColor = Color.FromArgb(120, 120, 120)
-            };
-            bottomBar.Controls.Add(lblDbStatus);
-
-            // Reflow on form resize
-            this.Resize += (s, e) =>
-            {
-                if (gridHolder != null)
-                    gridHolder.Size = new Size(this.ClientSize.Width - 40, this.ClientSize.Height - 260);
-
-                if (bottomBar != null)
-                {
-                    bottomBar.Location = new Point(20, this.ClientSize.Height - 120);
-                    bottomBar.Size = new Size(this.ClientSize.Width - 40, 100);
-                    lblDbStatus.Location = new Point(bottomBar.Width - 400, 14);
-                }
-            };
         }
 
         private Guna2Button MakeTopButton(string text, int x, int y)
@@ -275,9 +254,6 @@ namespace WinFormsApp1
             return btn;
         }
 
-        // =========================================================
-        // TABLE LIST
-        // =========================================================
         private void LoadTableList()
         {
             try
@@ -321,14 +297,13 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
-                    // Build a SELECT list that only includes non-binary columns
                     var columnsToLoad = new List<string>();
                     string schemaQuery = @"
-                SELECT COLUMN_NAME, DATA_TYPE
-                FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_SCHEMA = DATABASE()
-                  AND TABLE_NAME = @table
-                ORDER BY ORDINAL_POSITION";
+                        SELECT COLUMN_NAME, DATA_TYPE
+                        FROM INFORMATION_SCHEMA.COLUMNS
+                        WHERE TABLE_SCHEMA = DATABASE()
+                          AND TABLE_NAME = @table
+                        ORDER BY ORDINAL_POSITION";
 
                     using (var cmd = new MySqlCommand(schemaQuery, conn))
                     {
@@ -340,7 +315,6 @@ namespace WinFormsApp1
                                 string colName = r["COLUMN_NAME"].ToString();
                                 string dataType = r["DATA_TYPE"].ToString().ToLower();
 
-                                // Skip binary / blob columns — they crash the grid
                                 if (dataType == "blob" || dataType == "mediumblob" ||
                                     dataType == "longblob" || dataType == "tinyblob" ||
                                     dataType == "binary" || dataType == "varbinary")
@@ -362,7 +336,6 @@ namespace WinFormsApp1
                         var dt = new DataTable();
                         adapter.Fill(dt);
 
-                        // Detach any previous handler
                         dgvDatabase.DataError -= DgvDatabase_DataError;
                         dgvDatabase.DataError += DgvDatabase_DataError;
 
@@ -381,14 +354,10 @@ namespace WinFormsApp1
 
         private void DgvDatabase_DataError(object sender, DataGridViewDataErrorEventArgs e)
         {
-            // Silently ignore grid rendering errors (e.g. binary columns)
             e.ThrowException = false;
             e.Cancel = true;
         }
 
-        // =========================================================
-        // INLINE CELL EDIT
-        // =========================================================
         private void DgvDatabase_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
@@ -462,9 +431,6 @@ namespace WinFormsApp1
             return null;
         }
 
-        // =========================================================
-        // EDIT FULL ROW
-        // =========================================================
         private void EditSelectedRow()
         {
             if (dgvDatabase.SelectedRows.Count != 1)
@@ -614,9 +580,6 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // ADD ROW
-        // =========================================================
         private void AddRowToTable()
         {
             if (string.IsNullOrEmpty(currentDbTable))
@@ -737,9 +700,6 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // DELETE
-        // =========================================================
         private void DeleteSelectedRows()
         {
             if (dgvDatabase.SelectedRows.Count == 0)
@@ -802,9 +762,6 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // CUSTOM SELECT QUERY
-        // =========================================================
         private void RunCustomQuery()
         {
             string sql = txtCustomQuery.Text.Trim();
@@ -846,9 +803,6 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // RESET NUMBERING (TRUNCATE)
-        // =========================================================
         private void ResetTableNumbering()
         {
             if (string.IsNullOrEmpty(currentDbTable))
@@ -930,18 +884,14 @@ namespace WinFormsApp1
             if (step1 != CustomMessageBoxResult.Yes) return;
 
             string typed = Prompt(
-                $"To confirm, type the exact table name:\n\n    {currentDbTable}\n\n" +
-                $"(Copying is allowed — you may paste it.)",
+                $"To confirm, type the exact table name:\n\n    {currentDbTable}",
                 "");
 
             if (typed == null) return;
             if (typed.Trim() != currentDbTable)
             {
-                CustomMessageBox.Show(
-                    "The name you typed does not match. Truncation cancelled.",
-                    "Cancelled",
-                    CustomMessageBoxButtons.OK,
-                    CustomMessageBoxIcon.Information);
+                CustomMessageBox.Show("The name you typed does not match. Truncation cancelled.",
+                    "Cancelled", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 return;
             }
 
@@ -988,17 +938,11 @@ namespace WinFormsApp1
             }
             catch (Exception ex)
             {
-                CustomMessageBox.Show(
-                    "TRUNCATE failed:\n\n" + ex.Message,
-                    "Error",
-                    CustomMessageBoxButtons.OK,
-                    CustomMessageBoxIcon.Error);
+                CustomMessageBox.Show("TRUNCATE failed:\n\n" + ex.Message,
+                    "Error", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Error);
             }
         }
 
-        // =========================================================
-        // EXPORT
-        // =========================================================
         private void ShowExportMenu()
         {
             var menu = new ContextMenuStrip();
@@ -1079,7 +1023,6 @@ namespace WinFormsApp1
                     using (var wb = new XLWorkbook())
                     {
                         var ws = wb.Worksheets.Add(dt, SheetNameFor(reportKey));
-
                         ws.Columns().AdjustToContents();
 
                         var headerRow = ws.Row(1);
@@ -1432,9 +1375,6 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // PROMPT HELPER
-        // =========================================================
         private string Prompt(string label, string defaultValue)
         {
             using (var frm = new Form())

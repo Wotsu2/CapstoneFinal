@@ -13,6 +13,9 @@ namespace WinFormsApp1
         public string SmtpFrom { get; set; } = "your.email@gmail.com";
         public string SmtpFromName { get; set; } = "CDSGA Hub";
 
+        // Default password for newly created accounts
+        public string DefaultPassword { get; set; } = "12345678";
+
         // Network
         public string ServerIp { get; set; } = "192.168.100.4";
         public int WorkstationPort { get; set; } = 5000;

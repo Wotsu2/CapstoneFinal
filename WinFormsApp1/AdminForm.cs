@@ -22,42 +22,29 @@ namespace WinFormsApp1
 {
     public partial class AdminForm : Form
     {
-        // CONTEXT MENU
         private ContextMenuStrip userContextMenu;
         private int contextUserId = -1;
 
-        // DASHBOARD
         private Panel PanelIndicator;
 
-        // FILE MANAGEMENT
         private string currentFolder;
         private Stack<string> folderHistory = new Stack<string>();
 
-        // WORKSTATION
-        private TcpListener listener;
-        private TcpListener fileListener;
-        private int fileSubmittedCount = 0;
-        private int WorkStationNum = 0;
-        private Dictionary<string, Button> workstationButtons = new Dictionary<string, Button>();
-        private Dictionary<string, PictureBox> screenViewers = new Dictionary<string, PictureBox>();
-        private TcpListener screenListener;
-        private PictureBox pictureBoxScreen;
-        private string selectedWorkstationId = "";
-        private volatile bool isRunning = false;
-
-        // AUTH PHOTO / FILE TRANSFER LISTENER
         private TcpListener authPhotoListener;
         private volatile bool adminIsRunning = true;
 
-        // APP MENU (☰)
         private Guna.UI2.WinForms.Guna2Button btnAppMenu;
         private ContextMenuStrip appMenu;
 
-        // FILE MANAGEMENT
         private Guna.UI2.WinForms.Guna2Button btnDeleteFile;
 
-        // INLINE VALIDATION
-        private Label _inlineErrorLabel;
+        // Embedded panels
+        private Panel pnlDatabase;
+        private DatabaseManagerForm databaseManager;
+
+        // Dashboard user control host
+        private Panel pnlDashboardHost;
+        private DashboardControl dashboardControl;
 
         public AdminForm()
         {
@@ -73,149 +60,154 @@ namespace WinFormsApp1
 
         private void admindash_Load(object sender, EventArgs e)
         {
-            panelDashoard.Visible = true;
-            isRunning = true;
             adminIsRunning = true;
-
-            RefreshDashboardCounts();
 
             StyleUserDataGrid();
             LoadUserData();
 
-            StartServer();
-            StartScreenListener();
             _ = StartAuthPhotoListener();
 
             InitializeAppMenu();
-
             InitializeFileManagementButtons();
+            BuildEmbeddedDatabasePanel();
+            BuildEmbeddedDashboardPanel();
 
-            // I-attach ang TextChanged events para mawala agad ang pula habang nag-type
-            AttachValidationResetEvents();
-        }
-
-        // =========================================================
-        //  INLINE VALIDATION HELPERS
-        // =========================================================
-        private void AttachValidationResetEvents()
-        {
-            LastnameText.TextChanged += (s, e) => { SetFieldError(LastnameText, false); HideInlineError(); };
-            FirstnameText.TextChanged += (s, e) => { SetFieldError(FirstnameText, false); HideInlineError(); };
-            MiddlenameText.TextChanged += (s, e) => { SetFieldError(MiddlenameText, false); HideInlineError(); };
-            EmailText.TextChanged += (s, e) => { SetFieldError(EmailText, false); HideInlineError(); };
-            ContextRoleText.TextChanged += (s, e) => { SetFieldError(ContextRoleText, false); HideInlineError(); };
-        }
-
-        private void SetFieldError(Control ctrl, bool hasError)
-        {
-            if (ctrl == null) return;
-            try
+            // Show dashboard by default
+            if (pnlDashboardHost != null)
             {
-                Color errorColor = Color.FromArgb(255, 228, 230);
-                Color normalColor = Color.White;
-
-                if (ctrl is Guna.UI2.WinForms.Guna2TextBox gunaTb)
-                {
-                    gunaTb.FillColor = hasError ? errorColor : normalColor;
-                    gunaTb.BorderColor = hasError ? Color.FromArgb(220, 53, 69) : Color.FromArgb(213, 218, 223);
-                    gunaTb.BorderThickness = hasError ? 2 : 1;
-                }
-                else if (ctrl is Guna.UI2.WinForms.Guna2ComboBox gunaCb)
-                {
-                    gunaCb.FillColor = hasError ? errorColor : normalColor;
-                    gunaCb.BorderColor = hasError ? Color.FromArgb(220, 53, 69) : Color.FromArgb(213, 218, 223);
-                    gunaCb.BorderThickness = hasError ? 2 : 1;
-                }
-                else
-                {
-                    ctrl.BackColor = hasError ? errorColor : normalColor;
-                }
-            }
-            catch { }
-        }
-
-        private void ShowInlineError(string message)
-        {
-            if (_inlineErrorLabel == null || _inlineErrorLabel.IsDisposed)
-            {
-                _inlineErrorLabel = new Label
-                {
-                    AutoSize = false,
-                    Font = new Font("Segoe UI", 8.5F, FontStyle.Regular),
-                    ForeColor = Color.FromArgb(220, 53, 69),
-                    BackColor = Color.Transparent,
-                    TextAlign = ContentAlignment.MiddleLeft,
-                    Height = 22,
-                    Width = 340,
-                    Visible = false
-                };
-
-                Control anchor = null;
-                try
-                {
-                    foreach (Control c in this.Controls)
-                        FindControlRecursive(c, "CreateButton", ref anchor);
-                }
-                catch { }
-
-                Control parent = anchor?.Parent ?? this;
-
-                if (anchor != null)
-                    _inlineErrorLabel.Location = new Point(anchor.Left, anchor.Bottom + 3);
-                else
-                    _inlineErrorLabel.Location = new Point(20, 20);
-
-                parent.Controls.Add(_inlineErrorLabel);
-                _inlineErrorLabel.BringToFront();
+                pnlDashboardHost.Visible = true;
+                pnlDashboardHost.BringToFront();
+                LayoutDashboardPanel();
+                dashboardControl?.RefreshAll();
             }
 
-            _inlineErrorLabel.Text = "⚠  " + message;
-            _inlineErrorLabel.Visible = true;
+            // Ensure other panels stay BEHIND the dashboard
+            pnlUserManagement.SendToBack();
+            pnlFileManagement.SendToBack();
+            if (pnlDatabase != null) pnlDatabase.SendToBack();
         }
 
-        // 3. HideInlineError  ← ITO ANG NAWAWALA
-        private void HideInlineError()
+        // =========================================================
+        //  EMBEDDED DASHBOARD PANEL
+        // =========================================================
+        private void BuildEmbeddedDashboardPanel()
         {
-            if (_inlineErrorLabel != null && !_inlineErrorLabel.IsDisposed)
-                _inlineErrorLabel.Visible = false;
-        }
-
-        // 4. FindControlRecursive
-        private void FindControlRecursive(Control parent, string name, ref Control found)
-        {
-            if (found != null) return;
-            foreach (Control c in parent.Controls)
+            pnlDashboardHost = new Panel
             {
-                if (c.Name == name) { found = c; return; }
-                FindControlRecursive(c, name, ref found);
+                Name = "pnlDashboardHost",
+                BackColor = Color.FromArgb(245, 245, 248),
+                Visible = false,
+                AutoScroll = false
+            };
+
+            dashboardControl = new DashboardControl
+            {
+                Dock = DockStyle.Fill
+            };
+
+            pnlDashboardHost.Controls.Add(dashboardControl);
+            this.Controls.Add(pnlDashboardHost);
+
+            LayoutDashboardPanel();
+            pnlDashboardHost.BringToFront();
+        }
+
+        private void LayoutDashboardPanel()
+        {
+            if (pnlDashboardHost == null || pnlDashboardHost.IsDisposed) return;
+
+            int left = (pnlUserManagement != null) ? pnlUserManagement.Left : 40;
+            int top = (pnlUserManagement != null) ? pnlUserManagement.Top : 293;
+
+            int w = Math.Max(400, this.ClientSize.Width - left * 2);
+            int h = Math.Max(250, this.ClientSize.Height - top);
+
+            pnlDashboardHost.SetBounds(left, top, w, h);
+        }
+
+        // =========================================================
+        //  EMBEDDED DATABASE PANEL
+        // =========================================================
+        private void BuildEmbeddedDatabasePanel()
+        {
+            pnlDatabase = new Panel
+            {
+                Name = "pnlDatabase",
+                BackColor = Color.White,
+                Visible = false,
+                AutoScroll = false
+            };
+
+            databaseManager = new DatabaseManagerForm
+            {
+                Dock = DockStyle.Fill
+            };
+
+            pnlDatabase.Controls.Add(databaseManager);
+            this.Controls.Add(pnlDatabase);
+
+            LayoutDatabasePanel();
+            pnlDatabase.BringToFront();
+        }
+
+        private void LayoutDatabasePanel()
+        {
+            if (pnlDatabase == null || pnlDatabase.IsDisposed) return;
+
+            int left = (pnlUserManagement != null) ? pnlUserManagement.Left : 40;
+            int top = (pnlUserManagement != null) ? pnlUserManagement.Top : 293;
+
+            int w = Math.Max(400, this.ClientSize.Width - left * 2);
+            int h = Math.Max(250, this.ClientSize.Height - top);
+
+            pnlDatabase.SetBounds(left, top, w, h);
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            LayoutDatabasePanel();
+            LayoutDashboardPanel();
+        }
+
+        // =========================================================
+        //  DATABASE BUTTON CLICK
+        // =========================================================
+        private void btnDatabase_Click(object sender, EventArgs e)
+        {
+            if (pnlDatabase == null) return;
+
+            pnlUserManagement.Visible = false;
+            pnlFileManagement.Visible = false;
+            if (pnlDashboardHost != null) pnlDashboardHost.Visible = false;
+
+            pnlDatabase.Visible = true;
+            pnlDatabase.BringToFront();
+            LayoutDatabasePanel();
+
+            navbarStyle.RemoveIndicator(PanelIndicator);
+            PanelIndicator = navbarStyle.CreateIndicator(btnDatabase);
+        }
+
+        // =========================================================
+        //  POPUP CREATE ACCOUNT
+        // =========================================================
+        private void OpenCreateAccountForm()
+        {
+            using (var dlg = new CreateAccountForm())
+            {
+                var result = dlg.ShowDialog(this);
+                if (result == DialogResult.OK)
+                {
+                    LoadUserData();
+                    dashboardControl?.RefreshAll();
+                }
             }
         }
 
         // =========================================================
-        //  DASHBOARD COUNTS
+        //  COUNT FILES
         // =========================================================
-        private void RefreshDashboardCounts()
-        {
-            lblTotalUsers.Text = TotalUsers().ToString();
-            lblTotalWorkstations.Text = workstationButtons.Count.ToString();
-
-            Task.Run(() => CountFilesInServerFolder())
-                .ContinueWith(t =>
-                {
-                    if (this.IsDisposed) return;
-                    int count = t.Result;
-
-                    if (this.IsHandleCreated && !this.IsDisposed)
-                    {
-                        this.BeginInvoke(new Action(() =>
-                        {
-                            try { lblTotalFiles.Text = count.ToString(); }
-                            catch { }
-                        }));
-                    }
-                });
-        }
-
         private int CountFilesInServerFolder()
         {
             try
@@ -281,18 +273,10 @@ namespace WinFormsApp1
                 }
             };
 
-            var miDatabase = new ToolStripMenuItem("Database");
-            miDatabase.Click += (s, e) =>
-            {
-                var dbForm = new DatabaseManagerForm();
-                dbForm.ShowDialog(this);
-            };
-
             appMenu.Items.Add(miUpload);
             appMenu.Items.Add(miOpenFolder);
             appMenu.Items.Add(sep);
             appMenu.Items.Add(miAnnouncements);
-            appMenu.Items.Add(miDatabase);
 
             btnAppMenu.Click += (s, e) =>
             {
@@ -678,7 +662,10 @@ namespace WinFormsApp1
                     {
                         this.BeginInvoke(new Action(() =>
                         {
-                            try { lblTotalFiles.Text = count.ToString(); }
+                            try
+                            {
+                                dashboardControl?.RefreshAll();
+                            }
                             catch { }
                         }));
                     }
@@ -816,22 +803,30 @@ namespace WinFormsApp1
         // =========================================================
         private void btnDashboard_Click_1(object sender, EventArgs e)
         {
-            panelDashoard.Visible = true;
             pnlUserManagement.Visible = false;
             pnlFileManagement.Visible = false;
-            pnlWorkstation.Visible = false;
+            if (pnlDatabase != null) pnlDatabase.Visible = false;
+
+            if (pnlDashboardHost != null)
+            {
+                pnlDashboardHost.Visible = true;
+                pnlDashboardHost.BringToFront();
+                LayoutDashboardPanel();
+            }
+
+            dashboardControl?.RefreshAll();
+
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnDashboard);
-
-            RefreshDashboardCounts();
         }
 
         private void btnUserManagement_Click(object sender, EventArgs e)
         {
             pnlUserManagement.Visible = true;
-            panelDashoard.Visible = false;
             pnlFileManagement.Visible = false;
-            pnlWorkstation.Visible = false;
+            if (pnlDatabase != null) pnlDatabase.Visible = false;
+            if (pnlDashboardHost != null) pnlDashboardHost.Visible = false;
+
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnUserManagement);
             LoadUserData();
@@ -840,9 +835,10 @@ namespace WinFormsApp1
         private void btnFileManagement_Click(object sender, EventArgs e)
         {
             pnlFileManagement.Visible = true;
-            panelDashoard.Visible = false;
             pnlUserManagement.Visible = false;
-            pnlWorkstation.Visible = false;
+            if (pnlDatabase != null) pnlDatabase.Visible = false;
+            if (pnlDashboardHost != null) pnlDashboardHost.Visible = false;
+
             navbarStyle.RemoveIndicator(PanelIndicator);
             PanelIndicator = navbarStyle.CreateIndicator(btnFileManagement);
 
@@ -858,17 +854,7 @@ namespace WinFormsApp1
             LoadServerFolder(root, addToHistory: false);
         }
 
-        private void btnWorkstation_Click(object sender, EventArgs e)
-        {
-            pnlWorkstation.Visible = true;
-            panelDashoard.Visible = false;
-            pnlUserManagement.Visible = false;
-            pnlFileManagement.Visible = false;
-            navbarStyle.RemoveIndicator(PanelIndicator);
-            PanelIndicator = navbarStyle.CreateIndicator(btnWorkstation);
-        }
-
-        private void CreateButton_Click(object sender, EventArgs e) => CreateUser();
+        private void CreateButton_Click(object sender, EventArgs e) => OpenCreateAccountForm();
 
         private void cmbSelection_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -878,8 +864,14 @@ namespace WinFormsApp1
                     LoadUserData();
                     pnlUserList.BringToFront();
                     break;
+
                 case "Create Account":
-                    pnlCreateAccount.BringToFront();
+                    OpenCreateAccountForm();
+
+                    // Reset the dropdown so picking "Create Account" again fires the event
+                    cmbSelection.SelectedIndexChanged -= cmbSelection_SelectedIndexChanged;
+                    cmbSelection.SelectedItem = "Users";
+                    cmbSelection.SelectedIndexChanged += cmbSelection_SelectedIndexChanged;
                     break;
             }
         }
@@ -1099,6 +1091,7 @@ namespace WinFormsApp1
                 }
                 CustomMessageBox.Show("User deleted.", "Success", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
                 LoadUserData();
+                dashboardControl?.RefreshAll();
             }
             catch (Exception ex) { Console.WriteLine("Error deleting user: " + ex.Message); }
         }
@@ -1118,7 +1111,7 @@ namespace WinFormsApp1
                 {
                     conn.Open();
                     using (var cmd = new MySqlCommand(
-                        "UPDATE user_credential SET p_word = @pw WHERE user_id = @id", conn))
+                        "UPDATE user_credential SET p_word = MD5(@pw) WHERE user_id = @id", conn))
                     {
                         cmd.Parameters.AddWithValue("@pw", "12345678");
                         cmd.Parameters.AddWithValue("@id", contextUserId);
@@ -1277,505 +1270,6 @@ namespace WinFormsApp1
                 }
             }
             catch (Exception ex) { Console.WriteLine("LoadUserData error: " + ex.Message); }
-        }
-
-        private static int TotalUsers()
-        {
-            try
-            {
-                string connStr = SettingsManager.Current.GetConnectionString();
-                using (var conn = new MySqlConnection(connStr))
-                {
-                    conn.Open();
-                    using (var cmd = new MySqlCommand("SELECT COUNT(*) FROM user_credential", conn))
-                        return Convert.ToInt32(cmd.ExecuteScalar());
-                }
-            }
-            catch (Exception ex) { Console.WriteLine("TotalUsers error: " + ex.Message); return 0; }
-        }
-
-        // =========================================================
-        //  CREATE ACCOUNT
-        // =========================================================
-        string semester;
-
-        private void CreateUser()
-        {
-            string connStr = SettingsManager.Current.GetConnectionString();
-
-            // 1. Reset lahat ng field colors at itago ang inline error
-            SetFieldError(LastnameText, false);
-            SetFieldError(FirstnameText, false);
-            SetFieldError(MiddlenameText, false);
-            SetFieldError(EmailText, false);
-            SetFieldError(ContextRoleText, false);
-            HideInlineError();
-
-            // 2. Check kung may kulang na required fields
-            bool hasError = false;
-            if (string.IsNullOrWhiteSpace(LastnameText.Text)) { SetFieldError(LastnameText, true); hasError = true; }
-            if (string.IsNullOrWhiteSpace(FirstnameText.Text)) { SetFieldError(FirstnameText, true); hasError = true; }
-            if (string.IsNullOrWhiteSpace(ContextRoleText.Text)) { SetFieldError(ContextRoleText, true); hasError = true; }
-            if (string.IsNullOrWhiteSpace(EmailText.Text)) { SetFieldError(EmailText, true); hasError = true; }
-
-            if (hasError)
-            {
-                ShowInlineError("Please fill in all required fields.");
-                return;
-            }
-
-            // 3. Check kung may numero sa mga pangalan
-            hasError = false;
-            if (LastnameText.Text.Any(char.IsDigit)) { SetFieldError(LastnameText, true); hasError = true; }
-            if (FirstnameText.Text.Any(char.IsDigit)) { SetFieldError(FirstnameText, true); hasError = true; }
-            if (MiddlenameText.Text.Any(char.IsDigit)) { SetFieldError(MiddlenameText, true); hasError = true; }
-
-            if (hasError)
-            {
-                ShowInlineError("Names cannot contain numbers.");
-                return;
-            }
-
-            // 4. Check kung ang email ay @gmail.com
-            if (!EmailText.Text.Trim().EndsWith("@gmail.com", StringComparison.OrdinalIgnoreCase))
-            {
-                SetFieldError(EmailText, true);
-                ShowInlineError("Email must end with @gmail.com");
-                return;
-            }
-
-            semester = ContextRoleText.Text == "Student" ? "1st Semester" : "Null";
-
-            string username = GenerateUsername(LastnameText.Text, FirstnameText.Text, MiddlenameText.Text, connStr);
-            const string defaultPassword = "12345678";
-
-            try
-            {
-                long userId;
-
-                using (var conn = new MySqlConnection(connStr))
-                {
-                    conn.Open();
-
-                    string Insertquery2 = @"
-                        INSERT INTO user_credential (username, p_word, roles, user_status, authentication_condition, remaining_limit)
-                        VALUES (@Uname, MD5(@Password), @UserRole, @Status, @authentication_condition, @remaining_limit);
-                        SELECT LAST_INSERT_ID();";
-
-                    using (MySqlCommand cmd2 = new MySqlCommand(Insertquery2, conn))
-                    {
-                        cmd2.Parameters.AddWithValue("@Uname", username);
-                        cmd2.Parameters.AddWithValue("@Password", defaultPassword);
-                        cmd2.Parameters.AddWithValue("@UserRole", ContextRoleText.Text.Trim());
-                        cmd2.Parameters.AddWithValue("@Status", "Active");
-                        cmd2.Parameters.AddWithValue("@authentication_condition", "Disabled");
-                        cmd2.Parameters.AddWithValue("@remaining_limit", 20);
-                        userId = Convert.ToInt64(cmd2.ExecuteScalar());
-                    }
-
-                    string Insertquery = @"
-                        INSERT INTO user_information 
-                            (user_id, lastname, firstname, middlename, email, school_semester) 
-                        VALUES 
-                            (@user_id, @lastname, @firstname, @middlename, @email, @school_semester)";
-
-                    using (MySqlCommand cmd = new MySqlCommand(Insertquery, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@user_id", userId);
-                        cmd.Parameters.AddWithValue("@lastname", LastnameText.Text.ToUpper());
-                        cmd.Parameters.AddWithValue("@firstname", FirstnameText.Text.ToUpper());
-                        cmd.Parameters.AddWithValue("@middlename", MiddlenameText.Text.ToUpper());
-                        cmd.Parameters.AddWithValue("@email", EmailText.Text.Trim());
-                        cmd.Parameters.AddWithValue("@school_semester", semester);
-                        cmd.ExecuteNonQuery();
-                    }
-
-                    string AttendanceQuery = "INSERT INTO professor_attendance (student_id, student_name) VALUES (@student_id, @student_name)";
-                    using (MySqlCommand cmd3 = new MySqlCommand(AttendanceQuery, conn))
-                    {
-                        cmd3.Parameters.AddWithValue("@student_id", userId);
-                        cmd3.Parameters.AddWithValue("@student_name",
-                            $"{LastnameText.Text.ToUpper()} {FirstnameText.Text.ToUpper()} {MiddlenameText.Text.ToUpper()}");
-                        cmd3.ExecuteNonQuery();
-                    }
-
-                    string rootPath = SettingsManager.Current.SaveFolder;
-                    if (string.IsNullOrEmpty(rootPath))
-                    {
-                        ShowInlineError("Root folder is not configured.");
-                        return;
-                    }
-
-                    if (!Directory.Exists(rootPath))
-                    {
-                        try { Directory.CreateDirectory(rootPath); }
-                        catch (Exception ex) { Console.WriteLine("Could not create root folder: " + ex.Message); return; }
-                    }
-
-                    string folderName = SanitizeFolderName(
-                        $"{LastnameText.Text.ToUpper()}_{FirstnameText.Text.ToUpper()}_{MiddlenameText.Text.ToUpper()}");
-                    string userFolderPath = Path.Combine(rootPath, folderName);
-
-                    try
-                    {
-                        if (!Directory.Exists(userFolderPath))
-                            Directory.CreateDirectory(userFolderPath);
-                    }
-                    catch (Exception ex) { Console.WriteLine("Could not create user folder: " + ex.Message); return; }
-
-                    using (var cmd4 = new MySqlCommand("INSERT INTO mainfolderpath (user_id, FolderPath) VALUES (@user_id, @FolderPath)", conn))
-                    {
-                        cmd4.Parameters.AddWithValue("@user_id", userId);
-                        cmd4.Parameters.AddWithValue("@FolderPath", userFolderPath);
-                        cmd4.ExecuteNonQuery();
-                    }
-                }
-
-                string email = EmailText.Text.Trim();
-                string fullName = $"{FirstnameText.Text.Trim()} {MiddlenameText.Text.Trim()} {LastnameText.Text.Trim()}".Trim();
-                string role = ContextRoleText.Text.Trim();
-
-                bool emailed = TrySendCredentialsEmail(email, fullName, username, defaultPassword, role);
-
-                if (emailed)
-                    CustomMessageBox.Show($"Account created!\n\nUsername: {username}\nPassword: {defaultPassword}\n\nEmailed to {email}",
-                        "Account Created", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
-                else
-                    CustomMessageBox.Show($"Account created but email failed.\n\nUsername: {username}\nPassword: {defaultPassword}",
-                        "Account Created (Email Failed)", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
-
-                ClearText();
-                LoadUserData();
-                RefreshDashboardCounts();
-            }
-            catch (Exception ex) { Console.WriteLine("CreateUser error: " + ex.Message); }
-        }
-
-        private string GenerateUsername(string last, string first, string middle, string connStr)
-        {
-            string l = string.IsNullOrWhiteSpace(last) ? "X" : last.Trim().Substring(0, 1).ToUpper();
-            string f = string.IsNullOrWhiteSpace(first) ? "X" : first.Trim().Substring(0, 1).ToUpper();
-            string m = string.IsNullOrWhiteSpace(middle) ? "X" : middle.Trim().Substring(0, 1).ToUpper();
-
-            // Kung gusto mong walang petsa (numero) sa username, palitan ang baseUser ng: $"{l}{f}{m}"
-            string baseUser = $"{l}{f}{m}{DateTime.Now:MMddyyyy}";
-            string candidate = baseUser;
-            int suffix = 1;
-
-            using (var conn = new MySqlConnection(connStr))
-            {
-                conn.Open();
-                while (true)
-                {
-                    using (var cmd = new MySqlCommand("SELECT COUNT(*) FROM user_credential WHERE username = @u", conn))
-                    {
-                        cmd.Parameters.AddWithValue("@u", candidate);
-                        if (Convert.ToInt32(cmd.ExecuteScalar()) == 0) return candidate;
-                    }
-                    candidate = $"{baseUser}-{suffix}";
-                    suffix++;
-                }
-            }
-        }
-
-        private bool TrySendCredentialsEmail(string toEmail, string fullName, string username, string password, string role)
-        {
-            try
-            {
-                using (var mail = new MailMessage())
-                {
-                    mail.From = new MailAddress(SettingsManager.Current.SmtpFrom, SettingsManager.Current.SmtpFromName);
-                    mail.To.Add(toEmail);
-                    mail.Subject = "Your CDSGA Hub account credentials";
-                    mail.IsBodyHtml = true;
-
-                    string safeName = System.Security.SecurityElement.Escape(fullName);
-                    string safeUser = System.Security.SecurityElement.Escape(username);
-                    string safePass = System.Security.SecurityElement.Escape(password);
-                    string safeRole = System.Security.SecurityElement.Escape(role);
-
-                    mail.Body = $@"
-<div style='font-family:Segoe UI,Arial,sans-serif;font-size:14px;color:#222;'>
-  <h2 style='color:#8B0000;'>CDSGA Hub</h2>
-  <p>Hello <b>{safeName}</b>,</p>
-  <p>Your account has been created.</p>
-  <table style='border-collapse:collapse;margin:12px 0;'>
-    <tr><td style='padding:6px 12px;background:#f5f5f5;'><b>Role</b></td><td style='padding:6px 12px;'>{safeRole}</td></tr>
-    <tr><td style='padding:6px 12px;background:#f5f5f5;'><b>Username</b></td><td style='padding:6px 12px;'>{safeUser}</td></tr>
-    <tr><td style='padding:6px 12px;background:#f5f5f5;'><b>Password</b></td><td style='padding:6px 12px;'>{safePass}</td></tr>
-  </table>
-  <p>Please log in and change your password.</p>
-</div>";
-
-                    using (var smtp = new SmtpClient(SettingsManager.Current.SmtpHost, SettingsManager.Current.SmtpPort))
-                    {
-                        smtp.EnableSsl = true;
-                        smtp.Credentials = new System.Net.NetworkCredential(
-                            SettingsManager.Current.SmtpUser,
-                            SettingsManager.Current.SmtpPass);
-                        smtp.DeliveryMethod = SmtpDeliveryMethod.Network;
-                        smtp.Timeout = 15000;
-                        smtp.Send(mail);
-                    }
-                }
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("[CreateUser] Email send failed: " + ex.Message);
-                return false;
-            }
-        }
-
-        private void ClearText()
-        {
-            IdNumberText.Clear();
-            FirstnameText.Clear();
-            LastnameText.Clear();
-            MiddlenameText.Clear();
-            EmailText.Clear();
-            ContextRoleText.SelectedIndex = -1;
-
-            // Reset din ang kulay at inline error
-            SetFieldError(LastnameText, false);
-            SetFieldError(FirstnameText, false);
-            SetFieldError(MiddlenameText, false);
-            SetFieldError(EmailText, false);
-            SetFieldError(ContextRoleText, false);
-            HideInlineError();
-        }
-
-        // =========================================================
-        //  WORKSTATION
-        // =========================================================
-        public void WorkstationButton_Click(object sender, EventArgs e)
-        {
-            Button clickedButton = (Button)sender;
-            string workstationId = clickedButton.Tag.ToString();
-            selectedWorkstationId = workstationId;
-            AddScreenViewer(workstationId);
-        }
-
-        private async void StartServer()
-        {
-            try
-            {
-                listener = new TcpListener(IPAddress.Any, SettingsManager.Current.WorkstationPort);
-                listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-                listener.Start();
-            }
-            catch (Exception ex) { Console.WriteLine("Workstation bind failed: " + ex.Message); return; }
-
-            lblTotalWorkstations.Text = "0";
-
-            while (isRunning)
-            {
-                try
-                {
-                    TcpClient client = await listener.AcceptTcpClientAsync();
-                    string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
-
-                    Button wsButton = null;
-                    if (this.InvokeRequired)
-                        this.Invoke(new Action(() => wsButton = OnWorkStationConnected(clientIp)));
-                    else
-                        wsButton = OnWorkStationConnected(clientIp);
-
-                    _ = MonitorDisconnected(client, wsButton, clientIp);
-                }
-                catch (ObjectDisposedException) { break; }
-                catch (SocketException) { break; }
-                catch (Exception ex)
-                {
-                    if (!isRunning) break;
-                    Console.WriteLine("Workstation accept error: " + ex.Message);
-                }
-            }
-        }
-
-        private Button OnWorkStationConnected(string clientIp)
-        {
-            if (workstationButtons.ContainsKey(clientIp))
-            {
-                Button existingBtn = workstationButtons[clientIp];
-                existingBtn.BackColor = Color.LightGreen;
-                UpdateConnectedCount();
-                return existingBtn;
-            }
-
-            WorkStationNum++;
-
-            Button MainPcButton = new Button();
-            MainPcButton.Text = "PC " + WorkStationNum;
-            MainPcButton.Height = 180;
-            MainPcButton.Width = 131;
-            MainPcButton.Margin = new Padding(5);
-            MainPcButton.BackColor = Color.LightGreen;
-            MainPcButton.Tag = clientIp;
-            MainPcButton.Click += WorkstationButton_Click;
-
-            MainWorkstationFLP.Controls.Add(MainPcButton);
-            workstationButtons[clientIp] = MainPcButton;
-
-            UpdateConnectedCount();
-            return MainPcButton;
-        }
-
-        private async Task MonitorDisconnected(TcpClient client, Button wsButton, string clientIp)
-        {
-            NetworkStream stream = client.GetStream();
-            byte[] buffer = new byte[1];
-
-            try
-            {
-                while (client.Connected && isRunning)
-                {
-                    int bytesRead = await stream.ReadAsync(buffer, 0, 1);
-                    if (bytesRead == 0) break;
-                }
-            }
-            catch { }
-            finally
-            {
-                try
-                {
-                    if (!this.IsDisposed && this.IsHandleCreated)
-                    {
-                        if (this.InvokeRequired)
-                        {
-                            this.BeginInvoke(new Action(() =>
-                            {
-                                if (wsButton != null && !wsButton.IsDisposed)
-                                    wsButton.BackColor = Color.Red;
-                                UpdateConnectedCount();
-                            }));
-                        }
-                        else
-                        {
-                            if (wsButton != null && !wsButton.IsDisposed)
-                                wsButton.BackColor = Color.Red;
-                            UpdateConnectedCount();
-                        }
-                    }
-                }
-                catch { }
-
-                try { client.Close(); } catch { }
-                try { client.Dispose(); } catch { }
-            }
-        }
-
-        private void UpdateConnectedCount()
-        {
-            lblTotalWorkstations.Text = workstationButtons.Count.ToString();
-        }
-
-        // =========================================================
-        //  SCREEN SHARING
-        // =========================================================
-        private async void StartScreenListener()
-        {
-            try
-            {
-                screenListener = new TcpListener(IPAddress.Any, SettingsManager.Current.ScreenSharePort);
-                screenListener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-                screenListener.Start();
-            }
-            catch { return; }
-
-            while (isRunning)
-            {
-                try
-                {
-                    TcpClient client = await screenListener.AcceptTcpClientAsync();
-                    _ = ReceiveScreenStream(client);
-                }
-                catch (ObjectDisposedException) { break; }
-                catch (SocketException) { break; }
-                catch { if (!isRunning) break; }
-            }
-        }
-
-        private async Task ReceiveScreenStream(TcpClient client)
-        {
-            NetworkStream stream = client.GetStream();
-            string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
-
-            try
-            {
-                while (client.Connected && isRunning)
-                {
-                    byte[] lengthBuffer = new byte[4];
-                    int read = await ReadExactAsync(stream, lengthBuffer, 4);
-                    if (read == 0) break;
-
-                    int imageLength = BitConverter.ToInt32(lengthBuffer, 0);
-                    if (imageLength <= 0 || imageLength > 50 * 1024 * 1024) break;
-
-                    byte[] imageBuffer = new byte[imageLength];
-                    int totalRead = await ReadExactAsync(stream, imageBuffer, imageLength);
-                    if (totalRead == 0) break;
-
-                    using (MemoryStream ms = new MemoryStream(imageBuffer))
-                    {
-                        Image frame = Image.FromStream(ms);
-                        if (!this.IsDisposed && this.IsHandleCreated)
-                        {
-                            if (this.InvokeRequired)
-                                this.BeginInvoke(new Action(() => UpdateScreenViewer(clientIp, frame)));
-                            else
-                                UpdateScreenViewer(clientIp, frame);
-                        }
-                    }
-                }
-            }
-            catch { }
-            finally
-            {
-                try { client.Close(); } catch { }
-                try { client.Dispose(); } catch { }
-            }
-        }
-
-        private async Task<int> ReadExactAsync(NetworkStream stream, byte[] buffer, int count)
-        {
-            int totalRead = 0;
-            while (totalRead < count)
-            {
-                int bytesRead = await stream.ReadAsync(buffer, totalRead, count - totalRead);
-                if (bytesRead == 0) return 0;
-                totalRead += bytesRead;
-            }
-            return totalRead;
-        }
-
-        private void UpdateScreenViewer(string clientIp, Image frame)
-        {
-            if (screenViewers.ContainsKey(clientIp) && screenViewers[clientIp] != null)
-            {
-                PictureBox pb = screenViewers[clientIp];
-                Image oldImage = pb.Image;
-                pb.Image = frame;
-                oldImage?.Dispose();
-            }
-            else
-            {
-                frame.Dispose();
-            }
-        }
-
-        private void AddScreenViewer(string workstationId)
-        {
-            ScreenViewerForm viewer = new ScreenViewerForm(workstationId);
-            screenViewers[workstationId] = viewer.GetPictureBox();
-
-            viewer.FormClosed += (s, args) =>
-            {
-                if (screenViewers.ContainsKey(workstationId))
-                    screenViewers.Remove(workstationId);
-            };
-
-            viewer.Show();
         }
 
         // =========================================================
@@ -2080,22 +1574,13 @@ namespace WinFormsApp1
                 CustomMessageBoxButtons.YesNo, CustomMessageBoxIcon.Question);
             if (result != CustomMessageBoxResult.Yes) return;
 
-            isRunning = false;
             adminIsRunning = false;
 
-            try { listener?.Stop(); } catch { }
-            try { screenListener?.Stop(); } catch { }
             try { authPhotoListener?.Stop(); } catch { }
             try { authPhotoListener?.Server?.Dispose(); } catch { }
             authPhotoListener = null;
 
             System.Threading.Thread.Sleep(150);
-
-            foreach (var kvp in screenViewers)
-            {
-                try { kvp.Value?.Image?.Dispose(); } catch { }
-            }
-            screenViewers.Clear();
 
             foreach (Form f in Application.OpenForms.Cast<Form>().ToList())
             {
@@ -2242,29 +1727,5 @@ namespace WinFormsApp1
             }
         }
 
-        private void guna2Panel1_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
-
-        private void guna2Panel2_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
-
-        private void pnlCreateAccount_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
-
-        private void UserDataList_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-
-        }
-
-        private void pnlUserList_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
     }
 }
