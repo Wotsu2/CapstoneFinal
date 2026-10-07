@@ -42,21 +42,23 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges6 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges7 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges8 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges10 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges11 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges9 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges12 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges13 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges11 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges14 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges15 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges16 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges17 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges18 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges19 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges22 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges23 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges20 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges21 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges24 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges25 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges22 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges23 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges9 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges10 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             pnlUserManagement = new Panel();
             pnlUserList = new Panel();
             guna2Panel9 = new Guna.UI2.WinForms.Guna2Panel();
@@ -86,6 +88,7 @@
             label1 = new Label();
             pictureBox1 = new PictureBox();
             imageListIcon = new ImageList(components);
+            txtFileSearchBar = new Guna.UI2.WinForms.Guna2TextBox();
             pnlUserManagement.SuspendLayout();
             pnlUserList.SuspendLayout();
             guna2Panel9.SuspendLayout();
@@ -289,15 +292,16 @@
             // 
             guna2Panel10.BorderColor = Color.DarkGray;
             guna2Panel10.BorderThickness = 1;
+            guna2Panel10.Controls.Add(txtFileSearchBar);
             guna2Panel10.Controls.Add(label33);
             guna2Panel10.Controls.Add(BtnBack);
             guna2Panel10.Controls.Add(lvServerFolder);
-            guna2Panel10.CustomizableEdges = customizableEdges10;
+            guna2Panel10.CustomizableEdges = customizableEdges12;
             guna2Panel10.FillColor = Color.White;
             guna2Panel10.Location = new Point(0, 55);
             guna2Panel10.Margin = new Padding(3, 2, 3, 2);
             guna2Panel10.Name = "guna2Panel10";
-            guna2Panel10.ShadowDecoration.CustomizableEdges = customizableEdges11;
+            guna2Panel10.ShadowDecoration.CustomizableEdges = customizableEdges13;
             guna2Panel10.Size = new Size(1249, 576);
             guna2Panel10.TabIndex = 174;
             // 
@@ -327,7 +331,7 @@
             BtnBack.ImageSize = new Size(18, 12);
             BtnBack.Location = new Point(18, 18);
             BtnBack.Name = "BtnBack";
-            BtnBack.ShadowDecoration.CustomizableEdges = customizableEdges9;
+            BtnBack.ShadowDecoration.CustomizableEdges = customizableEdges11;
             BtnBack.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle;
             BtnBack.Size = new Size(34, 34);
             BtnBack.TabIndex = 44;
@@ -349,7 +353,7 @@
             // 
             guna2ComboBox1.BackColor = Color.Transparent;
             guna2ComboBox1.BorderColor = Color.Black;
-            guna2ComboBox1.CustomizableEdges = customizableEdges12;
+            guna2ComboBox1.CustomizableEdges = customizableEdges14;
             guna2ComboBox1.DisabledState.FillColor = Color.Maroon;
             guna2ComboBox1.DrawMode = DrawMode.OwnerDrawFixed;
             guna2ComboBox1.DropDownStyle = ComboBoxStyle.DropDownList;
@@ -365,7 +369,7 @@
             guna2ComboBox1.Margin = new Padding(3, 2, 3, 2);
             guna2ComboBox1.MaxDropDownItems = 100;
             guna2ComboBox1.Name = "guna2ComboBox1";
-            guna2ComboBox1.ShadowDecoration.CustomizableEdges = customizableEdges13;
+            guna2ComboBox1.ShadowDecoration.CustomizableEdges = customizableEdges15;
             guna2ComboBox1.Size = new Size(1249, 41);
             guna2ComboBox1.TabIndex = 173;
             // 
@@ -377,7 +381,7 @@
             btnDashboard.BorderRadius = 1;
             btnDashboard.BorderThickness = 1;
             btnDashboard.CustomBorderColor = Color.White;
-            btnDashboard.CustomizableEdges = customizableEdges14;
+            btnDashboard.CustomizableEdges = customizableEdges16;
             btnDashboard.DisabledState.BorderColor = Color.DarkGray;
             btnDashboard.DisabledState.CustomBorderColor = Color.DarkGray;
             btnDashboard.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -392,7 +396,7 @@
             btnDashboard.Location = new Point(40, 194);
             btnDashboard.Name = "btnDashboard";
             btnDashboard.PressedColor = Color.White;
-            btnDashboard.ShadowDecoration.CustomizableEdges = customizableEdges15;
+            btnDashboard.ShadowDecoration.CustomizableEdges = customizableEdges17;
             btnDashboard.Size = new Size(293, 76);
             btnDashboard.TabIndex = 0;
             btnDashboard.Text = "Dashboard";
@@ -406,7 +410,7 @@
             btnUserManagement.BorderRadius = 1;
             btnUserManagement.BorderThickness = 1;
             btnUserManagement.CustomBorderColor = Color.White;
-            btnUserManagement.CustomizableEdges = customizableEdges16;
+            btnUserManagement.CustomizableEdges = customizableEdges18;
             btnUserManagement.DisabledState.BorderColor = Color.DarkGray;
             btnUserManagement.DisabledState.CustomBorderColor = Color.DarkGray;
             btnUserManagement.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -421,7 +425,7 @@
             btnUserManagement.Location = new Point(339, 194);
             btnUserManagement.Name = "btnUserManagement";
             btnUserManagement.PressedColor = Color.White;
-            btnUserManagement.ShadowDecoration.CustomizableEdges = customizableEdges17;
+            btnUserManagement.ShadowDecoration.CustomizableEdges = customizableEdges19;
             btnUserManagement.Size = new Size(318, 76);
             btnUserManagement.TabIndex = 3;
             btnUserManagement.Text = "  User Management";
@@ -435,7 +439,7 @@
             btnDatabase.BorderRadius = 1;
             btnDatabase.BorderThickness = 1;
             btnDatabase.CustomBorderColor = Color.White;
-            btnDatabase.CustomizableEdges = customizableEdges18;
+            btnDatabase.CustomizableEdges = customizableEdges20;
             btnDatabase.DisabledState.BorderColor = Color.DarkGray;
             btnDatabase.DisabledState.CustomBorderColor = Color.DarkGray;
             btnDatabase.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
@@ -450,7 +454,7 @@
             btnDatabase.Location = new Point(973, 194);
             btnDatabase.Name = "btnDatabase";
             btnDatabase.PressedColor = Color.White;
-            btnDatabase.ShadowDecoration.CustomizableEdges = customizableEdges19;
+            btnDatabase.ShadowDecoration.CustomizableEdges = customizableEdges21;
             btnDatabase.Size = new Size(316, 76);
             btnDatabase.TabIndex = 2;
             btnDatabase.Text = "Database";
@@ -468,12 +472,12 @@
             guna2Panel1.Controls.Add(label2);
             guna2Panel1.Controls.Add(label1);
             guna2Panel1.Controls.Add(pictureBox1);
-            guna2Panel1.CustomizableEdges = customizableEdges22;
+            guna2Panel1.CustomizableEdges = customizableEdges24;
             guna2Panel1.Dock = DockStyle.Top;
             guna2Panel1.FillColor = Color.White;
             guna2Panel1.Location = new Point(0, 0);
             guna2Panel1.Name = "guna2Panel1";
-            guna2Panel1.ShadowDecoration.CustomizableEdges = customizableEdges23;
+            guna2Panel1.ShadowDecoration.CustomizableEdges = customizableEdges25;
             guna2Panel1.ShadowDecoration.Enabled = true;
             guna2Panel1.Size = new Size(1333, 100);
             guna2Panel1.TabIndex = 5;
@@ -493,7 +497,7 @@
             btnLogout.Image = Properties.Resources.Group;
             btnLogout.Location = new Point(1179, 26);
             btnLogout.Name = "btnLogout";
-            btnLogout.ShadowDecoration.CustomizableEdges = customizableEdges20;
+            btnLogout.ShadowDecoration.CustomizableEdges = customizableEdges22;
             btnLogout.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle;
             btnLogout.Size = new Size(51, 50);
             btnLogout.TabIndex = 10;
@@ -512,7 +516,7 @@
             btnLoguot.ForeColor = Color.White;
             btnLoguot.Location = new Point(2360, 24);
             btnLoguot.Name = "btnLoguot";
-            btnLoguot.ShadowDecoration.CustomizableEdges = customizableEdges21;
+            btnLoguot.ShadowDecoration.CustomizableEdges = customizableEdges23;
             btnLoguot.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle;
             btnLoguot.Size = new Size(51, 50);
             btnLoguot.TabIndex = 7;
@@ -614,6 +618,28 @@
             imageListIcon.ImageSize = new Size(16, 16);
             imageListIcon.TransparentColor = Color.Transparent;
             // 
+            // txtFileSearchBar
+            // 
+            txtFileSearchBar.BorderRadius = 10;
+            txtFileSearchBar.CustomizableEdges = customizableEdges9;
+            txtFileSearchBar.DefaultText = "";
+            txtFileSearchBar.DisabledState.BorderColor = Color.FromArgb(208, 208, 208);
+            txtFileSearchBar.DisabledState.FillColor = Color.FromArgb(226, 226, 226);
+            txtFileSearchBar.DisabledState.ForeColor = Color.FromArgb(138, 138, 138);
+            txtFileSearchBar.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138);
+            txtFileSearchBar.FocusedState.BorderColor = Color.FromArgb(94, 148, 255);
+            txtFileSearchBar.Font = new Font("Segoe UI", 9F);
+            txtFileSearchBar.HoverState.BorderColor = Color.FromArgb(94, 148, 255);
+            txtFileSearchBar.Location = new Point(58, 12);
+            txtFileSearchBar.Name = "txtFileSearchBar";
+            txtFileSearchBar.PlaceholderText = "Search";
+            txtFileSearchBar.SelectedText = "";
+            txtFileSearchBar.ShadowDecoration.CustomizableEdges = customizableEdges10;
+            txtFileSearchBar.Size = new Size(299, 36);
+            txtFileSearchBar.TabIndex = 46;
+            txtFileSearchBar.TextOffset = new Point(10, 0);
+            txtFileSearchBar.TextChanged += txtFileSearchBar_TextChanged;
+            // 
             // AdminForm
             // 
             AutoScaleMode = AutoScaleMode.None;
@@ -623,8 +649,8 @@
             BackgroundImage = Properties.Resources.Shade;
             BackgroundImageLayout = ImageLayout.Stretch;
             ClientSize = new Size(1350, 729);
-            Controls.Add(pnlUserManagement);
             Controls.Add(pnlFileManagement);
+            Controls.Add(pnlUserManagement);
             Controls.Add(label6);
             Controls.Add(guna2Panel1);
             Controls.Add(btnFileManagement);
@@ -696,5 +722,6 @@
         private DataGridViewTextBoxColumn school_semester;
         private DataGridViewTextBoxColumn school_course;
         private Guna.UI2.WinForms.Guna2ComboBox cmbSelection;
+        private Guna.UI2.WinForms.Guna2TextBox txtFileSearchBar;
     }
 }

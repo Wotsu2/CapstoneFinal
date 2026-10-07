@@ -318,7 +318,7 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        // START SERVER — Reads student name after TCP connect
+        // START SERVER
         // =========================================================
         private async Task StartServer()
         {
@@ -339,7 +339,6 @@ namespace WinFormsApp1
                     TcpClient client = await listener.AcceptTcpClientAsync();
                     string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
 
-                    // Read [4-byte length][N-byte UTF-8 name]
                     string studentName = "";
                     try
                     {
@@ -389,7 +388,7 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        // WORKSTATION CONNECTED — Big + mini, image fits perfectly
+        // WORKSTATION CONNECTED
         // =========================================================
         private Button OnWorkStationConnected(string clientIp, string studentName)
         {
@@ -422,9 +421,6 @@ namespace WinFormsApp1
 
             WorkStationNum++;
 
-            // =========================================================
-            // WRAPPER PANEL
-            // =========================================================
             Panel wrapper = new Panel();
             wrapper.Width = 280;
             wrapper.Height = 200;
@@ -464,7 +460,6 @@ namespace WinFormsApp1
             flpMainWorkstations.Controls.Add(wrapper);
             workstationButtons[clientIp] = MainPcButton;
 
-            // Mini button
             Button miniButton = new Button();
             miniButton.Text = label;
             miniButton.Height = 150;
@@ -547,10 +542,6 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
-                    // =========================================================
-                    // FIX: Only students who joined one of THIS professor's
-                    // classes (via student_class) should appear.
-                    // =========================================================
                     string query = @"
                 SELECT DISTINCT
                        u.username,
@@ -1699,9 +1690,6 @@ namespace WinFormsApp1
             flpSubjectClass.ResumeLayout();
         }
 
-        // =========================================================
-        // CREATE CLASS CARD — now clickable to open Class Details
-        // =========================================================
         private ClassCardPanel CreateClassCard(string classId, string title, string section,
             string day, string time, string professorName)
         {
@@ -1720,14 +1708,12 @@ namespace WinFormsApp1
             };
             _colorIndex++;
 
-            // NEW: Open Class Details when the card is clicked
             card.Click += (s, e) =>
             {
                 if (e is MouseEventArgs me && me.Button != MouseButtons.Left) return;
                 OpenClassDetails(classId, title, section, day, time);
             };
 
-            // Optional: also support double-click
             card.DoubleClick += (s, e) => OpenClassDetails(classId, title, section, day, time);
 
             ContextMenuStrip rightClickMenu = new ContextMenuStrip();
@@ -1739,9 +1725,6 @@ namespace WinFormsApp1
             return card;
         }
 
-        // =========================================================
-        // OPEN CLASS DETAILS FORM
-        // =========================================================
         private void OpenClassDetails(string classId, string className, string section,
                                       string day, string time)
         {
@@ -1903,8 +1886,8 @@ namespace WinFormsApp1
             string uncPath = null;
             string section = SanitizeFolderName(sectionRaw);
 
-            if (string.IsNullOrEmpty(ProfessorName)) NameGet();
-            string professorFolder = SanitizeFolderName(ProfessorName);
+
+            string professorFolder = SanitizeFolderName(ProfessorUsername);
 
             if (!string.IsNullOrEmpty(selectedFilePath) && File.Exists(selectedFilePath))
             {
@@ -2715,12 +2698,8 @@ namespace WinFormsApp1
 
         private void btnStopSharing_Click(object sender, EventArgs e)
         {
-            // 1) Stop the broadcast timer
             try { broadcastTimer?.Stop(); } catch { }
 
-            // 2) Close every broadcast client — this makes the student's
-            //    ConnectBroadcastReceiver loop exit, which closes the
-            //    BroadcastViewerForm and releases the input hooks.
             foreach (var kvp in broadcastClients.ToList())
             {
                 try { kvp.Value.Close(); } catch { }
@@ -3337,9 +3316,39 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        // *** FIXED HandleActivityFileReceive ***
-        // Reads the command first, then dispatches to the correct protocol
+        // Get professor's folder path — reads mainfolderpath
+        // (source of truth — matches what admin wrote when
+        // creating the professor account).
         // =========================================================
+        private string GetProfessorFolderPath()
+        {
+            try
+            {
+                string connStr = SettingsManager.Current.GetConnectionString();
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    using (var cmd = new MySqlCommand(
+                        "SELECT FolderPath FROM mainfolderpath WHERE user_id = @id", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", ProfessorID);
+                        object r = cmd.ExecuteScalar();
+                        if (r != null && r != DBNull.Value)
+                        {
+                            string path = r.ToString();
+                            if (!string.IsNullOrWhiteSpace(path))
+                                return path;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("GetProfessorFolderPath error: " + ex.Message);
+            }
+
+            return null;
+        }
 
         private async Task HandleActivityFileReceive(TcpClient client)
         {
@@ -3349,15 +3358,37 @@ namespace WinFormsApp1
                 using (NetworkStream stream = client.GetStream())
                 using (BinaryReader reader = new BinaryReader(stream, Encoding.UTF8))
                 {
-                    // =========================================================
-                    // Read the command header FIRST
-                    // =========================================================
                     string command = reader.ReadString();
                     Console.WriteLine("[Professor] FileTransfer command: " + command);
 
+                    // ★ Get professor folder from DB (matches admin's creation)
+                    string profFolderPath = GetProfessorFolderPath();
+
+                    if (string.IsNullOrEmpty(profFolderPath))
+                    {
+                        Console.WriteLine("[Professor] Cannot resolve professor folder — aborting.");
+                        return;
+                    }
+
+                    // Make sure the folder actually exists (creates UNC path if needed)
+                    try
+                    {
+                        if (!Directory.Exists(profFolderPath))
+                            Directory.CreateDirectory(profFolderPath);
+                    }
+                    catch (Exception exRoot)
+                    {
+                        Console.WriteLine("[Professor] Could not create professor folder: " + exRoot.Message);
+                        return;
+                    }
+
+                    Console.WriteLine("[Professor] Using professor folder: " + profFolderPath);
+
+                    // =========================================================
+                    // STUDENT SUBMISSION → <profFolder>/<Section>/<Student>/
+                    // =========================================================
                     if (command == "STUDENT_SUBMISSION")
                     {
-                        // Matches ActivityForm.SendSubmissionToServer
                         string professorFolder = reader.ReadString();
                         string section = reader.ReadString();
                         string studentName = reader.ReadString();
@@ -3373,34 +3404,29 @@ namespace WinFormsApp1
 
                         byte[] fileBytes = reader.ReadBytes(fileLength);
 
-                        if (string.IsNullOrEmpty(saveFolder) || saveFolder == "Null")
-                        {
-                            Console.WriteLine("[Professor] Save folder not configured.");
-                            return;
-                        }
-
-                        // Save under the section folder directly (student submission)
-                        string sectionFolder = Path.Combine(saveFolder, SanitizeFolderName(section));
-                        if (!Directory.Exists(sectionFolder))
-                            Directory.CreateDirectory(sectionFolder);
-
+                        string safeSection = SanitizeFolderName(section);
+                        string safeStudent = SanitizeFolderName(studentName);
                         string safeName = SanitizeFolderName(fileName);
-                        string savePath = Path.Combine(sectionFolder, safeName);
+                        string safeTitle = SanitizeFolderName(activityTitle);
 
+                        // ★ Route: <profFolder>/<Section>/<Student>/
+                        string studentFolder = Path.Combine(profFolderPath, safeSection, safeStudent);
+
+                        if (!Directory.Exists(studentFolder))
+                            Directory.CreateDirectory(studentFolder);
+
+                        string finalName = safeName.StartsWith(safeStudent, StringComparison.OrdinalIgnoreCase)
+                            ? safeName
+                            : $"{safeStudent}_{safeTitle}_{safeName}";
+
+                        string savePath = Path.Combine(studentFolder, finalName);
                         await File.WriteAllBytesAsync(savePath, fileBytes);
+
                         Console.WriteLine("[Professor] Student submission saved: " + savePath);
 
-                        // Look up student ID by name
                         int studentId = GetStudentIdByName(studentName);
-
-                        // Update the database with the correct save path
                         UpdateSubmissionFilePath(studentId, activityTitle, section, savePath);
 
-                        // =========================================================
-                        // *** IMPORTANT: REPLY WITH THE SAVED PATH ***
-                        // Without this, the Student's ReadString() will fail/hang
-                        // and the student will see "Failed to submit. Please try again."
-                        // =========================================================
                         try
                         {
                             using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
@@ -3408,22 +3434,20 @@ namespace WinFormsApp1
                                 writer.Write(savePath);
                                 writer.Flush();
                             }
-                            Console.WriteLine("[Professor] Replied with path: " + savePath);
                         }
                         catch (Exception exReply)
                         {
                             Console.WriteLine("[Professor] Failed to send reply: " + exReply.Message);
                         }
 
-                        // Refresh UI
-                        SafeInvoke(() =>
-                        {
-                            try { ActivityStatus(); } catch { }
-                        });
+                        SafeInvoke(() => { try { ActivityStatus(); } catch { } });
                     }
+
+                    // =========================================================
+                    // ACTIVITY FILE → <profFolder>/<Section>/ActivityFiles/
+                    // =========================================================
                     else if (command == "ACTIVITY_FILE")
                     {
-                        // Matches ProfessorForm.SendActivityFileToServer
                         string professorFolder = reader.ReadString();
                         string section = reader.ReadString();
                         string fileName = reader.ReadString();
@@ -3434,16 +3458,8 @@ namespace WinFormsApp1
 
                         byte[] fileBytes = reader.ReadBytes(fileLength);
 
-                        if (string.IsNullOrEmpty(saveFolder) || saveFolder == "Null") return;
-                        if (string.IsNullOrEmpty(ProfessorName)) NameGet();
-
-                        string professorFolderSafe = string.IsNullOrEmpty(ProfessorName)
-                            ? "Unknown"
-                            : SanitizeFolderName(ProfessorName);
-
                         string targetFolder = Path.Combine(
-                            saveFolder,
-                            professorFolderSafe,
+                            profFolderPath,
                             SanitizeFolderName(section),
                             "ActivityFiles");
 
@@ -3452,11 +3468,15 @@ namespace WinFormsApp1
 
                         string savePath = Path.Combine(targetFolder, SanitizeFolderName(fileName));
                         await File.WriteAllBytesAsync(savePath, fileBytes);
+
                         Console.WriteLine("[Professor] Activity file saved: " + savePath);
                     }
+
+                    // =========================================================
+                    // PROFILE PHOTO
+                    // =========================================================
                     else if (command == "PROFILE_PHOTO")
                     {
-                        // Matches StudentForm.SendProfilePhotoToAdmin
                         string username = reader.ReadString();
                         string fileName = reader.ReadString();
                         int fileLength = reader.ReadInt32();
@@ -3466,14 +3486,13 @@ namespace WinFormsApp1
 
                         byte[] fileBytes = reader.ReadBytes(fileLength);
 
-                        string profileFolder = Path.Combine(saveFolder ?? "", "ProfilePictures");
+                        string profileFolder = Path.Combine(SettingsManager.Current.SaveFolder ?? "", "ProfilePictures");
                         if (!Directory.Exists(profileFolder))
                             Directory.CreateDirectory(profileFolder);
 
                         string savePath = Path.Combine(profileFolder, SanitizeFolderName(fileName));
                         await File.WriteAllBytesAsync(savePath, fileBytes);
 
-                        // Reply back with the UNC path
                         try
                         {
                             using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
@@ -3500,8 +3519,9 @@ namespace WinFormsApp1
                 Console.WriteLine("HandleActivityFileReceive error: " + ex.Message);
             }
         }
+
         // =========================================================
-        // NEW: Get student_id from "Lastname_Firstname_Middlename"
+        // Get student_id from "Lastname_Firstname_Middlename"
         // =========================================================
         private int GetStudentIdByName(string studentName)
         {
@@ -3543,7 +3563,7 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        // NEW: Update submitted_activity file path + status
+        // Update submitted_activity file path + status
         // =========================================================
         private void UpdateSubmissionFilePath(int studentId, string title, string section, string savedPath)
         {
@@ -4157,7 +4177,6 @@ namespace WinFormsApp1
 
         private void btnLockPC_Click(object sender, EventArgs e)
         {
-            // 1. Collect all ONLINE PCs (only LightGreen = connected)
             List<string> onlinePCs = new List<string>();
 
             foreach (var kvp in workstationButtons)
@@ -4184,7 +4203,6 @@ namespace WinFormsApp1
                 return;
             }
 
-            // 2. Open LockForm and pass online PCs + command port
             LockForm lockPanel = new LockForm(onlinePCs, SettingsManager.Current.CommandPort);
             lockPanel.ShowDialog(this);
         }
