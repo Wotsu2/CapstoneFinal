@@ -3,6 +3,7 @@ using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using Guna.UI2.WinForms;
 using MySql.Data.MySqlClient;
 
 namespace WinFormsApp1
@@ -18,33 +19,34 @@ namespace WinFormsApp1
         private static readonly Color ClrMaroonDark = Color.FromArgb(70, 10, 24);
         private static readonly Color ClrGold = Color.FromArgb(198, 156, 53);
         private static readonly Color ClrGoldSoft = Color.FromArgb(230, 210, 180);
-        private static readonly Color ClrPageBg = Color.FromArgb(245, 247, 250);
-        private static readonly Color ClrCardBorder = Color.FromArgb(225, 228, 235);
-        private static readonly Color ClrMuted = Color.FromArgb(120, 125, 135);
-        private static readonly Color ClrText = Color.FromArgb(35, 35, 35);
+        private static readonly Color ClrPageBg = Color.FromArgb(243, 244, 246);
+        private static readonly Color ClrCardBg = Color.White;
+        private static readonly Color ClrBorder = Color.FromArgb(218, 222, 228);
+        private static readonly Color ClrGridLine = Color.FromArgb(238, 240, 243);
+        private static readonly Color ClrText = Color.FromArgb(31, 41, 55);
+        private static readonly Color ClrMuted = Color.FromArgb(107, 114, 128);
         private static readonly Color ClrDark = Color.FromArgb(40, 40, 40);
-        private static readonly Color ClrHeaderBg = Color.FromArgb(248, 249, 251);
-        private static readonly Color ClrGridLine = Color.FromArgb(234, 236, 241);
+        private static readonly Color ClrHoverLight = Color.FromArgb(243, 244, 246);
+        private static readonly Color ClrRowSelect = Color.FromArgb(252, 242, 226);
 
         private Panel header;
         private Label lblStudent;
         private Label lblAssessment;
+        private Guna2Panel pillScore;
         private Label lblScore;
-        private Label lblGrade;
 
-        private Panel gridCard;
+        private Guna2Panel gridCard;
         private Panel summaryRow;
         private DataGridView dgv;
 
         private Panel footer;
-        private Panel detailCard;
+        private Guna2Panel detailCard;
         private Label lblDetailCaption;
         private TextBox txtDetail;
-        private Button btnGradeEssay;
-        private Button btnClose;
+        private Guna2Button btnGradeEssay;
+        private Guna2Button btnClose;
 
         private Font boldFont;
-
         private DataTable table = new DataTable();
 
         public ProfessorStudentAnswersForm(int attemptId)
@@ -77,12 +79,16 @@ namespace WinFormsApp1
             gridHost.BackColor = ClrPageBg;
             gridHost.Padding = new Padding(24, 14, 24, 14);
 
-            gridCard = new Panel();
+            gridCard = new Guna2Panel();
             gridCard.Dock = DockStyle.Fill;
-            gridCard.BackColor = ClrPageBg;
+            gridCard.FillColor = ClrCardBg;
+            gridCard.BorderColor = ClrBorder;
+            gridCard.BorderThickness = 1;
+            gridCard.BorderRadius = 16;
             gridCard.Padding = new Padding(14);
-            gridCard.Paint += Card_Paint;
-            gridCard.Resize += (s, e) => gridCard.Invalidate();
+            gridCard.ShadowDecoration.Enabled = true;
+            gridCard.ShadowDecoration.Depth = 6;
+            gridCard.ShadowDecoration.Color = Color.FromArgb(25, 0, 0, 0);
 
             dgv = new DataGridView();
             dgv.Dock = DockStyle.Fill;
@@ -95,30 +101,31 @@ namespace WinFormsApp1
             dgv.MultiSelect = false;
             dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgv.AutoGenerateColumns = false;
-            dgv.BackgroundColor = Color.White;
+            dgv.BackgroundColor = ClrCardBg;
             dgv.BorderStyle = BorderStyle.None;
             dgv.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
             dgv.GridColor = ClrGridLine;
             dgv.EnableHeadersVisualStyles = false;
             dgv.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
             dgv.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-            dgv.ColumnHeadersHeight = 40;
-            dgv.RowTemplate.Height = 38;
+            dgv.ColumnHeadersHeight = 44;
             dgv.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
+            dgv.RowTemplate.Height = 40;
 
-            dgv.ColumnHeadersDefaultCellStyle.BackColor = ClrHeaderBg;
-            dgv.ColumnHeadersDefaultCellStyle.ForeColor = ClrDark;
-            dgv.ColumnHeadersDefaultCellStyle.Font = boldFont;
-            dgv.ColumnHeadersDefaultCellStyle.Padding = new Padding(10, 0, 0, 0);
-            dgv.ColumnHeadersDefaultCellStyle.SelectionBackColor = ClrHeaderBg;
-            dgv.ColumnHeadersDefaultCellStyle.SelectionForeColor = ClrDark;
+            dgv.ColumnHeadersDefaultCellStyle.BackColor = ClrCardBg;
+            dgv.ColumnHeadersDefaultCellStyle.ForeColor = ClrMuted;
+            dgv.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
+            dgv.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dgv.ColumnHeadersDefaultCellStyle.SelectionBackColor = ClrCardBg;
+            dgv.ColumnHeadersDefaultCellStyle.SelectionForeColor = ClrMuted;
 
             dgv.DefaultCellStyle.Font = new Font("Segoe UI", 9.5F);
             dgv.DefaultCellStyle.ForeColor = ClrText;
-            dgv.DefaultCellStyle.BackColor = Color.White;
-            dgv.DefaultCellStyle.SelectionBackColor = Color.FromArgb(252, 242, 226);
+            dgv.DefaultCellStyle.BackColor = ClrCardBg;
+            dgv.DefaultCellStyle.SelectionBackColor = ClrRowSelect;
             dgv.DefaultCellStyle.SelectionForeColor = ClrText;
             dgv.DefaultCellStyle.Padding = new Padding(10, 0, 8, 0);
+            dgv.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
 
             dgv.CellFormatting += Dgv_CellFormatting;
             dgv.SelectionChanged += (s, e) => ShowSelectedDetail();
@@ -140,10 +147,10 @@ namespace WinFormsApp1
 
             gridCard.Controls.Add(dgv);
 
-            // Summary chips row (Top, added second)
+            // Summary chips row (Top)
             summaryRow = new Panel();
             summaryRow.Dock = DockStyle.Top;
-            summaryRow.Height = 46;
+            summaryRow.Height = 50;
             summaryRow.BackColor = ClrPageBg;
 
             gridHost.Controls.Add(gridCard);
@@ -152,23 +159,27 @@ namespace WinFormsApp1
             // ---------------- FOOTER ----------------
             footer = new Panel();
             footer.Dock = DockStyle.Bottom;
-            footer.Height = 170;
+            footer.Height = 190;
             footer.BackColor = ClrPageBg;
             footer.Padding = new Padding(24, 14, 24, 22);
 
-            detailCard = new Panel();
+            detailCard = new Guna2Panel();
             detailCard.Dock = DockStyle.Fill;
-            detailCard.BackColor = ClrPageBg;
-            detailCard.Padding = new Padding(16, 12, 16, 14);
-            detailCard.Paint += Card_Paint;
-            detailCard.Resize += (s, e) => detailCard.Invalidate();
+            detailCard.FillColor = ClrCardBg;
+            detailCard.BorderColor = ClrBorder;
+            detailCard.BorderThickness = 1;
+            detailCard.BorderRadius = 16;
+            detailCard.Padding = new Padding(18, 14, 18, 14);
+            detailCard.ShadowDecoration.Enabled = true;
+            detailCard.ShadowDecoration.Depth = 6;
+            detailCard.ShadowDecoration.Color = Color.FromArgb(25, 0, 0, 0);
 
             txtDetail = new TextBox();
             txtDetail.Multiline = true;
             txtDetail.ReadOnly = true;
             txtDetail.ScrollBars = ScrollBars.Vertical;
             txtDetail.BorderStyle = BorderStyle.None;
-            txtDetail.BackColor = Color.White;
+            txtDetail.BackColor = ClrCardBg;
             txtDetail.ForeColor = ClrText;
             txtDetail.Font = new Font("Segoe UI", 10F);
             txtDetail.Dock = DockStyle.Fill;
@@ -179,7 +190,7 @@ namespace WinFormsApp1
             lblDetailCaption.ForeColor = ClrMuted;
             lblDetailCaption.BackColor = Color.Transparent;
             lblDetailCaption.Dock = DockStyle.Top;
-            lblDetailCaption.Height = 22;
+            lblDetailCaption.Height = 24;
 
             detailCard.Controls.Add(txtDetail);
             detailCard.Controls.Add(lblDetailCaption);
@@ -189,18 +200,12 @@ namespace WinFormsApp1
             right.Width = 200;
             right.BackColor = ClrPageBg;
 
-            btnGradeEssay = new Button();
-            btnGradeEssay.Text = "GRADE ESSAY";
-            btnGradeEssay.Size = new Size(180, 46);
-            btnGradeEssay.Location = new Point(16, 18);
-            StyleButton(btnGradeEssay, ClrMaroon, ClrMaroonDark, Color.White);
+            btnGradeEssay = MakeButton("GRADE ESSAY", 10, 20, 180, 46,
+                ClrMaroon, ClrMaroonDark, Color.White, false);
             btnGradeEssay.Click += BtnGradeEssay_Click;
 
-            btnClose = new Button();
-            btnClose.Text = "CLOSE";
-            btnClose.Size = new Size(180, 46);
-            btnClose.Location = new Point(16, 74);
-            StyleButton(btnClose, ClrDark, Color.FromArgb(70, 70, 70), Color.White);
+            btnClose = MakeButton("CLOSE", 10, 80, 180, 46,
+                Color.White, ClrHoverLight, ClrText, true);
             btnClose.Click += (s, e) => Close();
 
             right.Controls.Add(btnGradeEssay);
@@ -212,7 +217,7 @@ namespace WinFormsApp1
             // ---------------- HEADER ----------------
             header = new Panel();
             header.Dock = DockStyle.Top;
-            header.Height = 122;
+            header.Height = 128;
             header.BackColor = ClrMaroon;
 
             Panel accent = new Panel();
@@ -227,7 +232,7 @@ namespace WinFormsApp1
             lblStudent.ForeColor = Color.White;
             lblStudent.BackColor = Color.Transparent;
             lblStudent.AutoSize = true;
-            lblStudent.Location = new Point(28, 16);
+            lblStudent.Location = new Point(28, 18);
             header.Controls.Add(lblStudent);
 
             lblAssessment = new Label();
@@ -236,28 +241,24 @@ namespace WinFormsApp1
             lblAssessment.ForeColor = ClrGoldSoft;
             lblAssessment.BackColor = Color.Transparent;
             lblAssessment.AutoSize = true;
-            lblAssessment.Location = new Point(28, 54);
+            lblAssessment.Location = new Point(28, 56);
             header.Controls.Add(lblAssessment);
+
+            pillScore = new Guna2Panel();
+            pillScore.BorderRadius = 15;
+            pillScore.FillColor = ClrMaroonDark;
+            pillScore.Location = new Point(28, 86);
+            pillScore.Size = new Size(140, 30);
 
             lblScore = new Label();
             lblScore.Font = boldFont;
             lblScore.ForeColor = Color.White;
-            lblScore.BackColor = ClrMaroonDark;
+            lblScore.BackColor = Color.Transparent;
             lblScore.TextAlign = ContentAlignment.MiddleCenter;
-            lblScore.AutoSize = false;
-            lblScore.Location = new Point(28, 84);
-            lblScore.Size = new Size(120, 28);
-            header.Controls.Add(lblScore);
+            lblScore.Dock = DockStyle.Fill;
+            pillScore.Controls.Add(lblScore);
 
-            lblGrade = new Label();
-            lblGrade.Font = boldFont;
-            lblGrade.ForeColor = ClrMaroonDark;
-            lblGrade.BackColor = ClrGold;
-            lblGrade.TextAlign = ContentAlignment.MiddleCenter;
-            lblGrade.AutoSize = false;
-            lblGrade.Location = new Point(158, 84);
-            lblGrade.Size = new Size(120, 28);
-            header.Controls.Add(lblGrade);
+            header.Controls.Add(pillScore);
 
             // Added last = docked first (Top), then Bottom, then Fill
             Controls.Add(gridHost);
@@ -280,71 +281,51 @@ namespace WinFormsApp1
             };
         }
 
-        private void Card_Paint(object sender, PaintEventArgs e)
+        private Guna2Button MakeButton(string text, int x, int y, int w, int h,
+                                       Color fill, Color hover, Color fore, bool outline)
         {
-            Panel p = sender as Panel;
-            if (p == null) return;
-
-            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-
-            Rectangle rect = new Rectangle(0, 0, p.Width - 1, p.Height - 1);
-
-            using (GraphicsPath path = RoundedPath(rect, 14))
-            using (SolidBrush fill = new SolidBrush(Color.White))
-            using (Pen pen = new Pen(ClrCardBorder, 1f))
-            {
-                e.Graphics.FillPath(fill, path);
-                e.Graphics.DrawPath(pen, path);
-            }
-        }
-
-        private static GraphicsPath RoundedPath(Rectangle r, int radius)
-        {
-            int d = radius * 2;
-            GraphicsPath path = new GraphicsPath();
-
-            path.AddArc(r.X, r.Y, d, d, 180, 90);
-            path.AddArc(r.Right - d, r.Y, d, d, 270, 90);
-            path.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90);
-            path.AddArc(r.X, r.Bottom - d, d, d, 90, 90);
-            path.CloseFigure();
-
-            return path;
-        }
-
-        private void StyleButton(Button b, Color back, Color hover, Color fore)
-        {
-            b.FlatStyle = FlatStyle.Flat;
-            b.FlatAppearance.BorderSize = 0;
-            b.FlatAppearance.MouseOverBackColor = hover;
-            b.BackColor = back;
+            Guna2Button b = new Guna2Button();
+            b.Text = text;
+            b.Location = new Point(x, y);
+            b.Size = new Size(w, h);
+            b.BorderRadius = h / 2;
+            b.FillColor = fill;
             b.ForeColor = fore;
-            b.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
+            b.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
+            b.HoverState.FillColor = hover;
             b.Cursor = Cursors.Hand;
+
+            if (outline)
+            {
+                b.BorderThickness = 1;
+                b.BorderColor = ClrBorder;
+            }
+
+            return b;
         }
 
-        private void SizePill(Label l)
+        private void AddChip(int x, string text, Color fill, Color fore, ref int nextX)
         {
-            Size sz = TextRenderer.MeasureText(l.Text, l.Font);
-            l.Size = new Size(sz.Width + 28, 28);
-        }
+            Size sz = TextRenderer.MeasureText(text, boldFont);
 
-        private int AddChip(int x, string text, Color back, Color fore)
-        {
-            Label chip = new Label();
-            chip.Text = text;
-            chip.Font = boldFont;
-            chip.BackColor = back;
-            chip.ForeColor = fore;
-            chip.TextAlign = ContentAlignment.MiddleCenter;
-            chip.AutoSize = false;
+            Guna2Panel chip = new Guna2Panel();
+            chip.BorderRadius = 14;
+            chip.FillColor = fill;
+            chip.Location = new Point(x, 10);
+            chip.Size = new Size(sz.Width + 28, 30);
 
-            Size sz = TextRenderer.MeasureText(text, chip.Font);
-            chip.Size = new Size(sz.Width + 28, 28);
-            chip.Location = new Point(x, 9);
+            Label lbl = new Label();
+            lbl.Text = text;
+            lbl.Font = boldFont;
+            lbl.ForeColor = fore;
+            lbl.BackColor = Color.Transparent;
+            lbl.TextAlign = ContentAlignment.MiddleCenter;
+            lbl.Dock = DockStyle.Fill;
 
+            chip.Controls.Add(lbl);
             summaryRow.Controls.Add(chip);
-            return chip.Right + 10;
+
+            nextX = chip.Right + 10;
         }
 
         private void RenderSummary(int correct, int incorrect, int gradedEssay, int pendingEssay, int noAnswer)
@@ -352,22 +333,24 @@ namespace WinFormsApp1
             summaryRow.Controls.Clear();
 
             int x = 0;
-            x = AddChip(x, "Correct  " + correct,
-                Color.FromArgb(220, 243, 228), Color.FromArgb(22, 110, 55));
-            x = AddChip(x, "Incorrect  " + incorrect,
-                Color.FromArgb(252, 228, 228), Color.FromArgb(170, 30, 30));
+
+            AddChip(x, "Correct  " + correct,
+                Color.FromArgb(220, 243, 228), Color.FromArgb(22, 110, 55), ref x);
+
+            AddChip(x, "Incorrect  " + incorrect,
+                Color.FromArgb(252, 228, 228), Color.FromArgb(170, 30, 30), ref x);
 
             if (gradedEssay > 0)
-                x = AddChip(x, "Essay graded  " + gradedEssay,
-                    Color.FromArgb(226, 236, 252), Color.FromArgb(30, 80, 160));
+                AddChip(x, "Essay graded  " + gradedEssay,
+                    Color.FromArgb(226, 236, 252), Color.FromArgb(30, 80, 160), ref x);
 
             if (pendingEssay > 0)
-                x = AddChip(x, "Essay pending  " + pendingEssay,
-                    Color.FromArgb(255, 236, 205), Color.FromArgb(160, 80, 0));
+                AddChip(x, "Essay pending  " + pendingEssay,
+                    Color.FromArgb(255, 236, 205), Color.FromArgb(160, 80, 0), ref x);
 
             if (noAnswer > 0)
-                x = AddChip(x, "No answer  " + noAnswer,
-                    Color.FromArgb(236, 236, 240), ClrMuted);
+                AddChip(x, "No answer  " + noAnswer,
+                    Color.FromArgb(236, 236, 240), ClrMuted, ref x);
         }
 
         private static void ResultColors(string result, out Color back, out Color fore)
@@ -395,8 +378,8 @@ namespace WinFormsApp1
                     return;
 
                 default:
-                    back = Color.White;
-                    fore = Color.FromArgb(120, 125, 135);
+                    back = ClrCardBg;
+                    fore = ClrMuted;
                     return;
             }
         }
@@ -421,7 +404,7 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        // HEADER: STUDENT, ASSESSMENT, SCORE, GRADE
+        // HEADER: STUDENT, ASSESSMENT, SCORE
         // =========================================================
 
         private void LoadHeader()
@@ -433,7 +416,7 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 using (var cmd = new MySqlCommand(@"
                     SELECT qa.quiz_id, qa.student_name, qa.score, qa.total_questions,
-                           qa.percentage, qz.quiz_title, qz.assessment_type
+                           qz.quiz_title, qz.assessment_type
                     FROM quiz_attempts qa
                     INNER JOIN quizzes qz ON qz.quiz_id = qa.quiz_id
                     WHERE qa.attempt_id = @id", conn))
@@ -457,23 +440,16 @@ namespace WinFormsApp1
                         string title = r["quiz_title"] == DBNull.Value ? "" : r["quiz_title"].ToString();
                         string type = r["assessment_type"] == DBNull.Value ? "quiz" : r["assessment_type"].ToString();
 
-                        int score = Convert.ToInt32(r["score"]);
-                        int total = Convert.ToInt32(r["total_questions"]);
-                        decimal pct = Convert.ToDecimal(r["percentage"]);
+                        int score = r["score"] == DBNull.Value ? 0 : Convert.ToInt32(r["score"]);
+                        int total = r["total_questions"] == DBNull.Value ? 0 : Convert.ToInt32(r["total_questions"]);
 
                         lblStudent.Text = student;
                         lblAssessment.Text = title + "   [" + type.ToUpper() + "]";
 
                         lblScore.Text = "Score  " + score + " / " + total;
-                        lblGrade.Text = "Grade  " + pct.ToString("0.00") + "%";
 
-                        // Auto-size the pills to their text
-                        Size s1 = TextRenderer.MeasureText(lblScore.Text, boldFont);
-                        lblScore.Size = new Size(s1.Width + 28, 28);
-
-                        Size s2 = TextRenderer.MeasureText(lblGrade.Text, boldFont);
-                        lblGrade.Size = new Size(s2.Width + 28, 28);
-                        lblGrade.Location = new Point(lblScore.Right + 10, lblScore.Top);
+                        Size sz = TextRenderer.MeasureText(lblScore.Text, boldFont);
+                        pillScore.Size = new Size(sz.Width + 32, 30);
                     }
                 }
             }

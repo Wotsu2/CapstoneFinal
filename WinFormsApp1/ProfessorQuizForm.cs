@@ -1,12 +1,11 @@
-﻿using MySql.Data.MySqlClient;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using UMapx.Core;
+using Guna.UI2.WinForms;
+using MySql.Data.MySqlClient;
 
 namespace WinFormsApp1
 {
@@ -14,33 +13,45 @@ namespace WinFormsApp1
     {
         private int professorUserId;
 
-        private ComboBox cmbAssessmentType;
-        private ComboBox cmbExamPeriod;
-        private TextBox txtQuizTitle;
-        private ComboBox cmbSubject;
+        // ---- Palette (same as the rest of the app) ----
+        private static readonly Color ClrMaroon = Color.FromArgb(94, 14, 33);
+        private static readonly Color ClrMaroonDark = Color.FromArgb(70, 10, 24);
+        private static readonly Color ClrGold = Color.FromArgb(198, 156, 53);
+        private static readonly Color ClrGoldDark = Color.FromArgb(163, 126, 36);
+        private static readonly Color ClrGoldSoft = Color.FromArgb(230, 210, 180);
+        private static readonly Color ClrPageBg = Color.FromArgb(243, 244, 246);
+        private static readonly Color ClrCardBg = Color.White;
+        private static readonly Color ClrBorder = Color.FromArgb(218, 222, 228);
+        private static readonly Color ClrText = Color.FromArgb(31, 41, 55);
+        private static readonly Color ClrMuted = Color.FromArgb(107, 114, 128);
+        private static readonly Color ClrHoverLight = Color.FromArgb(243, 244, 246);
+        private static readonly Color ClrDark = Color.FromArgb(31, 31, 31);
+        private static readonly Color ClrDarkHover = Color.FromArgb(60, 60, 60);
 
-        // Time limit
-        private NumericUpDown numHours;
-        private NumericUpDown numMinutes;
-
-        // Deployment (when students can see the quiz / exam)
-        private ComboBox cmbDeployMode;
+        // ---- Controls ----
+        private Guna2Panel mainCard;
+        private Guna2TextBox txtQuizTitle;
+        private Guna2ComboBox cmbAssessmentType;
+        private Guna2ComboBox cmbExamPeriod;
+        private Guna2ComboBox cmbSubject;
+        private Guna2TextBox txtHours;
+        private Guna2TextBox txtMinutes;
+        private Guna2ComboBox cmbDeployMode;
         private DateTimePicker dtpDeployDate;
-        private DateTimePicker dtpDeployTime;
+        private Guna2TextBox txtDeployTime;
 
-        private RoundedButton btnImportDocx;
-        private RoundedButton btnViewExample;
-        private RoundedButton btnSaveQuiz;
-        private RoundedButton btnClear;
-        private RoundedButton btnMonitor;
-        private RoundedButton btnEditQuestion;
+        private Guna2Button btnImportDocx;
+        private Guna2Button btnViewExample;
+        private Guna2Button btnSaveQuiz;
+        private Guna2Button btnClear;
+        private Guna2Button btnMonitor;
+        private Guna2Button btnEditQuestion;
+        private Guna2Button btnApplyPoints;
 
-        // Points controls on the main form
-        private NumericUpDown numSelPoints;
-        private RoundedButton btnApplyPoints;
-
+        private Guna2TextBox txtSelPoints;
         private Label lblFileName;
         private Label lblQuestionCount;
+        private Guna2Panel listCard;
         private ListBox lstQuestions;
 
         // Last quiz created in this window (preselected in Monitoring)
@@ -50,16 +61,6 @@ namespace WinFormsApp1
         private List<QuizQuestion> importedQuestions = new List<QuizQuestion>();
         private Dictionary<int, QuizQuestion> questionItemMap = new Dictionary<int, QuizQuestion>();
 
-        // ---- Colors ----
-        private static readonly Color ClrMaroon = Color.FromArgb(94, 14, 33);
-        private static readonly Color ClrMaroonDark = Color.FromArgb(70, 10, 24);
-        private static readonly Color ClrBlack = Color.FromArgb(20, 20, 20);
-        private static readonly Color ClrBlackHover = Color.FromArgb(50, 50, 50);
-        private static readonly Color ClrLabelGray = Color.FromArgb(50, 50, 50);
-        private static readonly Color ClrGold = Color.FromArgb(198, 156, 53);
-        private static readonly Color ClrGoldDark = Color.FromArgb(163, 126, 36);
-        private static readonly Color ClrPageBg = Color.FromArgb(250, 247, 239);
-
         // =========================================================
         // CONSTRUCTOR
         // =========================================================
@@ -68,11 +69,11 @@ namespace WinFormsApp1
         {
             professorUserId = professorID;
 
+            AutoScaleMode = AutoScaleMode.None;
             BuildProfessorInterface();
 
             this.Load += (s, e) => LoadProfessorSubjects();
         }
-
         // =========================================================
         // LOAD PROFESSOR'S SUBJECTS INTO THE DROPDOWN
         // =========================================================
@@ -131,37 +132,6 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        // SMALL UI HELPERS
-        // =========================================================
-
-        private Label AddLabel(string text, int x, int y)
-        {
-            Label label = new Label();
-            label.Text = text;
-            label.Font = new Font("Segoe UI Semibold", 10, FontStyle.Bold);
-            label.ForeColor = ClrLabelGray;
-            label.AutoSize = true;
-            label.Location = new Point(x, y);
-            Controls.Add(label);
-            return label;
-        }
-
-        private RoundedButton MakeButton(string text, int x, int y, int w, int h,
-                                         Color back, Color hover, Color fore, float fontSize = 10F)
-        {
-            RoundedButton b = new RoundedButton();
-            b.Text = text;
-            b.Font = new Font("Segoe UI Semibold", fontSize, FontStyle.Bold);
-            b.Size = new Size(w, h);
-            b.Location = new Point(x, y);
-            b.BackColor = back;
-            b.HoverColor = hover;
-            b.ForeColor = fore;
-            Controls.Add(b);
-            return b;
-        }
-
-        // =========================================================
         // BUILD INTERFACE
         // =========================================================
 
@@ -169,291 +139,329 @@ namespace WinFormsApp1
         {
             Text = "Professor - Create Quiz / Exam";
             StartPosition = FormStartPosition.CenterScreen;
-            Size = new Size(780, 800);
-            MinimumSize = new Size(780, 800);
+            ClientSize = new Size(780, 800);
             BackColor = ClrPageBg;
             FormBorderStyle = FormBorderStyle.None;
             Font = new Font("Segoe UI", 9.5F);
 
-            this.Paint += (s, e) =>
+            Paint += (s, e) =>
             {
                 using (var pen = new Pen(ClrGold, 1.5f))
-                    e.Graphics.DrawRectangle(pen, 0, 0, this.Width - 1, this.Height - 1);
+                    e.Graphics.DrawRectangle(pen, 0, 0, Width - 1, Height - 1);
             };
 
-            int pad = 30;
-            int leftWidth = 690;
-            int bannerHeight = 100;
-            int yShift = 40;
-            int dep = 70;                 // extra space used by the Deploy row
-            int halfWidth = (leftWidth - 24) / 2;
-            int rightX = pad + halfWidth + 24;
+            // ---------------- MAIN CARD (added first so it stays behind everything) ----------------
+            mainCard = MakeCard(20, 116, 740, 668);
+            Controls.Add(mainCard);
 
-            // ---------------- HEADER BANNER ----------------
-            Panel bannerPanel = new Panel();
-            bannerPanel.Location = new Point(0, 0);
-            bannerPanel.Size = new Size(this.Width, bannerHeight);
-            bannerPanel.BackColor = ClrMaroon;
-            bannerPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            bannerPanel.Paint += (s, e) =>
-            {
-                using (var goldLine = new Pen(ClrGold, 4f))
-                    e.Graphics.DrawLine(goldLine, 0, bannerPanel.Height - 2, bannerPanel.Width, bannerPanel.Height - 2);
-            };
-            Controls.Add(bannerPanel);
+            // ---------------- HEADER ----------------
+            Panel header = new Panel();
+            header.Location = new Point(0, 0);
+            header.Size = new Size(780, 100);
+            header.BackColor = ClrMaroon;
+
+            Panel accent = new Panel();
+            accent.Dock = DockStyle.Bottom;
+            accent.Height = 3;
+            accent.BackColor = ClrGold;
+            header.Controls.Add(accent);
 
             Label lblBrand = new Label();
             lblBrand.Text = "CDSGA";
-            lblBrand.Font = new Font("Segoe UI Semibold", 13, FontStyle.Bold);
+            lblBrand.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
             lblBrand.ForeColor = ClrGold;
+            lblBrand.BackColor = Color.Transparent;
             lblBrand.AutoSize = true;
-            lblBrand.Location = new Point(pad, 16);
-            bannerPanel.Controls.Add(lblBrand);
+            lblBrand.Location = new Point(30, 16);
+            header.Controls.Add(lblBrand);
 
             Label lblHeader = new Label();
             lblHeader.Text = "Create Quiz / Exam";
-            lblHeader.Font = new Font("Segoe UI Semibold", 20, FontStyle.Bold);
+            lblHeader.Font = new Font("Segoe UI Semibold", 20F, FontStyle.Bold);
             lblHeader.ForeColor = Color.White;
+            lblHeader.BackColor = Color.Transparent;
             lblHeader.AutoSize = true;
-            lblHeader.Location = new Point(pad, 40);
-            bannerPanel.Controls.Add(lblHeader);
+            lblHeader.Location = new Point(28, 36);
+            header.Controls.Add(lblHeader);
 
             Label lblClose = new Label();
             lblClose.Text = "✕";
-            lblClose.Font = new Font("Segoe UI", 14);
+            lblClose.Font = new Font("Segoe UI", 14F);
             lblClose.ForeColor = Color.White;
+            lblClose.BackColor = Color.Transparent;
             lblClose.AutoSize = true;
             lblClose.Cursor = Cursors.Hand;
-            lblClose.Location = new Point(this.ClientSize.Width - pad - 16, 36);
-            lblClose.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            lblClose.Click += (s, e) => this.Close();
-            bannerPanel.Controls.Add(lblClose);
+            lblClose.Location = new Point(722, 34);
+            lblClose.Click += (s, e) => Close();
+            header.Controls.Add(lblClose);
 
-            // ---------------- LEFT CARD ----------------
-            Panel leftCard = CreateCardPanel(pad - 15, bannerHeight + 15, leftWidth + 30, 665);
-            Controls.Add(leftCard);
+            Controls.Add(header);
 
             // ---------------- TITLE ----------------
-            AddLabel("Title", pad, 85 + yShift);
+            AddCaption("TITLE", 44, 134);
 
-            txtQuizTitle = new TextBox();
-            txtQuizTitle.Font = new Font("Segoe UI", 10);
-            txtQuizTitle.BorderStyle = BorderStyle.FixedSingle;
-            txtQuizTitle.Location = new Point(pad, 108 + yShift);
-            txtQuizTitle.Size = new Size(leftWidth, 30);
-            Controls.Add(txtQuizTitle);
+            txtQuizTitle = MakeTextBox(44, 154, 692, 36);
+            txtQuizTitle.PlaceholderText = "Halimbawa: Midterm Exam - Chapter 1";
 
             // ---------------- ASSESSMENT TYPE / EXAM PERIOD ----------------
-            AddLabel("Assessment Type", pad, 155 + yShift);
-            AddLabel("Exam Period", rightX, 155 + yShift);
+            AddCaption("ASSESSMENT TYPE", 44, 204);
+            AddCaption("EXAM PERIOD", 404, 204);
 
-            cmbAssessmentType = new ComboBox();
-            cmbAssessmentType.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbAssessmentType = MakeCombo(44, 224, 332, 36);
             cmbAssessmentType.Items.Add("Quiz");
             cmbAssessmentType.Items.Add("Exam");
             cmbAssessmentType.SelectedIndex = 0;
-            cmbAssessmentType.Font = new Font("Segoe UI", 10);
-            cmbAssessmentType.Location = new Point(pad, 178 + yShift);
-            cmbAssessmentType.Size = new Size(halfWidth, 30);
-            Controls.Add(cmbAssessmentType);
 
-            cmbExamPeriod = new ComboBox();
-            cmbExamPeriod.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbExamPeriod = MakeCombo(404, 224, 332, 36);
             cmbExamPeriod.Items.Add("PRELIM");
             cmbExamPeriod.Items.Add("MIDTERM");
             cmbExamPeriod.Items.Add("SEMIFINALS");
             cmbExamPeriod.Items.Add("FINALS");
             cmbExamPeriod.SelectedIndex = 0;
-            cmbExamPeriod.Font = new Font("Segoe UI", 10);
-            cmbExamPeriod.Location = new Point(rightX, 178 + yShift);
-            cmbExamPeriod.Size = new Size(halfWidth, 30);
-            Controls.Add(cmbExamPeriod);
 
             // ---------------- SUBJECT / TIME LIMIT ----------------
-            AddLabel("Subject", pad, 225 + yShift);
-            AddLabel("Time Limit", rightX, 225 + yShift);
+            AddCaption("SUBJECT", 44, 274);
+            AddCaption("TIME LIMIT", 404, 274);
 
-            cmbSubject = new ComboBox();
-            cmbSubject.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbSubject.Font = new Font("Segoe UI", 10);
-            cmbSubject.Location = new Point(pad, 248 + yShift);
-            cmbSubject.Size = new Size(halfWidth, 30);
-            Controls.Add(cmbSubject);
+            cmbSubject = MakeCombo(44, 294, 332, 36);
 
-            int durY = 248 + yShift;
+            txtHours = MakeTextBox(404, 294, 70, 36);
+            txtHours.Text = "1";
+            txtHours.TextAlign = HorizontalAlignment.Center;
+            txtHours.MaxLength = 2;
+            txtHours.KeyPress += DigitsOnly;
 
-            numHours = new NumericUpDown();
-            numHours.Font = new Font("Segoe UI", 10);
-            numHours.BorderStyle = BorderStyle.FixedSingle;
-            numHours.Location = new Point(rightX, durY);
-            numHours.Size = new Size(70, 30);
-            numHours.Minimum = 0;
-            numHours.Maximum = 24;
-            numHours.Value = 1;
-            numHours.TextAlign = HorizontalAlignment.Center;
-            Controls.Add(numHours);
+            AddCaption("hr", 480, 304, false);
 
-            Label lblHoursUnit = new Label();
-            lblHoursUnit.Text = "hr";
-            lblHoursUnit.Font = new Font("Segoe UI", 9.5F);
-            lblHoursUnit.ForeColor = ClrLabelGray;
-            lblHoursUnit.AutoSize = true;
-            lblHoursUnit.Location = new Point(rightX + 74, durY + 7);
-            Controls.Add(lblHoursUnit);
+            txtMinutes = MakeTextBox(510, 294, 70, 36);
+            txtMinutes.Text = "0";
+            txtMinutes.TextAlign = HorizontalAlignment.Center;
+            txtMinutes.MaxLength = 2;
+            txtMinutes.KeyPress += DigitsOnly;
 
-            numMinutes = new NumericUpDown();
-            numMinutes.Font = new Font("Segoe UI", 10);
-            numMinutes.BorderStyle = BorderStyle.FixedSingle;
-            numMinutes.Location = new Point(rightX + 104, durY);
-            numMinutes.Size = new Size(70, 30);
-            numMinutes.Minimum = 0;
-            numMinutes.Maximum = 59;
-            numMinutes.Increment = 5;
-            numMinutes.Value = 0;
-            numMinutes.TextAlign = HorizontalAlignment.Center;
-            Controls.Add(numMinutes);
+            AddCaption("min", 586, 304, false);
 
-            Label lblMinutesUnit = new Label();
-            lblMinutesUnit.Text = "min";
-            lblMinutesUnit.Font = new Font("Segoe UI", 9.5F);
-            lblMinutesUnit.ForeColor = ClrLabelGray;
-            lblMinutesUnit.AutoSize = true;
-            lblMinutesUnit.Location = new Point(rightX + 178, durY + 7);
-            Controls.Add(lblMinutesUnit);
+            // ---------------- DEPLOY ----------------
+            AddCaption("DEPLOY TO STUDENTS", 44, 344);
+            AddCaption("DEPLOY DATE & TIME", 404, 344);
 
-            // ---------------- DEPLOY TO STUDENTS ----------------
-            AddLabel("Deploy to Students", pad, 295 + yShift);
-            AddLabel("Deploy Date & Time", rightX, 295 + yShift);
-
-            int depY = 318 + yShift;
-
-            cmbDeployMode = new ComboBox();
-            cmbDeployMode.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbDeployMode = MakeCombo(44, 364, 332, 36);
             cmbDeployMode.Items.Add("Deploy immediately");
             cmbDeployMode.Items.Add("Schedule for later");
             cmbDeployMode.SelectedIndex = 0;
-            cmbDeployMode.Font = new Font("Segoe UI", 10);
-            cmbDeployMode.Location = new Point(pad, depY);
-            cmbDeployMode.Size = new Size(halfWidth, 30);
             cmbDeployMode.SelectedIndexChanged += (s, e) => UpdateDeployControls();
-            Controls.Add(cmbDeployMode);
 
             DateTime defaultDeploy = DateTime.Today.AddDays(1).AddHours(8);
 
             dtpDeployDate = new DateTimePicker();
             dtpDeployDate.Format = DateTimePickerFormat.Custom;
             dtpDeployDate.CustomFormat = "MMM dd, yyyy";
-            dtpDeployDate.Font = new Font("Segoe UI", 10);
+            dtpDeployDate.Font = new Font("Segoe UI", 10F);
+            dtpDeployDate.Location = new Point(404, 364);
+            dtpDeployDate.Size = new Size(190, 36);
             dtpDeployDate.MinDate = DateTime.Today;
-            dtpDeployDate.Value = defaultDeploy;
-            dtpDeployDate.Location = new Point(rightX, depY);
-            dtpDeployDate.Size = new Size(165, 30);
+            dtpDeployDate.Value = defaultDeploy.Date;
             Controls.Add(dtpDeployDate);
 
-            dtpDeployTime = new DateTimePicker();
-            dtpDeployTime.Format = DateTimePickerFormat.Custom;
-            dtpDeployTime.CustomFormat = "hh:mm tt";
-            dtpDeployTime.ShowUpDown = true;
-            dtpDeployTime.Font = new Font("Segoe UI", 10);
-            dtpDeployTime.Value = defaultDeploy;
-            dtpDeployTime.Location = new Point(rightX + 175, depY);
-            dtpDeployTime.Size = new Size(120, 30);
-            Controls.Add(dtpDeployTime);
-
-            ToolTip tipDeploy = new ToolTip();
-            tipDeploy.SetToolTip(cmbDeployMode,
-                "Students will NOT see this quiz/exam until the deploy date and time.");
+            txtDeployTime = MakeTextBox(606, 364, 130, 36);
+            txtDeployTime.Text = defaultDeploy.ToString("hh:mm tt");
+            txtDeployTime.PlaceholderText = "08:00 AM";
+            txtDeployTime.TextAlign = HorizontalAlignment.Center;
+            txtDeployTime.MaxLength = 8;
 
             UpdateDeployControls();
 
             // ---------------- IMPORT DOCX ----------------
-            btnImportDocx = MakeButton("⬆  IMPORT DOCX", pad, 300 + yShift + dep, 190, 40,
-                ClrMaroon, ClrMaroonDark, Color.White, 9.5F);
+            btnImportDocx = MakeButton("⬆  IMPORT DOCX", 44, 420, 200, 42,
+                ClrMaroon, ClrMaroonDark, Color.White);
             btnImportDocx.Click += BtnImportDocx_Click;
 
-            btnViewExample = MakeButton("?", pad + 190 + 8, 298 + yShift + dep, 40, 40,
-                ClrGold, ClrGoldDark, ClrMaroonDark, 10F);
+            btnViewExample = MakeButton("?", 254, 420, 42, 42,
+                ClrGold, ClrGoldDark, ClrMaroonDark);
+            btnViewExample.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
             new ToolTip().SetToolTip(btnViewExample,
                 "See an example DOCX showing how to format your quiz");
             btnViewExample.Click += BtnViewExample_Click;
 
             lblFileName = new Label();
             lblFileName.Text = "No DOCX file selected.";
-            lblFileName.Font = new Font("Segoe UI Italic", 9F, FontStyle.Italic);
+            lblFileName.Font = new Font("Segoe UI", 9F, FontStyle.Italic);
             lblFileName.ForeColor = Color.FromArgb(120, 115, 110);
+            lblFileName.BackColor = Color.White;
             lblFileName.AutoSize = true;
-            lblFileName.Location = new Point(pad + 250, 312 + yShift + dep);
+            lblFileName.Location = new Point(308, 432);
             Controls.Add(lblFileName);
 
             lblQuestionCount = new Label();
             lblQuestionCount.Text = "Questions: 0";
-            lblQuestionCount.Font = new Font("Segoe UI Semibold", 10, FontStyle.Bold);
+            lblQuestionCount.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
             lblQuestionCount.ForeColor = ClrMaroon;
+            lblQuestionCount.BackColor = Color.White;
             lblQuestionCount.AutoSize = true;
-            lblQuestionCount.Location = new Point(pad + leftWidth - 110, 312 + yShift + dep);
+            lblQuestionCount.Location = new Point(600, 432);
             Controls.Add(lblQuestionCount);
 
-            // ---------------- PREVIEW ----------------
-            Label lblPreview = AddLabel("Imported Questions / Exam Structure", pad, 358 + yShift + dep);
-            lblPreview.Font = new Font("Segoe UI Semibold", 10.5F, FontStyle.Bold);
+            // ---------------- PREVIEW + POINTS ----------------
+            AddCaption("IMPORTED QUESTIONS / EXAM STRUCTURE", 44, 484);
 
-            // ---------------- POINTS (visible on main form) ----------------
-            Label lblSelPoints = AddLabel("Points:", 395, 358 + yShift + dep + 2);
+            AddCaption("POINTS", 430, 484);
 
-            numSelPoints = new NumericUpDown();
-            numSelPoints.Font = new Font("Segoe UI", 10);
-            numSelPoints.Minimum = 1;
-            numSelPoints.Maximum = 100;
-            numSelPoints.Value = 1;
-            numSelPoints.TextAlign = HorizontalAlignment.Center;
-            numSelPoints.Location = new Point(455, 353 + yShift + dep);
-            numSelPoints.Size = new Size(70, 30);
-            numSelPoints.Enabled = false;
-            Controls.Add(numSelPoints);
+            txtSelPoints = MakeTextBox(490, 476, 70, 36);
+            txtSelPoints.Text = "1";
+            txtSelPoints.TextAlign = HorizontalAlignment.Center;
+            txtSelPoints.MaxLength = 3;
+            txtSelPoints.Enabled = false;
+            txtSelPoints.KeyPress += DigitsOnly;
 
-            new ToolTip().SetToolTip(numSelPoints,
-                "Select a question in the list, set its points here, then click SET POINTS.");
-
-            btnApplyPoints = MakeButton("SET POINTS", 535, 352 + yShift + dep, 150, 32,
-                ClrGold, ClrGoldDark, ClrMaroonDark, 9F);
+            btnApplyPoints = MakeButton("SET POINTS", 572, 476, 164, 36,
+                ClrGold, ClrGoldDark, ClrMaroonDark);
+            btnApplyPoints.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
             btnApplyPoints.Click += BtnApplyPoints_Click;
 
+            // List inside a rounded card
+            listCard = new Guna2Panel();
+            listCard.Location = new Point(44, 522);
+            listCard.Size = new Size(692, 150);
+            listCard.FillColor = Color.White;
+            listCard.BorderColor = ClrBorder;
+            listCard.BorderThickness = 1;
+            listCard.BorderRadius = 12;
+            listCard.Padding = new Padding(8);
+            Controls.Add(listCard);
+
             lstQuestions = new ListBox();
+            lstQuestions.Dock = DockStyle.Fill;
+            lstQuestions.BorderStyle = BorderStyle.None;
             lstQuestions.Font = new Font("Segoe UI", 9.5F);
+            lstQuestions.ForeColor = ClrText;
+            lstQuestions.BackColor = Color.White;
             lstQuestions.HorizontalScrollbar = true;
-            lstQuestions.BorderStyle = BorderStyle.FixedSingle;
-            lstQuestions.Location = new Point(pad, 385 + yShift + dep);
-            lstQuestions.Size = new Size(leftWidth, 170);
             lstQuestions.DoubleClick += LstQuestions_DoubleClick;
             lstQuestions.SelectedIndexChanged += LstQuestions_SelectedIndexChanged;
-            Controls.Add(lstQuestions);
+            listCard.Controls.Add(lstQuestions);
 
-            // ---------------- EDIT / SUBMIT / MONITOR / CLEAR ----------------
-            btnEditQuestion = MakeButton("✎  EDIT SELECTED", pad, 675, 160, 38,
-                ClrGold, ClrGoldDark, ClrMaroonDark, 9.5F);
+            // ---------------- ACTIONS ----------------
+            btnEditQuestion = MakeButton("✎  EDIT SELECTED", 44, 688, 170, 42,
+                ClrGold, ClrGoldDark, ClrMaroonDark);
+            btnEditQuestion.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
             btnEditQuestion.Click += BtnEditQuestion_Click;
 
-            btnSaveQuiz = MakeButton("✓  SUBMIT", pad + leftWidth - 480, 725, 150, 42,
+            btnSaveQuiz = MakeButton("✓  SUBMIT", 296, 688, 150, 42,
                 ClrMaroon, ClrMaroonDark, Color.White);
             btnSaveQuiz.Click += BtnSaveQuiz_Click;
 
-            btnMonitor = MakeButton("◉  MONITOR", pad + leftWidth - 315, 725, 150, 42,
+            btnMonitor = MakeButton("◉  MONITOR", 456, 688, 150, 42,
                 ClrGold, ClrGoldDark, ClrMaroonDark);
             btnMonitor.Click += BtnMonitor_Click;
 
-            btnClear = MakeButton("CLEAR", pad + leftWidth - 150, 725, 130, 42,
-                ClrBlack, ClrBlackHover, Color.White);
+            btnClear = MakeButton("CLEAR", 616, 688, 120, 42,
+               ClrDark, ClrDarkHover, Color.White);
             btnClear.Click += BtnClear_Click;
 
-            leftCard.SendToBack();
+            // Ilagay ang card sa likod ng lahat ng controls
+            mainCard.SendToBack();
+
         }
+
+        // =========================================================
+        // UI HELPERS
+        // =========================================================
+
+        private Guna2Panel MakeCard(int x, int y, int w, int h)
+        {
+            Guna2Panel card = new Guna2Panel();
+            card.Location = new Point(x, y);
+            card.Size = new Size(w, h);
+            card.FillColor = ClrCardBg;
+            card.BorderColor = ClrBorder;
+            card.BorderThickness = 1;
+            card.BorderRadius = 16;
+            card.ShadowDecoration.Enabled = true;
+            card.ShadowDecoration.Depth = 6;
+            card.ShadowDecoration.Color = Color.FromArgb(25, 0, 0, 0);
+            return card;
+        }
+
+        private void AddCaption(string text, int x, int y, bool bold = true)
+        {
+            Label lbl = new Label();
+            lbl.Text = text;
+            lbl.Font = bold
+                ? new Font("Segoe UI Semibold", 7.5F, FontStyle.Bold)
+                : new Font("Segoe UI", 9F);
+            lbl.ForeColor = ClrMuted;
+            lbl.BackColor = Color.White;
+            lbl.AutoSize = true;
+            lbl.Location = new Point(x, y);
+            Controls.Add(lbl);
+        }
+
+        private Guna2TextBox MakeTextBox(int x, int y, int w, int h)
+        {
+            Guna2TextBox tb = new Guna2TextBox();
+            tb.Location = new Point(x, y);
+            tb.Size = new Size(w, h);
+            tb.FillColor = Color.White;
+            tb.BorderColor = ClrBorder;
+            tb.BorderThickness = 1;
+            tb.BorderRadius = 10;
+            tb.ForeColor = ClrText;
+            tb.Font = new Font("Segoe UI", 10F);
+            tb.FocusedState.BorderColor = ClrMaroon;
+            Controls.Add(tb);
+            return tb;
+        }
+
+        private Guna2ComboBox MakeCombo(int x, int y, int w, int h)
+        {
+            Guna2ComboBox cb = new Guna2ComboBox();
+            cb.DropDownStyle = ComboBoxStyle.DropDownList;
+            cb.Location = new Point(x, y);
+            cb.Size = new Size(w, h);
+            cb.FillColor = Color.White;
+            cb.BorderColor = ClrBorder;
+            cb.BorderThickness = 1;
+            cb.BorderRadius = 10;
+            cb.ForeColor = ClrText;
+            cb.Font = new Font("Segoe UI", 10F);
+            cb.FocusedState.BorderColor = ClrMaroon;
+            Controls.Add(cb);
+            return cb;
+        }
+
+        private Guna2Button MakeButton(string text, int x, int y, int w, int h,
+                                       Color fill, Color hover, Color fore)
+        {
+            Guna2Button b = new Guna2Button();
+            b.Text = text;
+            b.Location = new Point(x, y);
+            b.Size = new Size(w, h);
+            b.BorderRadius = h / 2;
+            b.FillColor = fill;
+            b.ForeColor = fore;
+            b.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
+            b.HoverState.FillColor = hover;
+            b.Cursor = Cursors.Hand;
+            Controls.Add(b);
+            return b;
+        }
+
+        private static void DigitsOnly(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
+                e.Handled = true;
+        }
+
+        // =========================================================
+        // DEPLOY CONTROLS
+        // =========================================================
 
         private void UpdateDeployControls()
         {
-            bool scheduled = cmbDeployMode != null && cmbDeployMode.SelectedIndex == 1;
+            bool scheduled = IsScheduled();
 
             if (dtpDeployDate != null) dtpDeployDate.Enabled = scheduled;
-            if (dtpDeployTime != null) dtpDeployTime.Enabled = scheduled;
+            if (txtDeployTime != null) txtDeployTime.Enabled = scheduled;
         }
 
         private bool IsScheduled()
@@ -461,9 +469,16 @@ namespace WinFormsApp1
             return cmbDeployMode != null && cmbDeployMode.SelectedIndex == 1;
         }
 
-        private DateTime GetDeployDateTime()
+        private bool TryGetDeployDateTime(out DateTime result)
         {
-            return dtpDeployDate.Value.Date + dtpDeployTime.Value.TimeOfDay;
+            result = DateTime.MinValue;
+
+            DateTime time;
+            if (!DateTime.TryParse(txtDeployTime.Text.Trim(), out time))
+                return false;
+
+            result = dtpDeployDate.Value.Date + time.TimeOfDay;
+            return true;
         }
 
         // =========================================================
@@ -472,20 +487,18 @@ namespace WinFormsApp1
 
         private void LstQuestions_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (numSelPoints == null) return;
-
             QuizQuestion q;
 
             if (lstQuestions.SelectedIndex >= 0 &&
                 questionItemMap.TryGetValue(lstQuestions.SelectedIndex, out q) &&
                 q != null)
             {
-                numSelPoints.Value = Math.Max(1, Math.Min(100, q.Points));
-                numSelPoints.Enabled = true;
+                txtSelPoints.Text = Math.Max(1, Math.Min(100, q.Points)).ToString();
+                txtSelPoints.Enabled = true;
             }
             else
             {
-                numSelPoints.Enabled = false;
+                txtSelPoints.Enabled = false;
             }
         }
 
@@ -504,57 +517,28 @@ namespace WinFormsApp1
                 return;
             }
 
+            int pts;
+            if (!int.TryParse(txtSelPoints.Text.Trim(), out pts) || pts < 1 || pts > 100)
+            {
+                CustomMessageBox.Show(
+                    "Ilagay ang points mula 1 hanggang 100.",
+                    "Set Points",
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Warning);
+                txtSelPoints.Focus();
+                return;
+            }
+
             QuizQuestion q = questionItemMap[idx];
             if (q == null) return;
 
-            q.Points = (int)numSelPoints.Value;
+            q.Points = pts;
 
             // Rebuild the list (same order, so the same index stays selected)
             RefreshQuestionList();
 
             if (idx < lstQuestions.Items.Count)
                 lstQuestions.SelectedIndex = idx;
-        }
-
-        // =========================================================
-        // CARD PANEL HELPER
-        // =========================================================
-
-        private Panel CreateCardPanel(int x, int y, int width, int height, int radius = 14)
-        {
-            Panel panel = new Panel();
-            panel.Location = new Point(x, y);
-            panel.Size = new Size(width, height);
-            panel.BackColor = Color.White;
-
-            panel.Paint += (s, e) =>
-            {
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-
-                Rectangle bounds = new Rectangle(0, 0, panel.Width - 1, panel.Height - 1);
-
-                using (GraphicsPath path = BuildRoundedRectPath(bounds, radius))
-                using (var borderPen = new Pen(ClrGold, 1.6f))
-                {
-                    e.Graphics.DrawPath(borderPen, path);
-                }
-            };
-
-            return panel;
-        }
-
-        private GraphicsPath BuildRoundedRectPath(Rectangle bounds, int radius)
-        {
-            int d = radius * 2;
-            GraphicsPath path = new GraphicsPath();
-
-            path.AddArc(bounds.X, bounds.Y, d, d, 180, 90);
-            path.AddArc(bounds.Right - d, bounds.Y, d, d, 270, 90);
-            path.AddArc(bounds.Right - d, bounds.Bottom - d, d, d, 0, 90);
-            path.AddArc(bounds.X, bounds.Bottom - d, d, d, 90, 90);
-            path.CloseFigure();
-
-            return path;
         }
 
         // =========================================================
@@ -879,14 +863,36 @@ namespace WinFormsApp1
                 return;
             }
 
-            int durationMinutes =
-                (Convert.ToInt32(numHours.Value) * 60) + Convert.ToInt32(numMinutes.Value);
+            // ---- time limit (typed) ----
+            int hours;
+            int minutes;
+
+            if (!int.TryParse(txtHours.Text.Trim(), out hours)) hours = 0;
+            if (!int.TryParse(txtMinutes.Text.Trim(), out minutes)) minutes = 0;
+
+            if (hours < 0 || hours > 24)
+            {
+                CustomMessageBox.Show("Hours must be between 0 and 24.", "Invalid Time Limit",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
+                txtHours.Focus();
+                return;
+            }
+
+            if (minutes < 0 || minutes > 59)
+            {
+                CustomMessageBox.Show("Minutes must be between 0 and 59.", "Invalid Time Limit",
+                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
+                txtMinutes.Focus();
+                return;
+            }
+
+            int durationMinutes = (hours * 60) + minutes;
 
             if (durationMinutes < 1)
             {
                 CustomMessageBox.Show("Time limit must be at least 1 minute.", "Invalid Time Limit",
                     CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
-                numHours.Focus();
+                txtHours.Focus();
                 return;
             }
 
@@ -894,7 +900,7 @@ namespace WinFormsApp1
             {
                 CustomMessageBox.Show("Time limit cannot exceed 24 hours (1440 minutes).", "Invalid Time Limit",
                     CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
-                numHours.Focus();
+                txtHours.Focus();
                 return;
             }
 
@@ -903,7 +909,17 @@ namespace WinFormsApp1
 
             if (IsScheduled())
             {
-                DateTime picked = GetDeployDateTime();
+                DateTime picked;
+
+                if (!TryGetDeployDateTime(out picked))
+                {
+                    CustomMessageBox.Show(
+                        "Ilagay ang deploy time sa tamang format, halimbawa: 08:00 AM o 14:30.",
+                        "Invalid Deploy Time",
+                        CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
+                    txtDeployTime.Focus();
+                    return;
+                }
 
                 if (picked <= DateTime.Now.AddMinutes(1))
                 {
@@ -1393,20 +1409,21 @@ namespace WinFormsApp1
             cmbAssessmentType.SelectedIndex = 0;
             cmbExamPeriod.SelectedIndex = 0;
 
-            if (numHours != null) numHours.Value = 1;
-            if (numMinutes != null) numMinutes.Value = 0;
+            txtHours.Text = "1";
+            txtMinutes.Text = "0";
 
-            if (cmbDeployMode != null) cmbDeployMode.SelectedIndex = 0;
+            cmbDeployMode.SelectedIndex = 0;
 
             DateTime defaultDeploy = DateTime.Today.AddDays(1).AddHours(8);
-            if (dtpDeployDate != null) dtpDeployDate.Value = defaultDeploy;
-            if (dtpDeployTime != null) dtpDeployTime.Value = defaultDeploy;
+            dtpDeployDate.Value = defaultDeploy.Date;
+            txtDeployTime.Text = defaultDeploy.ToString("hh:mm tt");
 
             importedQuestions = new List<QuizQuestion>();
             questionItemMap.Clear();
             lstQuestions.Items.Clear();
 
-            if (numSelPoints != null) numSelPoints.Enabled = false;
+            txtSelPoints.Text = "1";
+            txtSelPoints.Enabled = false;
 
             lblFileName.Text = "No DOCX file selected.";
             lblQuestionCount.Text = "Questions: 0";
@@ -1418,7 +1435,7 @@ namespace WinFormsApp1
     }
 
     // =================================================================
-    // QUESTION EDITOR FORM
+    // QUESTION EDITOR FORM (unchanged)
     // =================================================================
 
     public class QuestionEditorForm : Form
@@ -1775,9 +1792,4 @@ namespace WinFormsApp1
             Close();
         }
     }
-
-    // NOTE:
-    // RoundedButton class ay nasa LivenessCheckForm.cs mo.
-    // Huwag magdagdag ng panibagong RoundedButton class dito
-    // para maiwasan ang duplicate/ambiguous class error.
 }

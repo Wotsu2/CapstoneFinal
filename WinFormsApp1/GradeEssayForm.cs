@@ -166,6 +166,8 @@ namespace WinFormsApp1
             numPoints.Size = new Size(90, 28);
             cardGrade.Controls.Add(numPoints);
 
+
+
             lblMax = new Label();
             lblMax.Text = "out of 1";
             lblMax.Font = new Font("Segoe UI", 9.5F);
@@ -268,7 +270,7 @@ namespace WinFormsApp1
             lbl.Text = text;
             lbl.Font = new Font("Segoe UI Semibold", 8F, FontStyle.Bold);
             lbl.ForeColor = ClrMuted;
-            lbl.BackColor = Color.Transparent;
+            lbl.BackColor = Color.White;
             lbl.AutoSize = true;
             lbl.Location = new Point(x, y);
             parent.Controls.Add(lbl);

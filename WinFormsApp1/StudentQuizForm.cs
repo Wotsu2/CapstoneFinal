@@ -23,6 +23,7 @@ namespace WinFormsApp1
 
         private string studentName = "";
 
+        private bool isExam = false;
         // =========================================================
         // QUIZ ATTEMPT
         // =========================================================
@@ -692,6 +693,8 @@ namespace WinFormsApp1
                             }
 
                             selectedQuizId = Convert.ToInt32(reader["quiz_id"]);
+                            isExam = reader["assessment_type"] != DBNull.Value &&
+         reader["assessment_type"].ToString().Trim().Equals("exam", StringComparison.OrdinalIgnoreCase);
 
                             int dbDuration = 60;
                             if (reader["duration_minutes"] != DBNull.Value)
@@ -1466,10 +1469,18 @@ namespace WinFormsApp1
             }
 
             // ---- Exam permit (top of the examination) ----
-            permitPanel = CreatePermitPanel();
-            permitPanel.Location = new Point(PaperMargin, y);
-            contentPanel.Controls.Add(permitPanel);
-            y += permitPanel.Height + 16;
+            if (isExam)
+            {
+                permitPanel = CreatePermitPanel();
+                permitPanel.Location = new Point(PaperMargin, y);
+                contentPanel.Controls.Add(permitPanel);
+                y += permitPanel.Height + 16;
+            }
+            else
+            {
+                permitPanel = null;
+                txtPermit = null;
+            }
 
             string[] typeOrder = { "multiple_choice", "true_false", "identification", "essay" };
             string[] sectionTitles = { "MULTIPLE CHOICE", "TRUE OR FALSE", "IDENTIFICATION", "ESSAY" };
@@ -1985,7 +1996,7 @@ namespace WinFormsApp1
         private bool ValidateAllAnswers()
         {
             // Exam permit is required
-            if (txtPermit == null || string.IsNullOrWhiteSpace(txtPermit.Text))
+            if (isExam && (txtPermit == null || string.IsNullOrWhiteSpace(txtPermit.Text)))
             {
                 CustomMessageBox.Show("Please enter your Exam Permit number before submitting.",
                     "Exam Permit Required", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
@@ -2279,12 +2290,15 @@ namespace WinFormsApp1
                 if (type == "essay") continue;
 
                 if (!string.IsNullOrWhiteSpace(studentAnswer) &&
-                    !string.IsNullOrWhiteSpace(q.CorrectAnswer))
+                    !string.IsNullOrWhiteSpace(q.CorrectAnswer) &&
+                    studentAnswer.Trim().ToUpper() == q.CorrectAnswer.Trim().ToUpper())
                 {
-                    if (studentAnswer.Trim().ToUpper() == q.CorrectAnswer.Trim().ToUpper())
-                        score++;
+                    score += q.Points < 1 ? 1 : q.Points;
                 }
             }
+
+            int totalPoints = questions.Sum(q => q.Points < 1 ? 1 : q.Points);
+            bool essayPending = questions.Any(q => NormalizeQuestionType(q.QuestionType) == "essay");
 
             if (!SaveAnswersToDatabase())
             {
@@ -2299,18 +2313,24 @@ namespace WinFormsApp1
                 }
             }
 
-            SaveAttemptToDatabase(score, questions.Count, automaticSubmit);
+            SaveAttemptToDatabase(score, totalPoints, automaticSubmit, essayPending);
         }
 
         // =========================================================
         // SAVE ATTEMPT TO DATABASE
         // =========================================================
 
-        private void SaveAttemptToDatabase(int finalScore, int totalQuestions, bool automaticSubmit)
+        private void SaveAttemptToDatabase(int finalScore, int totalPoints, bool automaticSubmit, bool essayPending)
         {
             decimal percentage = 0;
-            if (totalQuestions > 0)
-                percentage = ((decimal)finalScore / totalQuestions) * 100;
+            if (totalPoints > 0)
+                percentage = ((decimal)finalScore / totalPoints) * 100;
+
+            string gradingStatus = essayPending ? "pending" : "auto";
+            int isReleased = essayPending ? 0 : 1;
+
+            // Permit number na nilagay ng student
+            string permitNo = (isExam && txtPermit != null) ? txtPermit.Text.Trim() : "";
 
             string connStr = SettingsManager.Current.GetConnectionString();
 
@@ -2324,23 +2344,29 @@ namespace WinFormsApp1
                     tx = conn.BeginTransaction();
 
                     string attemptQuery = @"
-                        UPDATE quiz_attempts
-                        SET score = @score,
-                            total_questions = @total_questions,
-                            percentage = @percentage,
-                            status = 'SUBMITTED',
-                            last_seen = NOW(),
-                            remaining_seconds = @remaining_seconds,
-                            student_name = @student_name
-                        WHERE attempt_id = @attempt_id";
+                UPDATE quiz_attempts
+                SET score = @score,
+                    total_questions = @total_questions,
+                    percentage = @percentage,
+                    status = 'SUBMITTED',
+                    last_seen = NOW(),
+                    remaining_seconds = @remaining_seconds,
+                    student_name = @student_name,
+                    grading_status = @grading_status,
+                    is_released = @is_released,
+                    permit_no = @permit_no
+                WHERE attempt_id = @attempt_id";
 
                     using (var cmd = new MySqlCommand(attemptQuery, conn, tx))
                     {
                         cmd.Parameters.AddWithValue("@score", finalScore);
-                        cmd.Parameters.AddWithValue("@total_questions", totalQuestions);
+                        cmd.Parameters.AddWithValue("@total_questions", totalPoints);
                         cmd.Parameters.AddWithValue("@percentage", percentage);
                         cmd.Parameters.AddWithValue("@remaining_seconds", Math.Max(0, remainingSeconds));
                         cmd.Parameters.AddWithValue("@student_name", studentName);
+                        cmd.Parameters.AddWithValue("@grading_status", gradingStatus);
+                        cmd.Parameters.AddWithValue("@is_released", isReleased);
+                        cmd.Parameters.AddWithValue("@permit_no", permitNo == "" ? (object)DBNull.Value : permitNo);
                         cmd.Parameters.AddWithValue("@attempt_id", currentAttemptId);
 
                         int affectedRows = cmd.ExecuteNonQuery();
@@ -2355,29 +2381,27 @@ namespace WinFormsApp1
                     StopAutoSave();
                     StopHeartbeat();
 
-                    if (automaticSubmit)
-                    {
-                        CustomMessageBox.Show(
-                            "Time is up.\n\n" +
-                            "Your examination has been submitted automatically.\n\n" +
-                            "Score: " + finalScore + " / " + totalQuestions +
-                            "\nPercentage: " + percentage.ToString("0.00") + "%",
-                            "Time Expired",
-                            CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
-                    }
-                    else
-                    {
-                        CustomMessageBox.Show(
-                            "Examination submitted successfully!\n\n" +
-                            "Score: " + finalScore + " / " + totalQuestions +
-                            "\nPercentage: " + percentage.ToString("0.00") + "%",
-                            "Examination Submitted",
-                            CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Information);
-                    }
+                    string resultText = essayPending
+                        ? "Your answers have been submitted.\n\n" +
+                          "The essay part will be graded by your professor. " +
+                          "Your final grade will be shown once it is released."
+                        : "Score: " + finalScore + " / " + totalPoints +
+                          "\nPercentage: " + percentage.ToString("0.00") + "%";
+
+                    string prefix = automaticSubmit
+                        ? "Time is up.\n\nYour examination has been submitted automatically.\n\n"
+                        : "Examination submitted successfully!\n\n";
+
+                    string title = automaticSubmit ? "Time Expired" : "Examination Submitted";
+
+                    CustomMessageBox.Show(
+                        prefix + resultText,
+                        title,
+                        CustomMessageBoxButtons.OK,
+                        CustomMessageBoxIcon.Information);
 
                     DisableQuiz();
 
-                    // Submitted: close the exam and go back to the dashboard
                     this.Close();
                 }
                 catch (Exception ex)
