@@ -743,6 +743,9 @@ namespace WinFormsApp1
             }
         }
 
+        // =========================================================
+        // COMMAND LISTENER — handles SHUTDOWN, RESTART, LOCK, MESSAGE
+        // =========================================================
         private void ListenForCommands()
         {
             while (isSharingScreen && !isSignedOut)
@@ -752,12 +755,15 @@ namespace WinFormsApp1
                     TcpClient client = Shutdownlistener.AcceptTcpClient();
                     NetworkStream stream = client.GetStream();
 
-                    byte[] buffer = new byte[1024];
+                    byte[] buffer = new byte[8192];
                     int bytesRead = stream.Read(buffer, 0, buffer.Length);
                     if (bytesRead == 0) { client.Close(); continue; }
 
                     string command = Encoding.UTF8.GetString(buffer, 0, bytesRead).Trim();
 
+                    // =========================================================
+                    // LOCK / UNLOCK
+                    // =========================================================
                     if (command == "LOCK" || command == "UNLOCK")
                     {
                         try
@@ -777,6 +783,34 @@ namespace WinFormsApp1
                         continue;
                     }
 
+                    // =========================================================
+                    // ★ MESSAGE — format: "MESSAGE|<text>"
+                    // =========================================================
+                    if (command.StartsWith("MESSAGE|"))
+                    {
+                        string msgText = command.Substring("MESSAGE|".Length);
+
+                        // Reply OK so professor knows it was received
+                        try
+                        {
+                            byte[] ok = Encoding.UTF8.GetBytes("OK");
+                            stream.Write(ok, 0, ok.Length);
+                            stream.Flush();
+                        }
+                        catch { }
+                        client.Close();
+
+                        if (!string.IsNullOrEmpty(msgText) && this.IsHandleCreated && !this.IsDisposed)
+                        {
+                            string finalMsg = msgText;
+                            this.BeginInvoke(new Action(() => ShowProfessorMessagePopup(finalMsg)));
+                        }
+                        continue;
+                    }
+
+                    // =========================================================
+                    // SHUTDOWN / RESTART
+                    // =========================================================
                     if (command == "SHUTDOWN")
                     {
                         client.Close();
@@ -800,6 +834,14 @@ namespace WinFormsApp1
                     System.Threading.Thread.Sleep(500);
                 }
             }
+        }
+
+        // =========================================================
+        // ★ Show a message popup from the professor (front & center, ~8s)
+        // =========================================================
+        private void ShowProfessorMessagePopup(string message)
+        {
+            ProfessorMessageForm.ShowMessage(message, 8);
         }
 
         // =========================================================
@@ -1001,7 +1043,7 @@ namespace WinFormsApp1
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-                    string query = "SELECT activity_id, title, start_time, due_date, activity_subject, activity_status, description, professor_id FROM professor_activity WHERE activity_id = @activity_id";
+                    string query = "SELECT activity_id, title, start_time, due_date, activity_subject, activity_status, description, professor_id, section FROM professor_activity WHERE activity_id = @activity_id";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
@@ -1018,11 +1060,18 @@ namespace WinFormsApp1
                                 string activity_status = reader.GetString("activity_status");
                                 string description = reader.GetString("description");
 
-                                string tempPdfPath = FetchActivityPdf(ActivityId, profId, title, StudentSection, activity_subject);
+                                // Read the section from the activity row itself — this is
+                                // always correct, unlike the student's profile section
+                                // which may be empty.
+                                string activitySection = reader.IsDBNull(reader.GetOrdinal("section"))
+                                    ? StudentSection
+                                    : reader.GetString("section");
+
+                                string tempPdfPath = FetchActivityPdf(ActivityId, profId, title, activitySection, activity_subject);
 
                                 ActivityForm activityForm = new ActivityForm(
                                     profId, userId, studentname, title, due_date, description,
-                                    StudentSection, activity_subject, activity_status, tempPdfPath);
+                                    activitySection, activity_subject, activity_status, tempPdfPath);
 
                                 activityForm.ActivitySubmitted += () => RefreshPendingActivities();
 
@@ -1070,7 +1119,7 @@ namespace WinFormsApp1
                     string query = @"
                         SELECT pa.activity_id, pa.title, pa.start_time, pa.due_date,
                                pa.activity_subject, pa.activity_status,
-                               pa.description, pa.professor_id
+                               pa.description, pa.professor_id, pa.section
                         FROM professor_activity pa
                         INNER JOIN student_class sc
                             ON  sc.user_id      = @user_id
@@ -1157,12 +1206,15 @@ namespace WinFormsApp1
             string Description = GetSafeValue(row, "description");
             string profId = GetSafeValue(row, "professor_id");
             string className = GetSafeValue(row, "activity_subject");
+            string section = GetSafeValue(row, "section");
 
-            string tempPdfPath = FetchActivityPdf(int.Parse(activityId), int.Parse(profId), Title, StudentSection, className);
+            if (string.IsNullOrEmpty(section)) section = StudentSection;
+
+            string tempPdfPath = FetchActivityPdf(int.Parse(activityId), int.Parse(profId), Title, section, className);
 
             ActivityForm activityForm = new ActivityForm(
                 int.Parse(profId), userId, studentname, Title, DueDate, Description,
-                StudentSection, className, ActivityStatus, tempPdfPath);
+                section, className, ActivityStatus, tempPdfPath);
 
             activityForm.ActivitySubmitted += () => RefreshPendingActivities();
 
@@ -1271,6 +1323,7 @@ namespace WinFormsApp1
 
         private string GetSafeValue(DataGridViewRow row, string columnName)
         {
+            if (!row.DataGridView.Columns.Contains(columnName)) return "";
             object raw = row.Cells[columnName].Value;
             return (raw == null || raw == DBNull.Value) ? "" : raw.ToString();
         }
@@ -1420,9 +1473,6 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // InitializeJoinClass — CREATES STUDENT FOLDER
-        // =========================================================
         private void InitializeJoinClass(int professorId, string className, string classSection, string classTime, string classDate)
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -1468,7 +1518,6 @@ namespace WinFormsApp1
 
                     LoadJoinedClasses();
 
-                    // ★ Create student folder
                     CreateStudentClassFolder(professorId, classSection);
 
                     MessageBox.Show("Successfully Joined Class!");
@@ -1482,9 +1531,6 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // Create <root>/<Professor>/<Section>/<Student>/ folder
-        // =========================================================
         private void CreateStudentClassFolder(int professorId, string classSection)
         {
             try
@@ -1857,9 +1903,6 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // UnjoinClass — DELETES STUDENT FOLDER
-        // =========================================================
         private void UnjoinClass(string classname, string classSection, string classTime, string classDate)
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -1907,7 +1950,6 @@ namespace WinFormsApp1
                     }
                 }
 
-                // ★ Delete the student folder
                 try
                 {
                     if (professorId > 0 && !string.IsNullOrEmpty(studentname))
@@ -4019,7 +4061,6 @@ namespace WinFormsApp1
             }
         }
 
-
         private void label8_Click(object sender, EventArgs e)
         {
         }
@@ -4030,10 +4071,6 @@ namespace WinFormsApp1
 
         private void guna2Panel2_Paint(object sender, PaintEventArgs e)
         {
-
         }
-
-       
-
     }
 }
