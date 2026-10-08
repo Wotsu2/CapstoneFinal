@@ -30,12 +30,12 @@
         {
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges3 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges4 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(StudentForm));
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges1 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges2 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges15 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges16 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges5 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(StudentForm));
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges6 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges7 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges8 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -199,6 +199,8 @@
             DataGridViewCellStyle dataGridViewCellStyle11 = new DataGridViewCellStyle();
             DataGridViewCellStyle dataGridViewCellStyle12 = new DataGridViewCellStyle();
             guna2Panel2 = new Guna.UI2.WinForms.Guna2Panel();
+            panel2 = new Panel();
+            label32 = new Label();
             label8 = new Label();
             panel1 = new Panel();
             pictureBox1 = new PictureBox();
@@ -375,7 +377,9 @@
             // 
             // guna2Panel2
             // 
-            guna2Panel2.BackColor = Color.White;
+            guna2Panel2.BackColor = Color.FromArgb(97, 30, 32);
+            guna2Panel2.Controls.Add(panel2);
+            guna2Panel2.Controls.Add(label32);
             guna2Panel2.Controls.Add(label8);
             guna2Panel2.Controls.Add(panel1);
             guna2Panel2.Controls.Add(pictureBox1);
@@ -386,22 +390,43 @@
             guna2Panel2.Controls.Add(label7);
             guna2Panel2.CustomizableEdges = customizableEdges3;
             guna2Panel2.Dock = DockStyle.Top;
-            guna2Panel2.FillColor = Color.White;
+            guna2Panel2.FillColor = Color.FromArgb(244, 243, 246);
             guna2Panel2.Location = new Point(0, 0);
             guna2Panel2.Name = "guna2Panel2";
             guna2Panel2.ShadowDecoration.CustomizableEdges = customizableEdges4;
             guna2Panel2.Size = new Size(1350, 83);
             guna2Panel2.TabIndex = 3;
+            guna2Panel2.Paint += guna2Panel2_Paint;
+            // 
+            // panel2
+            // 
+            panel2.BackColor = Color.FromArgb(123, 15, 23);
+            panel2.Location = new Point(80, 0);
+            panel2.Name = "panel2";
+            panel2.Size = new Size(1, 85);
+            panel2.TabIndex = 45;
+            // 
+            // label32
+            // 
+            label32.AutoSize = true;
+            label32.BackColor = Color.Transparent;
+            label32.Font = new Font("Segoe UI", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label32.ForeColor = Color.FromArgb(97, 30, 32);
+            label32.Location = new Point(1092, 35);
+            label32.Name = "label32";
+            label32.Size = new Size(130, 25);
+            label32.TabIndex = 44;
+            label32.Text = "Junaid Abdul";
             // 
             // label8
             // 
             label8.AutoSize = true;
             label8.BackColor = Color.Transparent;
-            label8.Font = new Font("Segoe UI Black", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label8.ForeColor = Color.FromArgb(123, 15, 23);
-            label8.Location = new Point(156, 38);
+            label8.Font = new Font("Segoe UI", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label8.ForeColor = Color.FromArgb(97, 30, 32);
+            label8.Location = new Point(167, 38);
             label8.Name = "label8";
-            label8.Size = new Size(202, 15);
+            label8.Size = new Size(233, 20);
             label8.TabIndex = 43;
             label8.Text = "Colegio De San Gabriel Arcangel";
             label8.Click += label8_Click;
@@ -409,18 +434,18 @@
             // panel1
             // 
             panel1.BackColor = Color.FromArgb(123, 15, 23);
-            panel1.Location = new Point(384, 30);
+            panel1.Location = new Point(410, 30);
             panel1.Name = "panel1";
-            panel1.Size = new Size(1, 30);
+            panel1.Size = new Size(1, 35);
             panel1.TabIndex = 38;
             // 
             // pictureBox1
             // 
             pictureBox1.BackColor = Color.Transparent;
-            pictureBox1.Image = Properties.Resources.cdsga;
-            pictureBox1.Location = new Point(120, 30);
+            pictureBox1.Image = (Image)resources.GetObject("pictureBox1.Image");
+            pictureBox1.Location = new Point(121, 28);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(30, 30);
+            pictureBox1.Size = new Size(40, 40);
             pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox1.TabIndex = 40;
             pictureBox1.TabStop = false;
@@ -429,10 +454,11 @@
             // 
             label30.AutoSize = true;
             label30.BackColor = Color.Transparent;
-            label30.ForeColor = Color.FromArgb(123, 15, 23);
-            label30.Location = new Point(466, 30);
+            label30.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label30.ForeColor = Color.FromArgb(97, 30, 32);
+            label30.Location = new Point(477, 30);
             label30.Name = "label30";
-            label30.Size = new Size(63, 15);
+            label30.Size = new Size(70, 17);
             label30.TabIndex = 42;
             label30.Text = "College Of";
             // 
@@ -440,11 +466,11 @@
             // 
             label31.AutoSize = true;
             label31.BackColor = Color.Transparent;
-            label31.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            label31.ForeColor = Color.FromArgb(123, 15, 23);
-            label31.Location = new Point(466, 45);
+            label31.Font = new Font("Segoe UI", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label31.ForeColor = Color.FromArgb(97, 30, 32);
+            label31.Location = new Point(477, 45);
             label31.Name = "label31";
-            label31.Size = new Size(179, 15);
+            label31.Size = new Size(223, 20);
             label31.TabIndex = 41;
             label31.Text = "Computer Studies Department\r\n";
             // 
@@ -452,31 +478,33 @@
             // 
             pictureBox4.BackColor = Color.Transparent;
             pictureBox4.Image = Properties.Resources._355823652_701491338448756_8639478619159832458_n_removebg_preview_12;
-            pictureBox4.Location = new Point(423, 30);
+            pictureBox4.Location = new Point(433, 27);
             pictureBox4.Name = "pictureBox4";
-            pictureBox4.Size = new Size(30, 30);
-            pictureBox4.SizeMode = PictureBoxSizeMode.AutoSize;
+            pictureBox4.Size = new Size(38, 38);
+            pictureBox4.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox4.TabIndex = 39;
             pictureBox4.TabStop = false;
             // 
             // btnAccount
             // 
             btnAccount.Animated = true;
-            btnAccount.BackColor = Color.White;
+            btnAccount.BackColor = Color.Transparent;
+            btnAccount.BorderColor = Color.FromArgb(244, 243, 246);
             btnAccount.BorderRadius = 10;
             btnAccount.CustomizableEdges = customizableEdges1;
             btnAccount.DisabledState.BorderColor = Color.DarkGray;
             btnAccount.DisabledState.CustomBorderColor = Color.DarkGray;
             btnAccount.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
             btnAccount.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnAccount.FillColor = Color.White;
+            btnAccount.FillColor = Color.Transparent;
             btnAccount.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnAccount.ForeColor = Color.White;
+            btnAccount.ForeColor = Color.Transparent;
             btnAccount.Image = Properties.Resources.Avatar;
             btnAccount.ImageOffset = new Point(1, 0);
-            btnAccount.ImageSize = new Size(50, 50);
-            btnAccount.Location = new Point(1269, 12);
+            btnAccount.ImageSize = new Size(40, 40);
+            btnAccount.Location = new Point(1249, 14);
             btnAccount.Name = "btnAccount";
+            btnAccount.PressedColor = Color.Transparent;
             btnAccount.ShadowDecoration.BorderRadius = 10;
             btnAccount.ShadowDecoration.CustomizableEdges = customizableEdges2;
             btnAccount.ShadowDecoration.Shadow = new Padding(0, 0, 0, 5);
@@ -488,7 +516,7 @@
             // 
             label7.AutoSize = true;
             label7.Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label7.Location = new Point(129, 45);
+            label7.Location = new Point(140, 45);
             label7.Name = "label7";
             label7.Size = new Size(0, 28);
             label7.TabIndex = 15;
@@ -496,14 +524,16 @@
             // guna2Panel1
             // 
             guna2Panel1.BackColor = Color.White;
+            guna2Panel1.BorderColor = Color.Black;
             guna2Panel1.Controls.Add(pictureBox5);
             guna2Panel1.Controls.Add(btnQuizExam);
             guna2Panel1.Controls.Add(btnSubject);
             guna2Panel1.Controls.Add(btnGrades);
             guna2Panel1.Controls.Add(btnActivities);
             guna2Panel1.Controls.Add(btnHome);
+            guna2Panel1.CustomBorderColor = Color.Black;
             guna2Panel1.CustomizableEdges = customizableEdges15;
-            guna2Panel1.FillColor = Color.FromArgb(97, 30, 32);
+            guna2Panel1.FillColor = Color.FromArgb(244, 243, 246);
             guna2Panel1.Location = new Point(0, 0);
             guna2Panel1.Name = "guna2Panel1";
             guna2Panel1.ShadowDecoration.CustomizableEdges = customizableEdges16;
@@ -514,7 +544,7 @@
             // pictureBox5
             // 
             pictureBox5.BackColor = Color.Transparent;
-            pictureBox5.Image = Properties.Resources.ChatGPT_Image_Aug_18__2026__07_20_15_PM_1;
+            pictureBox5.Image = (Image)resources.GetObject("pictureBox5.Image");
             pictureBox5.Location = new Point(15, 28);
             pictureBox5.Name = "pictureBox5";
             pictureBox5.Size = new Size(53, 43);
@@ -528,8 +558,8 @@
             btnQuizExam.BackColor = Color.Transparent;
             btnQuizExam.BorderColor = Color.Maroon;
             btnQuizExam.BorderRadius = 15;
-            btnQuizExam.CheckedState.FillColor = Color.Black;
-            btnQuizExam.CheckedState.Image = Properties.Resources.grades_white;
+            btnQuizExam.CheckedState.FillColor = Color.FromArgb(233, 196, 84);
+            btnQuizExam.CheckedState.Image = (Image)resources.GetObject("resource.Image");
             btnQuizExam.Cursor = Cursors.Hand;
             btnQuizExam.CustomizableEdges = customizableEdges5;
             btnQuizExam.DisabledState.BorderColor = Color.DarkGray;
@@ -540,11 +570,12 @@
             btnQuizExam.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             btnQuizExam.ForeColor = Color.Black;
             btnQuizExam.Image = (Image)resources.GetObject("btnQuizExam.Image");
-            btnQuizExam.Location = new Point(15, 416);
+            btnQuizExam.ImageSize = new Size(25, 25);
+            btnQuizExam.Location = new Point(15, 404);
             btnQuizExam.Name = "btnQuizExam";
-            btnQuizExam.PressedColor = Color.White;
+            btnQuizExam.PressedColor = Color.FromArgb(233, 196, 84);
             btnQuizExam.ShadowDecoration.CustomizableEdges = customizableEdges6;
-            btnQuizExam.Size = new Size(52, 42);
+            btnQuizExam.Size = new Size(50, 42);
             btnQuizExam.TabIndex = 17;
             btnQuizExam.TextOffset = new Point(15, 0);
             btnQuizExam.Click += btnQuizExam_Click;
@@ -555,8 +586,8 @@
             btnSubject.BackColor = Color.Transparent;
             btnSubject.BorderColor = Color.Maroon;
             btnSubject.BorderRadius = 15;
-            btnSubject.CheckedState.FillColor = Color.Black;
-            btnSubject.CheckedState.Image = Properties.Resources.subject_white;
+            btnSubject.CheckedState.FillColor = Color.FromArgb(233, 196, 84);
+            btnSubject.CheckedState.Image = (Image)resources.GetObject("resource.Image1");
             btnSubject.Cursor = Cursors.Hand;
             btnSubject.CustomizableEdges = customizableEdges7;
             btnSubject.DisabledState.BorderColor = Color.DarkGray;
@@ -566,10 +597,11 @@
             btnSubject.FillColor = Color.Transparent;
             btnSubject.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             btnSubject.ForeColor = Color.Black;
-            btnSubject.Image = Properties.Resources.Subject;
-            btnSubject.Location = new Point(15, 285);
+            btnSubject.Image = (Image)resources.GetObject("btnSubject.Image");
+            btnSubject.ImageSize = new Size(25, 25);
+            btnSubject.Location = new Point(15, 274);
             btnSubject.Name = "btnSubject";
-            btnSubject.PressedColor = Color.White;
+            btnSubject.PressedColor = Color.FromArgb(233, 196, 84);
             btnSubject.ShadowDecoration.CustomizableEdges = customizableEdges8;
             btnSubject.Size = new Size(50, 40);
             btnSubject.TabIndex = 8;
@@ -582,8 +614,8 @@
             btnGrades.BackColor = Color.Transparent;
             btnGrades.BorderColor = Color.Maroon;
             btnGrades.BorderRadius = 15;
-            btnGrades.CheckedState.FillColor = Color.Black;
-            btnGrades.CheckedState.Image = Properties.Resources.grades_white;
+            btnGrades.CheckedState.FillColor = Color.FromArgb(233, 196, 84);
+            btnGrades.CheckedState.Image = (Image)resources.GetObject("resource.Image2");
             btnGrades.Cursor = Cursors.Hand;
             btnGrades.CustomizableEdges = customizableEdges9;
             btnGrades.DisabledState.BorderColor = Color.DarkGray;
@@ -593,10 +625,11 @@
             btnGrades.FillColor = Color.Transparent;
             btnGrades.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             btnGrades.ForeColor = Color.Black;
-            btnGrades.Image = Properties.Resources.Grades;
-            btnGrades.Location = new Point(15, 351);
+            btnGrades.Image = (Image)resources.GetObject("btnGrades.Image");
+            btnGrades.ImageSize = new Size(25, 25);
+            btnGrades.Location = new Point(15, 338);
             btnGrades.Name = "btnGrades";
-            btnGrades.PressedColor = Color.White;
+            btnGrades.PressedColor = Color.FromArgb(233, 196, 84);
             btnGrades.ShadowDecoration.CustomizableEdges = customizableEdges10;
             btnGrades.Size = new Size(50, 40);
             btnGrades.TabIndex = 6;
@@ -609,8 +642,8 @@
             btnActivities.BackColor = Color.Transparent;
             btnActivities.BorderColor = Color.Maroon;
             btnActivities.BorderRadius = 15;
-            btnActivities.CheckedState.FillColor = Color.Black;
-            btnActivities.CheckedState.Image = Properties.Resources.Activity_white;
+            btnActivities.CheckedState.FillColor = Color.FromArgb(233, 196, 84);
+            btnActivities.CheckedState.Image = (Image)resources.GetObject("resource.Image3");
             btnActivities.Cursor = Cursors.Hand;
             btnActivities.CustomizableEdges = customizableEdges11;
             btnActivities.DisabledState.BorderColor = Color.DarkGray;
@@ -620,10 +653,11 @@
             btnActivities.FillColor = Color.Transparent;
             btnActivities.Font = new Font("Arial", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             btnActivities.ForeColor = Color.Black;
-            btnActivities.Image = Properties.Resources.Activities;
+            btnActivities.Image = (Image)resources.GetObject("btnActivities.Image");
+            btnActivities.ImageSize = new Size(25, 25);
             btnActivities.Location = new Point(15, 212);
             btnActivities.Name = "btnActivities";
-            btnActivities.PressedColor = Color.White;
+            btnActivities.PressedColor = Color.FromArgb(233, 196, 84);
             btnActivities.ShadowDecoration.CustomizableEdges = customizableEdges12;
             btnActivities.Size = new Size(50, 40);
             btnActivities.TabIndex = 5;
@@ -636,9 +670,13 @@
             btnHome.BackColor = Color.Transparent;
             btnHome.BorderColor = Color.MediumSpringGreen;
             btnHome.BorderRadius = 15;
-            btnHome.CheckedState.FillColor = Color.Black;
-            btnHome.CheckedState.Image = Properties.Resources.HomeWhite;
+            btnHome.CheckedState.BorderColor = Color.Transparent;
+            btnHome.CheckedState.CustomBorderColor = Color.Transparent;
+            btnHome.CheckedState.FillColor = Color.FromArgb(233, 196, 84);
+            btnHome.CheckedState.ForeColor = Color.Transparent;
+            btnHome.CheckedState.Image = (Image)resources.GetObject("resource.Image4");
             btnHome.Cursor = Cursors.Hand;
+            btnHome.CustomBorderColor = Color.Transparent;
             btnHome.CustomizableEdges = customizableEdges13;
             btnHome.DisabledState.BorderColor = Color.DarkGray;
             btnHome.DisabledState.CustomBorderColor = Color.DarkGray;
@@ -647,10 +685,11 @@
             btnHome.FillColor = Color.Transparent;
             btnHome.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             btnHome.ForeColor = Color.Black;
-            btnHome.Image = Properties.Resources.home;
+            btnHome.Image = (Image)resources.GetObject("btnHome.Image");
+            btnHome.ImageSize = new Size(25, 25);
             btnHome.Location = new Point(15, 146);
             btnHome.Name = "btnHome";
-            btnHome.PressedColor = Color.White;
+            btnHome.PressedColor = Color.FromArgb(233, 196, 84);
             btnHome.ShadowDecoration.CustomizableEdges = customizableEdges14;
             btnHome.Size = new Size(50, 40);
             btnHome.TabIndex = 2;
@@ -660,9 +699,9 @@
             // pnlHome
             // 
             pnlHome.AutoScroll = true;
-            pnlHome.BackColor = Color.SeaShell;
-            pnlHome.BackgroundImage = Properties.Resources.Shade;
-            pnlHome.BackgroundImageLayout = ImageLayout.Stretch;
+            pnlHome.BackColor = Color.FromArgb(97, 30, 32);
+            pnlHome.BackgroundImage = (Image)resources.GetObject("pnlHome.BackgroundImage");
+            pnlHome.BackgroundImageLayout = ImageLayout.Zoom;
             pnlHome.Controls.Add(pictureboxBanner);
             pnlHome.Controls.Add(label5);
             pnlHome.Controls.Add(flpPendingActivities);
@@ -670,7 +709,6 @@
             pnlHome.Controls.Add(lblStudentName);
             pnlHome.Controls.Add(label1);
             pnlHome.CustomizableEdges = customizableEdges21;
-            pnlHome.FillColor = Color.Transparent;
             pnlHome.Font = new Font("Arial Black", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             pnlHome.Location = new Point(80, 83);
             pnlHome.Name = "pnlHome";
@@ -694,6 +732,7 @@
             label5.AutoSize = true;
             label5.BackColor = Color.Transparent;
             label5.Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label5.ForeColor = Color.WhiteSmoke;
             label5.Location = new Point(65, 435);
             label5.Name = "label5";
             label5.Size = new Size(183, 28);
@@ -778,7 +817,8 @@
             lblStudentName.AutoSize = true;
             lblStudentName.BackColor = Color.Transparent;
             lblStudentName.Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblStudentName.Location = new Point(343, 20);
+            lblStudentName.ForeColor = Color.WhiteSmoke;
+            lblStudentName.Location = new Point(343, 19);
             lblStudentName.Name = "lblStudentName";
             lblStudentName.Size = new Size(143, 28);
             lblStudentName.TabIndex = 16;
@@ -789,6 +829,7 @@
             label1.AutoSize = true;
             label1.BackColor = Color.Transparent;
             label1.Font = new Font("Segoe UI", 15F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label1.ForeColor = Color.WhiteSmoke;
             label1.Location = new Point(65, 18);
             label1.Name = "label1";
             label1.Size = new Size(283, 28);
@@ -803,7 +844,7 @@
             pnlActivity.Controls.Add(guna2Panel8);
             pnlActivity.Controls.Add(guna2Panel7);
             pnlActivity.CustomizableEdges = customizableEdges37;
-            pnlActivity.FillColor = Color.SeaShell;
+            pnlActivity.FillColor = Color.FromArgb(97, 30, 32);
             pnlActivity.Location = new Point(80, 83);
             pnlActivity.Name = "pnlActivity";
             pnlActivity.ShadowDecoration.CustomizableEdges = customizableEdges38;
@@ -894,7 +935,7 @@
             customizableEdges23.BottomLeft = false;
             customizableEdges23.BottomRight = false;
             guna2Panel11.CustomizableEdges = customizableEdges23;
-            guna2Panel11.FillColor = Color.Maroon;
+            guna2Panel11.FillColor = Color.FromArgb(97, 30, 32);
             guna2Panel11.Location = new Point(3, 3);
             guna2Panel11.Name = "guna2Panel11";
             guna2Panel11.ShadowDecoration.CustomizableEdges = customizableEdges24;
@@ -1050,7 +1091,7 @@
             pnlSubject.Controls.Add(flpSubjectClass);
             pnlSubject.Controls.Add(btnJoinClass);
             pnlSubject.CustomizableEdges = customizableEdges49;
-            pnlSubject.FillColor = Color.SeaShell;
+            pnlSubject.FillColor = Color.FromArgb(97, 30, 32);
             pnlSubject.Location = new Point(80, 83);
             pnlSubject.Name = "pnlSubject";
             pnlSubject.ShadowDecoration.CustomizableEdges = customizableEdges50;
@@ -1084,8 +1125,8 @@
             btnCloseJointClassPanel.FillColor = Color.Transparent;
             btnCloseJointClassPanel.Font = new Font("Segoe UI", 9F);
             btnCloseJointClassPanel.ForeColor = Color.White;
-            btnCloseJointClassPanel.Image = Properties.Resources.Exit;
-            btnCloseJointClassPanel.ImageSize = new Size(15, 15);
+            btnCloseJointClassPanel.Image = (Image)resources.GetObject("btnCloseJointClassPanel.Image");
+            btnCloseJointClassPanel.ImageSize = new Size(30, 30);
             btnCloseJointClassPanel.Location = new Point(295, 5);
             btnCloseJointClassPanel.Name = "btnCloseJointClassPanel";
             btnCloseJointClassPanel.ShadowDecoration.CustomizableEdges = customizableEdges40;
@@ -1101,9 +1142,9 @@
             btnEnterClass.DisabledState.CustomBorderColor = Color.DarkGray;
             btnEnterClass.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
             btnEnterClass.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
-            btnEnterClass.FillColor = Color.Maroon;
-            btnEnterClass.Font = new Font("Segoe UI", 9F);
-            btnEnterClass.ForeColor = SystemColors.Window;
+            btnEnterClass.FillColor = Color.WhiteSmoke;
+            btnEnterClass.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnEnterClass.ForeColor = Color.Black;
             btnEnterClass.Location = new Point(227, 175);
             btnEnterClass.Name = "btnEnterClass";
             btnEnterClass.ShadowDecoration.CustomizableEdges = customizableEdges42;
@@ -1135,6 +1176,7 @@
             // 
             label9.AutoSize = true;
             label9.Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label9.ForeColor = Color.WhiteSmoke;
             label9.Location = new Point(22, 44);
             label9.Name = "label9";
             label9.Size = new Size(115, 28);
@@ -1157,28 +1199,28 @@
             btnJoinClass.DisabledState.FillColor = Color.FromArgb(169, 169, 169);
             btnJoinClass.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
             btnJoinClass.FillColor = Color.Transparent;
-            btnJoinClass.Font = new Font("Segoe UI Semibold", 13F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnJoinClass.ForeColor = Color.Maroon;
-            btnJoinClass.Image = Properties.Resources.PlusSign2;
+            btnJoinClass.Font = new Font("Segoe UI", 12.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnJoinClass.ForeColor = Color.WhiteSmoke;
+            btnJoinClass.Image = (Image)resources.GetObject("btnJoinClass.Image");
             btnJoinClass.ImageOffset = new Point(-4, 2);
-            btnJoinClass.ImageSize = new Size(13, 13);
+            btnJoinClass.ImageSize = new Size(21, 21);
             btnJoinClass.Location = new Point(1052, 62);
             btnJoinClass.Name = "btnJoinClass";
             btnJoinClass.ShadowDecoration.CustomizableEdges = customizableEdges48;
             btnJoinClass.Size = new Size(159, 43);
             btnJoinClass.TabIndex = 21;
-            btnJoinClass.Text = "Join a class";
+            btnJoinClass.Text = " Join a class";
             btnJoinClass.Click += btnJoinClass_Click;
             // 
             // pnlGrades
             // 
             pnlGrades.BackColor = Color.Transparent;
-            pnlGrades.BackgroundImage = Properties.Resources.Shade;
-            pnlGrades.BackgroundImageLayout = ImageLayout.Stretch;
+            pnlGrades.BackgroundImage = (Image)resources.GetObject("pnlGrades.BackgroundImage");
+            pnlGrades.BackgroundImageLayout = ImageLayout.Zoom;
             pnlGrades.Controls.Add(guna2Panel18);
             pnlGrades.Controls.Add(guna2Panel22);
             pnlGrades.CustomizableEdges = customizableEdges63;
-            pnlGrades.FillColor = Color.SeaShell;
+            pnlGrades.FillColor = Color.FromArgb(97, 30, 32);
             pnlGrades.Location = new Point(80, 83);
             pnlGrades.Name = "pnlGrades";
             pnlGrades.ShadowDecoration.CustomizableEdges = customizableEdges64;
@@ -1268,7 +1310,7 @@
             guna2Panel21.Controls.Add(label28);
             guna2Panel21.Controls.Add(label29);
             guna2Panel21.CustomizableEdges = customizableEdges51;
-            guna2Panel21.FillColor = Color.Maroon;
+            guna2Panel21.FillColor = Color.FromArgb(97, 30, 32);
             guna2Panel21.Location = new Point(0, 1);
             guna2Panel21.Name = "guna2Panel21";
             guna2Panel21.ShadowDecoration.CustomizableEdges = customizableEdges52;
@@ -1407,9 +1449,9 @@
             // 
             // pnlSetting
             // 
-            pnlSetting.BackColor = Color.Transparent;
-            pnlSetting.BackgroundImage = Properties.Resources.Shade;
-            pnlSetting.BackgroundImageLayout = ImageLayout.Center;
+            pnlSetting.BackColor = Color.FromArgb(97, 30, 32);
+            pnlSetting.BackgroundImage = (Image)resources.GetObject("pnlSetting.BackgroundImage");
+            pnlSetting.BackgroundImageLayout = ImageLayout.Zoom;
             pnlSetting.Controls.Add(pnlSettingQandA);
             pnlSetting.Controls.Add(btnSignOut);
             pnlSetting.Controls.Add(btnSettingPanel);
@@ -1452,7 +1494,7 @@
             pnlSettingQandA.Controls.Add(label27);
             pnlSettingQandA.CustomizableEdges = customizableEdges91;
             pnlSettingQandA.FillColor = Color.White;
-            pnlSettingQandA.Location = new Point(169, 89);
+            pnlSettingQandA.Location = new Point(217, 89);
             pnlSettingQandA.Name = "pnlSettingQandA";
             pnlSettingQandA.ShadowDecoration.BorderRadius = 20;
             pnlSettingQandA.ShadowDecoration.CustomizableEdges = customizableEdges92;
@@ -1803,8 +1845,8 @@
             // btnSignOut
             // 
             btnSignOut.Animated = true;
-            btnSignOut.BorderRadius = 10;
-            btnSignOut.CustomBorderColor = Color.Black;
+            btnSignOut.BackColor = Color.Transparent;
+            btnSignOut.CustomBorderColor = Color.White;
             btnSignOut.CustomBorderThickness = new Padding(0, 0, 0, 1);
             btnSignOut.CustomizableEdges = customizableEdges93;
             btnSignOut.DisabledState.BorderColor = Color.DarkGray;
@@ -1813,12 +1855,13 @@
             btnSignOut.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
             btnSignOut.FillColor = Color.Transparent;
             btnSignOut.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnSignOut.ForeColor = Color.Black;
-            btnSignOut.Image = Properties.Resources.Sign_Out;
+            btnSignOut.ForeColor = Color.WhiteSmoke;
+            btnSignOut.Image = (Image)resources.GetObject("btnSignOut.Image");
             btnSignOut.ImageAlign = HorizontalAlignment.Left;
             btnSignOut.ImageOffset = new Point(15, 0);
             btnSignOut.Location = new Point(89, 159);
             btnSignOut.Name = "btnSignOut";
+            btnSignOut.PressedColor = Color.White;
             btnSignOut.ShadowDecoration.CustomizableEdges = customizableEdges94;
             btnSignOut.Size = new Size(231, 42);
             btnSignOut.TabIndex = 21;
@@ -1830,8 +1873,9 @@
             // btnSettingPanel
             // 
             btnSettingPanel.Animated = true;
-            btnSettingPanel.BorderRadius = 10;
-            btnSettingPanel.CustomBorderColor = Color.Black;
+            btnSettingPanel.BackColor = Color.Transparent;
+            btnSettingPanel.BorderColor = Color.Transparent;
+            btnSettingPanel.CustomBorderColor = Color.White;
             btnSettingPanel.CustomBorderThickness = new Padding(0, 0, 0, 1);
             btnSettingPanel.CustomizableEdges = customizableEdges95;
             btnSettingPanel.DisabledState.BorderColor = Color.DarkGray;
@@ -1840,13 +1884,13 @@
             btnSettingPanel.DisabledState.ForeColor = Color.FromArgb(141, 141, 141);
             btnSettingPanel.FillColor = Color.Transparent;
             btnSettingPanel.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnSettingPanel.ForeColor = Color.Black;
-            btnSettingPanel.Image = Properties.Resources.Profile;
+            btnSettingPanel.ForeColor = Color.WhiteSmoke;
+            btnSettingPanel.Image = (Image)resources.GetObject("btnSettingPanel.Image");
             btnSettingPanel.ImageAlign = HorizontalAlignment.Left;
             btnSettingPanel.ImageOffset = new Point(15, 0);
-            btnSettingPanel.ImageSize = new Size(15, 15);
             btnSettingPanel.Location = new Point(89, 111);
             btnSettingPanel.Name = "btnSettingPanel";
+            btnSettingPanel.PressedColor = Color.White;
             btnSettingPanel.ShadowDecoration.CustomizableEdges = customizableEdges96;
             btnSettingPanel.Size = new Size(231, 42);
             btnSettingPanel.TabIndex = 18;
@@ -1857,7 +1901,9 @@
             // label15
             // 
             label15.AutoSize = true;
+            label15.BackColor = Color.Transparent;
             label15.Font = new Font("Arial", 26.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label15.ForeColor = Color.WhiteSmoke;
             label15.Location = new Point(85, 38);
             label15.Name = "label15";
             label15.Size = new Size(153, 41);
@@ -1866,6 +1912,7 @@
             // 
             // pnlSettingProfile
             // 
+            pnlSettingProfile.BackColor = Color.Transparent;
             pnlSettingProfile.BorderRadius = 20;
             pnlSettingProfile.Controls.Add(btnQandA);
             pnlSettingProfile.Controls.Add(btnOpenUploadAuthenticationPhoto);
@@ -1996,6 +2043,7 @@
             // btnSettingProfileExpand
             // 
             btnSettingProfileExpand.Animated = true;
+            btnSettingProfileExpand.BackColor = Color.Transparent;
             btnSettingProfileExpand.BorderRadius = 10;
             btnSettingProfileExpand.CustomizableEdges = customizableEdges105;
             btnSettingProfileExpand.DisabledState.BorderColor = Color.DarkGray;
@@ -2017,6 +2065,7 @@
             // btnSettingProfileExpand2
             // 
             btnSettingProfileExpand2.Animated = true;
+            btnSettingProfileExpand2.BackColor = Color.Transparent;
             btnSettingProfileExpand2.BorderRadius = 10;
             btnSettingProfileExpand2.CustomizableEdges = customizableEdges107;
             btnSettingProfileExpand2.DisabledState.BorderColor = Color.DarkGray;
@@ -2064,6 +2113,7 @@
             // lblProfUsername
             // 
             lblProfUsername.AutoSize = true;
+            lblProfUsername.BackColor = Color.Transparent;
             lblProfUsername.Font = new Font("Arial", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             lblProfUsername.Location = new Point(175, 95);
             lblProfUsername.Name = "lblProfUsername";
@@ -2074,6 +2124,7 @@
             // label16
             // 
             label16.AutoSize = true;
+            label16.BackColor = Color.Transparent;
             label16.Font = new Font("Arial", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label16.Location = new Point(175, 71);
             label16.Name = "label16";
@@ -2083,6 +2134,7 @@
             // 
             // picboxSettingProfilePicture
             // 
+            picboxSettingProfilePicture.BackColor = Color.Transparent;
             picboxSettingProfilePicture.FillColor = Color.Transparent;
             picboxSettingProfilePicture.Image = Properties.Resources.Avatar;
             picboxSettingProfilePicture.ImageRotate = 0F;
@@ -2119,6 +2171,7 @@
             // 
             // pnlSettingAuthenticationPhoto
             // 
+            pnlSettingAuthenticationPhoto.BackColor = Color.Transparent;
             pnlSettingAuthenticationPhoto.BorderColor = Color.Black;
             pnlSettingAuthenticationPhoto.BorderRadius = 10;
             pnlSettingAuthenticationPhoto.BorderThickness = 1;
@@ -2163,6 +2216,7 @@
             // 
             // picboxAuthenticationPhoto
             // 
+            picboxAuthenticationPhoto.BackColor = Color.Transparent;
             picboxAuthenticationPhoto.FillColor = Color.Transparent;
             picboxAuthenticationPhoto.Image = Properties.Resources.Avatar;
             picboxAuthenticationPhoto.ImageRotate = 0F;
@@ -2178,6 +2232,7 @@
             // label18
             // 
             label18.AutoSize = true;
+            label18.BackColor = Color.Transparent;
             label18.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             label18.Location = new Point(12, 14);
             label18.Name = "label18";
@@ -2656,11 +2711,11 @@
             // 
             pnlQuizExam.AutoScroll = true;
             pnlQuizExam.BackColor = Color.Transparent;
-            pnlQuizExam.BackgroundImage = Properties.Resources.Shade;
-            pnlQuizExam.BackgroundImageLayout = ImageLayout.Stretch;
+            pnlQuizExam.BackgroundImage = (Image)resources.GetObject("pnlQuizExam.BackgroundImage");
+            pnlQuizExam.BackgroundImageLayout = ImageLayout.Zoom;
             pnlQuizExam.Controls.Add(QuizExamScore);
             pnlQuizExam.CustomizableEdges = customizableEdges156;
-            pnlQuizExam.FillColor = Color.SeaShell;
+            pnlQuizExam.FillColor = Color.FromArgb(97, 30, 32);
             pnlQuizExam.Location = new Point(80, 83);
             pnlQuizExam.Name = "pnlQuizExam";
             pnlQuizExam.ShadowDecoration.CustomizableEdges = customizableEdges157;
@@ -2731,10 +2786,10 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1350, 729);
-            Controls.Add(pnlHome);
-            Controls.Add(pnlSetting);
             Controls.Add(guna2Panel1);
             Controls.Add(guna2Panel2);
+            Controls.Add(pnlHome);
+            Controls.Add(pnlSetting);
             Controls.Add(pnlGrades);
             Controls.Add(pnlActivity);
             Controls.Add(pnlSubject);
@@ -2942,5 +2997,7 @@
         private PictureBox pictureBox4;
         private Label label1;
         private PictureBox pictureBox5;
+        private Label label32;
+        private Panel panel2;
     }
 }
