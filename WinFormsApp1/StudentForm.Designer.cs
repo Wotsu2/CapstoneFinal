@@ -1494,7 +1494,7 @@
             pnlSettingQandA.Controls.Add(label27);
             pnlSettingQandA.CustomizableEdges = customizableEdges91;
             pnlSettingQandA.FillColor = Color.White;
-            pnlSettingQandA.Location = new Point(217, 89);
+            pnlSettingQandA.Location = new Point(226, 82);
             pnlSettingQandA.Name = "pnlSettingQandA";
             pnlSettingQandA.ShadowDecoration.BorderRadius = 20;
             pnlSettingQandA.ShadowDecoration.CustomizableEdges = customizableEdges92;
@@ -2128,9 +2128,9 @@
             label16.Font = new Font("Arial", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label16.Location = new Point(175, 71);
             label16.Name = "label16";
-            label16.Size = new Size(87, 19);
+            label16.Size = new Size(102, 19);
             label16.TabIndex = 22;
-            label16.Text = "Username";
+            label16.Text = "USERNAME";
             // 
             // picboxSettingProfilePicture
             // 

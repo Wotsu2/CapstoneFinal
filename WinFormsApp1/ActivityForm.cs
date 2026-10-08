@@ -67,13 +67,78 @@ namespace WinFormsApp1
             title = Title;
             dueDate = FormatDueDate(Due_Date);
             description = Description;
-            studentSection = StudentSection;
             activitySubject = ActivitySubject;
+
+            // FIX: don't trust the student's profile section (empty for new accounts).
+            // Look up the real section from the database instead.
+            studentSection = ResolveSection(StudentSection, prof_id, UserId, Title, ActivitySubject);
+
             status = Status;
             AcitvitypdfPath = PDF_Path;
 
             BuildUi();
             LoadActivityPdf();
+        }
+
+        // =========================================================
+        // RESOLVE SECTION FROM DATABASE
+        // =========================================================
+        private string ResolveSection(string given, int prof_id, string user_id,
+                                      string actTitle, string subject)
+        {
+            string connStr = SettingsManager.Current.GetConnectionString();
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    // 1) The section the professor posted this activity to
+                    //    (only if the student actually joined that section)
+                    using (var cmd = new MySqlCommand(@"
+                        SELECT pa.section
+                        FROM professor_activity pa
+                        INNER JOIN student_class sc
+                            ON  sc.user_id = @uid
+                            AND sc.professor_id = pa.professor_id
+                            AND LOWER(TRIM(sc.section)) = LOWER(TRIM(pa.section))
+                        WHERE pa.professor_id = @pid
+                          AND pa.title = @title
+                          AND pa.activity_subject = @subj
+                        LIMIT 1", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@uid", user_id);
+                        cmd.Parameters.AddWithValue("@pid", prof_id);
+                        cmd.Parameters.AddWithValue("@title", actTitle);
+                        cmd.Parameters.AddWithValue("@subj", subject);
+
+                        object r = cmd.ExecuteScalar();
+                        if (r != null && r != DBNull.Value && !string.IsNullOrWhiteSpace(r.ToString()))
+                            return r.ToString().Trim();
+                    }
+
+                    // 2) The section of the class the student joined for this subject
+                    using (var cmd = new MySqlCommand(@"
+                        SELECT section FROM student_class
+                        WHERE user_id = @uid AND professor_id = @pid AND class_name = @subj
+                        LIMIT 1", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@uid", user_id);
+                        cmd.Parameters.AddWithValue("@pid", prof_id);
+                        cmd.Parameters.AddWithValue("@subj", subject);
+
+                        object r = cmd.ExecuteScalar();
+                        if (r != null && r != DBNull.Value && !string.IsNullOrWhiteSpace(r.ToString()))
+                            return r.ToString().Trim();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("ResolveSection error: " + ex.Message);
+            }
+
+            return (given ?? "").Trim();
         }
 
         // =========================================================
@@ -86,7 +151,7 @@ namespace WinFormsApp1
             this.Size = new Size(1320, 720);
             this.MinimumSize = new Size(1100, 640);
             this.StartPosition = FormStartPosition.CenterParent;
-            this.WindowState = FormWindowState.Maximized;      // fill the screen for best fit
+            this.WindowState = FormWindowState.Maximized;
             this.BackColor = Color.FromArgb(245, 245, 248);
             this.FormBorderStyle = FormBorderStyle.Sizable;
             this.MaximizeBox = true;
@@ -117,7 +182,6 @@ namespace WinFormsApp1
             };
             mainCard.Controls.Add(headerPanel);
 
-            // Title
             lblTitle = new Label
             {
                 Text = title,
@@ -131,7 +195,6 @@ namespace WinFormsApp1
             };
             headerPanel.Controls.Add(lblTitle);
 
-            // Subject • Section
             lblSubject = new Label
             {
                 Text = activitySubject + "  •  Section " + studentSection,
@@ -295,12 +358,10 @@ namespace WinFormsApp1
             uploadZone.Controls.Add(lblFileName);
             lblFileName.BringToFront();
 
-            // Upload click
             EventHandler uploadClick = (s, e) => PickFile();
             uploadZone.Click += uploadClick;
             lblUploadHint.Click += uploadClick;
 
-            // Drag & drop
             uploadZone.DragEnter += (s, e) =>
             {
                 if (e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -313,7 +374,6 @@ namespace WinFormsApp1
                     SetSelectedFile(files[0]);
             };
 
-            // Submit button
             btnSubmit = new Guna2Button
             {
                 Text = "Submit",
@@ -493,10 +553,19 @@ namespace WinFormsApp1
 
         private async void btnPostActivity_Click(object sender, EventArgs e)
         {
+            // Never send an empty section (it would end up in "Unknown")
+            if (string.IsNullOrWhiteSpace(studentSection))
+            {
+                CustomMessageBox.Show(
+                    "Your section could not be determined.\n\nMake sure you joined the class first.",
+                    "Missing Section", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
+                return;
+            }
+
             if (string.IsNullOrEmpty(PathAnswer) || !File.Exists(PathAnswer))
             {
-                CustomMessageBox.Show("Please select a file first.", "Validation",
-                    CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
+                CustomMessageBox.Show("Please choose a file to submit first.",
+                    "No File", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
 
@@ -505,7 +574,10 @@ namespace WinFormsApp1
 
             if (string.IsNullOrEmpty(professorFolder))
             {
-                CustomMessageBox.Show("Could not determine the professor's folder. Ask the admin to check the share setup.",
+                CustomMessageBox.Show(
+                    "Could not determine the professor's folder.\n\n" +
+                    "profId = " + profId + " returned no username.\n" +
+                    "Ask the admin to verify user_credential.",
                     "Missing Folder", CustomMessageBoxButtons.OK, CustomMessageBoxIcon.Warning);
                 return;
             }
@@ -616,7 +688,7 @@ namespace WinFormsApp1
                     conn.Open();
 
                     string update = @"UPDATE submitted_activity 
-                                      SET file_path = @path, activity_status = 'Submitted'
+                                      SET file_path = @path, activity_status = 'Submitted', section = @section
                                       WHERE prof_id = @prof_id 
                                         AND user_id = @user_id 
                                         AND title   = @title";
@@ -625,6 +697,7 @@ namespace WinFormsApp1
                     using (var cmd = new MySqlCommand(update, conn))
                     {
                         cmd.Parameters.AddWithValue("@path", savedPath);
+                        cmd.Parameters.AddWithValue("@section", studentSection);
                         cmd.Parameters.AddWithValue("@prof_id", profId);
                         cmd.Parameters.AddWithValue("@user_id", userId);
                         cmd.Parameters.AddWithValue("@title", title);
@@ -660,38 +733,25 @@ namespace WinFormsApp1
 
         private string GetProfessorFolder(int prof_id)
         {
+            if (prof_id <= 0) return null;
+
             string connStr = SettingsManager.Current.GetConnectionString();
             try
             {
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
-
-                    string q = @"SELECT i.lastname, i.firstname, i.middlename
-                                 FROM user_information i
-                                 WHERE i.user_id = @id";
-                    using (var cmd = new MySqlCommand(q, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@id", prof_id);
-                        using (var r = cmd.ExecuteReader())
-                        {
-                            if (r.Read())
-                            {
-                                string ln = r["lastname"]?.ToString() ?? "";
-                                string fn = r["firstname"]?.ToString() ?? "";
-                                string mn = r["middlename"]?.ToString() ?? "";
-                                return SanitizeFolderName($"{ln}_{fn}_{mn}");
-                            }
-                        }
-                    }
-
                     using (var cmd = new MySqlCommand(
-                        "SELECT FolderPath FROM mainfolderpath WHERE user_id = @id", conn))
+                        "SELECT username FROM user_credential WHERE user_id = @id", conn))
                     {
                         cmd.Parameters.AddWithValue("@id", prof_id);
-                        object result = cmd.ExecuteScalar();
-                        if (result != null && result != DBNull.Value)
-                            return new DirectoryInfo(result.ToString()).Name;
+                        object r = cmd.ExecuteScalar();
+                        if (r != null && r != DBNull.Value)
+                        {
+                            string username = r.ToString().Trim();
+                            if (!string.IsNullOrEmpty(username))
+                                return SanitizeFolderName(username);
+                        }
                     }
                 }
             }
@@ -699,6 +759,7 @@ namespace WinFormsApp1
             {
                 Console.WriteLine("GetProfessorFolder error: " + ex.Message);
             }
+
             return null;
         }
 

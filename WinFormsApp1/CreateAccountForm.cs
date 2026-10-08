@@ -76,7 +76,7 @@ namespace WinFormsApp1
             };
             header.Controls.Add(lblTitle);
 
-            // ---------- Close button (standard Button) ----------
+            // ---------- Close button ----------
             var btnClose = new Button
             {
                 Text = "✕",
@@ -398,7 +398,6 @@ namespace WinFormsApp1
 
                 _defaultPassword = pwd;
 
-                // Persist to app settings
                 SettingsManager.Current.DefaultPassword = pwd;
                 SettingsManager.Save();
 
@@ -476,6 +475,8 @@ namespace WinFormsApp1
 
         // =========================================================
         //  CREATE USER
+        //  Folder is created ONLY when the role is "Professor".
+        //  Students and Admins do NOT get their own folder here.
         // =========================================================
         private void CreateUser()
         {
@@ -521,7 +522,8 @@ namespace WinFormsApp1
                 return;
             }
 
-            string semester = cmbRole.Text == "Student" ? "1st Semester" : "Null";
+            string role = cmbRole.Text.Trim();
+            string semester = role == "Student" ? "1st Semester" : "Null";
             string username = GenerateUsername(txtLastName.Text, txtFirstName.Text, txtMiddleName.Text, connStr);
 
             try
@@ -532,6 +534,9 @@ namespace WinFormsApp1
                 {
                     conn.Open();
 
+                    // =========================================================
+                    // 1. user_credential
+                    // =========================================================
                     string Insertquery2 = @"
                         INSERT INTO user_credential (username, p_word, roles, user_status, authentication_condition, remaining_limit)
                         VALUES (@Uname, MD5(@Password), @UserRole, @Status, @authentication_condition, @remaining_limit);
@@ -541,13 +546,16 @@ namespace WinFormsApp1
                     {
                         cmd2.Parameters.AddWithValue("@Uname", username);
                         cmd2.Parameters.AddWithValue("@Password", _defaultPassword);
-                        cmd2.Parameters.AddWithValue("@UserRole", cmbRole.Text.Trim());
+                        cmd2.Parameters.AddWithValue("@UserRole", role);
                         cmd2.Parameters.AddWithValue("@Status", "Active");
                         cmd2.Parameters.AddWithValue("@authentication_condition", "Disabled");
                         cmd2.Parameters.AddWithValue("@remaining_limit", 20);
                         userId = Convert.ToInt64(cmd2.ExecuteScalar());
                     }
 
+                    // =========================================================
+                    // 2. user_information
+                    // =========================================================
                     string Insertquery = @"
                         INSERT INTO user_information 
                             (user_id, lastname, firstname, middlename, email, school_semester) 
@@ -565,6 +573,9 @@ namespace WinFormsApp1
                         cmd.ExecuteNonQuery();
                     }
 
+                    // =========================================================
+                    // 3. professor_attendance
+                    // =========================================================
                     string AttendanceQuery = "INSERT INTO professor_attendance (student_id, student_name) VALUES (@student_id, @student_name)";
                     using (MySqlCommand cmd3 = new MySqlCommand(AttendanceQuery, conn))
                     {
@@ -574,41 +585,65 @@ namespace WinFormsApp1
                         cmd3.ExecuteNonQuery();
                     }
 
-                    string rootPath = SettingsManager.Current.SaveFolder;
-                    if (string.IsNullOrEmpty(rootPath))
+                    // =========================================================
+                    // 4. FOLDER CREATION — ONLY FOR PROFESSORS
+                    // =========================================================
+                    if (string.Equals(role, "Professor", StringComparison.OrdinalIgnoreCase))
                     {
-                        ShowError("Root folder is not configured.");
-                        return;
+                        string rootPath = SettingsManager.Current.SaveFolder;
+
+                        if (string.IsNullOrEmpty(rootPath))
+                        {
+                            ShowError("Root folder is not configured. Cannot create Professor folder.");
+                            return;
+                        }
+
+                        if (!Directory.Exists(rootPath))
+                        {
+                            try { Directory.CreateDirectory(rootPath); }
+                            catch (Exception ex)
+                            {
+                                ShowError("Could not create root folder: " + ex.Message);
+                                return;
+                            }
+                        }
+
+                        // Folder name uses the USERNAME so it matches everywhere else
+                        string folderName = SanitizeFolderName(username);
+                        string userFolderPath = Path.Combine(rootPath, folderName);
+
+                        try
+                        {
+                            if (!Directory.Exists(userFolderPath))
+                                Directory.CreateDirectory(userFolderPath);
+
+                            Console.WriteLine("[Admin] Professor folder created: " + userFolderPath);
+                        }
+                        catch (Exception ex)
+                        {
+                            ShowError("Could not create professor folder: " + ex.Message);
+                            return;
+                        }
+
+                        using (var cmd4 = new MySqlCommand(
+                            "INSERT INTO mainfolderpath (user_id, FolderPath) VALUES (@user_id, @FolderPath)", conn))
+                        {
+                            cmd4.Parameters.AddWithValue("@user_id", userId);
+                            cmd4.Parameters.AddWithValue("@FolderPath", userFolderPath);
+                            cmd4.ExecuteNonQuery();
+                        }
                     }
-
-                    if (!Directory.Exists(rootPath))
+                    else
                     {
-                        try { Directory.CreateDirectory(rootPath); }
-                        catch (Exception ex) { ShowError("Could not create root folder: " + ex.Message); return; }
-                    }
-
-                    string folderName = SanitizeFolderName(
-                        $"{txtLastName.Text.ToUpper()}_{txtFirstName.Text.ToUpper()}_{txtMiddleName.Text.ToUpper()}");
-                    string userFolderPath = Path.Combine(rootPath, folderName);
-
-                    try
-                    {
-                        if (!Directory.Exists(userFolderPath))
-                            Directory.CreateDirectory(userFolderPath);
-                    }
-                    catch (Exception ex) { ShowError("Could not create user folder: " + ex.Message); return; }
-
-                    using (var cmd4 = new MySqlCommand("INSERT INTO mainfolderpath (user_id, FolderPath) VALUES (@user_id, @FolderPath)", conn))
-                    {
-                        cmd4.Parameters.AddWithValue("@user_id", userId);
-                        cmd4.Parameters.AddWithValue("@FolderPath", userFolderPath);
-                        cmd4.ExecuteNonQuery();
+                        Console.WriteLine($"[Admin] '{role}' account '{username}' created — no folder.");
                     }
                 }
 
+                // =========================================================
+                // 5. Send credentials email
+                // =========================================================
                 string email = txtEmail.Text.Trim();
                 string fullName = $"{txtFirstName.Text.Trim()} {txtMiddleName.Text.Trim()} {txtLastName.Text.Trim()}".Trim();
-                string role = cmbRole.Text.Trim();
 
                 bool emailed = TrySendCredentialsEmail(email, fullName, username, _defaultPassword, role);
 

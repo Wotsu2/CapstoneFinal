@@ -29,6 +29,7 @@ namespace WinFormsApp1
 
         private string currentFolder;
         private Stack<string> folderHistory = new Stack<string>();
+        private List<ListViewItem> allServerFolderItems = new List<ListViewItem>();
 
         private TcpListener authPhotoListener;
         private volatile bool adminIsRunning = true;
@@ -45,6 +46,9 @@ namespace WinFormsApp1
         // Dashboard user control host
         private Panel pnlDashboardHost;
         private DashboardControl dashboardControl;
+
+        // ★★★ HARDCODED PROFESSOR FOLDER — change this if you rename the folder ★★★
+        private const string PROFESSOR_ROOT = @"\\192.168.100.4\SharedFolder\CPA10072026";
 
         public AdminForm()
         {
@@ -72,7 +76,6 @@ namespace WinFormsApp1
             BuildEmbeddedDatabasePanel();
             BuildEmbeddedDashboardPanel();
 
-            // Show dashboard by default
             if (pnlDashboardHost != null)
             {
                 pnlDashboardHost.Visible = true;
@@ -81,7 +84,6 @@ namespace WinFormsApp1
                 dashboardControl?.RefreshAll();
             }
 
-            // Ensure other panels stay BEHIND the dashboard
             pnlUserManagement.SendToBack();
             pnlFileManagement.SendToBack();
             if (pnlDatabase != null) pnlDatabase.SendToBack();
@@ -120,7 +122,7 @@ namespace WinFormsApp1
             int top = (pnlUserManagement != null) ? pnlUserManagement.Top : 293;
 
             int w = Math.Max(400, this.ClientSize.Width - left * 2);
-            int h = Math.Max(250, this.ClientSize.Height - top);
+            int h = Math.Max(250, this.ClientSize.Height - top + 250);
 
             pnlDashboardHost.SetBounds(left, top, w, h);
         }
@@ -474,6 +476,9 @@ namespace WinFormsApp1
                     string firstToken = reader.ReadString();
                     Console.WriteLine("[Admin] FileTransfer command: " + firstToken);
 
+                    // =========================================================
+                    // ACTIVITY FILE → <PROFESSOR_ROOT>/<Section>/ActivityFiles/
+                    // =========================================================
                     if (firstToken == "ACTIVITY_FILE")
                     {
                         string professorFolder = reader.ReadString();
@@ -484,21 +489,27 @@ namespace WinFormsApp1
                         if (length <= 0 || length > 200 * 1024 * 1024) return;
 
                         byte[] bytes = reader.ReadBytes(length);
-                        professorFolder = SanitizeFolderName(professorFolder);
                         section = SanitizeFolderName(section);
                         fileName = SanitizeFolderName(fileName);
 
-                        string root = SettingsManager.Current.SaveFolder;
-                        string folder = Path.Combine(root, professorFolder, section, "ActivityFiles");
-                        Directory.CreateDirectory(folder);
+                        // ★ HARDCODED — always saves into the correct professor folder
+                        string profFolderPath = PROFESSOR_ROOT;
+
+                        string folder = Path.Combine(profFolderPath, section, "ActivityFiles");
+                        if (!Directory.Exists(folder))
+                            Directory.CreateDirectory(folder);
 
                         string savePath = Path.Combine(folder, fileName);
                         await File.WriteAllBytesAsync(savePath, bytes);
 
+                        Console.WriteLine("[Admin] Activity file saved: " + savePath);
                         RefreshFileCountAsync();
                         return;
                     }
 
+                    // =========================================================
+                    // STUDENT SUBMISSION → <PROFESSOR_ROOT>/<Section>/<Student>/
+                    // =========================================================
                     if (firstToken == "STUDENT_SUBMISSION")
                     {
                         string professorFolder = reader.ReadString();
@@ -511,23 +522,31 @@ namespace WinFormsApp1
                         if (length <= 0 || length > 200 * 1024 * 1024) return;
 
                         byte[] bytes = reader.ReadBytes(length);
-                        professorFolder = SanitizeFolderName(professorFolder);
                         section = SanitizeFolderName(section);
                         studentName = SanitizeFolderName(studentName);
                         title = SanitizeFolderName(title);
                         fileName = SanitizeFolderName(fileName);
 
-                        string root = SettingsManager.Current.SaveFolder;
-                        string folder = Path.Combine(root, professorFolder, section, "Submissions");
-                        Directory.CreateDirectory(folder);
+                        // ★ HARDCODED — always saves into the correct professor folder
+                        string profFolderPath = PROFESSOR_ROOT;
 
-                        string finalName = SanitizeFolderName($"{studentName}_{title}_{fileName}");
-                        string localPath = Path.Combine(folder, finalName);
-                        await File.WriteAllBytesAsync(localPath, bytes);
+                        // Route into <PROFESSOR_ROOT>/<section>/<student>/
+                        string studentFolder = Path.Combine(profFolderPath, section, studentName);
+                        if (!Directory.Exists(studentFolder))
+                            Directory.CreateDirectory(studentFolder);
 
+                        string finalName = fileName.StartsWith(studentName, StringComparison.OrdinalIgnoreCase)
+                            ? fileName
+                            : $"{studentName}_{title}_{fileName}";
+
+                        string savePath = Path.Combine(studentFolder, finalName);
+                        await File.WriteAllBytesAsync(savePath, bytes);
+
+                        Console.WriteLine("[Admin] Student submission saved: " + savePath);
                         RefreshFileCountAsync();
 
-                        string uncPath = ToUnc(localPath);
+                        // Reply with UNC path
+                        string uncPath = ToUnc(savePath);
                         try
                         {
                             using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
@@ -540,6 +559,9 @@ namespace WinFormsApp1
                         return;
                     }
 
+                    // =========================================================
+                    // PROFILE PHOTO
+                    // =========================================================
                     if (firstToken == "PROFILE_PHOTO")
                     {
                         string username = reader.ReadString();
@@ -574,26 +596,21 @@ namespace WinFormsApp1
                         return;
                     }
 
+                    // =========================================================
+                    // AUTH PHOTO
+                    // =========================================================
                     if (firstToken == "AUTH_PHOTO")
                     {
                         string fileName = reader.ReadString();
                         int length = reader.ReadInt32();
 
-                        if (length <= 0 || length > 20 * 1024 * 1024)
-                        {
-                            Console.WriteLine("[Admin] Invalid auth photo length: " + length);
-                            return;
-                        }
+                        if (length <= 0 || length > 20 * 1024 * 1024) return;
 
                         byte[] bytes = reader.ReadBytes(length);
                         fileName = SanitizeFolderName(fileName);
 
                         string root = SettingsManager.Current.SaveFolder;
-                        if (string.IsNullOrEmpty(root))
-                        {
-                            Console.WriteLine("[Admin] SaveFolder is not configured.");
-                            return;
-                        }
+                        if (string.IsNullOrEmpty(root)) return;
 
                         string authSub = SettingsManager.Current.AuthPhotoSubfolder;
                         if (string.IsNullOrEmpty(authSub)) authSub = "AuthPhotos";
@@ -615,33 +632,12 @@ namespace WinFormsApp1
                                 writer.Write(uncPath);
                                 writer.Flush();
                             }
-                            Console.WriteLine("[Admin] Replied with auth path: " + uncPath);
                         }
-                        catch (Exception exReply)
-                        {
-                            Console.WriteLine("[Admin] Failed to send auth reply: " + exReply.Message);
-                        }
+                        catch { }
                         return;
                     }
 
                     Console.WriteLine("[Admin] Unknown FileTransfer command: " + firstToken);
-
-                    string legacyName = SanitizeFolderName(firstToken);
-                    int legacyLength;
-                    try { legacyLength = reader.ReadInt32(); }
-                    catch { return; }
-
-                    if (legacyLength <= 0 || legacyLength > 20 * 1024 * 1024) return;
-
-                    byte[] legacyBytes = reader.ReadBytes(legacyLength);
-
-                    string legacyRoot = SettingsManager.Current.SaveFolder;
-                    string legacySub = SettingsManager.Current.AuthPhotoSubfolder ?? "";
-                    string legacyFolder = Path.Combine(legacyRoot, legacySub);
-                    Directory.CreateDirectory(legacyFolder);
-
-                    await File.WriteAllBytesAsync(Path.Combine(legacyFolder, legacyName), legacyBytes);
-                    RefreshFileCountAsync();
                 }
             }
             catch (Exception ex)
@@ -868,7 +864,6 @@ namespace WinFormsApp1
                 case "Create Account":
                     OpenCreateAccountForm();
 
-                    // Reset the dropdown so picking "Create Account" again fires the event
                     cmbSelection.SelectedIndexChanged -= cmbSelection_SelectedIndexChanged;
                     cmbSelection.SelectedItem = "Users";
                     cmbSelection.SelectedIndexChanged += cmbSelection_SelectedIndexChanged;
@@ -1325,7 +1320,7 @@ namespace WinFormsApp1
                 lvServerFolder.Items.Add(item);
                 imageIndex++;
             }
-
+            allServerFolderItems = lvServerFolder.Items.Cast<ListViewItem>().ToList();
             BtnBack.Enabled = folderHistory.Count > 0;
         }
 
@@ -1618,8 +1613,8 @@ namespace WinFormsApp1
                 btnDeleteFile = new Guna.UI2.WinForms.Guna2Button
                 {
                     Text = "🗑",
-                    Size = new Size(100, 42),
-                    Location = new Point(1150, 85),
+                    Size = new Size(50, 42),
+                    Location = new Point(1140, 65),
                     Anchor = AnchorStyles.Top | AnchorStyles.Right,
                     BorderRadius = 10,
                     FillColor = Color.Maroon,
@@ -1727,5 +1722,52 @@ namespace WinFormsApp1
             }
         }
 
+        private void ApplyFileSearchFilter(string query)
+        {
+            if (lvServerFolder == null || lvServerFolder.IsDisposed) return;
+
+            lvServerFolder.BeginUpdate();
+            try
+            {
+                lvServerFolder.Items.Clear();
+
+                if (string.IsNullOrWhiteSpace(query))
+                {
+                    lvServerFolder.Items.AddRange(allServerFolderItems.ToArray());
+                    return;
+                }
+
+                string q = query.Trim();
+
+                var matches = allServerFolderItems.Where(item =>
+                {
+                    if (item.Text != null &&
+                        item.Text.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0)
+                        return true;
+
+                    string path = item.Tag as string;
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        string ext = Path.GetExtension(path)?.TrimStart('.');
+                        if (!string.IsNullOrEmpty(ext) &&
+                            ext.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0)
+                            return true;
+                    }
+
+                    return false;
+                });
+
+                lvServerFolder.Items.AddRange(matches.ToArray());
+            }
+            finally
+            {
+                lvServerFolder.EndUpdate();
+            }
+        }
+
+        private void txtFileSearchBar_TextChanged(object sender, EventArgs e)
+        {
+            ApplyFileSearchFilter(txtFileSearchBar.Text);
+        }
     }
 }

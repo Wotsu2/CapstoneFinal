@@ -82,7 +82,6 @@ namespace WinFormsApp1
         // =========================================================
         // NIGHT MODE
         // =========================================================
-
         private bool _isNightMode = false;
         private readonly Dictionary<Control, ThemeSnapshot> _originalTheme
             = new Dictionary<Control, ThemeSnapshot>();
@@ -202,10 +201,9 @@ namespace WinFormsApp1
                 activitiesRefreshTimer.Start();
 
                 bool isAdmin = new System.Security.Principal.WindowsPrincipal(
-    System.Security.Principal.WindowsIdentity.GetCurrent())
-    .IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+                    System.Security.Principal.WindowsIdentity.GetCurrent())
+                    .IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
 
-                Console.WriteLine("[Student] Running as Admin: " + isAdmin);
                 if (!isAdmin)
                 {
                     MessageBox.Show(
@@ -251,6 +249,7 @@ namespace WinFormsApp1
                 catch (Exception ex) { Console.WriteLine("InitializeAssessmentsCard error: " + ex.Message); }
             }
         }
+
         private void ApplyLock()
         {
             if (_lockScreen != null && !_lockScreen.IsDisposed) return;
@@ -265,6 +264,7 @@ namespace WinFormsApp1
             catch { }
             _lockScreen = null;
         }
+
         private void initializeShowReminderForm()
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -320,8 +320,6 @@ namespace WinFormsApp1
                 slideshowTimer.Start();
 
                 StartBannersWatcher();
-
-                Console.WriteLine($"[Slideshow] Started with {slideshowImages.Count} image(s).");
             }
             catch (Exception ex)
             {
@@ -506,7 +504,6 @@ namespace WinFormsApp1
         // =========================================================
         // TCP CLIENT HELPERS
         // =========================================================
-
         private async Task RunClientForever(
             string name,
             Func<TcpClient> connect,
@@ -521,7 +518,6 @@ namespace WinFormsApp1
                     c = connect();
                     if (c != null && c.Connected)
                     {
-                        Console.WriteLine($"[{name}] connected");
                         await onConnected(c);
                     }
                 }
@@ -557,12 +553,8 @@ namespace WinFormsApp1
 
                     try
                     {
-                        string myName = string.IsNullOrEmpty(studentname)
-                            ? StudentUsername
-                            : studentname;
-
-                        if (string.IsNullOrEmpty(myName))
-                            myName = "Unknown Student";
+                        string myName = string.IsNullOrEmpty(studentname) ? StudentUsername : studentname;
+                        if (string.IsNullOrEmpty(myName)) myName = "Unknown Student";
 
                         byte[] nameBytes = Encoding.UTF8.GetBytes(myName);
                         byte[] nameLen = BitConverter.GetBytes(nameBytes.Length);
@@ -570,8 +562,6 @@ namespace WinFormsApp1
                         await stream.WriteAsync(nameLen, 0, nameLen.Length);
                         await stream.WriteAsync(nameBytes, 0, nameBytes.Length);
                         await stream.FlushAsync();
-
-                        Console.WriteLine("[Workstation] Sent name: " + myName);
                     }
                     catch (Exception ex)
                     {
@@ -585,18 +575,12 @@ namespace WinFormsApp1
                             await Task.Delay(2000);
 
                             if (c.Client.Poll(0, SelectMode.SelectRead) && c.Client.Available == 0)
-                            {
-                                Console.WriteLine("[Workstation] server closed — reconnecting");
                                 break;
-                            }
 
                             try { stream.Write(new byte[0], 0, 0); }
                             catch { break; }
                         }
-                        catch
-                        {
-                            break;
-                        }
+                        catch { break; }
                     }
                 });
         }
@@ -634,10 +618,7 @@ namespace WinFormsApp1
                             shot.Dispose();
                             await Task.Delay(500);
                         }
-                        catch
-                        {
-                            break;
-                        }
+                        catch { break; }
                     }
                 });
         }
@@ -707,7 +688,6 @@ namespace WinFormsApp1
                                     }
                                     catch { }
 
-                                    // Make sure the hooks are gone, even if the form didn't fire FormClosed
                                     try { BroadcastViewerForm.ForceRemoveHooks(); } catch { }
                                 }));
                             }
@@ -750,8 +730,6 @@ namespace WinFormsApp1
                 Shutdownlistener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 Shutdownlistener.Start();
 
-                Console.WriteLine("[Student] TcpListener started on port " + SettingsManager.Current.CommandPort);
-
                 System.Threading.Thread t = new System.Threading.Thread(ListenForCommands);
                 t.IsBackground = true;
                 t.Name = "CommandListener";
@@ -765,13 +743,8 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // COMMAND LISTENER — handles SHUTDOWN, RESTART, and LOCK
-        // =========================================================
         private void ListenForCommands()
         {
-            Console.WriteLine("[Student] Command listener started on port " + SettingsManager.Current.CommandPort);
-
             while (isSharingScreen && !isSignedOut)
             {
                 try
@@ -784,14 +757,11 @@ namespace WinFormsApp1
                     if (bytesRead == 0) { client.Close(); continue; }
 
                     string command = Encoding.UTF8.GetString(buffer, 0, bytesRead).Trim();
-                    Console.WriteLine("[Student] Command received: '" + command + "'");
 
-                    // ============ LOCK COMMAND ============
                     if (command == "LOCK" || command == "UNLOCK")
                     {
                         try
                         {
-                            // Reply first so the professor knows it arrived
                             byte[] ok = Encoding.UTF8.GetBytes("OK");
                             stream.Write(ok, 0, ok.Length);
                             stream.Flush();
@@ -807,7 +777,6 @@ namespace WinFormsApp1
                         continue;
                     }
 
-                    // ============ SHUTDOWN / RESTART ============
                     if (command == "SHUTDOWN")
                     {
                         client.Close();
@@ -829,7 +798,6 @@ namespace WinFormsApp1
                 {
                     Console.WriteLine("[Student] Listener error: " + ex.Message);
                     System.Threading.Thread.Sleep(500);
-                    // Don't break — keep listener alive
                 }
             }
         }
@@ -878,14 +846,10 @@ namespace WinFormsApp1
                     {
                         cmd.Parameters.AddWithValue("@user_id", userId);
 
-                        int count = 0;
-
                         using (var reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
                             {
-                                count++;
-
                                 int activityId = reader.GetInt32("activity_id");
                                 string title = reader.GetString("title");
                                 string due_date = FormatDate(reader.GetString("due_date"));
@@ -994,8 +958,6 @@ namespace WinFormsApp1
                                 flpPendingActivities.Controls.Add(card);
                             }
                         }
-
-                        Console.WriteLine($"[Activities] Loaded {count} pending activities.");
                     }
                 }
             }
@@ -1458,6 +1420,9 @@ namespace WinFormsApp1
             }
         }
 
+        // =========================================================
+        // InitializeJoinClass — CREATES STUDENT FOLDER
+        // =========================================================
         private void InitializeJoinClass(int professorId, string className, string classSection, string classTime, string classDate)
         {
             string connStr = SettingsManager.Current.GetConnectionString();
@@ -1502,6 +1467,10 @@ namespace WinFormsApp1
                     }
 
                     LoadJoinedClasses();
+
+                    // ★ Create student folder
+                    CreateStudentClassFolder(professorId, classSection);
+
                     MessageBox.Show("Successfully Joined Class!");
 
                     try { RefreshPendingActivities(); } catch { }
@@ -1511,6 +1480,95 @@ namespace WinFormsApp1
             {
                 Console.WriteLine("InitializeJoinClass error: " + ex.Message);
             }
+        }
+
+        // =========================================================
+        // Create <root>/<Professor>/<Section>/<Student>/ folder
+        // =========================================================
+        private void CreateStudentClassFolder(int professorId, string classSection)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(studentname))
+                    NameGet();
+
+                if (string.IsNullOrEmpty(studentname))
+                    return;
+
+                string profFolder = GetProfessorFolderName(professorId);
+                if (string.IsNullOrEmpty(profFolder))
+                    return;
+
+                string root = SettingsManager.Current.SaveFolder;
+                if (string.IsNullOrEmpty(root) || !Directory.Exists(root))
+                    return;
+
+                string studentFolder = Path.Combine(
+                    root,
+                    profFolder,
+                    SanitizeFolderName(classSection),
+                    SanitizeFolderName(studentname));
+
+                if (!Directory.Exists(studentFolder))
+                {
+                    Directory.CreateDirectory(studentFolder);
+                    Console.WriteLine("[Student] Created: " + studentFolder);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("CreateStudentClassFolder error: " + ex.Message);
+            }
+        }
+
+        private string GetProfessorFolderName(int professorId)
+        {
+            string connStr = SettingsManager.Current.GetConnectionString();
+            try
+            {
+                using (var conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    using (var cmd = new MySqlCommand("SELECT FolderPath FROM mainfolderpath WHERE user_id = @id", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", professorId);
+                        object r = cmd.ExecuteScalar();
+                        if (r != null && r != DBNull.Value && Directory.Exists(r.ToString()))
+                            return new DirectoryInfo(r.ToString()).Name;
+                    }
+
+                    using (var cmd = new MySqlCommand(@"SELECT lastname, firstname, middlename FROM user_information WHERE user_id = @id", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", professorId);
+                        using (var r = cmd.ExecuteReader())
+                        {
+                            if (r.Read())
+                            {
+                                string ln = r["lastname"]?.ToString() ?? "";
+                                string fn = r["firstname"]?.ToString() ?? "";
+                                string mn = r["middlename"]?.ToString() ?? "";
+                                string full = $"{ln}_{fn}_{mn}".Trim('_');
+                                if (!string.IsNullOrWhiteSpace(full))
+                                    return SanitizeFolderName(full);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("GetProfessorFolderName error: " + ex.Message);
+            }
+            return null;
+        }
+
+        private static string SanitizeFolderName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "Unknown";
+            foreach (char c in Path.GetInvalidFileNameChars())
+                name = name.Replace(c, '_');
+            return name.Trim().TrimEnd('.');
         }
 
         private void InitializeCreadeClass(string classname = "", string classSection = "",
@@ -1799,15 +1857,38 @@ namespace WinFormsApp1
             }
         }
 
+        // =========================================================
+        // UnjoinClass — DELETES STUDENT FOLDER
+        // =========================================================
         private void UnjoinClass(string classname, string classSection, string classTime, string classDate)
         {
             string connStr = SettingsManager.Current.GetConnectionString();
 
             try
             {
+                int professorId = 0;
+
                 using (var conn = new MySqlConnection(connStr))
                 {
                     conn.Open();
+
+                    using (var findProf = new MySqlCommand(
+                        @"SELECT professor_id FROM student_class
+                          WHERE user_id = @user_id AND class_name = @class_name
+                          AND section = @section AND class_time = @class_time AND class_date = @class_date
+                          LIMIT 1", conn))
+                    {
+                        findProf.Parameters.AddWithValue("@user_id", userId);
+                        findProf.Parameters.AddWithValue("@class_name", classname);
+                        findProf.Parameters.AddWithValue("@section", classSection);
+                        findProf.Parameters.AddWithValue("@class_time", classTime);
+                        findProf.Parameters.AddWithValue("@class_date", classDate);
+
+                        object r = findProf.ExecuteScalar();
+                        if (r != null && r != DBNull.Value)
+                            professorId = Convert.ToInt32(r);
+                    }
+
                     using (var cmd = new MySqlCommand(@"DELETE FROM student_class
                         WHERE user_id = @user_id AND class_name = @class_name
                         AND section = @section AND class_time = @class_time AND class_date = @class_date", conn))
@@ -1824,6 +1905,35 @@ namespace WinFormsApp1
                         else
                             MessageBox.Show("No matching class found to unjoin.");
                     }
+                }
+
+                // ★ Delete the student folder
+                try
+                {
+                    if (professorId > 0 && !string.IsNullOrEmpty(studentname))
+                    {
+                        string profFolder = GetProfessorFolderName(professorId);
+                        string root = SettingsManager.Current.SaveFolder;
+
+                        if (!string.IsNullOrEmpty(profFolder) && !string.IsNullOrEmpty(root))
+                        {
+                            string studentFolder = Path.Combine(
+                                root,
+                                profFolder,
+                                SanitizeFolderName(classSection),
+                                SanitizeFolderName(studentname));
+
+                            if (Directory.Exists(studentFolder))
+                            {
+                                Directory.Delete(studentFolder, recursive: true);
+                                Console.WriteLine("[Student] Removed folder: " + studentFolder);
+                            }
+                        }
+                    }
+                }
+                catch (Exception exDel)
+                {
+                    Console.WriteLine("Delete student folder error: " + exDel.Message);
                 }
             }
             catch (Exception ex)
@@ -1891,7 +2001,6 @@ namespace WinFormsApp1
                     broadcastViewer = null;
                 }
 
-                // Force-release the input hooks no matter what
                 BroadcastViewerForm.ForceRemoveHooks();
             }
             catch { }
@@ -2362,8 +2471,6 @@ namespace WinFormsApp1
                     return;
                 }
 
-                Console.WriteLine("authPhoto savedPath = " + savedPath);
-
                 string connStr = SettingsManager.Current.GetConnectionString();
                 using (var conn = new MySqlConnection(connStr))
                 {
@@ -2390,7 +2497,7 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        // Assessment quiz exam — THREE STATES
+        // Assessments
         // =========================================================
         private void InitializeAssessmentsCard()
         {
@@ -2778,9 +2885,6 @@ namespace WinFormsApp1
 
             string connStr = SettingsManager.Current.GetConnectionString();
 
-            // =========================================================
-            // ASK: overwrite if already saved
-            // =========================================================
             bool alreadyExists = false;
             try
             {
@@ -2815,9 +2919,6 @@ namespace WinFormsApp1
                     return;
             }
 
-            // =========================================================
-            // DELETE old rows, then INSERT the new three
-            // =========================================================
             try
             {
                 using (var conn = new MySqlConnection(connStr))
@@ -2826,7 +2927,6 @@ namespace WinFormsApp1
 
                     using (var tx = conn.BeginTransaction())
                     {
-                        // Wipe previous answers for this user
                         using (var delCmd = new MySqlCommand(
                             "DELETE FROM question_answer_security WHERE username = @username", conn, tx))
                         {
@@ -2834,7 +2934,6 @@ namespace WinFormsApp1
                             delCmd.ExecuteNonQuery();
                         }
 
-                        // Insert the three new questions + answers
                         const string insertQuery =
                             "INSERT INTO question_answer_security (username, question, answer) " +
                             "VALUES (@username, @question, @answer)";
@@ -2874,9 +2973,6 @@ namespace WinFormsApp1
             }
         }
 
-        // =========================================================
-        // FORM CLOSING
-        // =========================================================
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             try { assessmentsRefreshTimer?.Stop(); } catch { }
@@ -2897,7 +2993,6 @@ namespace WinFormsApp1
             slideshowImages.Clear();
 
             base.OnFormClosing(e);
-
         }
 
         private void InitializeNavTooltips()
@@ -2922,20 +3017,7 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        // UTILITIES
-        // =========================================================
-        private static string SanitizeFolderName(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name)) return "Untitled";
-
-            foreach (char c in Path.GetInvalidFileNameChars())
-                name = name.Replace(c.ToString(), "");
-
-            return name.Trim().TrimEnd('.');
-        }
-
-        // =========================================================
-        // EXPANDED CALENDAR
+        // Calendar
         // =========================================================
         private ExpandedCalendar expandedCal;
 
@@ -2983,10 +3065,7 @@ namespace WinFormsApp1
                             {
                                 string dueRaw = r["due_date"].ToString();
                                 if (!TryParseCalDate(dueRaw, out DateTime due))
-                                {
-                                    Console.WriteLine("[Calendar] Can't parse due_date: '" + dueRaw + "'");
                                     continue;
-                                }
 
                                 string title = r["title"].ToString();
                                 string subject = r["activity_subject"].ToString();
@@ -3246,9 +3325,6 @@ namespace WinFormsApp1
             notificationPanelOpen = false;
         }
 
-        // =========================================================
-        // NOTIFICATIONS — LOAD + BUILD
-        // =========================================================
         private void LoadNotifications()
         {
             if (notificationList == null) return;
@@ -3679,7 +3755,7 @@ namespace WinFormsApp1
         }
 
         // =========================================================
-        // NIGHT MODE — TOGGLE + THEMING
+        // NIGHT MODE
         // =========================================================
         private void RebuildDynamicContent()
         {
@@ -3943,6 +4019,7 @@ namespace WinFormsApp1
             }
         }
 
+
         private void label8_Click(object sender, EventArgs e)
         {
         }
@@ -3955,5 +4032,8 @@ namespace WinFormsApp1
         {
 
         }
+
+       
+
     }
 }
