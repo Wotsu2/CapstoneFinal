@@ -1,11 +1,12 @@
-﻿using System;
+﻿using MySql.Data.MySqlClient;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using MySql.Data.MySqlClient;
+using UMapx.Core;
 
 namespace WinFormsApp1
 {
@@ -33,6 +34,10 @@ namespace WinFormsApp1
         private RoundedButton btnClear;
         private RoundedButton btnMonitor;
         private RoundedButton btnEditQuestion;
+
+        // Points controls on the main form
+        private NumericUpDown numSelPoints;
+        private RoundedButton btnApplyPoints;
 
         private Label lblFileName;
         private Label lblQuestionCount;
@@ -392,6 +397,27 @@ namespace WinFormsApp1
             Label lblPreview = AddLabel("Imported Questions / Exam Structure", pad, 358 + yShift + dep);
             lblPreview.Font = new Font("Segoe UI Semibold", 10.5F, FontStyle.Bold);
 
+            // ---------------- POINTS (visible on main form) ----------------
+            Label lblSelPoints = AddLabel("Points:", 395, 358 + yShift + dep + 2);
+
+            numSelPoints = new NumericUpDown();
+            numSelPoints.Font = new Font("Segoe UI", 10);
+            numSelPoints.Minimum = 1;
+            numSelPoints.Maximum = 100;
+            numSelPoints.Value = 1;
+            numSelPoints.TextAlign = HorizontalAlignment.Center;
+            numSelPoints.Location = new Point(455, 353 + yShift + dep);
+            numSelPoints.Size = new Size(70, 30);
+            numSelPoints.Enabled = false;
+            Controls.Add(numSelPoints);
+
+            new ToolTip().SetToolTip(numSelPoints,
+                "Select a question in the list, set its points here, then click SET POINTS.");
+
+            btnApplyPoints = MakeButton("SET POINTS", 535, 352 + yShift + dep, 150, 32,
+                ClrGold, ClrGoldDark, ClrMaroonDark, 9F);
+            btnApplyPoints.Click += BtnApplyPoints_Click;
+
             lstQuestions = new ListBox();
             lstQuestions.Font = new Font("Segoe UI", 9.5F);
             lstQuestions.HorizontalScrollbar = true;
@@ -399,6 +425,7 @@ namespace WinFormsApp1
             lstQuestions.Location = new Point(pad, 385 + yShift + dep);
             lstQuestions.Size = new Size(leftWidth, 170);
             lstQuestions.DoubleClick += LstQuestions_DoubleClick;
+            lstQuestions.SelectedIndexChanged += LstQuestions_SelectedIndexChanged;
             Controls.Add(lstQuestions);
 
             // ---------------- EDIT / SUBMIT / MONITOR / CLEAR ----------------
@@ -437,6 +464,56 @@ namespace WinFormsApp1
         private DateTime GetDeployDateTime()
         {
             return dtpDeployDate.Value.Date + dtpDeployTime.Value.TimeOfDay;
+        }
+
+        // =========================================================
+        // POINTS: SELECT A QUESTION, THEN SET ITS POINTS
+        // =========================================================
+
+        private void LstQuestions_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (numSelPoints == null) return;
+
+            QuizQuestion q;
+
+            if (lstQuestions.SelectedIndex >= 0 &&
+                questionItemMap.TryGetValue(lstQuestions.SelectedIndex, out q) &&
+                q != null)
+            {
+                numSelPoints.Value = Math.Max(1, Math.Min(100, q.Points));
+                numSelPoints.Enabled = true;
+            }
+            else
+            {
+                numSelPoints.Enabled = false;
+            }
+        }
+
+        private void BtnApplyPoints_Click(object sender, EventArgs e)
+        {
+            int idx = lstQuestions.SelectedIndex;
+
+            if (idx < 0 || !questionItemMap.ContainsKey(idx))
+            {
+                CustomMessageBox.Show(
+                    "Select a question in the list first.\n\n" +
+                    "Section headers cannot be given points.",
+                    "Set Points",
+                    CustomMessageBoxButtons.OK,
+                    CustomMessageBoxIcon.Information);
+                return;
+            }
+
+            QuizQuestion q = questionItemMap[idx];
+            if (q == null) return;
+
+            q.Points = (int)numSelPoints.Value;
+
+            // Rebuild the list (same order, so the same index stays selected)
+            RefreshQuestionList();
+
+            if (idx < lstQuestions.Items.Count)
+                lstQuestions.SelectedIndex = idx;
         }
 
         // =========================================================
@@ -493,6 +570,23 @@ namespace WinFormsApp1
             if (hours > 0) return hours + "h";
 
             return minutes + " minute" + (minutes == 1 ? "" : "s");
+        }
+
+        // =========================================================
+        // DEFAULT POINTS (MC / TF / IDENTIFICATION = 1, ESSAY = 5)
+        // =========================================================
+
+        private void ApplyDefaultPoints()
+        {
+            if (importedQuestions == null) return;
+
+            foreach (QuizQuestion q in importedQuestions)
+            {
+                if (q == null) continue;
+
+                string type = NormalizeQuestionType(q.QuestionType, false);
+                q.Points = (type == "essay") ? 5 : 1;
+            }
         }
 
         // =========================================================
@@ -555,6 +649,7 @@ namespace WinFormsApp1
                     }
 
                     importedQuestions = result.Questions;
+                    ApplyDefaultPoints();
 
                     lblFileName.Text = "File: " + Path.GetFileName(dialog.FileName);
                     lblQuestionCount.Text = "Questions: " + importedQuestions.Count;
@@ -564,8 +659,9 @@ namespace WinFormsApp1
                     CustomMessageBox.Show(
                         "DOCX imported successfully!\n\n" +
                         "Questions found: " + importedQuestions.Count + "\n\n" +
-                        "You can now edit any imported question without uploading another DOCX.\n\n" +
-                        "Double-click a question or select it and click EDIT SELECTED.",
+                        "Points are set automatically: 1 for MC / TF / Identification, 5 for Essay.\n\n" +
+                        "To change points, select a question in the list, set the Points box, " +
+                        "and click SET POINTS.",
                         "Import Successful",
                         CustomMessageBoxButtons.OK,
                         CustomMessageBoxIcon.Information);
@@ -669,7 +765,11 @@ namespace WinFormsApp1
                 QuizQuestion q = sectionQuestions[i];
                 string questionText = q.Question == null ? "" : q.Question.Trim();
 
-                int itemIndex = lstQuestions.Items.Add(displayNumber + ". " + questionText);
+                int pts = q.Points < 1 ? 1 : q.Points;
+
+                int itemIndex = lstQuestions.Items.Add(
+                    displayNumber + ". " + questionText + "   [" + pts + (pts == 1 ? " pt]" : " pts]"));
+
                 questionItemMap[itemIndex] = q;
                 displayNumber++;
             }
@@ -842,6 +942,7 @@ namespace WinFormsApp1
             int tfCount = CountQuestionsByType("true_false");
             int identificationCount = CountQuestionsByType("identification");
             int essayCount = CountQuestionsByType("essay");
+            int totalPoints = GetTotalPoints();
 
             string deployText = deployAt.HasValue
                 ? "Scheduled for " + deployAt.Value.ToString("MMM dd, yyyy  hh:mm tt")
@@ -859,7 +960,8 @@ namespace WinFormsApp1
                 "True / False: " + tfCount + "\n" +
                 "Identification: " + identificationCount + "\n" +
                 "Essay: " + essayCount + "\n\n" +
-                "Total Questions: " + importedQuestions.Count,
+                "Total Questions: " + importedQuestions.Count + "\n" +
+                "Total Points: " + totalPoints,
                 "Confirm Submit",
                 CustomMessageBoxButtons.YesNo,
                 CustomMessageBoxIcon.Question);
@@ -910,7 +1012,8 @@ namespace WinFormsApp1
                 "True / False: " + tfCount + "\n" +
                 "Identification: " + identificationCount + "\n" +
                 "Essay: " + essayCount + "\n\n" +
-                "Total Questions: " + importedQuestions.Count + "\n\n" +
+                "Total Questions: " + importedQuestions.Count + "\n" +
+                "Total Points: " + totalPoints + "\n\n" +
                 visibility + "\n" +
                 "Click MONITOR to watch the students.",
                 "Submit Successful",
@@ -987,10 +1090,10 @@ namespace WinFormsApp1
                     string questionSql = @"
                         INSERT INTO questions
                         (quiz_id, question_text, question_type,
-                         choice_a, choice_b, choice_c, choice_d, correct_answer)
+                         choice_a, choice_b, choice_c, choice_d, correct_answer, points)
                         VALUES
                         (@quiz_id, @question_text, @question_type,
-                         @choice_a, @choice_b, @choice_c, @choice_d, @correct_answer);";
+                         @choice_a, @choice_b, @choice_c, @choice_d, @correct_answer, @points);";
 
                     for (int i = 0; i < importedQuestions.Count; i++)
                     {
@@ -1068,6 +1171,7 @@ namespace WinFormsApp1
                             command.Parameters.AddWithValue("@choice_c", (object)choiceC ?? DBNull.Value);
                             command.Parameters.AddWithValue("@choice_d", (object)choiceD ?? DBNull.Value);
                             command.Parameters.AddWithValue("@correct_answer", (object)correctAnswer ?? DBNull.Value);
+                            command.Parameters.AddWithValue("@points", q.Points < 1 ? 1 : q.Points);
                             command.ExecuteNonQuery();
                         }
                     }
@@ -1118,6 +1222,21 @@ namespace WinFormsApp1
             return count;
         }
 
+        private int GetTotalPoints()
+        {
+            int total = 0;
+
+            if (importedQuestions == null) return 0;
+
+            foreach (QuizQuestion q in importedQuestions)
+            {
+                if (q == null) continue;
+                total += q.Points < 1 ? 1 : q.Points;
+            }
+
+            return total;
+        }
+
         private string ValidateQuestions()
         {
             for (int i = 0; i < importedQuestions.Count; i++)
@@ -1126,6 +1245,9 @@ namespace WinFormsApp1
                 string no = "Question " + (i + 1);
 
                 if (q == null) return no + " is empty.";
+
+                if (q.Points < 1)
+                    return no + " must have at least 1 point.";
 
                 if (string.IsNullOrWhiteSpace(q.Question))
                     return no + " has no question text.";
@@ -1284,6 +1406,8 @@ namespace WinFormsApp1
             questionItemMap.Clear();
             lstQuestions.Items.Clear();
 
+            if (numSelPoints != null) numSelPoints.Enabled = false;
+
             lblFileName.Text = "No DOCX file selected.";
             lblQuestionCount.Text = "Questions: 0";
         }
@@ -1302,6 +1426,7 @@ namespace WinFormsApp1
         private QuizQuestion question;
 
         private ComboBox cmbQuestionType;
+        private NumericUpDown numPoints;
         private TextBox txtQuestion;
         private TextBox txtChoiceA, txtChoiceB, txtChoiceC, txtChoiceD;
         private TextBox txtCorrectAnswer;
@@ -1365,6 +1490,23 @@ namespace WinFormsApp1
             cmbQuestionType.Size = new Size(250, 32);
             cmbQuestionType.SelectedIndexChanged += (s, e) => UpdateQuestionTypeControls();
             Controls.Add(cmbQuestionType);
+
+            Label lblPoints = new Label();
+            lblPoints.Text = "Points";
+            lblPoints.Font = new Font("Segoe UI Semibold", 10, FontStyle.Bold);
+            lblPoints.AutoSize = true;
+            lblPoints.Location = new Point(300, 105);
+            Controls.Add(lblPoints);
+
+            numPoints = new NumericUpDown();
+            numPoints.Font = new Font("Segoe UI", 10);
+            numPoints.Minimum = 1;
+            numPoints.Maximum = 100;
+            numPoints.Value = 1;
+            numPoints.TextAlign = HorizontalAlignment.Center;
+            numPoints.Location = new Point(300, 130);
+            numPoints.Size = new Size(90, 32);
+            Controls.Add(numPoints);
 
             Label lblQuestion = new Label();
             lblQuestion.Text = "Question";
@@ -1488,6 +1630,8 @@ namespace WinFormsApp1
             txtChoiceC.Text = question.ChoiceC ?? "";
             txtChoiceD.Text = question.ChoiceD ?? "";
             txtCorrectAnswer.Text = question.CorrectAnswer ?? "";
+
+            numPoints.Value = Math.Max(1, Math.Min(100, question.Points));
 
             UpdateQuestionTypeControls();
         }
@@ -1625,6 +1769,7 @@ namespace WinFormsApp1
 
             question.Question = questionText;
             question.QuestionType = newType;
+            question.Points = (int)numPoints.Value;
 
             DialogResult = DialogResult.OK;
             Close();

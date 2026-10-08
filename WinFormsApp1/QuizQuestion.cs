@@ -10,7 +10,7 @@
         public string ChoiceB { get; set; }
         public string ChoiceC { get; set; }
         public string ChoiceD { get; set; }
-
+        public int Points { get; set; } = 1;
         public string CorrectAnswer { get; set; }
     }
 }
