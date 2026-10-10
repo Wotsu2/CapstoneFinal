@@ -8,8 +8,8 @@ namespace WinFormsApp1
     {
         public string SmtpHost { get; set; } = "smtp.gmail.com";
         public int SmtpPort { get; set; } = 587;
-        public string SmtpUser { get; set; } = "mjmeriales22@gmail.com";
-        public string SmtpPass { get; set; } = "eroh cert nhpm yacq";
+        public string SmtpUser { get; set; } = "Example@gmail.com";
+        public string SmtpPass { get; set; } = "qwer asdf zxcv poiu";
         public string SmtpFrom { get; set; } = "your.email@gmail.com";
         public string SmtpFromName { get; set; } = "CDSGA Hub";
 
